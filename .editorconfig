@@ -1,0 +1,36 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# TypeScript / JavaScript / JSON / YAML / Markdown
+[*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,yaml,yml,md,mdx,html,css}]
+indent_style = space
+indent_size = 2
+
+# Python (PEP 8)
+[*.py]
+indent_style = space
+indent_size = 4
+
+# SQL
+[*.sql]
+indent_style = space
+indent_size = 2
+
+# Dockerfile
+[Dockerfile*]
+indent_style = space
+indent_size = 2
+
+# Shell scripts
+[*.{sh,bash,zsh}]
+indent_style = space
+indent_size = 2
+
+# Makefiles require tabs
+[Makefile]
+indent_style = tab
