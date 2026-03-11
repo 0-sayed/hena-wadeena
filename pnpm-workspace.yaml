@@ -1,0 +1,8 @@
+packages:
+  - "packages/*"
+  - "services/identity"
+  - "services/market"
+  - "services/guide-booking"
+  - "services/map"
+  - "apps/*"
+  # services/ai is NOT included — Python service managed by uv

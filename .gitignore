@@ -123,3 +123,6 @@ Thumbs.db
 *.tmp
 *.swp
 .cache/
+
+# Binary documents
+docs/**/*.pdf
