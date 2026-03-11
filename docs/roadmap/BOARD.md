@@ -34,7 +34,7 @@
 - [ ] **T02a** Arabic Embedding Validation Spike · S · ← _no deps_
 - [ ] **T03** Market Schema Design · S · ← _no deps_
 - [ ] **T04** Guide + Map Schema Design · S · ← _no deps_
-- [ ] **F00** Move Frontend into Monorepo · S · ← T01
+- [x] **F00** Move Frontend into Monorepo · S · ← T01
 
 ## Layer 1 — Core Services
 
