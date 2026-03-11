@@ -1,0 +1,4 @@
+pre-commit:
+  jobs:
+    - name: gitleaks
+      run: gitleaks protect --staged --redact
