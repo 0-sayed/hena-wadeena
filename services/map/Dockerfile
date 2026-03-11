@@ -47,6 +47,9 @@ COPY --from=build /app/services/map/dist services/map/dist/
 # Install production deps only
 RUN pnpm install --frozen-lockfile --prod
 
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 8004
 
 HEALTHCHECK --interval=15s --timeout=10s --retries=5 \
