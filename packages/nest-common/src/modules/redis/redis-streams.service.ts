@@ -30,7 +30,7 @@ export class RedisStreamsService implements OnModuleDestroy {
     payload: T,
   ): Promise<string> {
     const fields = this.encodeStreamFields(payload);
-    const id = await this.redis.xadd(eventName, '*', ...fields);
+    const id = await this.redis.xadd(eventName as string, '*', ...fields);
     if (!id) throw new Error(`Failed to publish to stream: ${eventName}`);
     this.logger.debug(`Published ${eventName}: ${id}`);
     return id;
@@ -45,7 +45,7 @@ export class RedisStreamsService implements OnModuleDestroy {
   ): Promise<void> {
     // Create consumer group if it doesn't exist
     try {
-      await this.redis.xgroup('CREATE', stream, groupName, '0', 'MKSTREAM');
+      await this.redis.xgroup('CREATE', stream as string, groupName, '0', 'MKSTREAM');
     } catch (err: unknown) {
       const error = err as { message?: string };
       if (!error.message?.includes('BUSYGROUP')) {
@@ -59,12 +59,15 @@ export class RedisStreamsService implements OnModuleDestroy {
     const streamKey = `${stream}:${groupName}:${consumerName}`;
     if (!this.activeStreams.has(streamKey)) {
       this.activeStreams.add(streamKey);
-      void this.startConsuming(stream, groupName, consumerName);
+      void this.startConsuming(stream as string, groupName, consumerName);
     }
   }
 
   private async startConsuming(stream: string, group: string, consumer: string): Promise<void> {
     const streamKey = `${stream}:${group}:${consumer}`;
+    const lastPendingId = '0';
+    let readingNew = false;
+
     while (this.activeStreams.has(streamKey)) {
       try {
         const results = await this.redis.xreadgroup(
@@ -77,10 +80,15 @@ export class RedisStreamsService implements OnModuleDestroy {
           2000,
           'STREAMS',
           stream,
-          '>',
+          readingNew ? '>' : lastPendingId,
         );
 
-        if (!results) continue;
+        if (!results) {
+          if (!readingNew) {
+            readingNew = true;
+          }
+          continue;
+        }
 
         for (const [streamName, messages] of results as [string, [string, string[]][]][]) {
           const key = `${streamName}:${group}`;
