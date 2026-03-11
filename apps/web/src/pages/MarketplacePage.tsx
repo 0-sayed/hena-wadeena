@@ -1,0 +1,297 @@
+import { useState, useEffect } from 'react';
+import { Layout } from '@/components/layout/Layout';
+import { useNavigate } from 'react-router';
+import {
+  Search,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  MapPin,
+  Star,
+  Phone,
+  BarChart3,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { marketAPI, type PriceItem, type Supplier } from '@/services/api';
+import { SR } from '@/components/motion/ScrollReveal';
+import { PageTransition } from '@/components/motion/PageTransition';
+import { Skeleton } from '@/components/motion/Skeleton';
+import { PageHero } from '@/components/layout/PageHero';
+import heroMarketplace from '@/assets/hero-marketplace.jpg';
+
+const cities = [
+  { id: 'kharga', name: 'الخارجة' },
+  { id: 'dakhla', name: 'الداخلة' },
+  { id: 'farafra', name: 'الفرافرة' },
+  { id: 'paris', name: 'باريس' },
+];
+
+const MarketplacePage = () => {
+  const navigate = useNavigate();
+  const [selectedCity, setSelectedCity] = useState('kharga');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceData, setPriceData] = useState<PriceItem[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void Promise.all([
+      marketAPI.getPrices().then((r) => setPriceData(r.data)),
+      marketAPI.getSuppliers().then((r) => setSuppliers(r.data)),
+    ]).finally(() => setLoading(false));
+  }, []);
+
+  const filteredProducts = priceData.filter(
+    (p) => p.name.includes(searchQuery) || p.category.includes(searchQuery),
+  );
+
+  return (
+    <Layout>
+      <PageTransition>
+        {/* Hero Section */}
+        <PageHero image={heroMarketplace} alt="البورصة والأسعار">
+          <SR>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+              <BarChart3 className="h-5 w-5 text-accent" />
+              <span className="text-sm font-semibold text-card">البورصة والأسعار</span>
+            </div>
+          </SR>
+          <SR delay={100}>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-card mb-5">
+              البورصة والأسعار
+            </h1>
+          </SR>
+          <SR delay={200}>
+            <p className="text-lg md:text-xl text-card/90 mb-8">
+              أسعار المنتجات المحلية، دليل الموردين، والتواصل المباشر
+            </p>
+          </SR>
+        </PageHero>
+
+        {/* Content */}
+        <section className="py-14">
+          <div className="container px-4">
+            <Tabs defaultValue="prices" className="w-full">
+              <SR>
+                <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-10 h-12 rounded-xl">
+                  <TabsTrigger value="prices" className="rounded-lg text-sm font-semibold">
+                    لوحة الأسعار
+                  </TabsTrigger>
+                  <TabsTrigger value="suppliers" className="rounded-lg text-sm font-semibold">
+                    دليل الموردين
+                  </TabsTrigger>
+                </TabsList>
+              </SR>
+
+              {/* Prices Tab */}
+              <TabsContent value="prices" className="space-y-6">
+                <SR>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <Select value={selectedCity} onValueChange={setSelectedCity}>
+                      <SelectTrigger className="w-full md:w-48 h-12 rounded-xl">
+                        <SelectValue placeholder="اختر المدينة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city.id} value={city.id}>
+                            {city.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="relative flex-1">
+                      <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        placeholder="ابحث عن منتج..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pr-12 h-12 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </SR>
+
+                <SR delay={150}>
+                  <Card className="border-border/50 overflow-hidden rounded-2xl shadow-lg">
+                    <div className="bg-primary/5 px-6 py-5 border-b border-border">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-foreground text-lg">
+                          أسعار {cities.find((c) => c.id === selectedCity)?.name}
+                        </h3>
+                        <span className="text-sm text-muted-foreground">
+                          آخر تحديث: اليوم 10:30 ص
+                        </span>
+                      </div>
+                    </div>
+                    <CardContent className="p-0">
+                      {loading ? (
+                        <div className="p-6 space-y-4">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Skeleton key={i} h="h-12" />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-border bg-muted/30">
+                                <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
+                                  المنتج
+                                </th>
+                                <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
+                                  التصنيف
+                                </th>
+                                <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
+                                  السعر
+                                </th>
+                                <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
+                                  التغير
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredProducts.map((item, index) => (
+                                <tr
+                                  key={item.name}
+                                  className={`hover:bg-muted/20 transition-colors duration-200 ${index !== filteredProducts.length - 1 ? 'border-b border-border/50' : ''}`}
+                                >
+                                  <td className="py-5 px-6">
+                                    <span className="font-semibold text-foreground">
+                                      {item.name}
+                                    </span>
+                                  </td>
+                                  <td className="py-5 px-6">
+                                    <Badge variant="outline">{item.category}</Badge>
+                                  </td>
+                                  <td className="py-5 px-6">
+                                    <span className="font-bold text-lg text-foreground">
+                                      {item.price}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground mr-1">
+                                      جنيه/{item.unit}
+                                    </span>
+                                  </td>
+                                  <td className="py-5 px-6">
+                                    <div
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${item.change > 0 ? 'bg-primary/10 text-primary' : item.change < 0 ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'}`}
+                                    >
+                                      {item.change > 0 ? (
+                                        <TrendingUp className="h-4 w-4" />
+                                      ) : item.change < 0 ? (
+                                        <TrendingDown className="h-4 w-4" />
+                                      ) : (
+                                        <Minus className="h-4 w-4" />
+                                      )}
+                                      {Math.abs(item.change)}%
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </SR>
+              </TabsContent>
+
+              {/* Suppliers Tab */}
+              <TabsContent value="suppliers" className="space-y-6">
+                <SR>
+                  <div className="relative max-w-md">
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input placeholder="ابحث عن مورد..." className="pr-12 h-12 rounded-xl" />
+                  </div>
+                </SR>
+
+                {loading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                      <Skeleton key={i} h="h-56" className="rounded-2xl" />
+                    ))}
+                  </div>
+                ) : (
+                  <SR stagger>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                      {suppliers.map((supplier) => (
+                        <Card
+                          key={supplier.id}
+                          className="border-border/50 hover:border-primary/40 hover-lift rounded-2xl"
+                        >
+                          <CardContent className="p-7">
+                            <div className="flex items-start justify-between mb-5">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="text-lg font-bold text-foreground">
+                                    {supplier.name}
+                                  </h3>
+                                  {supplier.verified && (
+                                    <Badge className="bg-primary/10 text-primary">موثق</Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                  <MapPin className="h-4 w-4" />
+                                  {supplier.city}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-accent">
+                                <Star className="h-5 w-5 fill-current" />
+                                <span className="font-bold text-base">{supplier.rating}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  ({supplier.reviews})
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 mb-5">
+                              {supplier.specialties.map((specialty) => (
+                                <Badge key={specialty} variant="secondary">
+                                  {specialty}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex gap-3">
+                              <Button
+                                variant="outline"
+                                className="flex-1 hover:scale-[1.02] transition-transform"
+                                onClick={() => void navigate(`/marketplace/supplier/${supplier.id}`)}
+                              >
+                                عرض الملف
+                              </Button>
+                              <Button
+                                className="flex-1 hover:scale-[1.02] transition-transform"
+                                onClick={() =>
+                                  alert(`للتواصل مع ${supplier.name}: اتصل أو أرسل واتساب`)
+                                }
+                              >
+                                <Phone className="h-4 w-4 ml-2" />
+                                تواصل
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </SR>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
+      </PageTransition>
+    </Layout>
+  );
+};
+
+export default MarketplacePage;

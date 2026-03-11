@@ -31,6 +31,7 @@ const config: KnipConfig = {
       project: ['src/**/*.ts'],
     },
   },
+  ignoreWorkspaces: ['apps/web'],
   ignore: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
   ignoreDependencies: ['typescript'],
 };
