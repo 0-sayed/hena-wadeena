@@ -1,0 +1,172 @@
+name: hena-wadeena
+
+x-nestjs-service: &nestjs-service
+  restart: unless-stopped
+  env_file: .env
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  networks:
+    - hena-internal
+
+x-nestjs-healthcheck: &nestjs-healthcheck
+  interval: 15s
+  timeout: 10s
+  retries: 5
+
+services:
+  # ─── Infrastructure ─────────────────────────────────────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wadeena_db
+      POSTGRES_USER: ${POSTGRES_USER:-hena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-schemas.sql:/docker-entrypoint-initdb.d/00-init-schemas.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-hena} -d wadeena_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hena-internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is not set}
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'REDISCLI_AUTH=$REDIS_PASSWORD redis-cli ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hena-internal
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    restart: unless-stopped
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:6333/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - hena-internal
+
+  # ─── NestJS Services ────────────────────────────────────────────────────────
+  identity:
+    <<: *nestjs-service
+    build:
+      context: .
+      dockerfile: services/identity/Dockerfile
+    environment:
+      SERVICE_NAME: identity
+      PORT: 8001
+      DB_SCHEMA: identity
+    healthcheck:
+      <<: *nestjs-healthcheck
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8001/health || exit 1']
+
+  market:
+    <<: *nestjs-service
+    build:
+      context: .
+      dockerfile: services/market/Dockerfile
+    environment:
+      SERVICE_NAME: market
+      PORT: 8002
+      DB_SCHEMA: market
+    healthcheck:
+      <<: *nestjs-healthcheck
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8002/health || exit 1']
+
+  guide-booking:
+    <<: *nestjs-service
+    build:
+      context: .
+      dockerfile: services/guide-booking/Dockerfile
+    environment:
+      SERVICE_NAME: guide-booking
+      PORT: 8003
+      DB_SCHEMA: guide_booking
+    healthcheck:
+      <<: *nestjs-healthcheck
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8003/health || exit 1']
+
+  map:
+    <<: *nestjs-service
+    build:
+      context: .
+      dockerfile: services/map/Dockerfile
+    environment:
+      SERVICE_NAME: map
+      PORT: 8004
+      DB_SCHEMA: map
+    healthcheck:
+      <<: *nestjs-healthcheck
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8004/health || exit 1']
+
+  ai:
+    <<: *nestjs-service
+    build:
+      context: services/ai
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: ai
+      PORT: 8005
+      DB_SCHEMA: ai
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      <<: *nestjs-healthcheck
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8005/health || exit 1']
+
+  # ─── Gateway ────────────────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - '8000:80'
+    depends_on:
+      identity:
+        condition: service_started
+      market:
+        condition: service_started
+      guide-booking:
+        condition: service_started
+      map:
+        condition: service_started
+      ai:
+        condition: service_started
+    networks:
+      - hena-internal
+
+volumes:
+  postgres-data:
+  redis-data:
+  qdrant-data:
+
+networks:
+  hena-internal:
+    driver: bridge

@@ -1,0 +1,78 @@
+# Development overrides — usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+name: hena-wadeena-dev
+
+services:
+  postgres:
+    ports:
+      - '5432:5432'
+
+  redis:
+    # No auth in dev
+    command: redis-server --appendonly yes
+
+  qdrant:
+    ports:
+      - '${QDRANT_PORT:-6333}:6333'
+      - '6334:6334'
+
+  # NestJS services: hot-reload with volume mounts
+  identity:
+    build:
+      target: development
+    ports:
+      - '8001:8001'
+    volumes:
+      - ./services/identity:/app/services/identity:delegated
+      - ./packages:/app/packages:delegated
+      - /app/node_modules
+    command: pnpm --filter @hena-wadeena/identity run dev
+    environment:
+      NODE_ENV: development
+
+  market:
+    build:
+      target: development
+    ports:
+      - '8002:8002'
+    volumes:
+      - ./services/market:/app/services/market:delegated
+      - ./packages:/app/packages:delegated
+      - /app/node_modules
+    command: pnpm --filter @hena-wadeena/market run dev
+    environment:
+      NODE_ENV: development
+
+  guide-booking:
+    build:
+      target: development
+    ports:
+      - '8003:8003'
+    volumes:
+      - ./services/guide-booking:/app/services/guide-booking:delegated
+      - ./packages:/app/packages:delegated
+      - /app/node_modules
+    command: pnpm --filter @hena-wadeena/guide-booking run dev
+    environment:
+      NODE_ENV: development
+
+  map:
+    build:
+      target: development
+    ports:
+      - '8004:8004'
+    volumes:
+      - ./services/map:/app/services/map:delegated
+      - ./packages:/app/packages:delegated
+      - /app/node_modules
+    command: pnpm --filter @hena-wadeena/map run dev
+    environment:
+      NODE_ENV: development
+
+  ai:
+    ports:
+      - '8005:8005'
+    volumes:
+      - ./services/ai:/app:delegated
+    command: uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8005
+    environment:
+      ENVIRONMENT: development
