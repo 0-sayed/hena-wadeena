@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
 import {
@@ -44,7 +44,7 @@ const AccommodationInquiryPage = () => {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     toast.success('تم إرسال استفسارك بنجاح! سيتواصل معك المالك قريباً');
     void navigate('/tourism');
