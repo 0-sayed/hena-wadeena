@@ -59,13 +59,20 @@ export function Header() {
   // Check if user is logged in
   const [user, setUser] = useState<AuthUser | null>(null);
   useEffect(() => {
+    const token = localStorage.getItem('access_token');
     const stored = localStorage.getItem('user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored) as AuthUser);
-      } catch {
-        localStorage.removeItem('user');
-      }
+    if (!token || !stored) {
+      setUser(null);
+      setUnreadCount(0);
+      return;
+    }
+
+    try {
+      setUser(JSON.parse(stored) as AuthUser);
+    } catch {
+      localStorage.removeItem('user');
+      setUser(null);
+      setUnreadCount(0);
     }
   }, [location.pathname]);
 
@@ -256,7 +263,7 @@ export function Header() {
         </div>
 
         {/* Mobile: notification + menu */}
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
           {user && (
             <Link to="/notifications" className="relative">
               <Button variant="ghost" size="icon" className="text-muted-foreground">

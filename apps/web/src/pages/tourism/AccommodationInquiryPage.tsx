@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import {
   ArrowRight,
   User,
@@ -31,6 +31,7 @@ const tenantTypes = ['طالب جامعي', 'موظف حكومي', 'موظف ق�
 
 const AccommodationInquiryPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -46,6 +47,8 @@ const AccommodationInquiryPage = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // TODO: send inquiry to API with accommodation id
+    console.warn('TODO: send inquiry to API for accommodation', id);
     toast.success('تم إرسال استفسارك بنجاح! سيتواصل معك المالك قريباً');
     void navigate('/tourism');
   };
