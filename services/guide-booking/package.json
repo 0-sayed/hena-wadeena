@@ -1,0 +1,30 @@
+{
+  "name": "@hena-wadeena/guide-booking",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hena Wadeena — Guide Booking Service",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+  },
+  "dependencies": {
+    "@hena-wadeena/nest-common": "workspace:*",
+    "@hena-wadeena/types": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3"
+  }
+}
