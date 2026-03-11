@@ -128,6 +128,7 @@ services:
     environment:
       SERVICE_NAME: ai
       PORT: 8005
+      DB_SCHEMA: ai
     depends_on:
       postgres:
         condition: service_healthy
