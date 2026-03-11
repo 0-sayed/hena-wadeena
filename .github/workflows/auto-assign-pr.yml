@@ -1,0 +1,20 @@
+---
+name: Auto-assign PR Author
+
+'on':
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-assign:
+    name: Assign PR to Author
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assign PR to author
+        uses: toshimaru/auto-author-assign@4d585cc37690897bd9015942ed6e766aa7cdb97f # v3.0.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
