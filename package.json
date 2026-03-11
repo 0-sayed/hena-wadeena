@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
-    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm knip && pnpm audit --audit-level=high && pnpm build"
+    "validate": "pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm knip && pnpm audit --audit-level=high"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",

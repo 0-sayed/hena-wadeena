@@ -12,3 +12,6 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
+    - name: Build shared packages
+      shell: bash
+      run: pnpm --filter @hena-wadeena/types build && pnpm --filter @hena-wadeena/nest-common build
