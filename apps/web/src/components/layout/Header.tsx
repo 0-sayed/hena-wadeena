@@ -60,7 +60,13 @@ export function Header() {
   const [user, setUser] = useState<AuthUser | null>(null);
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored) as AuthUser);
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored) as AuthUser);
+      } catch {
+        localStorage.removeItem('user');
+      }
+    }
   }, [location.pathname]);
 
   // Fetch unread notification count

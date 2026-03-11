@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { aiAPI } from '@/services/api';
 
 interface Message {
+  id: string;
   role: 'user' | 'assistant';
   content: string;
 }
@@ -12,7 +13,7 @@ interface Message {
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'مرحباً! أنا مساعدك الذكي في هنا وادينا 🌴\nكيف أقدر أساعدك؟' },
+    { id: crypto.randomUUID(), role: 'assistant', content: 'مرحباً! أنا مساعدك الذكي في هنا وادينا 🌴\nكيف أقدر أساعدك؟' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,17 +28,17 @@ export function ChatWidget() {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content: userMsg }]);
     setLoading(true);
 
     try {
       const res = await aiAPI.chat(userMsg, convId);
       setConvId(res.data.conversation_id);
-      setMessages((prev) => [...prev, { role: 'assistant', content: res.data.response }]);
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: res.data.response }]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'عذراً، حدث خطأ. حاول مرة أخرى.' },
+        { id: crypto.randomUUID(), role: 'assistant', content: 'عذراً، حدث خطأ. حاول مرة أخرى.' },
       ]);
     } finally {
       setLoading(false);
@@ -69,9 +70,9 @@ export function ChatWidget() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[320px]" dir="rtl">
-            {messages.map((msg, i) => (
+            {messages.map((msg) => (
               <div
-                key={i}
+                key={msg.id}
                 className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 <div
