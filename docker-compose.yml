@@ -24,7 +24,7 @@ services:
     environment:
       POSTGRES_DB: wadeena_db
       POSTGRES_USER: ${POSTGRES_USER:-hena}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
@@ -41,7 +41,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is not set}
     ports:
       - '${REDIS_PORT:-6379}:6379'
     volumes:

@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "info"
 
-    # Database
-    database_url: str = "postgresql://hena:hena_dev@localhost:5432/wadeena_db"
+    # Database — required, see .env.example for setup instructions
+    database_url: str
 
     # Redis
     redis_url: str = "redis://localhost:6379"
