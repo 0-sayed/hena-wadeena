@@ -1,4 +1,4 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
+import { DynamicModule, Global, Inject, Module, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 
 export const REDIS_CLIENT = 'REDIS_CLIENT';
@@ -11,7 +11,13 @@ export interface RedisModuleOptions {
 
 @Global()
 @Module({})
-export class RedisModule {
+export class RedisModule implements OnModuleDestroy {
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+
+  async onModuleDestroy() {
+    await this.redis.quit();
+  }
+
   static forRoot(options: RedisModuleOptions): DynamicModule {
     const redisProvider = {
       provide: REDIS_CLIENT,

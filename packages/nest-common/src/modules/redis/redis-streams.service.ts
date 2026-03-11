@@ -17,8 +17,10 @@ export type StreamEventHandler<T = Record<string, unknown>> = (
 @Injectable()
 export class RedisStreamsService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisStreamsService.name);
-  private isRunning = false;
+  private readonly activeStreams = new Set<string>();
   private readonly handlers = new Map<string, StreamEventHandler>();
+  private readonly retryCount = new Map<string, number>();
+  private readonly maxRetries = 3;
 
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
@@ -54,14 +56,16 @@ export class RedisStreamsService implements OnModuleDestroy {
     const key = `${stream}:${groupName}`;
     this.handlers.set(key, handler as StreamEventHandler);
 
-    if (!this.isRunning) {
-      this.isRunning = true;
+    const streamKey = `${stream}:${groupName}:${consumerName}`;
+    if (!this.activeStreams.has(streamKey)) {
+      this.activeStreams.add(streamKey);
       void this.startConsuming(stream, groupName, consumerName);
     }
   }
 
   private async startConsuming(stream: string, group: string, consumer: string): Promise<void> {
-    while (this.isRunning) {
+    const streamKey = `${stream}:${group}:${consumer}`;
+    while (this.activeStreams.has(streamKey)) {
       try {
         const results = await this.redis.xreadgroup(
           'GROUP',
@@ -89,14 +93,40 @@ export class RedisStreamsService implements OnModuleDestroy {
               try {
                 await handler({ stream: streamName, id: msgId, data: data as never });
                 await this.redis.xack(streamName, group, msgId);
+                this.retryCount.delete(msgId);
               } catch (err) {
-                this.logger.error(`Handler error for ${streamName}:${msgId}`, err);
+                const retries = (this.retryCount.get(msgId) ?? 0) + 1;
+                this.retryCount.set(msgId, retries);
+                this.logger.error(
+                  `Handler error for ${streamName}:${msgId} (attempt ${retries}/${this.maxRetries})`,
+                  err,
+                );
+                if (retries >= this.maxRetries) {
+                  const dlqStream = `${streamName}:dlq`;
+                  const errorMessage = err instanceof Error ? err.message : String(err);
+                  await this.redis.xadd(
+                    dlqStream,
+                    '*',
+                    ...this.encodeStreamFields({
+                      ...data,
+                      _originalId: msgId,
+                      _originalStream: streamName,
+                      _error: errorMessage,
+                      _failedAt: new Date().toISOString(),
+                    }),
+                  );
+                  await this.redis.xack(streamName, group, msgId);
+                  this.retryCount.delete(msgId);
+                  this.logger.error(
+                    `Message ${msgId} moved to DLQ ${dlqStream} after ${this.maxRetries} failed attempts`,
+                  );
+                }
               }
             }),
           );
         }
       } catch (err) {
-        if (this.isRunning) {
+        if (this.activeStreams.has(streamKey)) {
           this.logger.error('Stream consumer error', err);
           await new Promise((r) => setTimeout(r, 1000));
         }
@@ -117,7 +147,8 @@ export class RedisStreamsService implements OnModuleDestroy {
   }
 
   onModuleDestroy() {
-    this.isRunning = false;
+    this.activeStreams.clear();
     this.handlers.clear();
+    this.retryCount.clear();
   }
 }

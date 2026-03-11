@@ -1,4 +1,4 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
+import { DynamicModule, Global, Inject, Module, OnModuleDestroy } from '@nestjs/common';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -12,7 +12,13 @@ export interface DrizzleModuleOptions {
 
 @Global()
 @Module({})
-export class DrizzleModule {
+export class DrizzleModule implements OnModuleDestroy {
+  constructor(@Inject(POSTGRES_CLIENT) private readonly sql: postgres.Sql) {}
+
+  async onModuleDestroy() {
+    await this.sql.end();
+  }
+
   static forRoot(options: DrizzleModuleOptions): DynamicModule {
     const postgresProvider = {
       provide: POSTGRES_CLIENT,

@@ -144,7 +144,6 @@ export enum NvDistrict {
   DAKHLA = 'dakhla',
   FARAFRA = 'farafra',
   BARIS = 'baris',
-  PARIS = 'paris',
 }
 
 export enum CommodityUnit {
