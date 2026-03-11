@@ -8,7 +8,9 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['services/*/test/*.e2e-spec.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

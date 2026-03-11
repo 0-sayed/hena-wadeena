@@ -5,7 +5,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await configureApp(app, { port: Number(process.env.PORT) || 8004, serviceName: 'Map' });
+  await configureApp(app, { port: Number(process.env.PORT ?? 8004), serviceName: 'Map' });
 }
 
 void bootstrap();
