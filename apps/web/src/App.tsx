@@ -4,6 +4,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import { ChatWidget } from '@/components/ai/ChatWidget';
+import { RequireAuth } from '@/components/auth/RequireAuth';
+import { RequireRole } from '@/components/auth/RequireRole';
 import Index from './pages/Index';
 import LogisticsPage from './pages/LogisticsPage';
 import MarketplacePage from './pages/MarketplacePage';
@@ -37,6 +39,9 @@ import InvestorDashboard from './pages/roles/InvestorDashboard';
 import TouristDashboard from './pages/roles/TouristDashboard';
 import StudentDashboard from './pages/roles/StudentDashboard';
 import ResidentDashboard from './pages/roles/ResidentDashboard';
+
+// Search pages
+import SearchResultsPage from './pages/search/SearchResultsPage';
 
 // Logistics pages
 import CreateTripPage from './pages/logistics/CreateTripPage';
@@ -85,14 +90,28 @@ const App = () => (
           <Route path="/moderator" element={<ModeratorDashboard />} />
           <Route path="/reviewer" element={<ReviewerDashboard />} />
           {/* Role Dashboards */}
-          <Route path="/dashboard/merchant" element={<MerchantDashboard />} />
-          <Route path="/dashboard/driver" element={<DriverDashboard />} />
-          <Route path="/dashboard/investor" element={<InvestorDashboard />} />
-          <Route path="/dashboard/tourist" element={<TouristDashboard />} />
-          <Route path="/dashboard/student" element={<StudentDashboard />} />
-          <Route path="/dashboard/resident" element={<ResidentDashboard />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<RequireRole roles={['merchant']} />}>
+              <Route path="/dashboard/merchant" element={<MerchantDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['driver']} />}>
+              <Route path="/dashboard/driver" element={<DriverDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['investor']} />}>
+              <Route path="/dashboard/investor" element={<InvestorDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['tourist']} />}>
+              <Route path="/dashboard/tourist" element={<TouristDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['student']} />}>
+              <Route path="/dashboard/student" element={<StudentDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['resident']} />}>
+              <Route path="/dashboard/resident" element={<ResidentDashboard />} />
+            </Route>
+          </Route>
           {/* Search */}
-
+          <Route path="/search" element={<SearchResultsPage />} />
           {/* Tourism */}
           <Route path="/tourism" element={<TourismPage />} />
           <Route path="/tourism/attractions" element={<AttractionsPage />} />
@@ -105,9 +124,7 @@ const App = () => (
           <Route path="/logistics/create-trip" element={<CreateTripPage />} />
           <Route path="/logistics/book/:id" element={<BookTripPage />} />
           <Route path="/logistics/route/:id" element={<RouteDetailsPage />} />
-          <Route path="/logistics/:id" element={<RouteDetailsPage />} />
           <Route path="/logistics/station/:id" element={<StationDetailsPage />} />
-          <Route path="/book-trip/:id" element={<BookTripPage />} />
           {/* Marketplace */}
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/marketplace/prices" element={<PricesPage />} />
