@@ -5,7 +5,8 @@
  * Currently points to mock-server; switch BASE_URL for production.
  */
 
-const BASE_URL = 'http://localhost:8000/api/v1';
+const BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://localhost:8000/api/v1';
 
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
@@ -144,18 +145,18 @@ export interface Accommodation {
 }
 
 export const tourismAPI = {
-  getAttractions: () => apiFetch<{ success: boolean; data: Attraction[] }>('/tourism/attractions'),
+  getAttractions: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions'),
 
   getFeatured: () =>
-    apiFetch<{ success: boolean; data: Attraction[] }>('/tourism/attractions/featured'),
+    apiFetch<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
 
   getAttraction: (id: number) =>
-    apiFetch<{ success: boolean; data: Attraction }>(`/tourism/attractions/${id}`),
+    apiFetch<{ success: boolean; data: Attraction }>(`/attractions/${id}`),
 
-  getGuides: () => apiFetch<{ success: boolean; data: Guide[] }>('/tourism/guides'),
+  getGuides: () => apiFetch<{ success: boolean; data: Guide[] }>('/guides'),
 
   getAccommodations: () =>
-    apiFetch<{ success: boolean; data: Accommodation[] }>('/tourism/accommodations'),
+    apiFetch<{ success: boolean; data: Accommodation[] }>('/accommodations'),
 };
 
 // ── Market ──────────────────────────────────────────────────────────────────
@@ -237,14 +238,14 @@ export interface Carpool {
 }
 
 export const logisticsAPI = {
-  getRoutes: () => apiFetch<{ success: boolean; data: TransportRoute[] }>('/logistics/routes'),
+  getRoutes: () => apiFetch<{ success: boolean; data: TransportRoute[] }>('/routes'),
 
-  getStations: () => apiFetch<{ success: boolean; data: Station[] }>('/logistics/stations'),
+  getStations: () => apiFetch<{ success: boolean; data: Station[] }>('/stations'),
 
   getStation: (id: number) =>
-    apiFetch<{ success: boolean; data: Station }>(`/logistics/stations/${id}`),
+    apiFetch<{ success: boolean; data: Station }>(`/stations/${id}`),
 
-  getCarpools: () => apiFetch<{ success: boolean; data: Carpool[] }>('/logistics/carpools'),
+  getCarpools: () => apiFetch<{ success: boolean; data: Carpool[] }>('/carpools'),
 };
 
 // ── Investment ──────────────────────────────────────────────────────────────
@@ -278,12 +279,12 @@ export interface Startup {
 
 export const investmentAPI = {
   getOpportunities: () =>
-    apiFetch<{ success: boolean; data: Opportunity[] }>('/investment/opportunities'),
+    apiFetch<{ success: boolean; data: Opportunity[] }>('/opportunities'),
 
   getOpportunity: (id: number) =>
-    apiFetch<{ success: boolean; data: Opportunity }>(`/investment/opportunities/${id}`),
+    apiFetch<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
 
-  getStartups: () => apiFetch<{ success: boolean; data: Startup[] }>('/investment/startups'),
+  getStartups: () => apiFetch<{ success: boolean; data: Startup[] }>('/startups'),
 };
 
 // ── Map / POI ──────────────────────────────────────────────────────────────
@@ -325,10 +326,10 @@ export interface CarpoolRide {
 export const mapAPI = {
   getPOIs: (category?: string) =>
     apiFetch<{ success: boolean; data: POI[] }>(
-      category ? `/map/pois?category=${category}` : '/map/pois',
+      category ? `/pois?category=${category}` : '/pois',
     ),
-  getPOI: (id: number) => apiFetch<{ success: boolean; data: POI }>(`/map/pois/${id}`),
-  getCarpoolRides: () => apiFetch<{ success: boolean; data: CarpoolRide[] }>('/map/carpool/rides'),
+  getPOI: (id: number) => apiFetch<{ success: boolean; data: POI }>(`/pois/${id}`),
+  getCarpoolRides: () => apiFetch<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
   createCarpoolRide: (body: {
     origin_name: string;
     destination_name: string;
@@ -337,7 +338,7 @@ export const mapAPI = {
     price_per_seat: number;
     notes?: string;
   }) =>
-    apiFetch<{ success: boolean; data: CarpoolRide }>('/map/carpool/rides', {
+    apiFetch<{ success: boolean; data: CarpoolRide }>('/carpool/rides', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
