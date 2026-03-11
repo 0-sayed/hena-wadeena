@@ -47,13 +47,10 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # 3. Start infrastructure (Postgres, Redis, Qdrant)
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis qdrant
 
 # 4. Run all backend services in dev mode
 pnpm dev
-
-# 5. Start the frontend
-pnpm dev --filter @hena/web
 ```
 
 ### AI Service (Python)
@@ -68,10 +65,10 @@ uv run uvicorn src.main:app --reload --port 8005
 
 ```
 hena-wadeena/
-├── apps/web/              # React frontend (@hena/web)
+├── apps/web/              # React frontend (@hena-wadeena/web)  [planned]
 ├── packages/
-│   ├── types/             # @hena/types — shared TypeScript types
-│   └── nest-common/       # @hena/nest-common — shared NestJS modules
+│   ├── types/             # @hena-wadeena/types — shared TypeScript types
+│   └── nest-common/       # @hena-wadeena/nest-common — shared NestJS modules
 ├── services/
 │   ├── identity/          # Auth, users, KYC, notifications  :8001
 │   ├── market/            # Listings, price index, investment :8002
@@ -79,7 +76,6 @@ hena-wadeena/
 │   ├── map/               # POIs, carpool                    :8004
 │   └── ai/                # RAG chatbot (Python/FastAPI)     :8005
 ├── gateway/               # Nginx config                     :8000
-├── tools/mock-server/     # Development mock server
 └── docs/                  # Architecture + API specs
 ```
 
