@@ -1,4 +1,4 @@
-.PHONY: help setup infra infra-down dev ai build test validate health logs seed clean
+.PHONY: help setup infra infra-down dev web ai build test validate health logs seed clean
 
 DC = docker compose -f docker-compose.yml -f docker-compose.dev.yml
 
@@ -8,6 +8,7 @@ help:
 	@echo "  infra       start postgres, redis, qdrant"
 	@echo "  infra-down  stop infrastructure containers"
 	@echo "  dev         run all NestJS services (hot-reload)"
+	@echo "  web         run React frontend (hot-reload, :8080)"
 	@echo "  ai          run Python AI service (hot-reload)"
 	@echo "  build       build all packages + services"
 	@echo "  test        run all tests"
@@ -37,6 +38,9 @@ logs:
 # ── Development ───────────────────────────────────────────────────────────────
 dev:
 	pnpm dev
+
+web:
+	pnpm --filter @hena-wadeena/web dev
 
 ai:
 	cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
