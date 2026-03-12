@@ -60,7 +60,7 @@ services:
     volumes:
       - qdrant-data:/qdrant/storage
     healthcheck:
-      test: ['CMD-SHELL', 'curl -sf http://localhost:6333/health || exit 1']
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/6333" || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
