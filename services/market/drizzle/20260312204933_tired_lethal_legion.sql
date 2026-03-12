@@ -15,7 +15,7 @@ CREATE TABLE "market"."business_directories" (
 	"name_en" text,
 	"category" text NOT NULL,
 	"description" text,
-	"location" geometry(point, 4326),
+	"location" geometry(point),
 	"phone" text,
 	"website" text,
 	"logo_url" text,
@@ -86,7 +86,7 @@ CREATE TABLE "market"."listings" (
 	"price_unit" text DEFAULT 'EGP',
 	"price_range" text,
 	"area_sqm" real,
-	"location" geometry(point, 4326),
+	"location" geometry(point),
 	"address" text,
 	"district" text,
 	"images" text[],
@@ -108,7 +108,8 @@ CREATE TABLE "market"."listings" (
 	"views_count" integer DEFAULT 0,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"deleted_at" timestamp with time zone
+	"deleted_at" timestamp with time zone,
+	CONSTRAINT "chk_listings_price_non_neg" CHECK ("market"."listings"."price" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "market"."price_snapshots" (
@@ -120,7 +121,13 @@ CREATE TABLE "market"."price_snapshots" (
 	"max_price" integer NOT NULL,
 	"sample_count" integer NOT NULL,
 	"snapshot_date" date NOT NULL,
-	CONSTRAINT "price_snapshots_district_type_date_unique" UNIQUE("district","listing_type","snapshot_date")
+	CONSTRAINT "price_snapshots_district_type_date_unique" UNIQUE("district","listing_type","snapshot_date"),
+	CONSTRAINT "chk_price_snapshots_avg_non_neg" CHECK ("market"."price_snapshots"."avg_price" >= 0),
+	CONSTRAINT "chk_price_snapshots_min_non_neg" CHECK ("market"."price_snapshots"."min_price" >= 0),
+	CONSTRAINT "chk_price_snapshots_max_non_neg" CHECK ("market"."price_snapshots"."max_price" >= 0),
+	CONSTRAINT "chk_price_snapshots_min_lte_max" CHECK ("market"."price_snapshots"."min_price" <= "market"."price_snapshots"."max_price"),
+	CONSTRAINT "chk_price_snapshots_avg_in_range" CHECK ("market"."price_snapshots"."avg_price" BETWEEN "market"."price_snapshots"."min_price" AND "market"."price_snapshots"."max_price"),
+	CONSTRAINT "chk_price_snapshots_sample_non_neg" CHECK ("market"."price_snapshots"."sample_count" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "market"."reviews" (

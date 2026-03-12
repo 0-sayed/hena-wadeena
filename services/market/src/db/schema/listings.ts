@@ -2,6 +2,7 @@ import { generateId } from '@hena-wadeena/nest-common';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   geometry,
   index,
   integer,
@@ -72,5 +73,6 @@ export const listings = marketSchema.table(
     index('idx_listings_created_at').on(t.createdAt.desc()),
     index('idx_listings_location').using('gist', t.location),
     index('idx_listings_tags').using('gin', t.tags),
+    check('chk_listings_price_non_neg', sql`${t.price} >= 0`),
   ],
 );

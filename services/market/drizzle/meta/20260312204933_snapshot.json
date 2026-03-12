@@ -1,5 +1,5 @@
 {
-  "id": "90050efe-7fa9-4c9c-ac75-6606de572fd9",
+  "id": "4d4144e7-dee0-4b5d-851b-f0ad2f9f18ad",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -900,7 +900,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "chk_listings_price_non_neg": {
+          "name": "chk_listings_price_non_neg",
+          "value": "\"market\".\"listings\".\"price\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "market.price_snapshots": {
@@ -1009,7 +1014,32 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "chk_price_snapshots_avg_non_neg": {
+          "name": "chk_price_snapshots_avg_non_neg",
+          "value": "\"market\".\"price_snapshots\".\"avg_price\" >= 0"
+        },
+        "chk_price_snapshots_min_non_neg": {
+          "name": "chk_price_snapshots_min_non_neg",
+          "value": "\"market\".\"price_snapshots\".\"min_price\" >= 0"
+        },
+        "chk_price_snapshots_max_non_neg": {
+          "name": "chk_price_snapshots_max_non_neg",
+          "value": "\"market\".\"price_snapshots\".\"max_price\" >= 0"
+        },
+        "chk_price_snapshots_min_lte_max": {
+          "name": "chk_price_snapshots_min_lte_max",
+          "value": "\"market\".\"price_snapshots\".\"min_price\" <= \"market\".\"price_snapshots\".\"max_price\""
+        },
+        "chk_price_snapshots_avg_in_range": {
+          "name": "chk_price_snapshots_avg_in_range",
+          "value": "\"market\".\"price_snapshots\".\"avg_price\" BETWEEN \"market\".\"price_snapshots\".\"min_price\" AND \"market\".\"price_snapshots\".\"max_price\""
+        },
+        "chk_price_snapshots_sample_non_neg": {
+          "name": "chk_price_snapshots_sample_non_neg",
+          "value": "\"market\".\"price_snapshots\".\"sample_count\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "market.reviews": {
