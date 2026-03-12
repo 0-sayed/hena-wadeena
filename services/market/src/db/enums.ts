@@ -1,9 +1,13 @@
-import { pgEnum } from 'drizzle-orm/pg-core';
+import { marketSchema } from './schema';
 
 // Listing enums
-export const listingTypeEnum = pgEnum('listing_type', ['real_estate', 'land', 'business']);
-export const transactionTypeEnum = pgEnum('transaction_type', ['sale', 'rent']);
-export const listingCategoryEnum = pgEnum('listing_category', [
+export const listingTypeEnum = marketSchema.enum('listing_type', [
+  'real_estate',
+  'land',
+  'business',
+]);
+export const transactionTypeEnum = marketSchema.enum('transaction_type', ['sale', 'rent']);
+export const listingCategoryEnum = marketSchema.enum('listing_category', [
   'place',
   'accommodation',
   'restaurant',
@@ -14,7 +18,7 @@ export const listingCategoryEnum = pgEnum('listing_category', [
   'healthcare',
   'shopping',
 ]);
-export const listingStatusEnum = pgEnum('listing_status', [
+export const listingStatusEnum = marketSchema.enum('listing_status', [
   'draft',
   'active',
   'sold',
@@ -23,7 +27,7 @@ export const listingStatusEnum = pgEnum('listing_status', [
 ]);
 
 // Investment enums
-export const investmentSectorEnum = pgEnum('investment_sector', [
+export const investmentSectorEnum = marketSchema.enum('investment_sector', [
   'agriculture',
   'tourism',
   'industry',
@@ -32,14 +36,14 @@ export const investmentSectorEnum = pgEnum('investment_sector', [
   'technology',
   'energy',
 ]);
-export const opportunityStatusEnum = pgEnum('opportunity_status', [
+export const opportunityStatusEnum = marketSchema.enum('opportunity_status', [
   'draft',
   'review',
   'active',
   'closed',
   'taken',
 ]);
-export const applicationStatusEnum = pgEnum('application_status', [
+export const applicationStatusEnum = marketSchema.enum('application_status', [
   'pending',
   'reviewed',
   'accepted',
@@ -48,4 +52,4 @@ export const applicationStatusEnum = pgEnum('application_status', [
 ]);
 
 // Business directory
-export const businessStatusEnum = pgEnum('business_status', ['active', 'inactive']);
+export const businessStatusEnum = marketSchema.enum('business_status', ['active', 'inactive']);

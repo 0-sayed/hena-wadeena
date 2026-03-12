@@ -1,4 +1,5 @@
 import { generateId } from '@hena-wadeena/nest-common';
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   geometry,
@@ -8,6 +9,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -44,7 +46,7 @@ export const listings = marketSchema.table(
     tags: text().array(),
     contact: jsonb(),
     openingHours: text('opening_hours'),
-    slug: text().unique().notNull(),
+    slug: text().notNull(),
     status: listingStatusEnum().default('draft').notNull(),
     isVerified: boolean('is_verified').default(false).notNull(),
     isFeatured: boolean('is_featured').default(false).notNull(),
@@ -60,6 +62,9 @@ export const listings = marketSchema.table(
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
+    uniqueIndex('listings_slug_active_unique')
+      .on(t.slug)
+      .where(sql`${t.deletedAt} IS NULL`),
     index('idx_listings_status').on(t.status),
     index('idx_listings_category').on(t.category),
     index('idx_listings_district').on(t.district),

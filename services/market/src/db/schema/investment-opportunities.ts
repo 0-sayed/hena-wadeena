@@ -1,6 +1,8 @@
 import { generateId } from '@hena-wadeena/nest-common';
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -47,6 +49,9 @@ export const investmentOpportunities = marketSchema.table(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
+    check('investment_min_non_negative', sql`${t.minInvestment} >= 0`),
+    check('investment_max_non_negative', sql`${t.maxInvestment} >= 0`),
+    check('investment_range_valid', sql`${t.maxInvestment} >= ${t.minInvestment}`),
     index('idx_opportunities_status').on(t.status),
     index('idx_opportunities_sector').on(t.sector),
     index('idx_opportunities_owner_id').on(t.ownerId),

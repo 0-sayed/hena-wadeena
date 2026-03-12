@@ -1,5 +1,6 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { index, integer, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { check, index, integer, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 import { applicationStatusEnum } from '../enums';
 import { marketSchema } from '../schema';
@@ -23,6 +24,7 @@ export const investmentApplications = marketSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
+    check('amount_proposed_non_negative', sql`${t.amountProposed} >= 0`),
     unique('applications_investor_opportunity_unique').on(t.investorId, t.opportunityId),
     index('idx_applications_opportunity_id').on(t.opportunityId),
     index('idx_applications_investor_id').on(t.investorId),

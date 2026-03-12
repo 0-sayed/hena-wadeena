@@ -1,13 +1,13 @@
 CREATE SCHEMA "market";
 --> statement-breakpoint
-CREATE TYPE "public"."application_status" AS ENUM('pending', 'reviewed', 'accepted', 'rejected', 'withdrawn');--> statement-breakpoint
-CREATE TYPE "public"."business_status" AS ENUM('active', 'inactive');--> statement-breakpoint
-CREATE TYPE "public"."investment_sector" AS ENUM('agriculture', 'tourism', 'industry', 'real_estate', 'services', 'technology', 'energy');--> statement-breakpoint
-CREATE TYPE "public"."listing_category" AS ENUM('place', 'accommodation', 'restaurant', 'service', 'activity', 'transport', 'education', 'healthcare', 'shopping');--> statement-breakpoint
-CREATE TYPE "public"."listing_status" AS ENUM('draft', 'active', 'sold', 'rented', 'suspended');--> statement-breakpoint
-CREATE TYPE "public"."listing_type" AS ENUM('real_estate', 'land', 'business');--> statement-breakpoint
-CREATE TYPE "public"."opportunity_status" AS ENUM('draft', 'review', 'active', 'closed', 'taken');--> statement-breakpoint
-CREATE TYPE "public"."transaction_type" AS ENUM('sale', 'rent');--> statement-breakpoint
+CREATE TYPE "market"."application_status" AS ENUM('pending', 'reviewed', 'accepted', 'rejected', 'withdrawn');--> statement-breakpoint
+CREATE TYPE "market"."business_status" AS ENUM('active', 'inactive');--> statement-breakpoint
+CREATE TYPE "market"."investment_sector" AS ENUM('agriculture', 'tourism', 'industry', 'real_estate', 'services', 'technology', 'energy');--> statement-breakpoint
+CREATE TYPE "market"."listing_category" AS ENUM('place', 'accommodation', 'restaurant', 'service', 'activity', 'transport', 'education', 'healthcare', 'shopping');--> statement-breakpoint
+CREATE TYPE "market"."listing_status" AS ENUM('draft', 'active', 'sold', 'rented', 'suspended');--> statement-breakpoint
+CREATE TYPE "market"."listing_type" AS ENUM('real_estate', 'land', 'business');--> statement-breakpoint
+CREATE TYPE "market"."opportunity_status" AS ENUM('draft', 'review', 'active', 'closed', 'taken');--> statement-breakpoint
+CREATE TYPE "market"."transaction_type" AS ENUM('sale', 'rent');--> statement-breakpoint
 CREATE TABLE "market"."business_directories" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"owner_id" uuid NOT NULL,
@@ -15,11 +15,11 @@ CREATE TABLE "market"."business_directories" (
 	"name_en" text,
 	"category" text NOT NULL,
 	"description" text,
-	"location" geometry(point),
+	"location" geometry(point, 4326),
 	"phone" text,
 	"website" text,
 	"logo_url" text,
-	"status" "business_status" DEFAULT 'active' NOT NULL,
+	"status" "market"."business_status" DEFAULT 'active' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -32,9 +32,10 @@ CREATE TABLE "market"."investment_applications" (
 	"contact_email" text,
 	"contact_phone" text,
 	"documents" text[],
-	"status" "application_status" DEFAULT 'pending' NOT NULL,
+	"status" "market"."application_status" DEFAULT 'pending' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "applications_investor_opportunity_unique" UNIQUE("investor_id","opportunity_id")
+	CONSTRAINT "applications_investor_opportunity_unique" UNIQUE("investor_id","opportunity_id"),
+	CONSTRAINT "amount_proposed_non_negative" CHECK ("market"."investment_applications"."amount_proposed" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "market"."investment_opportunities" (
@@ -43,7 +44,7 @@ CREATE TABLE "market"."investment_opportunities" (
 	"title_ar" text NOT NULL,
 	"title_en" text,
 	"description" text,
-	"sector" "investment_sector" NOT NULL,
+	"sector" "market"."investment_sector" NOT NULL,
 	"area" text,
 	"land_area_sqm" real,
 	"min_investment" integer NOT NULL,
@@ -56,7 +57,7 @@ CREATE TABLE "market"."investment_opportunities" (
 	"contact" jsonb,
 	"documents" text[],
 	"images" text[],
-	"status" "opportunity_status" DEFAULT 'draft' NOT NULL,
+	"status" "market"."opportunity_status" DEFAULT 'draft' NOT NULL,
 	"source" text,
 	"expires_at" date,
 	"is_verified" boolean DEFAULT false NOT NULL,
@@ -65,24 +66,27 @@ CREATE TABLE "market"."investment_opportunities" (
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "investment_min_non_negative" CHECK ("market"."investment_opportunities"."min_investment" >= 0),
+	CONSTRAINT "investment_max_non_negative" CHECK ("market"."investment_opportunities"."max_investment" >= 0),
+	CONSTRAINT "investment_range_valid" CHECK ("market"."investment_opportunities"."max_investment" >= "market"."investment_opportunities"."min_investment")
 );
 --> statement-breakpoint
 CREATE TABLE "market"."listings" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"owner_id" uuid NOT NULL,
-	"listing_type" "listing_type" NOT NULL,
-	"transaction" "transaction_type" NOT NULL,
+	"listing_type" "market"."listing_type" NOT NULL,
+	"transaction" "market"."transaction_type" NOT NULL,
 	"title_ar" text NOT NULL,
 	"title_en" text,
 	"description" text,
-	"category" "listing_category" NOT NULL,
+	"category" "market"."listing_category" NOT NULL,
 	"sub_category" text,
 	"price" integer NOT NULL,
 	"price_unit" text DEFAULT 'EGP',
 	"price_range" text,
 	"area_sqm" real,
-	"location" geometry(point),
+	"location" geometry(point, 4326),
 	"address" text,
 	"district" text,
 	"images" text[],
@@ -92,7 +96,7 @@ CREATE TABLE "market"."listings" (
 	"contact" jsonb,
 	"opening_hours" text,
 	"slug" text NOT NULL,
-	"status" "listing_status" DEFAULT 'draft' NOT NULL,
+	"status" "market"."listing_status" DEFAULT 'draft' NOT NULL,
 	"is_verified" boolean DEFAULT false NOT NULL,
 	"is_featured" boolean DEFAULT false NOT NULL,
 	"featured_until" timestamp with time zone,
@@ -104,14 +108,13 @@ CREATE TABLE "market"."listings" (
 	"views_count" integer DEFAULT 0,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"deleted_at" timestamp with time zone,
-	CONSTRAINT "listings_slug_unique" UNIQUE("slug")
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "market"."price_snapshots" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"district" text NOT NULL,
-	"listing_type" "listing_type" NOT NULL,
+	"listing_type" "market"."listing_type" NOT NULL,
 	"avg_price" integer NOT NULL,
 	"min_price" integer NOT NULL,
 	"max_price" integer NOT NULL,
@@ -148,6 +151,7 @@ CREATE INDEX "idx_applications_status" ON "market"."investment_applications" USI
 CREATE INDEX "idx_opportunities_status" ON "market"."investment_opportunities" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_opportunities_sector" ON "market"."investment_opportunities" USING btree ("sector");--> statement-breakpoint
 CREATE INDEX "idx_opportunities_owner_id" ON "market"."investment_opportunities" USING btree ("owner_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "listings_slug_active_unique" ON "market"."listings" USING btree ("slug") WHERE "market"."listings"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "idx_listings_status" ON "market"."listings" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_listings_category" ON "market"."listings" USING btree ("category");--> statement-breakpoint
 CREATE INDEX "idx_listings_district" ON "market"."listings" USING btree ("district");--> statement-breakpoint

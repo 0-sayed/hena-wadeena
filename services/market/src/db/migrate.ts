@@ -12,8 +12,14 @@ const sql = postgres(connectionString, {
 const db = drizzle(sql);
 
 async function main() {
-  await migrate(db, { migrationsFolder: './drizzle' });
-  await sql.end();
+  try {
+    await migrate(db, { migrationsFolder: './drizzle' });
+  } finally {
+    await sql.end();
+  }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

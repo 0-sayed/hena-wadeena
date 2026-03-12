@@ -1,5 +1,5 @@
 {
-  "id": "75b9d281-a1b2-45fa-ad92-7fa0bcccb19d",
+  "id": "90050efe-7fa9-4c9c-ac75-6606de572fd9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -71,7 +71,7 @@
         "status": {
           "name": "status",
           "type": "business_status",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true,
           "default": "'active'"
@@ -193,7 +193,7 @@
         "status": {
           "name": "status",
           "type": "application_status",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
@@ -281,7 +281,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "amount_proposed_non_negative": {
+          "name": "amount_proposed_non_negative",
+          "value": "\"market\".\"investment_applications\".\"amount_proposed\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "market.investment_opportunities": {
@@ -321,7 +326,7 @@
         "sector": {
           "name": "sector",
           "type": "investment_sector",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true
         },
@@ -401,7 +406,7 @@
         "status": {
           "name": "status",
           "type": "opportunity_status",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true,
           "default": "'draft'"
@@ -517,7 +522,20 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "investment_min_non_negative": {
+          "name": "investment_min_non_negative",
+          "value": "\"market\".\"investment_opportunities\".\"min_investment\" >= 0"
+        },
+        "investment_max_non_negative": {
+          "name": "investment_max_non_negative",
+          "value": "\"market\".\"investment_opportunities\".\"max_investment\" >= 0"
+        },
+        "investment_range_valid": {
+          "name": "investment_range_valid",
+          "value": "\"market\".\"investment_opportunities\".\"max_investment\" >= \"market\".\"investment_opportunities\".\"min_investment\""
+        }
+      },
       "isRLSEnabled": false
     },
     "market.listings": {
@@ -539,14 +557,14 @@
         "listing_type": {
           "name": "listing_type",
           "type": "listing_type",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true
         },
         "transaction": {
           "name": "transaction",
           "type": "transaction_type",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true
         },
@@ -571,7 +589,7 @@
         "category": {
           "name": "category",
           "type": "listing_category",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true
         },
@@ -669,7 +687,7 @@
         "status": {
           "name": "status",
           "type": "listing_status",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true,
           "default": "'draft'"
@@ -756,6 +774,22 @@
         }
       },
       "indexes": {
+        "listings_slug_active_unique": {
+          "name": "listings_slug_active_unique",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"market\".\"listings\".\"deleted_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "idx_listings_status": {
           "name": "idx_listings_status",
           "columns": [
@@ -864,15 +898,7 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "listings_slug_unique": {
-          "name": "listings_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -896,7 +922,7 @@
         "listing_type": {
           "name": "listing_type",
           "type": "listing_type",
-          "typeSchema": "public",
+          "typeSchema": "market",
           "primaryKey": false,
           "notNull": true
         },
@@ -1153,9 +1179,9 @@
     }
   },
   "enums": {
-    "public.application_status": {
+    "market.application_status": {
       "name": "application_status",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "pending",
         "reviewed",
@@ -1164,17 +1190,17 @@
         "withdrawn"
       ]
     },
-    "public.business_status": {
+    "market.business_status": {
       "name": "business_status",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "active",
         "inactive"
       ]
     },
-    "public.investment_sector": {
+    "market.investment_sector": {
       "name": "investment_sector",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "agriculture",
         "tourism",
@@ -1185,9 +1211,9 @@
         "energy"
       ]
     },
-    "public.listing_category": {
+    "market.listing_category": {
       "name": "listing_category",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "place",
         "accommodation",
@@ -1200,9 +1226,9 @@
         "shopping"
       ]
     },
-    "public.listing_status": {
+    "market.listing_status": {
       "name": "listing_status",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "draft",
         "active",
@@ -1211,18 +1237,18 @@
         "suspended"
       ]
     },
-    "public.listing_type": {
+    "market.listing_type": {
       "name": "listing_type",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "real_estate",
         "land",
         "business"
       ]
     },
-    "public.opportunity_status": {
+    "market.opportunity_status": {
       "name": "opportunity_status",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "draft",
         "review",
@@ -1231,9 +1257,9 @@
         "taken"
       ]
     },
-    "public.transaction_type": {
+    "market.transaction_type": {
       "name": "transaction_type",
-      "schema": "public",
+      "schema": "market",
       "values": [
         "sale",
         "rent"
