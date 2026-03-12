@@ -16,21 +16,35 @@ export enum KycStatus {
   REJECTED = 'rejected',
 }
 
+export enum ListingType {
+  REAL_ESTATE = 'real_estate',
+  LAND = 'land',
+  BUSINESS = 'business',
+}
+
+export enum TransactionType {
+  SALE = 'sale',
+  RENT = 'rent',
+}
+
 export enum ListingStatus {
   DRAFT = 'draft',
-  PENDING_VERIFICATION = 'pending_verification',
   ACTIVE = 'active',
-  SUSPENDED = 'suspended',
   SOLD = 'sold',
+  RENTED = 'rented',
+  SUSPENDED = 'suspended',
 }
 
 export enum ListingCategory {
-  REAL_ESTATE = 'real_estate',
-  AGRICULTURAL = 'agricultural',
-  COMMERCIAL = 'commercial',
-  VEHICLE = 'vehicle',
-  EQUIPMENT = 'equipment',
-  OTHER = 'other',
+  PLACE = 'place',
+  ACCOMMODATION = 'accommodation',
+  RESTAURANT = 'restaurant',
+  SERVICE = 'service',
+  ACTIVITY = 'activity',
+  TRANSPORT = 'transport',
+  EDUCATION = 'education',
+  HEALTHCARE = 'healthcare',
+  SHOPPING = 'shopping',
 }
 
 export enum BookingStatus {
@@ -90,28 +104,35 @@ export enum PassengerStatus {
   CANCELLED = 'cancelled',
 }
 
-export enum InvestmentStatus {
+export enum OpportunityStatus {
   DRAFT = 'draft',
-  PUBLISHED = 'published',
-  FUNDED = 'funded',
+  REVIEW = 'review',
+  ACTIVE = 'active',
   CLOSED = 'closed',
+  TAKEN = 'taken',
 }
 
 export enum InvestmentSector {
   AGRICULTURE = 'agriculture',
   TOURISM = 'tourism',
+  INDUSTRY = 'industry',
   REAL_ESTATE = 'real_estate',
-  MANUFACTURING = 'manufacturing',
   SERVICES = 'services',
-  ENERGY = 'energy',
   TECHNOLOGY = 'technology',
+  ENERGY = 'energy',
 }
 
 export enum ApplicationStatus {
-  SUBMITTED = 'submitted',
-  UNDER_REVIEW = 'under_review',
-  APPROVED = 'approved',
+  PENDING = 'pending',
+  REVIEWED = 'reviewed',
+  ACCEPTED = 'accepted',
   REJECTED = 'rejected',
+  WITHDRAWN = 'withdrawn',
+}
+
+export enum BusinessStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
 }
 
 export enum NotificationType {
