@@ -1,4 +1,3 @@
-import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -69,7 +68,6 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
       <Sonner />
       <BrowserRouter>
         <Routes>
@@ -78,17 +76,27 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           {/* Profile / User Dashboard */}
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/bookings" element={<BookingsPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/bookings" element={<BookingsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+          </Route>
           {/* Guides */}
           <Route path="/guides" element={<GuidesPage />} />
           <Route path="/guides/:id" element={<GuideProfilePage />} />
           {/* Admin Dashboards */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/moderator" element={<ModeratorDashboard />} />
-          <Route path="/reviewer" element={<ReviewerDashboard />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<RequireRole roles={['admin']} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['admin', 'moderator']} />}>
+              <Route path="/moderator" element={<ModeratorDashboard />} />
+            </Route>
+            <Route element={<RequireRole roles={['admin', 'moderator', 'reviewer']} />}>
+              <Route path="/reviewer" element={<ReviewerDashboard />} />
+            </Route>
+          </Route>
           {/* Role Dashboards */}
           <Route element={<RequireAuth />}>
             <Route element={<RequireRole roles={['merchant']} />}>

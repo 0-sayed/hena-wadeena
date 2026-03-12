@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useLocation, Link } from 'react-router';
+import type { Location } from 'react-router';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import { SR } from '@/components/motion/ScrollReveal';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +26,8 @@ const LoginPage = () => {
       localStorage.setItem('access_token', res.data.access_token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       toast.success(res.message);
-      void navigate('/');
+      const from = (location.state as { from?: Location })?.from?.pathname || '/';
+      void navigate(from);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'فشل تسجيل الدخول');
     } finally {

@@ -335,7 +335,6 @@ const RegisterPage = () => {
                     {step === 3 && (
                       <div className="space-y-4">
                         <DocumentUpload
-                          docType="national_id"
                           label="صورة بطاقة الرقم القومي"
                           uploadedFile={documents.national_id}
                           onUpload={(file) => handleDocUpload('national_id', file)}
@@ -343,7 +342,6 @@ const RegisterPage = () => {
 
                         {(formData.role === 'driver' || formData.role === 'guide') && (
                           <DocumentUpload
-                            docType="license"
                             label={
                               formData.role === 'driver' ? 'رخصة القيادة' : 'ترخيص الإرشاد السياحي'
                             }
@@ -354,7 +352,6 @@ const RegisterPage = () => {
 
                         {formData.role === 'farmer' && (
                           <DocumentUpload
-                            docType="certificate"
                             label="شهادة حيازة زراعية"
                             uploadedFile={documents.certificate}
                             onUpload={(file) => handleDocUpload('certificate', file)}

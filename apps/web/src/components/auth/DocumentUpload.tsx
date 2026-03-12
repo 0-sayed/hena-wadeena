@@ -2,15 +2,15 @@ import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, FileCheck } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DocumentUploadProps {
-  docType: string;
   label: string;
   uploadedFile?: File;
   onUpload: (file: File) => void;
 }
 
-export function DocumentUpload({ docType: _docType, label, uploadedFile, onUpload }: DocumentUploadProps) {
+export function DocumentUpload({ label, uploadedFile, onUpload }: DocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,13 +18,13 @@ export function DocumentUpload({ docType: _docType, label, uploadedFile, onUploa
     if (file) {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('حجم الملف يجب أن يكون أقل من 5 ميجابايت');
+        toast.error('حجم الملف يجب أن يكون أقل من 5 ميجابايت');
         return;
       }
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
       if (!allowedTypes.includes(file.type)) {
-        alert('يرجى رفع صورة (JPG, PNG, WebP) أو ملف PDF');
+        toast.error('يرجى رفع صورة (JPG, PNG, WebP) أو ملف PDF');
         return;
       }
       onUpload(file);
