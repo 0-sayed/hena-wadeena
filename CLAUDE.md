@@ -93,7 +93,8 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 ## Banned Behaviors
 
 - NEVER use `float` or `decimal` for money — always integer piasters
-- NEVER modify pushed/applied Drizzle migrations
+- NEVER modify applied Drizzle migrations
+- NEVER use `drizzle-kit push` — always `drizzle-kit generate` + `migrate.ts` (dev and prod alike)
 - NEVER import `@hena-wadeena/nest-common` from frontend code
 - NEVER add cross-schema JOINs in database queries
 - NEVER commit `.env` files or real secrets
