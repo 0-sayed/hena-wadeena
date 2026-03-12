@@ -62,6 +62,8 @@ export function Header() {
     const token = localStorage.getItem('access_token');
     const stored = localStorage.getItem('user');
     if (!token || !stored) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
       setUser(null);
       setUnreadCount(0);
       return;
@@ -70,6 +72,7 @@ export function Header() {
     try {
       setUser(JSON.parse(stored) as AuthUser);
     } catch {
+      localStorage.removeItem('access_token');
       localStorage.removeItem('user');
       setUser(null);
       setUnreadCount(0);
