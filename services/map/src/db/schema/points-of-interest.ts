@@ -33,6 +33,7 @@ export const pointsOfInterest = mapSchema.table(
     index('idx_pois_status').on(t.status),
     index('idx_pois_submitted_by').on(t.submittedBy),
     index('idx_pois_created_at').on(t.createdAt.desc()),
+    check('chk_pois_rating_count_non_neg', sql`${t.ratingCount} >= 0`),
     check(
       'chk_pois_rating_range',
       sql`${t.ratingAvg} IS NULL OR (${t.ratingAvg} >= 0 AND ${t.ratingAvg} <= 5)`,

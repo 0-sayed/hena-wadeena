@@ -1,5 +1,5 @@
 {
-  "id": "49941e63-b513-45ff-81aa-c76efddf5e87",
+  "id": "0de1ead4-4e3f-474e-94eb-7011ad3d7dfe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -184,6 +184,27 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_bookings_id_guide_id": {
+          "name": "uq_bookings_id_guide_id",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -510,30 +531,18 @@
         }
       },
       "foreignKeys": {
-        "guide_reviews_booking_id_bookings_id_fk": {
-          "name": "guide_reviews_booking_id_bookings_id_fk",
+        "fk_guide_reviews_booking_guide": {
+          "name": "fk_guide_reviews_booking_guide",
           "tableFrom": "guide_reviews",
           "tableTo": "bookings",
           "schemaTo": "guide_booking",
           "columnsFrom": [
-            "booking_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "guide_reviews_guide_id_guides_id_fk": {
-          "name": "guide_reviews_guide_id_guides_id_fk",
-          "tableFrom": "guide_reviews",
-          "tableTo": "guides",
-          "schemaTo": "guide_booking",
-          "columnsFrom": [
+            "booking_id",
             "guide_id"
           ],
           "columnsTo": [
-            "id"
+            "id",
+            "guide_id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -543,6 +552,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "chk_guide_reviews_helpful_count_non_neg": {
+          "name": "chk_guide_reviews_helpful_count_non_neg",
+          "value": "\"guide_booking\".\"guide_reviews\".\"helpful_count\" >= 0"
+        },
         "chk_guide_reviews_rating_range": {
           "name": "chk_guide_reviews_rating_range",
           "value": "\"guide_booking\".\"guide_reviews\".\"rating\" >= 1 AND \"guide_booking\".\"guide_reviews\".\"rating\" <= 5"
@@ -670,21 +683,6 @@
           "method": "btree",
           "with": {}
         },
-        "idx_guides_active": {
-          "name": "idx_guides_active",
-          "columns": [
-            {
-              "expression": "active",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "uq_guides_license_number": {
           "name": "uq_guides_license_number",
           "columns": [
@@ -697,6 +695,21 @@
           ],
           "isUnique": true,
           "where": "\"guide_booking\".\"guides\".\"deleted_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_guides_active": {
+          "name": "idx_guides_active",
+          "columns": [
+            {
+              "expression": "active",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -755,6 +768,10 @@
         "chk_guides_base_price_non_neg": {
           "name": "chk_guides_base_price_non_neg",
           "value": "\"guide_booking\".\"guides\".\"base_price\" >= 0"
+        },
+        "chk_guides_rating_count_non_neg": {
+          "name": "chk_guides_rating_count_non_neg",
+          "value": "\"guide_booking\".\"guides\".\"rating_count\" >= 0"
         },
         "chk_guides_rating_range": {
           "name": "chk_guides_rating_range",

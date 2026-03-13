@@ -1,5 +1,5 @@
 {
-  "id": "96ae3cff-0907-446a-878f-8138455610a8",
+  "id": "e9553011-adcf-4d7c-9160-0d048a48471c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -50,17 +50,23 @@
         }
       },
       "indexes": {
-        "idx_carpool_passengers_ride_id": {
-          "name": "idx_carpool_passengers_ride_id",
+        "uq_carpool_passengers_ride_user": {
+          "name": "uq_carpool_passengers_ride_user",
           "columns": [
             {
               "expression": "ride_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -510,6 +516,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "chk_pois_rating_count_non_neg": {
+          "name": "chk_pois_rating_count_non_neg",
+          "value": "\"map\".\"points_of_interest\".\"rating_count\" >= 0"
+        },
         "chk_pois_rating_range": {
           "name": "chk_pois_rating_range",
           "value": "\"map\".\"points_of_interest\".\"rating_avg\" IS NULL OR (\"map\".\"points_of_interest\".\"rating_avg\" >= 0 AND \"map\".\"points_of_interest\".\"rating_avg\" <= 5)"

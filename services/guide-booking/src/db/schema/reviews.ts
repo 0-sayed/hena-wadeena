@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   check,
+  foreignKey,
   index,
   integer,
   text,
@@ -14,18 +15,13 @@ import {
 import { guideBookingSchema } from '../schema';
 
 import { bookings } from './bookings';
-import { guides } from './guides';
 
 export const guideReviews = guideBookingSchema.table(
   'guide_reviews',
   {
     id: uuid().primaryKey().$defaultFn(generateId),
-    bookingId: uuid('booking_id')
-      .notNull()
-      .references(() => bookings.id),
-    guideId: uuid('guide_id')
-      .notNull()
-      .references(() => guides.id),
+    bookingId: uuid('booking_id').notNull(),
+    guideId: uuid('guide_id').notNull(),
     reviewerId: uuid('reviewer_id').notNull(),
     rating: integer().notNull(),
     title: text(),
@@ -43,6 +39,12 @@ export const guideReviews = guideBookingSchema.table(
     index('idx_guide_reviews_reviewer_id').on(t.reviewerId),
     index('idx_guide_reviews_rating').on(t.rating),
     index('idx_guide_reviews_created_at').on(t.createdAt.desc()),
+    foreignKey({
+      name: 'fk_guide_reviews_booking_guide',
+      columns: [t.bookingId, t.guideId],
+      foreignColumns: [bookings.id, bookings.guideId],
+    }),
+    check('chk_guide_reviews_helpful_count_non_neg', sql`${t.helpfulCount} >= 0`),
     check('chk_guide_reviews_rating_range', sql`${t.rating} >= 1 AND ${t.rating} <= 5`),
   ],
 );

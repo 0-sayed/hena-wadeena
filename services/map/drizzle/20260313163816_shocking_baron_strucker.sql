@@ -17,8 +17,8 @@ CREATE TABLE "map"."carpool_passengers" (
 CREATE TABLE "map"."carpool_rides" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"driver_id" uuid NOT NULL,
-	"origin" geometry(Point,4326) NOT NULL,
-	"destination" geometry(Point,4326) NOT NULL,
+	"origin" geometry(point) NOT NULL,
+	"destination" geometry(point) NOT NULL,
 	"origin_name" text NOT NULL,
 	"destination_name" text NOT NULL,
 	"departure_time" timestamp with time zone NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE "map"."points_of_interest" (
 	"name_en" text,
 	"description" text,
 	"category" "map"."poi_category" NOT NULL,
-	"location" geometry(Point,4326) NOT NULL,
+	"location" geometry(point) NOT NULL,
 	"address" text,
 	"phone" text,
 	"website" text,
@@ -52,11 +52,12 @@ CREATE TABLE "map"."points_of_interest" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
+	CONSTRAINT "chk_pois_rating_count_non_neg" CHECK ("map"."points_of_interest"."rating_count" >= 0),
 	CONSTRAINT "chk_pois_rating_range" CHECK ("map"."points_of_interest"."rating_avg" IS NULL OR ("map"."points_of_interest"."rating_avg" >= 0 AND "map"."points_of_interest"."rating_avg" <= 5))
 );
 --> statement-breakpoint
 ALTER TABLE "map"."carpool_passengers" ADD CONSTRAINT "carpool_passengers_ride_id_carpool_rides_id_fk" FOREIGN KEY ("ride_id") REFERENCES "map"."carpool_rides"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "uq_carpool_passengers_ride_user" ON "map"."carpool_passengers" USING btree ("ride_id", "user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_carpool_passengers_ride_user" ON "map"."carpool_passengers" USING btree ("ride_id","user_id");--> statement-breakpoint
 CREATE INDEX "idx_carpool_passengers_user_id" ON "map"."carpool_passengers" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_carpool_passengers_status" ON "map"."carpool_passengers" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_carpool_rides_driver_id" ON "map"."carpool_rides" USING btree ("driver_id");--> statement-breakpoint
