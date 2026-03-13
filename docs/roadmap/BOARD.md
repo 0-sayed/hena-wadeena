@@ -33,7 +33,7 @@
 - [x] **T02** AI Service Scaffold · M · ← _no deps_
 - [ ] **T02a** Arabic Embedding Validation Spike · S · ← _no deps_
 - [X] **T03** Market Schema Design · S · ← _no deps_
-- [ ] **T04** Guide + Map Schema Design · S · ← _no deps_
+- [x] **T04** Guide + Map Schema Design · S · ← _no deps_
 - [x] **F00** Move Frontend into Monorepo · S · ← T01
 
 ## Layer 1 — Core Services
