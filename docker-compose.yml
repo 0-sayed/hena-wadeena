@@ -60,7 +60,13 @@ services:
     volumes:
       - qdrant-data:/qdrant/storage
     healthcheck:
-      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/6333" || exit 1']
+      test:
+        [
+          'CMD',
+          'bash',
+          '-c',
+          'exec 3<>/dev/tcp/127.0.0.1/6333 && printf "GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && IFS= read -r status <&3 && [[ $$status == *" 200 "* ]]',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
