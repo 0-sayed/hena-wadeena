@@ -1,4 +1,4 @@
-CREATE SCHEMA "map";
+CREATE SCHEMA IF NOT EXISTS "map";
 --> statement-breakpoint
 CREATE TYPE "map"."carpool_ride_status" AS ENUM('open', 'full', 'departed', 'completed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "map"."passenger_status" AS ENUM('requested', 'confirmed', 'declined', 'cancelled');--> statement-breakpoint
@@ -56,7 +56,7 @@ CREATE TABLE "map"."points_of_interest" (
 );
 --> statement-breakpoint
 ALTER TABLE "map"."carpool_passengers" ADD CONSTRAINT "carpool_passengers_ride_id_carpool_rides_id_fk" FOREIGN KEY ("ride_id") REFERENCES "map"."carpool_rides"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "idx_carpool_passengers_ride_id" ON "map"."carpool_passengers" USING btree ("ride_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_carpool_passengers_ride_user" ON "map"."carpool_passengers" USING btree ("ride_id", "user_id");--> statement-breakpoint
 CREATE INDEX "idx_carpool_passengers_user_id" ON "map"."carpool_passengers" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_carpool_passengers_status" ON "map"."carpool_passengers" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_carpool_rides_driver_id" ON "map"."carpool_rides" USING btree ("driver_id");--> statement-breakpoint
