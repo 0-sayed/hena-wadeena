@@ -42,10 +42,7 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
     fields: [bookings.guideId],
     references: [guides.id],
   }),
-  review: one(guideReviews, {
-    fields: [bookings.id],
-    references: [guideReviews.bookingId],
-  }),
+  review: one(guideReviews),
 }));
 
 export const guideAvailabilityRelations = relations(guideAvailability, ({ one }) => ({

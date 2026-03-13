@@ -63,6 +63,7 @@ CREATE TABLE "guide_booking"."guides" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
 	CONSTRAINT "chk_guides_base_price_non_neg" CHECK ("guide_booking"."guides"."base_price" >= 0),
+	CONSTRAINT "chk_guides_rating_count_non_neg" CHECK ("guide_booking"."guides"."rating_count" >= 0),
 	CONSTRAINT "chk_guides_rating_range" CHECK ("guide_booking"."guides"."rating_avg" IS NULL OR ("guide_booking"."guides"."rating_avg" >= 0 AND "guide_booking"."guides"."rating_avg" <= 5))
 );
 --> statement-breakpoint

@@ -41,6 +41,7 @@ export const guideReviews = guideBookingSchema.table(
     uniqueIndex('uq_guide_reviews_booking_id').on(t.bookingId),
     index('idx_guide_reviews_guide_id').on(t.guideId),
     index('idx_guide_reviews_reviewer_id').on(t.reviewerId),
+    index('idx_guide_reviews_rating').on(t.rating),
     index('idx_guide_reviews_created_at').on(t.createdAt.desc()),
     check('chk_guide_reviews_rating_range', sql`${t.rating} >= 1 AND ${t.rating} <= 5`),
   ],

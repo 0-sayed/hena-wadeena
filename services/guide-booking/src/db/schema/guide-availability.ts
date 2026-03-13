@@ -18,6 +18,7 @@ export const guideAvailability = guideBookingSchema.table(
   },
   (t) => [
     uniqueIndex('uq_guide_availability_guide_date').on(t.guideId, t.date),
+    index('idx_guide_availability_guide_id').on(t.guideId),
     index('idx_guide_availability_date').on(t.date),
   ],
 );

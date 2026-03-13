@@ -46,10 +46,12 @@ export const guides = guideBookingSchema.table(
     uniqueIndex('uq_guides_license_number')
       .on(t.licenseNumber)
       .where(sql`${t.deletedAt} IS NULL`),
+    index('idx_guides_active').on(t.active),
     index('idx_guides_created_at').on(t.createdAt.desc()),
     index('idx_guides_languages').using('gin', t.languages),
     index('idx_guides_specialties').using('gin', t.specialties),
     check('chk_guides_base_price_non_neg', sql`${t.basePrice} >= 0`),
+    check('chk_guides_rating_count_non_neg', sql`${t.ratingCount} >= 0`),
     check(
       'chk_guides_rating_range',
       sql`${t.ratingAvg} IS NULL OR (${t.ratingAvg} >= 0 AND ${t.ratingAvg} <= 5)`,
