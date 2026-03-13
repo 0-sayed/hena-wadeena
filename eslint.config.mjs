@@ -51,6 +51,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/coverage/**',
+      '.claude/**',
       'apps/web/**',
       'services/ai/**',
       '*.config.js',

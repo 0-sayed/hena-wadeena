@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file ../../.env src/db/migrate.ts"
   },
   "dependencies": {
     "@hena-wadeena/nest-common": "workspace:*",
@@ -19,11 +21,14 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "drizzle-orm": "^0.38.0",
+    "postgres": "^3.4.5",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
+    "drizzle-kit": "0.30.4",
     "tsx": "^4.19.0",
     "typescript": "^5.7.3"
   }

@@ -382,6 +382,12 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.0.0
         version: 11.1.16(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)
+      drizzle-orm:
+        specifier: ^0.38.0
+        version: 0.38.4(@types/react@18.3.28)(postgres@3.4.8)(react@18.3.1)
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.8
       reflect-metadata:
         specifier: ^0.2.0
         version: 0.2.2
@@ -392,6 +398,9 @@ importers:
       '@nestjs/testing':
         specifier: ^11.0.0
         version: 11.1.16(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(@nestjs/platform-express@11.1.16)
+      drizzle-kit:
+        specifier: 0.30.4
+        version: 0.30.4
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
@@ -450,6 +459,12 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.0.0
         version: 11.1.16(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)
+      drizzle-orm:
+        specifier: ^0.38.0
+        version: 0.38.4(@types/react@18.3.28)(postgres@3.4.8)(react@18.3.1)
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.8
       reflect-metadata:
         specifier: ^0.2.0
         version: 0.2.2
@@ -460,6 +475,9 @@ importers:
       '@nestjs/testing':
         specifier: ^11.0.0
         version: 11.1.16(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(@nestjs/platform-express@11.1.16)
+      drizzle-kit:
+        specifier: 0.30.4
+        version: 0.30.4
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
