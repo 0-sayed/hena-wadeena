@@ -10,7 +10,7 @@ export const auditEvents = identitySchema.table(
   'audit_events',
   {
     id: uuid().primaryKey().$defaultFn(generateId),
-    userId: uuid('user_id').references(() => users.id),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     eventType: auditEventTypeEnum('event_type').notNull(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),

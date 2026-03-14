@@ -12,7 +12,7 @@ export const authTokens = identitySchema.table(
     id: uuid().primaryKey().$defaultFn(generateId),
     userId: uuid('user_id')
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: 'cascade' }),
     tokenHash: text('token_hash').notNull(),
     family: uuid().notNull(),
     deviceInfo: text('device_info'),
