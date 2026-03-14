@@ -171,7 +171,7 @@ export class AuthService {
     if (payload.jti && payload.exp) {
       const ttl = payload.exp - Math.floor(Date.now() / 1000);
       if (ttl > 0) {
-        await this.redis.set(`blacklist:${payload.jti}`, '1', 'EX', ttl);
+        await this.redis.set(`id:blacklist:${payload.jti}`, '1', 'EX', ttl);
       }
     }
 
