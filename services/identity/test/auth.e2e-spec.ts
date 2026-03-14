@@ -249,10 +249,15 @@ describe('Auth (e2e)', () => {
   });
 
   describe('GET /api/v1/internal/users/:id (cross-service)', () => {
+    it('should reject requests without internal secret', async () => {
+      await request(app.getHttpServer()).get(`/api/v1/internal/users/${testUserId}`).expect(403);
+    });
+
     it('should return public user profile', async () => {
       // Use userId captured at registration — avoids exhausting rate-limited login endpoint
       const res = await request(app.getHttpServer())
         .get(`/api/v1/internal/users/${testUserId}`)
+        .set('X-Internal-Secret', process.env.INTERNAL_SECRET!)
         .expect(200);
 
       expect(res.body.id).toBe(testUserId);
