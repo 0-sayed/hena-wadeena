@@ -30,7 +30,7 @@ export class EmailService {
     });
 
     if (error) {
-      this.logger.error(`Failed to send password reset OTP to ${to}: ${error.message}`);
+      this.logger.error(`Failed to send password reset OTP: ${error.message}`);
       throw new Error('Failed to send password reset email');
     }
   }
