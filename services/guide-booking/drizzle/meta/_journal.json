@@ -8,6 +8,13 @@
       "when": 1773419895031,
       "tag": "20260313163815_eager_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773523996913,
+      "tag": "20260314213316_guide-rating-trigger",
+      "breakpoints": true
     }
   ]
 }
