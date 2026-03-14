@@ -1632,7 +1632,7 @@ APP_SECRET_KEY=your-secret-key
 LOG_LEVEL=INFO
 
 # MongoDB
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/
+MONGODB_URI=
 MONGODB_DB_NAME=nakheel_db
 
 # Qdrant
