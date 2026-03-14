@@ -1,6 +1,15 @@
-import { CurrentUser, Public } from '@hena-wadeena/nest-common';
+import { CurrentUser, InternalGuard, Public } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { Body, Controller, Get, Inject, NotFoundException, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 
 import type { users } from '../db/schema/index';
 
@@ -35,6 +44,7 @@ export class UsersController {
   }
 
   @Public()
+  @UseGuards(InternalGuard)
   @Get('internal/users/:id')
   async getInternalUser(@Param('id') id: string) {
     const user = await this.usersService.findById(id);
