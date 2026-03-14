@@ -13,9 +13,9 @@ const db = drizzle(sql);
 
 async function main() {
   try {
-    console.log('Running identity migrations...');
+    console.warn('Running identity migrations...');
     await migrate(db, { migrationsFolder: './drizzle' });
-    console.log('Identity migrations complete.');
+    console.warn('Identity migrations complete.');
   } finally {
     await sql.end();
   }
