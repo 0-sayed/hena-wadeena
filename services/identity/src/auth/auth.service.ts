@@ -336,7 +336,7 @@ export class AuthService {
   }
 
   private generateOtp(): string {
-    return randomInt(100000, 999999).toString();
+    return randomInt(100000, 1000000).toString();
   }
 
   private async recordAudit(
