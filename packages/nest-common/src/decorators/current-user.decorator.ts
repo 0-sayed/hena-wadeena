@@ -4,6 +4,8 @@ export interface JwtPayload {
   sub: string; // user ID (UUID v7)
   email: string;
   role: string;
+  jti?: string;
+  lang?: string;
   iat?: number;
   exp?: number;
 }
