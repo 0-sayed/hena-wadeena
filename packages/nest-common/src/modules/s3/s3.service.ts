@@ -2,7 +2,7 @@ import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { S3_CONFIG, S3ModuleOptions } from './s3.module';
+import { S3_CONFIG, S3ModuleOptions } from './s3.tokens';
 
 export interface PresignedUploadOptions {
   key: string;
