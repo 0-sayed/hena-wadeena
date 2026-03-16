@@ -5,7 +5,7 @@ import {
   generateId,
 } from '@hena-wadeena/nest-common';
 import { EVENTS, PaginatedResponse, slugify } from '@hena-wadeena/types';
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
@@ -43,6 +43,8 @@ const SORTABLE_FIELDS = {
 
 @Injectable()
 export class ListingsService {
+  private readonly logger = new Logger(ListingsService.name);
+
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     private readonly s3: S3Service,
@@ -148,12 +150,14 @@ export class ListingsService {
       })
       .returning();
 
-    void this.redisStreams.publish(EVENTS.LISTING_CREATED, {
-      listingId: listing.id,
-      title: listing.titleAr,
-      category: listing.category,
-      area: listing.district ?? '',
-    });
+    this.redisStreams
+      .publish(EVENTS.LISTING_CREATED, {
+        listingId: listing.id,
+        title: listing.titleAr,
+        category: listing.category,
+        area: listing.district ?? '',
+      })
+      .catch((err) => this.logger.error(`Failed to publish ${EVENTS.LISTING_CREATED}`, err));
 
     return listing;
   }
@@ -309,9 +313,9 @@ export class ListingsService {
   async generateImageUploadUrl(
     id: string,
     dto: ImageUploadDto,
-    callerId: string,
   ): Promise<{ uploadUrl: string; key: string }> {
-    await this.assertOwnership(id, callerId);
+    const listing = await this.findRaw(id);
+    if (!listing) throw new NotFoundException('Listing not found');
 
     const ext = dto.filename.split('.').pop() ?? 'jpg';
     const key = `market/listings/${id}/${generateId()}.${ext}`;
