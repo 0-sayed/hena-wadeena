@@ -1,4 +1,4 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
@@ -9,7 +9,10 @@ export class OptionalJwtGuard extends AuthGuard('jwt') {
   }
 
   handleRequest<TUser = unknown>(err: Error | null, user: TUser | false): TUser | null {
-    // Don't throw on missing/invalid token — just return null
-    return (user || null) as TUser | null;
+    // Only suppress unauthorized outcomes for optional auth — re-throw real errors
+    if (err && !(err instanceof UnauthorizedException)) {
+      throw err;
+    }
+    return (user ?? null) as TUser | null;
   }
 }
