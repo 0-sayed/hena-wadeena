@@ -127,22 +127,19 @@ export class ListingsService {
     }
 
     const id = generateId();
-    const { location: locationInput, ...rest } = dto;
+    const { location: locationInput, category, listingType, transaction, ...rest } = dto;
 
     const locationExpr = locationInput
       ? sql`public.ST_SetSRID(public.ST_MakePoint(${locationInput.lng}, ${locationInput.lat}), 4326)`
       : null;
 
-    // drizzle-zod produces string types for enum columns; InsertListing cast aligns them.
-    // locationExpr is a PostGIS SQL expression, not typed by drizzle-zod — requires cast.
-
     const [listing] = await this.db
       .insert(listings)
       .values({
-        ...(rest as unknown as Omit<
-          InsertListing,
-          'id' | 'ownerId' | 'slug' | 'status' | 'location'
-        >),
+        ...rest,
+        category: category as InsertListing['category'],
+        listingType: listingType as InsertListing['listingType'],
+        transaction: transaction as InsertListing['transaction'],
         id,
         ownerId,
         slug,
@@ -263,10 +260,8 @@ export class ListingsService {
   }
 
   async update(id: string, dto: UpdateListingDto): Promise<Listing> {
-    const { location: locationInput, ...rest } = dto;
+    const { location: locationInput, category, listingType, transaction, ...rest } = dto;
 
-    // Conditionally include PostGIS location expression — cast is necessary because
-    // drizzle-zod produces `{ x, y }` types while we pass an SQL expression at runtime.
     const locationUpdate =
       locationInput !== undefined
         ? {
@@ -276,10 +271,21 @@ export class ListingsService {
           }
         : {};
 
+    const enumFields = {
+      ...(category !== undefined && { category: category as InsertListing['category'] }),
+      ...(listingType !== undefined && {
+        listingType: listingType as InsertListing['listingType'],
+      }),
+      ...(transaction !== undefined && {
+        transaction: transaction as InsertListing['transaction'],
+      }),
+    };
+
     const [updated] = await this.db
       .update(listings)
       .set({
-        ...(rest as unknown as Partial<InsertListing>),
+        ...rest,
+        ...enumFields,
         updatedAt: new Date(),
         ...locationUpdate,
       })
