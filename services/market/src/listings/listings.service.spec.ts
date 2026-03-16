@@ -51,8 +51,8 @@ const mockListing = {
   slug: 'apartment-for-sale',
   status: 'active' as const,
   category: 'real_estate',
-  listingType: 'for_sale',
-  transaction: 'sell',
+  listingType: 'real_estate',
+  transaction: 'sale',
   price: 50000,
   priceUnit: 'EGP',
   priceRange: null,
@@ -88,8 +88,8 @@ const createDto = {
   titleEn: 'Apartment for Sale',
   price: 50000,
   category: 'real_estate',
-  listingType: 'for_sale',
-  transaction: 'sell',
+  listingType: 'real_estate',
+  transaction: 'sale',
 };
 
 // ---------------------------------------------------------------------------
