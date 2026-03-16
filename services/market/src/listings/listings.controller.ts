@@ -102,6 +102,6 @@ export class ListingsController {
     @CurrentUser() user: JwtPayload,
   ) {
     await this.assertOwnerUnlessAdmin(id, user);
-    return this.listingsService.generateImageUploadUrl(id, dto);
+    return this.listingsService.generateImageUploadUrl(id, dto, user.sub);
   }
 }

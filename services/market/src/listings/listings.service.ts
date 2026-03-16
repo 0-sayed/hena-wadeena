@@ -309,7 +309,10 @@ export class ListingsService {
   async generateImageUploadUrl(
     id: string,
     dto: ImageUploadDto,
+    callerId: string,
   ): Promise<{ uploadUrl: string; key: string }> {
+    await this.assertOwnership(id, callerId);
+
     const ext = dto.filename.split('.').pop() ?? 'jpg';
     const key = `market/listings/${id}/${generateId()}.${ext}`;
 
