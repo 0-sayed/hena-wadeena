@@ -17,7 +17,8 @@ export class LoggerModule {
             : undefined,
         genReqId: (req: IncomingMessage) => {
           const headerId = req.headers['x-request-id'];
-          return (typeof headerId === 'string' ? headerId : null) ?? generateId();
+          const normalizedId = typeof headerId === 'string' ? headerId.trim() : '';
+          return normalizedId.length > 0 ? normalizedId : generateId();
         },
         customProps: () => ({
           service: serviceName,
