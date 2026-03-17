@@ -1,5 +1,5 @@
 import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -29,6 +29,7 @@ export class UsersService {
         role: data.role as typeof users.$inferInsert.role,
       })
       .returning();
+    if (!user) throw new InternalServerErrorException('Insert did not return a row');
     return user;
   }
 

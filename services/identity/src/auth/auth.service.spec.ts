@@ -30,7 +30,11 @@ describe('AuthService', () => {
   let mockUsersService: UsersService;
   let mockHashingService: HashingService;
   let mockDb: ReturnType<typeof createMockDb>;
-  let mockRedis: Record<string, ReturnType<typeof vi.fn>>;
+  let mockRedis: {
+    get: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
+    del: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDb = createMockDb();
@@ -274,6 +278,7 @@ describe('AuthService', () => {
   describe('requestPasswordReset', () => {
     it('should send OTP email for existing user', async () => {
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+
       const emailSpy = vi.spyOn(authService['emailService'], 'sendPasswordResetOtp');
       mockDb.returning.mockResolvedValueOnce([{ id: 'otp-id' }]);
 
