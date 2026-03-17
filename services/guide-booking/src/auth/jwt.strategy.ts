@@ -1,5 +1,5 @@
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -20,6 +20,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload): JwtPayload {
+    if (!payload?.sub || !payload?.email || !payload?.role) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
     return payload;
   }
 }
