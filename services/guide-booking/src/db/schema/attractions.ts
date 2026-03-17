@@ -49,15 +49,13 @@ export const attractions = guideBookingSchema.table(
     isActive: boolean('is_active').notNull().default(true),
     isFeatured: boolean('is_featured').notNull().default(false),
     ratingAvg: real('rating_avg'),
-    reviewCount: integer('review_count').default(0),
+    reviewCount: integer('review_count').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
-    uniqueIndex('attractions_slug_active_unique')
-      .on(t.slug)
-      .where(sql`${t.deletedAt} IS NULL`),
+    uniqueIndex('attractions_slug_unique').on(t.slug),
     index('idx_attractions_location').using('gist', t.location),
     index('idx_attractions_type').on(t.type),
     index('idx_attractions_area').on(t.area),

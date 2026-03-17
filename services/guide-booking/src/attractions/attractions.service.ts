@@ -89,24 +89,17 @@ export class AttractionsService {
   private async generateUniqueSlug(name: string): Promise<string> {
     const base = slugify(name);
 
-    const [latest] = await this.db
+    const rows = await this.db
       .select({ slug: attractions.slug })
       .from(attractions)
-      .where(
-        and(
-          isNull(attractions.deletedAt),
-          sql`(${attractions.slug} = ${base} OR ${attractions.slug} LIKE ${base + '-%'})`,
-        ),
-      )
-      .orderBy(desc(attractions.slug))
-      .limit(1);
+      .where(or(eq(attractions.slug, base), ilike(attractions.slug, `${base}-%`)));
 
-    if (!latest) return base;
-    if (latest.slug === base) return `${base}-2`;
+    const existingSlugs = new Set(rows.map(({ slug }) => slug));
+    if (!existingSlugs.has(base)) return base;
 
-    const suffix = latest.slug.slice(base.length + 1);
-    const num = parseInt(suffix, 10);
-    return `${base}-${(Number.isNaN(num) ? 1 : num) + 1}`;
+    let i = 2;
+    while (existingSlugs.has(`${base}-${i}`)) i++;
+    return `${base}-${i}`;
   }
 
   private async paginate(
