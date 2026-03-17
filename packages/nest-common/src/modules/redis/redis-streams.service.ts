@@ -25,10 +25,7 @@ export class RedisStreamsService implements OnModuleDestroy {
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   /** Publish an event to a Redis Stream */
-  async publish<T extends Record<string, string>>(
-    eventName: EventName,
-    payload: T,
-  ): Promise<string> {
+  async publish(eventName: EventName, payload: Record<string, string>): Promise<string> {
     const fields = this.encodeStreamFields(payload);
     const id = await this.redis.xadd(eventName as string, '*', ...fields);
     if (!id) throw new Error(`Failed to publish to stream: ${eventName}`);
@@ -47,8 +44,7 @@ export class RedisStreamsService implements OnModuleDestroy {
     try {
       await this.redis.xgroup('CREATE', stream as string, groupName, '0', 'MKSTREAM');
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      if (!error.message?.includes('BUSYGROUP')) {
+      if (!(err instanceof Error) || !err.message.includes('BUSYGROUP')) {
         throw err;
       }
     }
@@ -83,6 +79,7 @@ export class RedisStreamsService implements OnModuleDestroy {
           readingNew ? '>' : lastPendingId,
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- xreadgroup with BLOCK can return null on timeout despite type definitions
         if (!results) {
           if (!readingNew) {
             readingNew = true;
@@ -99,7 +96,7 @@ export class RedisStreamsService implements OnModuleDestroy {
             messages.map(async ([msgId, fields]) => {
               const data = this.decodeStreamFields(fields);
               try {
-                await handler({ stream: streamName, id: msgId, data: data as never });
+                await handler({ stream: streamName, id: msgId, data });
                 await this.redis.xack(streamName, group, msgId);
                 this.retryCount.delete(msgId);
               } catch (err) {
@@ -142,14 +139,18 @@ export class RedisStreamsService implements OnModuleDestroy {
     }
   }
 
-  private encodeStreamFields<T extends Record<string, string>>(obj: T): string[] {
+  private encodeStreamFields(obj: Record<string, string>): string[] {
     return Object.entries(obj).flat();
   }
 
   private decodeStreamFields(fields: string[]): Record<string, string> {
     const data: Record<string, string> = {};
     for (let i = 0; i < fields.length; i += 2) {
-      data[fields[i]] = fields[i + 1];
+      const key = fields[i];
+      const value = fields[i + 1];
+      if (key !== undefined) {
+        data[key] = value ?? '';
+      }
     }
     return data;
   }
