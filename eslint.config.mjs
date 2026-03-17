@@ -4,7 +4,8 @@ import importPlugin from 'eslint-plugin-import';
 
 export default tseslint.config(
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
       parserOptions: {
@@ -18,11 +19,40 @@ export default tseslint.config(
       import: importPlugin,
     },
     rules: {
+      // --- Tightened from previous config ---
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unsafe-type-assertion': 'warn',
+
+      // --- Kept from previous config ---
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-floating-promises': 'error',
+
+      // --- New ---
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': true,
+        },
+      ],
+
+      // NestJS modules are empty classes decorated with @Module() — this is
+      // the standard pattern, not an anti-pattern.
+      '@typescript-eslint/no-extraneous-class': 'off',
+
+      // Numbers in template literals are safe and ubiquitous. strictTypeChecked
+      // sets allowNumber: false by default, which is too strict for our codebase.
+      '@typescript-eslint/restrict-template-expressions': [
+        'error',
+        {
+          allowNumber: true,
+        },
+      ],
+
+      // --- Non-TS (unchanged) ---
       'import/order': [
         'warn',
         {
@@ -35,7 +65,7 @@ export default tseslint.config(
     },
   },
   {
-    // Relax rules for test files
+    // Test files: mocks legitimately need escape hatches
     files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -43,6 +73,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-type-assertion': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/dot-notation': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
     },
   },
   {
@@ -56,6 +90,8 @@ export default tseslint.config(
       'services/ai/**',
       '*.config.js',
       '*.config.mjs',
+      '**/*.config.ts',
+      'vitest.workspace.ts',
     ],
   },
 );
