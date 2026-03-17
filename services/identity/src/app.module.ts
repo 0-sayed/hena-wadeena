@@ -22,6 +22,7 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     LoggerModule.forRoot('Identity'),
     DrizzleModule.forRoot({
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by validateEnv before this module initializes
       connectionString: process.env.DATABASE_URL!,
       schema: process.env.DB_SCHEMA ?? 'identity',
     }),
