@@ -22,6 +22,18 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { AttractionsModule } from './attractions/attractions.module';
 import { JwtStrategy } from './auth/jwt.strategy';
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`${name} environment variable is required`);
+    }
+    console.warn(`⚠️  ${name} is not set — S3 uploads will fail at runtime`);
+    return '';
+  }
+  return value;
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
@@ -46,9 +58,9 @@ import { JwtStrategy } from './auth/jwt.strategy';
     }),
     S3Module.forRoot({
       region: process.env.AWS_REGION ?? 'me-south-1',
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-      bucket: process.env.AWS_S3_BUCKET ?? '',
+      accessKeyId: requireEnv('AWS_ACCESS_KEY_ID'),
+      secretAccessKey: requireEnv('AWS_SECRET_ACCESS_KEY'),
+      bucket: requireEnv('AWS_S3_BUCKET'),
       defaultExpiry: Number(process.env.AWS_S3_PRESIGNED_URL_EXPIRES ?? 3600),
     }),
     ThrottlerModule.forRoot([
