@@ -1,7 +1,72 @@
-import { HealthModule } from '@hena-wadeena/nest-common';
+import {
+  DrizzleModule,
+  getJwtConfig,
+  HealthModule,
+  JwtAuthGuard,
+  LoggerModule,
+  REDIS_PREFIX,
+  RedisModule,
+  RolesGuard,
+  S3Module,
+  validateEnv,
+} from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import type { StringValue } from 'ms';
+import { ZodValidationPipe } from 'nestjs-zod';
+
+import { AttractionsModule } from './attractions/attractions.module';
+import { JwtStrategy } from './auth/jwt.strategy';
 
 @Module({
-  imports: [HealthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    LoggerModule.forRoot('GuideBooking'),
+    DrizzleModule.forRoot({
+      connectionString: process.env.DATABASE_URL!,
+      schema: process.env.DB_SCHEMA ?? 'guide_booking, public',
+    }),
+    PassportModule,
+    JwtModule.registerAsync({
+      useFactory: (config: ConfigService) =>
+        getJwtConfig(
+          config.get<string>('JWT_ACCESS_SECRET')!,
+          config.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as StringValue,
+        ),
+      inject: [ConfigService],
+    }),
+    RedisModule.forRoot({
+      url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+      password: process.env.REDIS_PASSWORD,
+      keyPrefix: REDIS_PREFIX.GUIDE_BOOKING,
+    }),
+    S3Module.forRoot({
+      region: process.env.AWS_REGION ?? 'me-south-1',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+      bucket: process.env.AWS_S3_BUCKET ?? '',
+      defaultExpiry: Number(process.env.AWS_S3_PRESIGNED_URL_EXPIRES ?? 3600),
+    }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: Number(process.env.THROTTLE_TTL_MS ?? 60000),
+        limit: Number(process.env.THROTTLE_LIMIT ?? 100),
+      },
+    ]),
+    HealthModule,
+    AttractionsModule,
+  ],
+  providers: [
+    JwtStrategy,
+    { provide: APP_PIPE, useClass: ZodValidationPipe },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
