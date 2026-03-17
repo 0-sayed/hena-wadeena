@@ -7,7 +7,10 @@ const attractionFiltersSchema = z
   .object({
     type: z.enum(attractionTypeEnum.enumValues).optional(),
     area: z.enum(attractionAreaEnum.enumValues).optional(),
-    featured: z.coerce.boolean().optional(),
+    featured: z
+      .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+      .transform((v) => (typeof v === 'boolean' ? v : v === 'true' || v === '1'))
+      .optional(),
     nearLat: z.coerce.number().min(-90).max(90).optional(),
     nearLng: z.coerce.number().min(-180).max(180).optional(),
     radiusKm: z.coerce.number().positive().max(100).default(25),
