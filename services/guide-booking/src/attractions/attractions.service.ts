@@ -215,9 +215,10 @@ export class AttractionsService {
   }
 
   async softDelete(id: string): Promise<{ message: string }> {
+    const now = new Date();
     const [deleted] = await this.db
       .update(attractions)
-      .set({ deletedAt: new Date() })
+      .set({ deletedAt: now, updatedAt: now })
       .where(and(eq(attractions.id, id), isNull(attractions.deletedAt)))
       .returning({ id: attractions.id });
 

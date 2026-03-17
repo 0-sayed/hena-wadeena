@@ -278,7 +278,7 @@ describe('AttractionsService', () => {
       const result = await service.softDelete(mockAttraction.id);
       expect(result).toEqual({ message: 'Attraction deleted' });
       expect(mockDb.set).toHaveBeenCalledWith(
-        expect.objectContaining({ deletedAt: expect.any(Date) }),
+        expect.objectContaining({ deletedAt: expect.any(Date), updatedAt: expect.any(Date) }),
       );
     });
 
