@@ -3,12 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AttractionsService } from './attractions.service';
-import type {
-  AttractionFiltersDto,
-  CreateAttractionDto,
-  UpdateAttractionDto,
-  UploadUrlDto,
-} from './dto';
+import type { CreateAttractionDto, UpdateAttractionDto, UploadUrlDto } from './dto';
 
 /**
  * Chain mock for Drizzle query builder. All methods return the same chain so
@@ -16,8 +11,12 @@ import type {
  * resolves via `chain.then()` — use mockImplementationOnce to control each
  * successive awaited query result.
  */
-function createMockDb() {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+type MockChain = Record<string, ReturnType<typeof vi.fn>> & {
+  then: ReturnType<typeof vi.fn>;
+};
+
+function createMockDb(): MockChain {
+  const chain = {} as MockChain;
 
   for (const method of [
     'select',
@@ -75,7 +74,7 @@ const mockAttraction = {
   deletedAt: null,
 };
 
-const baseFilters: AttractionFiltersDto = { page: 1, limit: 20, radiusKm: 25 };
+const baseFilters = { page: 1, limit: 20, radiusKm: 25 };
 
 describe('AttractionsService', () => {
   let service: AttractionsService;

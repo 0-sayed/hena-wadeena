@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload): JwtPayload {
-    if (!payload?.sub || !payload?.email || !payload?.role) {
+    if (!payload.sub || !payload.email || !payload.role) {
       throw new UnauthorizedException('Invalid token payload');
     }
     return payload;

@@ -1,7 +1,12 @@
 import { DRIZZLE_CLIENT, S3Service, generateId } from '@hena-wadeena/nest-common';
 import type { PaginatedResponse } from '@hena-wadeena/types';
 import { slugify } from '@hena-wadeena/types';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, count, desc, eq, ilike, isNotNull, isNull, not, or, sql } from 'drizzle-orm';
 import type { Column, SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
@@ -14,6 +19,7 @@ import type {
   UpdateAttractionDto,
   UploadUrlDto,
 } from './dto';
+import { createAttractionSchema } from './dto';
 
 type Attraction = typeof attractions.$inferSelect;
 
@@ -48,7 +54,7 @@ export class AttractionsService {
     filters: AttractionFiltersDto,
     includeInactive = false,
   ): SQL | undefined {
-    const conditions: SQL<unknown>[] = [];
+    const conditions: SQL[] = [];
 
     if (!includeInactive) {
       conditions.push(eq(attractions.isActive, true));
@@ -175,7 +181,7 @@ export class AttractionsService {
   ): Promise<PaginatedResponse<Attraction>> {
     const baseWhere = this.buildWhereClause(filters, true);
 
-    let statusCondition: SQL<unknown> | undefined;
+    let statusCondition: SQL | undefined;
     if (status === 'active') {
       statusCondition = and(eq(attractions.isActive, true), isNull(attractions.deletedAt));
     } else if (status === 'inactive') {
@@ -197,9 +203,10 @@ export class AttractionsService {
 
     const [row] = await this.db
       .insert(attractions)
-      .values({ ...dto, id: generateId(), slug })
+      .values({ ...createAttractionSchema.parse(dto), id: generateId(), slug })
       .returning();
 
+    if (!row) throw new InternalServerErrorException('Insert did not return a row');
     return row;
   }
 

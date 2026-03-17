@@ -46,6 +46,7 @@ function requireEnv(name: string): string {
     JwtModule.registerAsync({
       useFactory: (config: ConfigService) =>
         getJwtConfig(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by validateEnv
           config.get<string>('JWT_ACCESS_SECRET')!,
           config.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as StringValue,
         ),
