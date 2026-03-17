@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const updateProfileSchema = z.object({
   display_name: z.string().max(100).optional(),
-  avatar_url: z.string().url().optional(),
+  avatar_url: z.string().pipe(z.url()).optional(),
   language: z.enum(['ar', 'en']).optional(),
 });
 

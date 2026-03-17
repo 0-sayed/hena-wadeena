@@ -65,12 +65,12 @@ export class AuthService {
     const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as Parameters<
       typeof ms
     >[0];
-    this.refreshExpiresMs = ms(refreshExp) ?? 7 * 24 * 60 * 60 * 1000;
+    this.refreshExpiresMs = ms(refreshExp);
 
     const accessExp = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as Parameters<
       typeof ms
     >[0];
-    this.accessExpiresInSec = Math.floor((ms(accessExp) ?? 15 * 60 * 1000) / 1000);
+    this.accessExpiresInSec = Math.floor(ms(accessExp) / 1000);
   }
 
   async register(
