@@ -39,7 +39,7 @@ function requireEnv(name: string): string {
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     LoggerModule.forRoot('GuideBooking'),
     DrizzleModule.forRoot({
-      connectionString: process.env.DATABASE_URL!,
+      connectionString: requireEnv('DATABASE_URL'),
       schema: process.env.DB_SCHEMA ?? 'guide_booking, public',
     }),
     PassportModule,
