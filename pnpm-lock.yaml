@@ -11,12 +11,12 @@ importers:
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.4
+      '@total-typescript/ts-reset':
+        specifier: ^0.6.1
+        version: 0.6.1
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.15
-      '@types/supertest':
-        specifier: ^6.0.0
-        version: 6.0.3
       '@vitest/coverage-v8':
         specifier: ^3.0.0
         version: 3.2.4(vitest@3.2.4(@types/node@22.19.15)(jiti@2.6.1)(jsdom@20.0.3)(tsx@4.21.0)(yaml@2.8.2))
@@ -35,9 +35,6 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.8.1
-      supertest:
-        specifier: ^7.0.0
-        version: 7.2.2
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -300,12 +297,6 @@ importers:
       '@nestjs/terminus':
         specifier: ^11.0.0
         version: 11.1.1(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/throttler':
-        specifier: ^6.4.0
-        version: 6.5.0(@nestjs/common@11.1.16(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(reflect-metadata@0.2.2)
-      '@node-rs/argon2':
-        specifier: ^2.0.0
-        version: 2.0.2
       drizzle-orm:
         specifier: ^0.38.0
         version: 0.38.4(@types/react@18.3.28)(postgres@3.4.8)(react@18.3.1)
@@ -321,9 +312,6 @@ importers:
       passport:
         specifier: ^0.7.0
         version: 0.7.0
-      passport-jwt:
-        specifier: ^4.0.1
-        version: 4.0.1
       pino-http:
         specifier: ^10.4.0
         version: 10.5.0
@@ -346,9 +334,6 @@ importers:
       '@types/ms':
         specifier: ^2.1.0
         version: 2.1.0
-      '@types/passport-jwt':
-        specifier: ^4.0.1
-        version: 4.0.1
       ms:
         specifier: ^2.1.3
         version: 2.1.3
@@ -492,6 +477,9 @@ importers:
       '@types/supertest':
         specifier: ^6.0.0
         version: 6.0.3
+      dotenv:
+        specifier: ^16.0.0
+        version: 16.6.1
       drizzle-kit:
         specifier: 0.30.4
         version: 0.30.4
@@ -3035,6 +3023,9 @@ packages:
   '@tootallnate/once@2.0.0':
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
     engines: {node: '>= 10'}
+
+  '@total-typescript/ts-reset@0.6.1':
+    resolution: {integrity: sha512-cka47fVSo6lfQDIATYqb/vO1nvFfbPw7uWLayIXIhGETj0wcOOlrlkobOMDNQOFr9QOafegUPq13V2+6vtD7yg==}
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -8581,6 +8572,8 @@ snapshots:
   '@tokenizer/token@0.3.0': {}
 
   '@tootallnate/once@2.0.0': {}
+
+  '@total-typescript/ts-reset@0.6.1': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
