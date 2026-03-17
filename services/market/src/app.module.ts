@@ -18,6 +18,18 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { AuthModule } from './auth/auth.module';
 import { ListingsModule } from './listings/listings.module';
 
+/** Fail fast on missing env var in production; allow empty fallback in dev. */
+function requireEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`${key} is required for the market service`);
+    }
+    return '';
+  }
+  return value;
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
@@ -33,10 +45,10 @@ import { ListingsModule } from './listings/listings.module';
       keyPrefix: REDIS_PREFIX.MARKET,
     }),
     S3Module.forRoot({
-      bucket: process.env.AWS_S3_BUCKET ?? '',
+      bucket: requireEnv('AWS_S3_BUCKET'),
       region: process.env.AWS_REGION ?? 'me-south-1',
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+      accessKeyId: requireEnv('AWS_ACCESS_KEY_ID'),
+      secretAccessKey: requireEnv('AWS_SECRET_ACCESS_KEY'),
       defaultExpiry: 300,
     }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),

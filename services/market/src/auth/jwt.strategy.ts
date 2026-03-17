@@ -29,12 +29,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    let isBlacklisted: string | null;
-    try {
-      isBlacklisted = await this.redis.get(`id:blacklist:${payload.jti}`);
-    } catch {
-      throw new UnauthorizedException('Invalid token');
-    }
+    // No try/catch — Redis failures surface as 5xx, not masked as 401
+    const isBlacklisted = await this.redis.get(`id:blacklist:${payload.jti}`);
 
     if (isBlacklisted) {
       throw new UnauthorizedException('Token has been revoked');

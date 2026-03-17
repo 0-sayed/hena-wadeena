@@ -5,7 +5,14 @@ import {
   generateId,
 } from '@hena-wadeena/nest-common';
 import { EVENTS, PaginatedResponse, slugify } from '@hena-wadeena/types';
-import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
@@ -29,7 +36,7 @@ function andRequired(...conditions: (SQL | undefined)[]): SQL {
 /** Extracts the first row or throws — for INSERT/UPDATE … RETURNING that must yield a row. */
 function firstOrThrow<T>(rows: T[], message = 'Expected at least one row'): T {
   const row = rows[0];
-  if (!row) throw new Error(message);
+  if (!row) throw new InternalServerErrorException(message);
   return row;
 }
 
