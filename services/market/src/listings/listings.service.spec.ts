@@ -23,8 +23,23 @@ const mockRedisStreams = {
  * - `offset` resolves to [] by default (terminal for paginated queries).
  * - `returning` resolves to [] by default (terminal for insert/update).
  */
-function createMockDb() {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+type MockFn = ReturnType<typeof vi.fn>;
+interface MockDbChain {
+  select: MockFn;
+  from: MockFn;
+  where: MockFn;
+  limit: MockFn;
+  offset: MockFn;
+  insert: MockFn;
+  values: MockFn;
+  returning: MockFn;
+  update: MockFn;
+  set: MockFn;
+  orderBy: MockFn;
+}
+
+function createMockDb(): MockDbChain {
+  const chain = {} as MockDbChain;
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
@@ -225,7 +240,7 @@ describe('ListingsService', () => {
 
       await service.create(dtoArabicOnly as never, 'owner-uuid-001');
 
-      const valuesArg = mockDb.values.mock.calls[0][0] as Record<string, unknown>;
+      const valuesArg = mockDb.values.mock.calls[0]![0] as Record<string, unknown>;
       expect(typeof valuesArg.slug).toBe('string');
       expect((valuesArg.slug as string).length).toBeGreaterThan(0);
     });
@@ -238,7 +253,7 @@ describe('ListingsService', () => {
 
       const result = await service.create(createDto as never, 'owner-uuid-001');
 
-      const valuesArg = mockDb.values.mock.calls[0][0] as Record<string, unknown>;
+      const valuesArg = mockDb.values.mock.calls[0]![0] as Record<string, unknown>;
       expect(valuesArg.slug).not.toBe('apartment-for-sale');
       expect(result.slug).toMatch(/^apartment-for-sale-/);
     });
@@ -265,7 +280,7 @@ describe('ListingsService', () => {
 
       await service.create(dtoWithLocation as never, 'owner-uuid-001');
 
-      const valuesArg = mockDb.values.mock.calls[0][0] as Record<string, unknown>;
+      const valuesArg = mockDb.values.mock.calls[0]![0] as Record<string, unknown>;
       // location must NOT be the raw { lat, lng } object — it's converted to an SQL expression
       expect(valuesArg.location).not.toEqual({ lat: 25.44, lng: 30.56 });
       expect(valuesArg.location).toBeDefined();

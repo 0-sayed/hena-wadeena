@@ -23,6 +23,7 @@ import { ListingsModule } from './listings/listings.module';
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     LoggerModule.forRoot('Market'),
     DrizzleModule.forRoot({
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validateEnv guarantees DATABASE_URL
       connectionString: process.env.DATABASE_URL!,
       schema: process.env.DB_SCHEMA ?? 'market',
     }),

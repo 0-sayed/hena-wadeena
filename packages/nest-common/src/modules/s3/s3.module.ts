@@ -3,7 +3,8 @@ import { DynamicModule, Global, Module } from '@nestjs/common';
 import { S3Service } from './s3.service';
 import { S3_CONFIG, S3ModuleOptions } from './s3.tokens';
 
-export { S3_CONFIG, S3ModuleOptions };
+export { S3_CONFIG };
+export type { S3ModuleOptions };
 
 @Global()
 @Module({})

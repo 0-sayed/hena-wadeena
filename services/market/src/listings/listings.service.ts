@@ -19,6 +19,20 @@ import { UpdateListingDto } from './dto/update-listing.dto';
 type Listing = typeof listings.$inferSelect;
 type InsertListing = typeof listings.$inferInsert;
 
+/** Narrows `SQL | undefined` to `SQL` — safe when and() receives ≥1 condition. */
+function andRequired(...conditions: (SQL | undefined)[]): SQL {
+  const result = and(...conditions);
+  if (!result) throw new Error('and() returned undefined — no conditions provided');
+  return result;
+}
+
+/** Extracts the first row or throws — for INSERT/UPDATE … RETURNING that must yield a row. */
+function firstOrThrow<T>(rows: T[], message = 'Expected at least one row'): T {
+  const row = rows[0];
+  if (!row) throw new Error(message);
+  return row;
+}
+
 function paginate<T>(
   data: T[],
   total: number,
@@ -76,24 +90,23 @@ export class ListingsService {
       conditions.push(arrayContains(listings.tags, tagArray));
     }
 
-    // Non-null assertion: always has at least 2 conditions (isNull + eq status)
-    return and(...conditions)!;
+    return andRequired(...conditions);
   }
 
   private buildSort(sort?: string) {
     if (!sort) return desc(listings.createdAt);
     const [field, direction] = sort.split('|');
+    if (!field || !(field in SORTABLE_FIELDS)) return desc(listings.createdAt);
     const column = SORTABLE_FIELDS[field as keyof typeof SORTABLE_FIELDS];
-    if (!column) return desc(listings.createdAt);
     return direction === 'asc' ? asc(column) : desc(column);
   }
 
   private async countListings(filters: SQL): Promise<number> {
-    const [{ count }] = await this.db
+    const result = await this.db
       .select({ count: sql<number>`count(*)::int` })
       .from(listings)
       .where(filters);
-    return count;
+    return result[0]?.count ?? 0;
   }
 
   /** Raw find by id — ignores status, used for ownership checks */
@@ -135,20 +148,22 @@ export class ListingsService {
       ? sql`public.ST_SetSRID(public.ST_MakePoint(${locationInput.lng}, ${locationInput.lat}), 4326)`
       : null;
 
-    const [listing] = await this.db
-      .insert(listings)
-      .values({
-        ...rest,
-        category: category as InsertListing['category'],
-        listingType: listingType as InsertListing['listingType'],
-        transaction: transaction as InsertListing['transaction'],
-        id,
-        ownerId,
-        slug,
-        status: 'draft',
-        location: locationExpr as unknown as InsertListing['location'],
-      })
-      .returning();
+    const listing = firstOrThrow(
+      await this.db
+        .insert(listings)
+        .values({
+          ...rest,
+          category: category as InsertListing['category'],
+          listingType: listingType as InsertListing['listingType'],
+          transaction: transaction as InsertListing['transaction'],
+          id,
+          ownerId,
+          slug,
+          status: 'draft',
+          location: locationExpr as unknown as InsertListing['location'],
+        })
+        .returning(),
+    );
 
     this.redisStreams
       .publish(EVENTS.LISTING_CREATED, {
@@ -157,7 +172,9 @@ export class ListingsService {
         category: listing.category,
         area: listing.district ?? '',
       })
-      .catch((err) => this.logger.error(`Failed to publish ${EVENTS.LISTING_CREATED}`, err));
+      .catch((err: unknown) => {
+        this.logger.error(`Failed to publish ${EVENTS.LISTING_CREATED}`, err);
+      });
 
     return listing;
   }
@@ -206,11 +223,11 @@ export class ListingsService {
   }
 
   async findFeatured(query: QueryListingsDto): Promise<PaginatedResponse<Listing>> {
-    const filters = and(
+    const filters = andRequired(
       isNull(listings.deletedAt),
       eq(listings.status, 'active'),
       eq(listings.isFeatured, true),
-    )!;
+    );
 
     const [results, total] = await Promise.all([
       this.db
@@ -232,12 +249,12 @@ export class ListingsService {
     const { lat, lng, radius_km, limit, offset } = query;
     const radiusM = radius_km * 1000;
 
-    const nearbyFilters = and(
+    const nearbyFilters = andRequired(
       isNull(listings.deletedAt),
       eq(listings.status, 'active'),
       sql`${listings.location} IS NOT NULL`,
       sql`public.ST_DWithin(${listings.location}::public.geography, public.ST_SetSRID(public.ST_MakePoint(${lng}, ${lat}), 4326)::public.geography, ${radiusM})`,
-    )!;
+    );
 
     const distanceExpr = sql<number>`
       public.ST_Distance(
@@ -266,14 +283,12 @@ export class ListingsService {
   async update(id: string, dto: UpdateListingDto): Promise<Listing> {
     const { location: locationInput, category, listingType, transaction, ...rest } = dto;
 
-    const locationUpdate =
-      locationInput !== undefined
-        ? {
-            location: (locationInput
-              ? sql`public.ST_SetSRID(public.ST_MakePoint(${locationInput.lng}, ${locationInput.lat}), 4326)`
-              : null) as unknown as InsertListing['location'],
-          }
-        : {};
+    const locationUpdate = locationInput
+      ? {
+          location:
+            sql`public.ST_SetSRID(public.ST_MakePoint(${locationInput.lng}, ${locationInput.lat}), 4326)` as unknown as InsertListing['location'],
+        }
+      : {};
 
     const enumFields = {
       ...(category !== undefined && { category: category as InsertListing['category'] }),

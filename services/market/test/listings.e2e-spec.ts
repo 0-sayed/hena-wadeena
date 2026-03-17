@@ -157,7 +157,7 @@ describe('Listings (e2e)', () => {
 
       // GET / only shows active non-deleted listings — the deleted draft should not appear
       const listRes = await request(app.getHttpServer()).get('/api/v1/listings').expect(200);
-      const ids = (listRes.body.data as Array<{ id: string }>).map((l) => l.id);
+      const ids = (listRes.body.data as { id: string }[]).map((l) => l.id);
       expect(ids).not.toContain(id);
     });
   });
@@ -527,7 +527,7 @@ describe('Listings (e2e)', () => {
         .get('/api/v1/listings?sort=price%7Casc')
         .expect(200);
 
-      const prices = (res.body.data as Array<{ price: number }>).map((l) => l.price);
+      const prices = (res.body.data as { price: number }[]).map((l) => l.price);
       expect(prices).toEqual([...prices].sort((a, b) => a - b));
     });
 
@@ -536,7 +536,7 @@ describe('Listings (e2e)', () => {
         .get('/api/v1/listings?sort=price%7Cdesc')
         .expect(200);
 
-      const prices = (res.body.data as Array<{ price: number }>).map((l) => l.price);
+      const prices = (res.body.data as { price: number }[]).map((l) => l.price);
       expect(prices).toEqual([...prices].sort((a, b) => b - a));
     });
 
