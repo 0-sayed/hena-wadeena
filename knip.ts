@@ -25,6 +25,8 @@ const config: KnipConfig = {
     'services/market': {
       entry: ['src/main.ts', 'src/db/migrate.ts'],
       project: ['src/**/*.ts'],
+      // @hena-wadeena/types and zod will be used as market features are built out
+      ignoreDependencies: ['@hena-wadeena/types', 'zod', '@nestjs/testing'],
     },
     'services/guide-booking': {
       entry: ['src/main.ts', 'src/db/migrate.ts'],
