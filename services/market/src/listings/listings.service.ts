@@ -75,26 +75,33 @@ export class ListingsService {
   // --- Private helpers ---
 
   private buildFilters(query: QueryListingsDto): SQL {
-    const conditions = [isNull(listings.deletedAt), eq(listings.status, 'active')];
+    const conditions: SQL[] = [isNull(listings.deletedAt), eq(listings.status, 'active')];
 
-    if (query.category)
-      conditions.push(eq(listings.category, query.category as InsertListing['category']));
-    if (query.sub_category) conditions.push(eq(listings.subCategory, query.sub_category));
-    if (query.listing_type)
-      conditions.push(eq(listings.listingType, query.listing_type as InsertListing['listingType']));
-    if (query.transaction)
-      conditions.push(eq(listings.transaction, query.transaction as InsertListing['transaction']));
-    if (query.area) conditions.push(eq(listings.district, query.area));
+    const eqFilters = [
+      [query.category, listings.category],
+      [query.sub_category, listings.subCategory],
+      [query.listing_type, listings.listingType],
+      [query.transaction, listings.transaction],
+      [query.area, listings.district],
+      [query.is_verified, listings.isVerified],
+      [query.is_featured, listings.isFeatured],
+    ] as const;
+
+    for (const [value, column] of eqFilters) {
+      if (value !== undefined) conditions.push(eq(column, value as never));
+    }
+
     if (query.min_price !== undefined) conditions.push(gte(listings.price, query.min_price));
     if (query.max_price !== undefined) conditions.push(lte(listings.price, query.max_price));
-    if (query.is_verified !== undefined)
-      conditions.push(eq(listings.isVerified, query.is_verified));
-    if (query.is_featured !== undefined)
-      conditions.push(eq(listings.isFeatured, query.is_featured));
     if (query.min_rating !== undefined) conditions.push(gte(listings.ratingAvg, query.min_rating));
+
     if (query.tags) {
-      const tagArray = query.tags.split(',').map((t) => t.trim());
-      conditions.push(arrayContains(listings.tags, tagArray));
+      conditions.push(
+        arrayContains(
+          listings.tags,
+          query.tags.split(',').map((t) => t.trim()),
+        ),
+      );
     }
 
     return andRequired(...conditions);
