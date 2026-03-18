@@ -4,7 +4,7 @@ import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Req } from '@nest
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
-import { AuthService } from './auth.service';
+import { AuthService, type AuthResponse } from './auth.service';
 import {
   ChangePasswordDto,
   ConfirmResetDto,
@@ -22,7 +22,7 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('register')
-  async register(@Req() req: Request, @Body() dto: RegisterDto) {
+  async register(@Req() req: Request, @Body() dto: RegisterDto): Promise<AuthResponse> {
     const ip: string | undefined = req.ip;
 
     const userAgent: string | undefined = req.headers['user-agent'];
@@ -33,7 +33,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Req() req: Request, @Body() dto: LoginDto) {
+  async login(@Req() req: Request, @Body() dto: LoginDto): Promise<AuthResponse> {
     const ip: string | undefined = req.ip;
 
     const userAgent: string | undefined = req.headers['user-agent'];
@@ -44,7 +44,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body() dto: RefreshTokenDto) {
+  async refresh(@Body() dto: RefreshTokenDto): Promise<Omit<AuthResponse, 'user'>> {
     return this.authService.refresh(dto.refresh_token);
   }
 
@@ -58,7 +58,10 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  async changePassword(@CurrentUser() user: JwtPayload, @Body() dto: ChangePasswordDto) {
+  async changePassword(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<AuthResponse> {
     return this.authService.changePassword(user.sub, dto.current_password, dto.new_password);
   }
 
@@ -75,7 +78,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('password-reset/confirm')
   @HttpCode(HttpStatus.OK)
-  async confirmReset(@Body() dto: ConfirmResetDto) {
+  async confirmReset(@Body() dto: ConfirmResetDto): Promise<AuthResponse> {
     return this.authService.confirmPasswordReset(dto.email, dto.otp, dto.new_password);
   }
 }

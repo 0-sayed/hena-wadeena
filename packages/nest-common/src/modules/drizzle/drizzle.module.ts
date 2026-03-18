@@ -25,7 +25,9 @@ export class DrizzleModule implements OnModuleDestroy {
       useFactory: () => {
         return postgres(options.connectionString, {
           max: 20,
-          onnotice: () => {},
+          onnotice: () => {
+            /* intentionally empty — suppress postgres notice messages */
+          },
           connection: {
             search_path: options.schema,
           },

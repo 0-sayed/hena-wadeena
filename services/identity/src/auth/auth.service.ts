@@ -65,12 +65,20 @@ export class AuthService {
     const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as Parameters<
       typeof ms
     >[0];
-    this.refreshExpiresMs = ms(refreshExp) ?? 7 * 24 * 60 * 60 * 1000;
+    const refreshMs = ms(refreshExp);
+    if (!Number.isFinite(refreshMs) || refreshMs <= 0) {
+      throw new Error(`Invalid JWT_REFRESH_EXPIRES_IN: "${refreshExp}"`);
+    }
+    this.refreshExpiresMs = refreshMs;
 
     const accessExp = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as Parameters<
       typeof ms
     >[0];
-    this.accessExpiresInSec = Math.floor((ms(accessExp) ?? 15 * 60 * 1000) / 1000);
+    const accessMs = ms(accessExp);
+    if (!Number.isFinite(accessMs) || accessMs <= 0) {
+      throw new Error(`Invalid JWT_ACCESS_EXPIRES_IN: "${accessExp}"`);
+    }
+    this.accessExpiresInSec = Math.floor(accessMs / 1000);
   }
 
   async register(

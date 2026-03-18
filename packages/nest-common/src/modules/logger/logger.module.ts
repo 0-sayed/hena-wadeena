@@ -10,24 +10,25 @@ export class LoggerModule {
   static forRoot(serviceName: string) {
     return PinoLoggerModule.forRoot({
       pinoHttp: {
-        level: process.env.LOG_LEVEL || 'info',
+        level: process.env.LOG_LEVEL ?? 'info',
         transport:
           process.env.NODE_ENV !== 'production'
             ? { target: 'pino-pretty', options: { colorize: true, singleLine: true } }
             : undefined,
         genReqId: (req: IncomingMessage) => {
-          return (req.headers['x-request-id'] as string) || generateId();
+          const headerId = req.headers['x-request-id'];
+          return (typeof headerId === 'string' ? headerId : null) ?? generateId();
         },
         customProps: () => ({
           service: serviceName,
         }),
         redact: ['req.headers.authorization'],
         serializers: {
-          req: (req: Record<string, unknown>) => ({
+          req: (req: { method: string; url: string }) => ({
             method: req.method,
             url: req.url,
           }),
-          res: (res: Record<string, unknown>) => ({
+          res: (res: { statusCode: number }) => ({
             statusCode: res.statusCode,
           }),
         },
