@@ -1,3 +1,4 @@
+import secrets
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,9 +11,9 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "Nakheel RAG Chatbot"
     APP_ENV: str = "development"
-    APP_PORT: int = 8000
+    APP_PORT: int = 7000
     APP_VERSION: str = "1.0.0"
-    APP_SECRET_KEY: str = "change-me"
+    APP_SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     API_V1_PREFIX: str = "/api/v1"
     LOG_LEVEL: str = "INFO"
 
@@ -27,13 +28,17 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str | None = None
     OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    OPENAI_EMBEDDING_DIMENSIONS: int = 1024
     OPENAI_MAX_TOKENS: int = 1024
     OPENAI_TEMPERATURE: float = 0.3
 
-    BGE_EMBEDDING_MODEL: str = "BAAI/bge-m3"
     BGE_RERANKER_MODEL: str = "BAAI/bge-reranker-v2-m3"
-    BGE_DEVICE: str = "cpu"
     BGE_USE_FP16: bool = False
+
+    PDF_PARSER_BACKEND: str = "pypdf"
+    PDF_ENABLE_OCR: bool = False
+    PDF_ENABLE_TABLE_STRUCTURE: bool = False
 
     CHUNK_MAX_TOKENS: int = 512
     CHUNK_MIN_TOKENS: int = 50
@@ -54,7 +59,7 @@ class Settings(BaseSettings):
 
     MAX_FILE_SIZE_MB: int = 50
     TEMP_DIR: Path = Field(default=Path("./tmp/nakheel"))
-    PARSED_FILE_TTL_HOURS: int = 1
+    PARSED_FILE_TTL_HOURS: int = 2
 
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 30
     RATE_LIMIT_INJECT_PER_HOUR: int = 10

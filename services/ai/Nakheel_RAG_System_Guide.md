@@ -1627,12 +1627,12 @@ Stage 4 — Domain Guard:
 ```dotenv
 # Application
 APP_ENV=development          # development | staging | production
-APP_PORT=8000
+APP_PORT=7000
 APP_SECRET_KEY=your-secret-key
 LOG_LEVEL=INFO
 
 # MongoDB
-MONGODB_URI=
+MONGODB_URI=mongodb://localhost:27017/?directConnection=true&tls=false
 MONGODB_DB_NAME=nakheel_db
 
 # Qdrant

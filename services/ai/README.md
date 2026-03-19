@@ -4,7 +4,7 @@ FastAPI implementation of the Nakheel bilingual RAG chatbot for New Valley Gover
 
 ## What is included
 
-- Synchronous PDF parse and inject endpoints
+- Synchronous PDF parse plus asynchronous batch PDF inject endpoints
 - Hybrid retrieval with dense + sparse search abstractions
 - Domain-guarded chat sessions with source references
 - MongoDB persistence for documents, chunks, sessions, messages, and audit logs
@@ -16,39 +16,35 @@ FastAPI implementation of the Nakheel bilingual RAG chatbot for New Valley Gover
 
 1. Create `.env` from `.env.example`:
 
-```powershell
-Copy-Item .env.example .env
+```bash
+cp .env.example .env
 ```
 
-2. Add your `OPENAI_API_KEY` in `.env`.
+2. Set `OPENAI_API_KEY` and replace `APP_SECRET_KEY` in `.env`.
 
-3. Start the full stack:
+3. Start MongoDB locally on your machine.
 
-```powershell
-./run.ps1
-```
+4. Start the Docker stack for the API and Qdrant:
 
-Or directly:
-
-```powershell
+```bash
 docker compose up --build
 ```
 
 Services:
 
-- API: `http://localhost:8000`
-- MongoDB: `mongodb://localhost:27017`
+- API: `http://localhost:7000`
+- MongoDB: `mongodb://127.0.0.1:27017`
 - Qdrant: `http://localhost:6333`
 
 Stop everything:
 
-```powershell
+```bash
 docker compose down
 ```
 
 Stop and remove volumes:
 
-```powershell
+```bash
 docker compose down -v
 ```
 
@@ -56,15 +52,15 @@ docker compose down -v
 
 1. Create a virtual environment and install dependencies:
 
-```powershell
+```bash
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+. .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 2. Start Qdrant locally:
 
-```powershell
+```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
@@ -79,37 +75,53 @@ docker run -p 6333:6333 qdrant/qdrant
 5. Run the API:
 
 ```powershell
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 7000
 ```
 
 ## Notes on heavy dependencies
 
-- `docling` is the preferred parser; a lightweight PDF-text fallback is included for local development.
-- `FlagEmbedding` is the preferred embedding/reranking stack; deterministic fallbacks are included so tests can run without downloading large model weights.
-- For production-like quality, install the full dependencies and allow model downloads before evaluating answer quality.
+- Dense retrieval uses OpenAI embeddings through the API, with a deterministic local fallback when no API key is configured.
+- The PDF parser defaults to `pypdf` for a lighter and quieter ingest path; switch `PDF_PARSER_BACKEND=docling` only if you need richer extraction.
+- `FlagEmbedding` is only used for reranking. If it is unavailable, the app falls back to the built-in heuristic reranker.
 
 ## Smoke test
 
 Create a session:
 
-```powershell
-curl -Method Post http://localhost:8000/api/v1/chat/sessions -ContentType "application/json" -Body "{}"
+```bash
+curl -X POST http://localhost:7000/api/v1/chat/sessions \
+  -H "Content-Type: application/json" \
+  -d '{}'
 ```
 
 Health check:
 
-```powershell
-curl http://localhost:8000/api/v1/health
+```bash
+curl http://localhost:7000/api/v1/health
 ```
 
 Parse a PDF:
 
+```bash
+curl -X POST http://localhost:7000/api/v1/documents/parse \
+  -F "file=@./sample.pdf"
+```
+
+Submit a PDF batch:
+
+```bash
+curl -X POST http://localhost:7000/api/v1/documents/inject \
+  -F "files=@./sample.pdf"
+```
+
+Check batch status:
+
 ```powershell
-curl -Method Post http://localhost:8000/api/v1/documents/parse -Form @{ file = Get-Item .\sample.pdf }
+curl http://localhost:7000/api/v1/documents/batches/<batch_id>
 ```
 
 ## Test
 
-```powershell
+```bash
 pytest
 ```

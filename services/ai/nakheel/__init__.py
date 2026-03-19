@@ -1,2 +1,3 @@
-__all__ = ["main"]
+from . import main
 
+__all__ = ["main"]

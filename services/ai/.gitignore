@@ -36,7 +36,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-pytest_cache/
+.pytest_cache/
 nosetests.xml
 coverage.xml
 *.cover
@@ -55,6 +55,7 @@ coverage.xml
 # Environments
 .env
 .env.*
+!.env.example
 .venv/
 venv/
 env/

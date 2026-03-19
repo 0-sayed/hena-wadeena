@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -24,8 +26,44 @@ from nakheel.db.qdrant import QdrantDatabase
 from nakheel.exceptions import NakheelBaseException
 
 
+@dataclass(slots=True)
+class StartupCheck:
+    """Represents the result of a single startup dependency validation."""
+
+    ok: bool
+    detail: str
+
+
+async def validate_startup_dependencies(
+    mongo: MongoDatabase,
+    qdrant: QdrantDatabase,
+    dense_embedder: DenseEmbedder,
+    reranker: RerankerService,
+    llm_client: LLMClient,
+) -> dict[str, dict[str, str | bool]]:
+    """Run all critical readiness checks before the app accepts traffic."""
+
+    mongo_ok = await mongo.ping()
+    qdrant_ok = await asyncio.to_thread(qdrant.ping)
+    embedder_check, reranker_check, llm_check = await asyncio.gather(
+        dense_embedder.startup_check_async(),
+        reranker.startup_check_async(),
+        llm_client.startup_check_async(),
+    )
+    checks = {
+        "mongodb": StartupCheck(ok=mongo_ok, detail="connected" if mongo_ok else "unreachable"),
+        "qdrant": StartupCheck(ok=qdrant_ok, detail="connected" if qdrant_ok else "unreachable"),
+        "embedder": StartupCheck(**embedder_check),
+        "reranker": StartupCheck(**reranker_check),
+        "llm": StartupCheck(**llm_check),
+    }
+    return {name: asdict(check) for name, check in checks.items()}
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Create shared services once and fail fast if a critical dependency is unavailable."""
+
     settings = get_settings()
     mongo = MongoDatabase(settings)
     qdrant = QdrantDatabase(settings)
@@ -52,19 +90,18 @@ async def lifespan(app: FastAPI):
         sparse_embedder=sparse_embedder,
     )
 
-    mongo_ok = await mongo.ping()
-    qdrant_ok = qdrant.ping()
-    embedder_check = dense_embedder.startup_check()
-    reranker_check = reranker.startup_check()
-    llm_check = llm_client.startup_check()
-    startup_checks = {
-        "mongodb": {"ok": mongo_ok, "detail": "connected" if mongo_ok else "unreachable"},
-        "qdrant": {"ok": qdrant_ok, "detail": "connected" if qdrant_ok else "unreachable"},
-        "embedder": embedder_check,
-        "reranker": reranker_check,
-        "llm": llm_check,
-    }
-    failed_checks = [name for name, status in startup_checks.items() if not status["ok"]]
+    startup_checks = await validate_startup_dependencies(
+        mongo=mongo,
+        qdrant=qdrant,
+        dense_embedder=dense_embedder,
+        reranker=reranker,
+        llm_client=llm_client,
+    )
+    failed_checks = [
+        name
+        for name, status in startup_checks.items()
+        if not status["ok"] and name in {"mongodb", "qdrant", "embedder", "llm"}
+    ]
     if failed_checks:
         await mongo.close()
         qdrant.close()
@@ -84,11 +121,17 @@ async def lifespan(app: FastAPI):
     app.state.prompt_builder = prompt_builder
     app.state.session_manager = session_manager
     app.state.startup_checks = startup_checks
+    app.state.document_batch_tasks = set()
 
     logger.info("Nakheel app started with validated dependencies")
     try:
         yield
     finally:
+        batch_tasks = list(getattr(app.state, "document_batch_tasks", set()))
+        for task in batch_tasks:
+            task.cancel()
+        if batch_tasks:
+            await asyncio.gather(*batch_tasks, return_exceptions=True)
         await mongo.close()
         qdrant.close()
         logger.info("Nakheel app stopped")
@@ -100,6 +143,8 @@ app.include_router(api_router, prefix=get_settings().API_V1_PREFIX)
 
 @app.exception_handler(NakheelBaseException)
 async def nakheel_exception_handler(_, exc: NakheelBaseException) -> JSONResponse:
+    """Return domain exceptions in RFC 7807-compatible JSON form."""
+
     payload = {
         "type": f"https://httpstatuses.com/{exc.status_code}",
         "title": exc.title,
@@ -113,6 +158,8 @@ async def nakheel_exception_handler(_, exc: NakheelBaseException) -> JSONRespons
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_, exc: RequestValidationError) -> JSONResponse:
+    """Normalize framework validation errors to the same response shape."""
+
     return JSONResponse(
         status_code=422,
         content={
@@ -121,6 +168,6 @@ async def validation_exception_handler(_, exc: RequestValidationError) -> JSONRe
             "status": 422,
             "detail": "Request validation failed",
             "error": "VALIDATION_ERROR",
-            "errors": exc.errors(),
+            "errors": exc.errors(include_input=False),
         },
     )

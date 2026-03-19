@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
@@ -14,7 +15,11 @@ class MongoDatabase:
         self.db: AsyncIOMotorDatabase | None = None
 
     async def connect(self) -> None:
-        self.client = AsyncIOMotorClient(self.settings.MONGODB_URI)
+        self.client = AsyncIOMotorClient(
+            self.settings.MONGODB_URI,
+            tz_aware=True,
+            tzinfo=UTC,
+        )
         self.db = self.client[self.settings.MONGODB_DB_NAME]
 
     async def close(self) -> None:
@@ -24,8 +29,12 @@ class MongoDatabase:
     async def ensure_indexes(self) -> None:
         assert self.db is not None
         await self.db.documents.create_index("doc_id", unique=True)
+        await self.db.documents.create_index("batch_id")
         await self.db.documents.create_index("status")
         await self.db.documents.create_index("uploaded_at")
+        await self.db.document_batches.create_index("batch_id", unique=True)
+        await self.db.document_batches.create_index("status")
+        await self.db.document_batches.create_index("created_at")
         await self.db.chunks.create_index("chunk_id", unique=True)
         await self.db.chunks.create_index("doc_id")
         await self.db.chunks.create_index("language")
@@ -49,4 +58,3 @@ class MongoDatabase:
 
     async def insert_one(self, name: str, payload: dict[str, Any]) -> None:
         await self.collection(name).insert_one(payload)
-

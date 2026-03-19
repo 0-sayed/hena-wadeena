@@ -36,10 +36,6 @@ def get_hybrid_search(request: Request) -> HybridSearchService:
     return request.app.state.hybrid_search
 
 
-def get_query_processor(request: Request) -> QueryProcessor:
-    return request.app.state.query_processor
-
-
 def get_reranker(request: Request) -> RerankerService:
     return request.app.state.reranker
 

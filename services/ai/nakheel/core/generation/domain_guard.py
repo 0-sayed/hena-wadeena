@@ -22,8 +22,14 @@ def localized_refusal(language: str) -> str:
 
 
 def post_process_response(response_text: str, language: str) -> str:
-    refusal = localized_refusal(language)
-    if "only help with questions about New Valley" in response_text:
-        return refusal
+    normalized = response_text.strip().lower()
+    refusal_markers = {
+        "en": ("only help with questions about new valley", "i'm nakheel, and i can only help"),
+        "ar-eg": ("\u0645\u0634 \u0642\u0627\u062f\u0631 \u0623\u0633\u0627\u0639\u062f\u0643", "\u0623\u0646\u0627 \u0646\u062e\u064a\u0644"),
+        "ar-msa": ("\u0644\u0627 \u0623\u0633\u062a\u0637\u064a\u0639 \u0627\u0644\u0625\u062c\u0627\u0628\u0629", "\u0623\u0646\u0627 \u0646\u062e\u064a\u0644"),
+        "mixed": ("only help with questions about new valley", "\u0623\u0646\u0627 \u0646\u062e\u064a\u0644"),
+    }
+    markers = refusal_markers.get(language, refusal_markers["en"])
+    if any(marker in normalized for marker in markers):
+        return localized_refusal(language)
     return response_text.strip()
-

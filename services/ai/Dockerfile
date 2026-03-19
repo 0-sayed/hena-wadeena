@@ -1,8 +1,11 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
+ENV HF_HOME=/app/.cache/huggingface
+ENV HUGGINGFACE_HUB_CACHE=/app/.cache/huggingface/hub
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface/transformers
 
 WORKDIR /app
 
@@ -16,7 +19,13 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
-EXPOSE 8000
+RUN groupadd --gid 10001 appuser \
+    && useradd --uid 10001 --gid appuser --shell /usr/sbin/nologin --no-create-home appuser \
+    && mkdir -p /app/.cache/huggingface/hub /app/.cache/huggingface/transformers \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 7000
 
 CMD ["python", "docker/wait_for_services.py"]
-

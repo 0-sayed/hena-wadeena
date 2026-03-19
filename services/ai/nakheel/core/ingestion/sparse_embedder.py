@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import math
 import re
 from collections import Counter
@@ -34,4 +35,5 @@ class SparseEmbedder:
 
     @staticmethod
     def _token_to_index(token: str) -> int:
-        return abs(hash(token)) % (2**31 - 1)
+        digest = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+        return int.from_bytes(digest, "big") % (2**31 - 1)

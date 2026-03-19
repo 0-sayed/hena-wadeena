@@ -4,7 +4,8 @@ import re
 from dataclasses import dataclass
 
 try:
-    from langdetect import detect_langs
+    from langdetect import DetectorFactory, detect_langs
+    DetectorFactory.seed = 0
 except ImportError:  # pragma: no cover
     detect_langs = None
 

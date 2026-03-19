@@ -21,9 +21,18 @@ def test_rrf_fusion_deduplicates_and_orders():
 def test_domain_guard_threshold():
     chunk = SimpleNamespace(chunk=SimpleNamespace())
     assert is_domain_relevant([ScoredChunk(chunk=chunk, score=0.5)], 0.35)
+    assert is_domain_relevant([ScoredChunk(chunk=chunk, score=0.35)], 0.35)
     assert not is_domain_relevant([ScoredChunk(chunk=chunk, score=0.2)], 0.35)
+
+
+def test_rrf_fusion_rejects_negative_k():
+    try:
+        fuse_ranked_results([], [], k=-1)
+    except ValueError as exc:
+        assert "k must be >= 0" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for negative k")
 
 
 def test_localized_refusal_defaults_to_english():
     assert localized_refusal("unknown").startswith("Sorry")
-

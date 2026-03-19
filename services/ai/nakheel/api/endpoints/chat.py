@@ -29,6 +29,8 @@ router = APIRouter(prefix="/chat")
 
 
 def _map_sources(retrieved_chunks: list[RetrievedChunkRef]) -> list[dict]:
+    """Convert internal chunk references to API response payloads."""
+
     return [
         {
             "chunk_id": chunk.chunk_id,
@@ -41,11 +43,28 @@ def _map_sources(retrieved_chunks: list[RetrievedChunkRef]) -> list[dict]:
     ]
 
 
+def _build_retrieved_refs(reranked_results) -> list[RetrievedChunkRef]:
+    """Flatten reranked chunks into the persisted source-reference model."""
+
+    return [
+        RetrievedChunkRef(
+            chunk_id=result.chunk.chunk.chunk_id,
+            doc_id=result.chunk.chunk.doc_id,
+            section_title=result.chunk.chunk.section_title,
+            score=result.score,
+            text_snippet=result.chunk.chunk.text[:200],
+        )
+        for result in reranked_results
+    ]
+
+
 @router.post("/sessions", status_code=201)
 async def create_session(
     payload: CreateSessionRequest,
     session_manager: SessionManager = Depends(get_session_manager),
 ):
+    """Create a new chat session and return the localized greeting."""
+
     session = await session_manager.create_session(
         user_id=payload.user_id,
         language_preference=payload.language_preference,
@@ -73,6 +92,8 @@ async def send_message(
     llm_client: LLMClient = Depends(get_llm_client),
     prompt_builder: PromptBuilder = Depends(get_prompt_builder),
 ):
+    """Handle the full chat pipeline from retrieval to grounded response generation."""
+
     started = time.perf_counter()
     session = await session_manager.get_session(session_id)
     language = session_manager.detect_or_prefer_language(session.language or payload.language, payload.content)
@@ -83,21 +104,12 @@ async def send_message(
         language=language,
     )
 
-    processed = query_processor.process(payload.content)
+    processed = await query_processor.process_async(payload.content)
     candidates = await hybrid_search.search(processed)
-    reranked = reranker.rerank(processed.normalized_text, candidates)
+    reranked = await reranker.rerank_async(processed.normalized_text, candidates)
     domain_relevant = is_domain_relevant(reranked, get_settings().RELEVANCE_THRESHOLD)
 
-    retrieved_refs = [
-        RetrievedChunkRef(
-            chunk_id=item.chunk.chunk.chunk_id,
-            doc_id=item.chunk.chunk.doc_id,
-            section_title=item.chunk.chunk.section_title,
-            score=item.score,
-            text_snippet=item.chunk.chunk.text[:200],
-        )
-        for item in reranked
-    ]
+    retrieved_refs = _build_retrieved_refs(reranked)
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     if not domain_relevant:
@@ -129,7 +141,7 @@ async def send_message(
     user_prompt = prompt_builder.build_user_prompt(payload.content, context)
     history = await session_manager.build_context_window(session_id, user_prompt)
     messages = [{"role": "system", "content": system_prompt}, *history]
-    llm_response = llm_client.complete(messages)
+    llm_response = await llm_client.complete_async(messages)
     content = post_process_response(llm_response.content, language)
     assistant_message = await session_manager.save_message(
         session_id=session_id,
@@ -163,6 +175,8 @@ async def get_session(
     per_page: int = 20,
     session_manager: SessionManager = Depends(get_session_manager),
 ):
+    """Return paginated session details and stored message history."""
+
     session = await session_manager.get_session(session_id)
     messages, total = await session_manager.get_messages(session_id, page=page, per_page=per_page)
     return {
@@ -197,6 +211,8 @@ async def close_session(
     session_id: str,
     session_manager: SessionManager = Depends(get_session_manager),
 ):
+    """Close an existing session without deleting its stored history."""
+
     session = await session_manager.close_session(session_id)
     return {
         "session_id": session.session_id,

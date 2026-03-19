@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 from openai import OpenAI
@@ -17,6 +18,8 @@ class LLMResponse:
 
 
 class LLMClient:
+    """Thin wrapper around the OpenAI client with async-friendly entry points."""
+
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
@@ -25,6 +28,8 @@ class LLMClient:
         return self.client is not None
 
     def complete(self, messages: list[dict[str, str]]) -> LLMResponse:
+        """Send a chat completion request synchronously."""
+
         if self.client is None:
             return LLMResponse(
                 content="I don't have enough information about this in my knowledge base.",
@@ -48,9 +53,16 @@ class LLMClient:
         except Exception as exc:
             raise LLMError("Failed to generate response") from exc
 
+    async def complete_async(self, messages: list[dict[str, str]]) -> LLMResponse:
+        """Offload the blocking client call to a worker thread."""
+
+        return await asyncio.to_thread(self.complete, messages)
+
     def startup_check(self) -> dict[str, str | bool]:
+        """Verify that the configured model can answer a minimal probe request."""
+
         if self.client is None:
-            return {"ok": False, "detail": "OPENAI_API_KEY is not configured"}
+            return {"ok": True, "detail": "OPENAI_API_KEY is not configured; using fallback responses"}
         try:
             response = self.client.chat.completions.create(
                 model=self.settings.OPENAI_MODEL,
@@ -62,3 +74,8 @@ class LLMClient:
             return {"ok": bool(content), "detail": f"LLM responded: {content}"}
         except Exception as exc:
             return {"ok": False, "detail": f"LLM startup check failed: {exc}"}
+
+    async def startup_check_async(self) -> dict[str, str | bool]:
+        """Async wrapper for startup readiness validation."""
+
+        return await asyncio.to_thread(self.startup_check)

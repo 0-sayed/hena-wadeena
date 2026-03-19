@@ -1,59 +1,66 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import math
 
-from nakheel.config import Settings
+from openai import OpenAI
 
-try:
-    from FlagEmbedding import BGEM3FlagModel
-except ImportError:  # pragma: no cover
-    BGEM3FlagModel = None
+from nakheel.config import Settings
 
 
 class DenseEmbedder:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self._model = None
-        if BGEM3FlagModel is not None:
-            try:
-                self._model = BGEM3FlagModel(
-                    settings.BGE_EMBEDDING_MODEL,
-                    use_fp16=settings.BGE_USE_FP16,
-                    device=settings.BGE_DEVICE,
-                )
-            except Exception:
-                self._model = None
+        self._dimensions = settings.OPENAI_EMBEDDING_DIMENSIONS
+        self._client = OpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        if self._model is not None:
-            result = self._model.encode(
-                texts,
-                batch_size=min(16, len(texts)),
-                max_length=self.settings.CHUNK_MAX_TOKENS,
-                return_dense=True,
-                return_sparse=False,
-                return_colbert_vecs=False,
-            )
-            return [list(vector) for vector in result["dense_vecs"]]
-        return [self._fallback_dense(text) for text in texts]
+        if self._client is not None:
+            vectors: list[list[float]] = []
+            for start in range(0, len(texts), 32):
+                batch = texts[start : start + 32]
+                response = self._client.embeddings.create(
+                    model=self.settings.OPENAI_EMBEDDING_MODEL,
+                    input=batch,
+                    dimensions=self._dimensions,
+                )
+                vectors.extend([list(item.embedding) for item in response.data])
+            return vectors
+        return [self._fallback_dense(text, self._dimensions) for text in texts]
 
     def embed_query(self, query: str) -> list[float]:
         return self.embed_texts([query])[0]
 
+    async def embed_texts_async(self, texts: list[str]) -> list[list[float]]:
+        return await asyncio.to_thread(self.embed_texts, texts)
+
+    async def embed_query_async(self, query: str) -> list[float]:
+        return await asyncio.to_thread(self.embed_query, query)
+
     def is_model_loaded(self) -> bool:
-        return self._model is not None
+        return self._client is not None
 
     def startup_check(self) -> dict[str, str | bool]:
-        if self._model is None:
-            return {"ok": False, "detail": "BGE embedding model is not loaded"}
-        sample = self.embed_query("startup health check for embeddings")
-        return {"ok": bool(sample and len(sample) == 1024), "detail": "embedding model loaded"}
+        if self._client is None:
+            sample = self._fallback_dense("startup health check for embeddings", self._dimensions)
+            return {
+                "ok": bool(sample and len(sample) == self._dimensions),
+                "detail": "using deterministic fallback embedding backend",
+            }
+        try:
+            sample = self.embed_query("startup health check for embeddings")
+        except Exception as exc:
+            return {"ok": False, "detail": f"embedding startup check failed: {exc}"}
+        return {"ok": bool(sample and len(sample) == self._dimensions), "detail": "OpenAI embedding model loaded"}
+
+    async def startup_check_async(self) -> dict[str, str | bool]:
+        return await asyncio.to_thread(self.startup_check)
 
     @staticmethod
-    def _fallback_dense(text: str, dimensions: int = 1024) -> list[float]:
+    def _fallback_dense(text: str, dimensions: int) -> list[float]:
         values = [0.0] * dimensions
         for token in text.lower().split():
             digest = hashlib.sha256(token.encode("utf-8")).digest()

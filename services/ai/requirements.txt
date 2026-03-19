@@ -1,20 +1,38 @@
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-python-multipart
-pydantic>=2.0
-pydantic-settings>=2.2.1
-motor>=3.4.0
-pymongo>=4.7.0
-qdrant-client>=1.9.0
-docling>=1.0.0
-FlagEmbedding>=1.2.9
-openai>=1.30.0
-langdetect>=1.0.9
-python-dotenv>=1.0.0
-tiktoken>=0.7.0
-httpx>=0.27.0
-loguru>=0.7.0
-pypdf>=4.2.0
-pytest>=8.2.0
-pytest-asyncio>=0.23.7
+# --- Core API & Validation ---
+fastapi==0.115.6
+uvicorn==0.32.1
+python-multipart==0.0.19
+pydantic==2.11.5
+pydantic-settings==2.6.1
+loguru==0.7.3
 
+# --- Database & Storage ---
+motor==3.7.1
+pymongo==4.10.1
+qdrant-client==1.16.1
+
+# --- LlamaIndex / Vector Abstractions ---
+llama-index==0.14.13
+llama-index-core==0.14.13
+llama-index-vector-stores-qdrant==0.9.1
+fastembed==0.3.4
+
+# --- OpenAI / Tokenization ---
+openai>=1.0
+tiktoken>=0.7.0
+
+# --- PDF Parsing ---
+pypdf==5.1.0
+docling==2.7.0
+docling-core==2.7.0
+
+# --- Retrieval / Reranking ---
+FlagEmbedding==1.3.3
+transformers==4.44.2
+torch==2.5.1
+sentence-transformers>=2.0,<3.0
+
+# --- Language / Utilities ---
+langdetect==1.0.9
+python-dotenv==1.0.1
+numpy==1.26.4

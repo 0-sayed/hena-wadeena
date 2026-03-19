@@ -4,50 +4,33 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: nakheel-app
+    network_mode: host
     env_file:
       - .env
     environment:
-      MONGODB_URI: mongodb://mongo:27017
-      QDRANT_HOST: qdrant
+      MONGODB_URI: mongodb://127.0.0.1:27017
+      QDRANT_HOST: 127.0.0.1
       QDRANT_PORT: 6333
-      TEMP_DIR: /app/tmp/nakheel
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./tmp:/app/tmp
+      TEMP_DIR: /tmp/nakheel
     depends_on:
-      mongo:
-        condition: service_healthy
       qdrant:
-        condition: service_started
-    restart: unless-stopped
-
-  mongo:
-    image: mongo:7
-    container_name: nakheel-mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+        condition: service_healthy
     restart: unless-stopped
 
   qdrant:
-    image: qdrant/qdrant:v1.9.1
+    image: qdrant/qdrant:latest
     container_name: nakheel-qdrant
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 volumes:
-  mongo_data:
   qdrant_data:
-

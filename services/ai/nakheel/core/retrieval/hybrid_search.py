@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 from nakheel.config import Settings
@@ -18,14 +19,20 @@ class CandidateChunk:
 
 
 class HybridSearchService:
+    """Runs dense and sparse retrieval, then merges results with RRF."""
+
     def __init__(self, settings: Settings, qdrant: QdrantDatabase, mongo: MongoDatabase) -> None:
         self.settings = settings
         self.qdrant = qdrant
         self.mongo = mongo
 
     async def search(self, query: ProcessedQuery) -> list[CandidateChunk]:
-        dense_results = self.qdrant.dense_search(query.dense_vector, self.settings.DENSE_TOP_K)
-        sparse_results = self.qdrant.sparse_search(query.sparse_vector, self.settings.SPARSE_TOP_K)
+        """Search Qdrant and hydrate the matching chunks from MongoDB."""
+
+        dense_results, sparse_results = await asyncio.gather(
+            self.qdrant.dense_search_async(query.dense_vector, self.settings.DENSE_TOP_K),
+            self.qdrant.sparse_search_async(query.sparse_vector, self.settings.SPARSE_TOP_K),
+        )
         fused = fuse_ranked_results(
             dense_results,
             sparse_results,
@@ -45,4 +52,3 @@ class HybridSearchService:
             for item in fused
             if item["point"].payload["chunk_id"] in chunk_map
         ]
-
