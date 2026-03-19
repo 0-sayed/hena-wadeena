@@ -1,7 +1,8 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 
 import { S3Service } from './s3.service';
-import { S3_CONFIG, S3ModuleOptions } from './s3.tokens';
+import { S3_CONFIG } from './s3.tokens';
+import type { S3ModuleOptions } from './s3.tokens';
 
 export { S3_CONFIG };
 export type { S3ModuleOptions };

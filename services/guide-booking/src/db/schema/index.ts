@@ -3,6 +3,7 @@ import { relations } from 'drizzle-orm';
 export { guideBookingSchema } from '../schema';
 
 export * from '../enums';
+export { attractions } from './attractions';
 export { guideAvailability } from './guide-availability';
 export { bookings } from './bookings';
 export { guides } from './guides';
