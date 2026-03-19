@@ -23,7 +23,7 @@ export class RedisModule implements OnModuleDestroy {
       provide: REDIS_CLIENT,
       useFactory: () => {
         const client = new Redis(options.url, {
-          password: options.password ?? undefined,
+          password: options.password?.trim() ? options.password : undefined,
           keyPrefix: options.keyPrefix,
           lazyConnect: false,
           maxRetriesPerRequest: 3,

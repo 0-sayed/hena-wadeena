@@ -31,8 +31,8 @@ const config: KnipConfig = {
     'services/guide-booking': {
       entry: ['src/main.ts', 'src/db/migrate.ts'],
       project: ['src/**/*.ts'],
-      // drizzle-zod: planned for DTO generation from Drizzle schemas (roadmap tech stack)
-      ignoreDependencies: ['drizzle-zod', '@nestjs/testing'],
+      // drizzle-zod: planned for DTO generation; @hena-wadeena/types will be used as features are built out
+      ignoreDependencies: ['drizzle-zod', '@hena-wadeena/types', '@nestjs/testing'],
     },
     'services/map': {
       entry: ['src/main.ts', 'src/db/migrate.ts'],
