@@ -59,6 +59,12 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 - **Monetary values: integer (piasters, 1 EGP = 100 piasters). NEVER float/decimal.**
 - Schema isolation: each service uses its own PostgreSQL schema via `search_path`
 
+### Drizzle Migrations
+- Generated migrations (`drizzle-kit generate`) are **machine-owned** — do NOT manually edit them. Fix the schema `.ts` files and regenerate instead.
+- Custom SQL (triggers, functions, RLS policies, seed data) goes in a **separate** migration file: `drizzle-kit generate --custom --name=<description>`. This keeps generated DDL and hand-written SQL cleanly separated.
+- Migration files live at `services/<name>/drizzle/` with `meta/_journal.json` tracking apply order.
+- When reviewing migrations, only review `--custom` files — generated `.sql` files are derived from the schema and should not be nitpicked.
+
 ### API
 - Global prefix: `/api/v1`
 - Health check: `/health` (excluded from prefix for Docker healthcheck)
@@ -94,12 +100,17 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 
 - NEVER use `float` or `decimal` for money — always integer piasters
 - NEVER modify applied Drizzle migrations
+- NEVER append custom SQL (triggers, functions, etc.) to generated migration files — use `drizzle-kit generate --custom` instead
 - NEVER use `drizzle-kit push` — always `drizzle-kit generate` + `migrate.ts` (dev and prod alike)
 - NEVER import `@hena-wadeena/nest-common` from frontend code
 - NEVER add cross-schema JOINs in database queries
 - NEVER commit `.env` files or real secrets
-- NEVER use `any` without justification (warn-level ESLint rule)
+- NEVER use `any` without justification (error-level ESLint rule)
 - NEVER skip `strict: true` in TypeScript configs
+- NEVER add `eslint-disable` comments to satisfy a warning-level rule — warnings are intentional review signals, not errors to suppress
+- NEVER add `as unknown as T` double-casts — if a single `as T` triggers a warning, let it warn
+- NEVER add JSDoc comments (`@public`, `@internal`) just to suppress tooling — fix the root cause (e.g., remove unnecessary `export`) instead
+- NEVER enable `noPropertyAccessFromIndexSignature` — it creates `process.env['X']` noise with zero safety benefit
 
 ## File Paths
 

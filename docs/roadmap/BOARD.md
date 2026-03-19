@@ -38,8 +38,8 @@
 
 ## Layer 1 — Core Services
 
-- [ ] **T05** Identity: Auth Core · M · ← T01
-- [ ] **T06** Market: Core CRUD · M · ← T01, T03
+- [X] **T05** Identity: Auth Core · M · ← T01
+- [X] **T06** Market: Core CRUD · M · ← T01, T03
 - [ ] **T07** Guide-Booking: Attractions · M · ← T01, T04
 - [ ] **T08** RAG: Ingestion Pipeline · M · ← T02, T02a
 - [ ] **F01** Frontend Foundation · M · ← F00
