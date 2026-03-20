@@ -6,7 +6,15 @@ export enum UserRole {
   INVESTOR = 'investor',
   STUDENT = 'student',
   DRIVER = 'driver',
+  MODERATOR = 'moderator',
+  REVIEWER = 'reviewer',
   ADMIN = 'admin',
+}
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  BANNED = 'banned',
 }
 
 export enum KycStatus {

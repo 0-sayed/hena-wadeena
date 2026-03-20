@@ -23,6 +23,7 @@ const mockUser = {
   lastLoginAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
 };
 
 describe('AuthService', () => {
