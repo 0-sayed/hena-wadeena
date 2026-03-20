@@ -495,25 +495,31 @@ describe('CommodityPricesService', () => {
     const query = { offset: 0, limit: 20 };
 
     it('should return cached response on cache hit without hitting DB', async () => {
-      const cachedRows = [
-        {
-          commodity: {
-            id: 'commodity-uuid-001',
-            nameAr: 'تمور',
-            nameEn: 'Dates',
-            unit: 'kg',
-            category: 'fruits',
+      const cachedResponse = {
+        data: [
+          {
+            commodity: {
+              id: 'commodity-uuid-001',
+              nameAr: 'تمور',
+              nameEn: 'Dates',
+              unit: 'kg',
+              category: 'fruits',
+            },
+            latestPrice: 1500,
+            previousPrice: 1400,
+            changePiasters: 100,
+            changePercent: 7.14,
+            region: 'kharga',
+            priceType: 'wholesale',
+            recordedAt: new Date('2026-01-15').toISOString(),
           },
-          latestPrice: 1500,
-          previousPrice: 1400,
-          changePiasters: 100,
-          changePercent: 7.14,
-          region: 'kharga',
-          priceType: 'wholesale',
-          recordedAt: new Date('2026-01-15').toISOString(),
-        },
-      ];
-      mockRedis.get.mockResolvedValueOnce(JSON.stringify({ rows: cachedRows, total: 1 }));
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        hasMore: false,
+      };
+      mockRedis.get.mockResolvedValueOnce(JSON.stringify(cachedResponse));
 
       const result = await service.getPriceIndex(query as never);
 
@@ -536,11 +542,13 @@ describe('CommodityPricesService', () => {
         region: 'kharga',
         recorded_at: new Date('2026-01-15'),
       };
+      // First execute = COUNT query, second = data query
+      mockDb.execute.mockResolvedValueOnce([{ count: 1 }]);
       mockDb.execute.mockResolvedValueOnce([rawRow]);
 
       const result = await service.getPriceIndex(query as never);
 
-      expect(mockDb.execute).toHaveBeenCalled();
+      expect(mockDb.execute).toHaveBeenCalledTimes(2);
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
       expect(result.page).toBe(1);
@@ -549,6 +557,7 @@ describe('CommodityPricesService', () => {
 
     it('should compute changePiasters and changePercent from latest and previous prices', async () => {
       mockRedis.get.mockResolvedValueOnce(null);
+      mockDb.execute.mockResolvedValueOnce([{ count: 1 }]);
       mockDb.execute.mockResolvedValueOnce([
         {
           commodity_id: 'c1',
@@ -573,6 +582,7 @@ describe('CommodityPricesService', () => {
 
     it('should return null changePiasters and changePercent when no previous price exists', async () => {
       mockRedis.get.mockResolvedValueOnce(null);
+      mockDb.execute.mockResolvedValueOnce([{ count: 1 }]);
       mockDb.execute.mockResolvedValueOnce([
         {
           commodity_id: 'c1',
@@ -597,24 +607,24 @@ describe('CommodityPricesService', () => {
 
     it('should paginate correctly with offset and limit', async () => {
       mockRedis.get.mockResolvedValueOnce(null);
-      // Simulate 3 rows in total
-      const rows = Array.from({ length: 3 }, (_, i) => ({
-        commodity_id: `c${i}`,
-        name_ar: `commodity-${i}`,
+      // DB-level: COUNT returns 3 total, data query returns the 2-row slice
+      mockDb.execute.mockResolvedValueOnce([{ count: 3 }]);
+      const pageRows = Array.from({ length: 2 }, (_, i) => ({
+        commodity_id: `c${i + 1}`,
+        name_ar: `commodity-${i + 1}`,
         name_en: null,
         unit: 'kg',
         category: 'fruits',
-        latest_price: 1000 + i * 100,
+        latest_price: 1100 + i * 100,
         previous_price: null,
         price_type: 'wholesale',
         region: 'kharga',
         recorded_at: new Date('2026-01-15'),
       }));
-      mockDb.execute.mockResolvedValueOnce(rows);
+      mockDb.execute.mockResolvedValueOnce(pageRows);
 
       const result = await service.getPriceIndex({ offset: 1, limit: 2 } as never);
 
-      // Slices rows[1..2] from the full set of 3
       expect(result.data).toHaveLength(2);
       expect(result.total).toBe(3);
       expect(result.page).toBe(1); // Math.floor(1/2) + 1 = 1
@@ -623,6 +633,7 @@ describe('CommodityPricesService', () => {
 
     it('should cache the computed result for 1 hour', async () => {
       mockRedis.get.mockResolvedValueOnce(null);
+      mockDb.execute.mockResolvedValueOnce([{ count: 0 }]);
       mockDb.execute.mockResolvedValueOnce([]);
 
       await service.getPriceIndex(query as never);

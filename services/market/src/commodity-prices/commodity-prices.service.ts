@@ -381,21 +381,28 @@ export class CommodityPricesService {
   // --- Price Index ---
 
   async getPriceIndex(query: QueryPriceIndexDto): Promise<PaginatedResponse<unknown>> {
-    const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}`;
+    const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}:${query.offset}:${query.limit}`;
     const cached = await this.redis.get(cacheKey);
     if (cached) {
-      const parsed = JSON.parse(cached) as { rows: unknown[]; total: number };
-      return paginate(
-        parsed.rows.slice(query.offset, query.offset + query.limit),
-        parsed.total,
-        query.offset,
-        query.limit,
-      );
+      return JSON.parse(cached) as PaginatedResponse<unknown>;
     }
 
     const categoryFilter = query.category ? sql`AND c.category = ${query.category}` : sql``;
     const regionFilter = query.region ? sql`AND cp.region = ${query.region}` : sql``;
     const priceTypeFilter = query.price_type ? sql`AND cp.price_type = ${query.price_type}` : sql``;
+
+    const countRows = await this.db.execute<{ count: number }>(sql`
+      SELECT COUNT(*) AS count FROM (
+        SELECT DISTINCT ON (cp.commodity_id, cp.region, cp.price_type) 1
+        FROM market.commodity_prices cp
+        JOIN market.commodities c ON c.id = cp.commodity_id
+        WHERE cp.deleted_at IS NULL
+          AND c.is_active = true
+          ${categoryFilter}
+          ${regionFilter}
+          ${priceTypeFilter}
+      ) sub
+    `);
 
     const rows = await this.db.execute<PriceIndexRow>(sql`
       WITH latest AS (
@@ -447,19 +454,19 @@ export class CommodityPricesService {
         recorded_at
       FROM with_prev
       ORDER BY commodity_id, region, price_type
+      LIMIT ${query.limit}
+      OFFSET ${query.offset}
     `);
 
     const formatted = [...rows].map(formatPriceIndexRow);
+    const total = countRows[0]?.count ?? 0;
+    const response = paginate(formatted, total, query.offset, query.limit);
 
-    // Cache the formatted result (avoids re-formatting on cache hit)
-    this.redis
-      .set(cacheKey, JSON.stringify({ rows: formatted, total: formatted.length }), 'EX', 3600)
-      .catch((err: unknown) => {
-        this.logger.error('Cache set failed', err);
-      });
+    this.redis.set(cacheKey, JSON.stringify(response), 'EX', 3600).catch((err: unknown) => {
+      this.logger.error('Cache set failed', err);
+    });
 
-    const slice = formatted.slice(query.offset, query.offset + query.limit);
-    return paginate(slice, formatted.length, query.offset, query.limit);
+    return response;
   }
 
   async getPriceSummary() {
