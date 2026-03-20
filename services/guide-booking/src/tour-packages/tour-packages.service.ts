@@ -233,6 +233,9 @@ export class TourPackagesService {
         LEFT JOIN guide_booking.attractions a ON a.id = tpa.attraction_id
         WHERE tp.status = 'active'
           AND tp.deleted_at IS NULL
+          AND g.active = true
+          AND g.license_verified = true
+          AND g.deleted_at IS NULL
           ${filters}
         GROUP BY tp.id, g.id
         ORDER BY tp.created_at DESC
@@ -242,8 +245,12 @@ export class TourPackagesService {
       this.db.execute(sql`
         SELECT COUNT(*)::int AS total
         FROM guide_booking.tour_packages tp
+        JOIN guide_booking.guides g ON g.id = tp.guide_id
         WHERE tp.status = 'active'
           AND tp.deleted_at IS NULL
+          AND g.active = true
+          AND g.license_verified = true
+          AND g.deleted_at IS NULL
           ${filters}
       `),
     ]);
@@ -303,6 +310,9 @@ export class TourPackagesService {
       WHERE tp.id = ${id}
         AND tp.status = 'active'
         AND tp.deleted_at IS NULL
+        AND g.active = true
+        AND g.license_verified = true
+        AND g.deleted_at IS NULL
       GROUP BY tp.id, g.id
     `);
 

@@ -34,6 +34,7 @@ export class GuidesService {
 
     if (!includeAll) {
       conditions.push(eq(guides.active, true));
+      conditions.push(eq(guides.licenseVerified, true));
       conditions.push(isNull(guides.deletedAt));
     }
 
@@ -210,7 +211,14 @@ export class GuidesService {
         reviewCount: reviewCountSq,
       })
       .from(guides)
-      .where(and(eq(guides.id, id), eq(guides.active, true), isNull(guides.deletedAt)))
+      .where(
+        and(
+          eq(guides.id, id),
+          eq(guides.active, true),
+          eq(guides.licenseVerified, true),
+          isNull(guides.deletedAt),
+        ),
+      )
       .limit(1);
 
     if (!row) throw new NotFoundException(`Guide not found: ${id}`);
@@ -222,7 +230,14 @@ export class GuidesService {
     const [guideRow] = await this.db
       .select({ id: guides.id })
       .from(guides)
-      .where(and(eq(guides.id, guideId), eq(guides.active, true), isNull(guides.deletedAt)))
+      .where(
+        and(
+          eq(guides.id, guideId),
+          eq(guides.active, true),
+          eq(guides.licenseVerified, true),
+          isNull(guides.deletedAt),
+        ),
+      )
       .limit(1);
 
     if (!guideRow) throw new NotFoundException(`Guide not found: ${guideId}`);
