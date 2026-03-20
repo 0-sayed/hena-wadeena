@@ -15,6 +15,20 @@
       "when": 1773525203660,
       "tag": "20260314215323_rich_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773962209620,
+      "tag": "20260319231649_narrow_human_fly",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773962217948,
+      "tag": "20260319231657_add-admin-audit-event-types",
+      "breakpoints": true
     }
   ]
 }

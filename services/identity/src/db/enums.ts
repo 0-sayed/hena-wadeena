@@ -25,4 +25,7 @@ export const auditEventTypeEnum = identitySchema.enum('audit_event_type', [
   'token_refreshed',
   'account_suspended',
   'account_banned',
+  'role_changed',
+  'account_activated',
+  'account_deleted',
 ]);
