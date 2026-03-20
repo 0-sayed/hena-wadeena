@@ -192,8 +192,12 @@ export class CommodityPricesService {
 
   async findCommodityById(id: string) {
     const cacheKey = `mkt:commodity:${id}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch (err) {
+      this.logger.error('Redis read failed, falling back to DB', err);
+    }
 
     const [commodity] = await this.db
       .select()
@@ -241,25 +245,11 @@ export class CommodityPricesService {
 
       const entry = firstOrThrow(rows);
 
-      const commodityRow = await this.db
-        .select({ nameAr: commodities.nameAr })
-        .from(commodities)
-        .where(eq(commodities.id, dto.commodityId))
-        .limit(1);
-
-      this.redisStreams
-        .publish(EVENTS.COMMODITY_PRICE_UPDATED, {
-          commodityId: dto.commodityId,
-          nameAr: commodityRow[0]?.nameAr ?? '',
-          region: dto.region,
-          price: String(dto.price),
-          priceType: dto.priceType,
-        })
-        .catch((err: unknown) => {
-          this.logger.error(`Failed to publish ${EVENTS.COMMODITY_PRICE_UPDATED}`, err);
-        });
-
       this.invalidatePriceCache(dto.commodityId);
+
+      // Best-effort enrichment: don't let a post-write failure hide the committed write
+      this.enrichAndPublishPrice(dto.commodityId, dto.region, dto.price, dto.priceType);
+
       return entry;
     } catch (err) {
       if (isForeignKeyViolation(err)) {
@@ -303,35 +293,18 @@ export class CommodityPricesService {
       throw err;
     }
 
-    // Batch-fetch commodity names (single query instead of N per entry)
-    const uniqueCommodityIds = [...new Set(entries.map((e) => e.commodityId))];
-    const commodityRows = await this.db
-      .select({ id: commodities.id, nameAr: commodities.nameAr })
-      .from(commodities)
-      .where(inArray(commodities.id, uniqueCommodityIds));
-    const nameMap = new Map(commodityRows.map((r) => [r.id, r.nameAr]));
-
-    for (const entry of entries) {
-      this.redisStreams
-        .publish(EVENTS.COMMODITY_PRICE_UPDATED, {
-          commodityId: entry.commodityId,
-          nameAr: nameMap.get(entry.commodityId) ?? '',
-          region: entry.region,
-          price: String(entry.price),
-          priceType: entry.priceType,
-        })
-        .catch((err: unknown) => {
-          this.logger.error(`Failed to publish ${EVENTS.COMMODITY_PRICE_UPDATED}`, err);
-        });
-    }
-
     this.invalidatePriceCache();
     // Also evict per-commodity detail caches for all affected commodities
+    const uniqueCommodityIds = [...new Set(entries.map((e) => e.commodityId))];
     for (const cid of uniqueCommodityIds) {
       this.redis.del(`mkt:commodity:${cid}`).catch((err: unknown) => {
         this.logger.error('Cache invalidation failed', err);
       });
     }
+
+    // Best-effort enrichment: don't let post-write failures hide committed writes
+    this.enrichAndPublishBatch(entries, uniqueCommodityIds);
+
     return entries;
   }
 
@@ -382,9 +355,13 @@ export class CommodityPricesService {
 
   async getPriceIndex(query: QueryPriceIndexDto): Promise<PaginatedResponse<unknown>> {
     const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}:${query.offset}:${query.limit}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached) as PaginatedResponse<unknown>;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached) as PaginatedResponse<unknown>;
+      }
+    } catch (err) {
+      this.logger.error('Redis read failed, falling back to DB', err);
     }
 
     const categoryFilter = query.category ? sql`AND c.category = ${query.category}` : sql``;
@@ -471,8 +448,12 @@ export class CommodityPricesService {
 
   async getPriceSummary() {
     const cacheKey = 'mkt:price-summary';
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch (err) {
+      this.logger.error('Redis read failed, falling back to DB', err);
+    }
 
     const [[summary], topMovers, categoryAverages] = await Promise.all([
       this.db.execute<PriceSummaryRow>(sql`
@@ -483,15 +464,17 @@ export class CommodityPricesService {
       `),
       this.db.execute<TopMoverRow>(sql`
         WITH latest AS (
-          SELECT DISTINCT ON (commodity_id)
+          SELECT DISTINCT ON (commodity_id, region, price_type)
             cp.commodity_id,
             cp.price AS latest_price,
+            cp.region,
+            cp.price_type,
             cp.recorded_at,
             c.name_ar
           FROM market.commodity_prices cp
           JOIN market.commodities c ON c.id = cp.commodity_id
           WHERE cp.deleted_at IS NULL AND c.is_active = true
-          ORDER BY commodity_id, recorded_at DESC
+          ORDER BY commodity_id, region, price_type, recorded_at DESC
         ),
         with_prev AS (
           SELECT
@@ -502,6 +485,8 @@ export class CommodityPricesService {
               SELECT cp2.price
               FROM market.commodity_prices cp2
               WHERE cp2.commodity_id = l.commodity_id
+                AND cp2.region = l.region
+                AND cp2.price_type = l.price_type
                 AND cp2.deleted_at IS NULL
                 AND cp2.recorded_at < l.recorded_at
               ORDER BY cp2.recorded_at DESC
@@ -633,6 +618,53 @@ export class CommodityPricesService {
   }
 
   // --- Cache helpers ---
+
+  private enrichAndPublishPrice(
+    commodityId: string,
+    region: string,
+    price: number,
+    priceType: string,
+  ): void {
+    (async () => {
+      const commodityRow = await this.db
+        .select({ nameAr: commodities.nameAr })
+        .from(commodities)
+        .where(eq(commodities.id, commodityId))
+        .limit(1);
+
+      await this.redisStreams.publish(EVENTS.COMMODITY_PRICE_UPDATED, {
+        commodityId,
+        nameAr: commodityRow[0]?.nameAr ?? '',
+        region,
+        price: String(price),
+        priceType,
+      });
+    })().catch((err: unknown) => {
+      this.logger.error('Post-write enrichment failed (write already committed)', err);
+    });
+  }
+
+  private enrichAndPublishBatch(entries: CommodityPrice[], uniqueCommodityIds: string[]): void {
+    (async () => {
+      const commodityRows = await this.db
+        .select({ id: commodities.id, nameAr: commodities.nameAr })
+        .from(commodities)
+        .where(inArray(commodities.id, uniqueCommodityIds));
+      const nameMap = new Map(commodityRows.map((r) => [r.id, r.nameAr]));
+
+      for (const entry of entries) {
+        await this.redisStreams.publish(EVENTS.COMMODITY_PRICE_UPDATED, {
+          commodityId: entry.commodityId,
+          nameAr: nameMap.get(entry.commodityId) ?? '',
+          region: entry.region,
+          price: String(entry.price),
+          priceType: entry.priceType,
+        });
+      }
+    })().catch((err: unknown) => {
+      this.logger.error('Post-write batch enrichment failed (writes already committed)', err);
+    });
+  }
 
   private invalidatePriceCache(commodityId?: string): void {
     const ops: Promise<unknown>[] = [

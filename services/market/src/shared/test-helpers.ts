@@ -1,8 +1,8 @@
 import { vi } from 'vitest';
 
-export type MockFn = ReturnType<typeof vi.fn>;
+type MockFn = ReturnType<typeof vi.fn>;
 
-export interface MockDbChain {
+interface MockDbChain {
   select: MockFn;
   from: MockFn;
   where: MockFn;
@@ -58,14 +58,14 @@ export function createMockDb(): MockDbChain {
   return chain;
 }
 
-export interface MockRedis {
+interface MockRedis {
   get: MockFn;
   set: MockFn;
   del: MockFn;
   scan: MockFn;
 }
 
-export interface MockRedisStreams {
+interface MockRedisStreams {
   publish: MockFn;
 }
 
