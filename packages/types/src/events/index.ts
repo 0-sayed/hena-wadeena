@@ -13,6 +13,8 @@ export const EVENTS = {
   OPPORTUNITY_PUBLISHED: 'opportunity.published',
   POI_APPROVED: 'poi.approved',
   KB_REBUILD_REQUESTED: 'kb.rebuild.requested',
+  BUSINESS_VERIFIED: 'business.verified',
+  COMMODITY_PRICE_UPDATED: 'commodity_price.updated',
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
