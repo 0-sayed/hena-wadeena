@@ -5,11 +5,15 @@ import { check, index, integer, text, timestamp, uuid } from 'drizzle-orm/pg-cor
 import { priceTypeEnum } from '../enums';
 import { marketSchema } from '../schema';
 
+import { commodities } from './commodities';
+
 export const commodityPrices = marketSchema.table(
   'commodity_prices',
   {
     id: uuid().primaryKey().$defaultFn(generateId),
-    commodityId: uuid('commodity_id').notNull(),
+    commodityId: uuid('commodity_id')
+      .notNull()
+      .references(() => commodities.id),
     price: integer().notNull(),
     priceType: priceTypeEnum('price_type').notNull(),
     region: text().notNull(),

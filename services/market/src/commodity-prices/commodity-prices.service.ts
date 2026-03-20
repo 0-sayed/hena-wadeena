@@ -82,6 +82,16 @@ function isUniqueViolation(err: unknown): boolean {
   );
 }
 
+/** Returns true if the error is a PostgreSQL foreign key violation (code 23503). */
+function isForeignKeyViolation(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as Record<string, unknown>).code === '23503'
+  );
+}
+
 function formatPriceIndexRow(r: PriceIndexRow) {
   const changePiasters = r.previous_price !== null ? r.latest_price - r.previous_price : null;
   const changePercent =
@@ -249,9 +259,12 @@ export class CommodityPricesService {
           this.logger.error(`Failed to publish ${EVENTS.COMMODITY_PRICE_UPDATED}`, err);
         });
 
-      this.invalidatePriceCache();
+      this.invalidatePriceCache(dto.commodityId);
       return entry;
     } catch (err) {
+      if (isForeignKeyViolation(err)) {
+        throw new NotFoundException('Commodity not found');
+      }
       if (isUniqueViolation(err)) {
         throw new ConflictException(
           'A price entry already exists for this commodity, region, and type on this day',
@@ -279,6 +292,9 @@ export class CommodityPricesService {
         return tx.insert(commodityPrices).values(values).returning();
       });
     } catch (err) {
+      if (isForeignKeyViolation(err)) {
+        throw new NotFoundException('Commodity not found');
+      }
       if (isUniqueViolation(err)) {
         throw new ConflictException(
           'One or more entries duplicate an existing price for the same commodity, region, type, and day',
@@ -310,6 +326,12 @@ export class CommodityPricesService {
     }
 
     this.invalidatePriceCache();
+    // Also evict per-commodity detail caches for all affected commodities
+    for (const cid of uniqueCommodityIds) {
+      this.redis.del(`mkt:commodity:${cid}`).catch((err: unknown) => {
+        this.logger.error('Cache invalidation failed', err);
+      });
+    }
     return entries;
   }
 
@@ -323,16 +345,25 @@ export class CommodityPricesService {
     if (dto.notes !== undefined) updates.notes = dto.notes;
     if (dto.recordedAt !== undefined) updates.recordedAt = new Date(dto.recordedAt);
 
-    const [updated] = await this.db
-      .update(commodityPrices)
-      .set(updates)
-      .where(andRequired(eq(commodityPrices.id, id), isNull(commodityPrices.deletedAt)))
-      .returning();
+    try {
+      const [updated] = await this.db
+        .update(commodityPrices)
+        .set(updates)
+        .where(andRequired(eq(commodityPrices.id, id), isNull(commodityPrices.deletedAt)))
+        .returning();
 
-    if (!updated) throw new NotFoundException('Price entry not found');
+      if (!updated) throw new NotFoundException('Price entry not found');
 
-    this.invalidatePriceCache();
-    return updated;
+      this.invalidatePriceCache(updated.commodityId);
+      return updated;
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        throw new ConflictException(
+          'A price entry already exists for this commodity, region, and type on this day',
+        );
+      }
+      throw err;
+    }
   }
 
   async deletePrice(id: string): Promise<void> {
@@ -340,11 +371,11 @@ export class CommodityPricesService {
       .update(commodityPrices)
       .set({ deletedAt: new Date() })
       .where(andRequired(eq(commodityPrices.id, id), isNull(commodityPrices.deletedAt)))
-      .returning({ id: commodityPrices.id });
+      .returning({ id: commodityPrices.id, commodityId: commodityPrices.commodityId });
 
     if (!deleted) throw new NotFoundException('Price entry not found');
 
-    this.invalidatePriceCache();
+    this.invalidatePriceCache(deleted.commodityId);
   }
 
   // --- Price Index ---
@@ -596,17 +627,27 @@ export class CommodityPricesService {
 
   // --- Cache helpers ---
 
-  private invalidatePriceCache(): void {
-    Promise.all([
+  private invalidatePriceCache(commodityId?: string): void {
+    const ops: Promise<unknown>[] = [
       scanAndDelete(this.redis, 'mkt:price-index:*'),
       this.redis.del('mkt:price-summary'),
-    ]).catch((err: unknown) => {
+    ];
+    // Also evict the commodity detail cache so latestPricesByRegion stays fresh
+    if (commodityId) {
+      ops.push(this.redis.del(`mkt:commodity:${commodityId}`));
+    }
+    Promise.all(ops).catch((err: unknown) => {
       this.logger.error('Cache invalidation failed', err);
     });
   }
 
   private invalidateCommodityCache(id: string): void {
-    this.redis.del(`mkt:commodity:${id}`).catch((err: unknown) => {
+    // Evict per-commodity detail AND public price caches (name/category/active shown there)
+    Promise.all([
+      this.redis.del(`mkt:commodity:${id}`),
+      scanAndDelete(this.redis, 'mkt:price-index:*'),
+      this.redis.del('mkt:price-summary'),
+    ]).catch((err: unknown) => {
       this.logger.error('Cache invalidation failed', err);
     });
   }

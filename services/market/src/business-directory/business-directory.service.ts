@@ -1,6 +1,7 @@
 import { DRIZZLE_CLIENT, REDIS_CLIENT, RedisStreamsService } from '@hena-wadeena/nest-common';
 import { EVENTS, PaginatedResponse } from '@hena-wadeena/types';
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -107,7 +108,7 @@ export class BusinessDirectoryService {
 
   // --- Ownership ---
 
-  async assertOwnership(id: string, userId: string): Promise<BusinessDirectory> {
+  private async findByIdOrThrow(id: string): Promise<BusinessDirectory> {
     const [business] = await this.db
       .select()
       .from(businessDirectories)
@@ -115,13 +116,37 @@ export class BusinessDirectoryService {
       .limit(1);
 
     if (!business) throw new NotFoundException('Business not found');
+    return business;
+  }
+
+  async assertOwnership(id: string, userId: string): Promise<BusinessDirectory> {
+    const business = await this.findByIdOrThrow(id);
     if (business.ownerId !== userId) throw new ForbiddenException('Not the business owner');
     return business;
+  }
+
+  // --- Validation helpers ---
+
+  private async validateCommodityIds(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    const existing = await this.db
+      .select({ id: commodities.id })
+      .from(commodities)
+      .where(inArray(commodities.id, ids));
+    if (existing.length !== ids.length) {
+      const found = new Set(existing.map((r) => r.id));
+      const missing = ids.filter((id) => !found.has(id));
+      throw new BadRequestException(`Invalid commodity IDs: ${missing.join(', ')}`);
+    }
   }
 
   // --- CRUD ---
 
   async create(dto: CreateBusinessDto, ownerId: string): Promise<BusinessDirectory> {
+    if (dto.commodityIds?.length) {
+      await this.validateCommodityIds(dto.commodityIds);
+    }
+
     const locationExpr = dto.location
       ? sql`public.ST_SetSRID(public.ST_MakePoint(${dto.location.lng}, ${dto.location.lat}), 4326)`
       : null;
@@ -159,8 +184,18 @@ export class BusinessDirectoryService {
     return business;
   }
 
-  async update(id: string, dto: UpdateBusinessDto, userId: string): Promise<BusinessDirectory> {
-    const business = await this.assertOwnership(id, userId);
+  async update(
+    id: string,
+    dto: UpdateBusinessDto,
+    userId: string,
+    role?: string,
+  ): Promise<BusinessDirectory> {
+    if (dto.commodityIds?.length) {
+      await this.validateCommodityIds(dto.commodityIds);
+    }
+
+    const business =
+      role === 'admin' ? await this.findByIdOrThrow(id) : await this.assertOwnership(id, userId);
 
     // Determine if re-verification is needed (spec §3.4)
     const hasReVerificationField = RE_VERIFICATION_FIELDS.some((field) => dto[field] !== undefined);
@@ -215,8 +250,12 @@ export class BusinessDirectoryService {
     return updated;
   }
 
-  async remove(id: string, userId: string): Promise<void> {
-    await this.assertOwnership(id, userId);
+  async remove(id: string, userId: string, role?: string): Promise<void> {
+    if (role === 'admin') {
+      await this.findByIdOrThrow(id);
+    } else {
+      await this.assertOwnership(id, userId);
+    }
 
     const [removed] = await this.db
       .update(businessDirectories)
@@ -233,7 +272,14 @@ export class BusinessDirectoryService {
     const [business] = await this.db
       .select()
       .from(businessDirectories)
-      .where(andRequired(eq(businessDirectories.id, id), isNull(businessDirectories.deletedAt)))
+      .where(
+        andRequired(
+          eq(businessDirectories.id, id),
+          eq(businessDirectories.verificationStatus, 'verified'),
+          eq(businessDirectories.status, 'active'),
+          isNull(businessDirectories.deletedAt),
+        ),
+      )
       .limit(1);
 
     if (!business) throw new NotFoundException('Business not found');

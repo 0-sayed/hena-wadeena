@@ -27,7 +27,7 @@ export interface MockDbChain {
  * Chainable by default: select, from, where, offset, orderBy, insert, values, update, set,
  * innerJoin, delete.
  *
- * Terminal by default (resolve to `[]`): limit, returning, execute.
+ * Terminal by default (resolve to `[]`): returning, execute.
  *
  * Override per-test with `.mockResolvedValueOnce(...)` or `.mockReturnValueOnce(...)`.
  */
@@ -36,7 +36,7 @@ export function createMockDb(): MockDbChain {
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
-  chain.limit = vi.fn().mockResolvedValue([]);
+  chain.limit = vi.fn().mockReturnValue(chain);
   chain.offset = vi.fn().mockReturnValue(chain);
   chain.insert = vi.fn().mockReturnValue(chain);
   chain.values = vi.fn().mockReturnValue(chain);

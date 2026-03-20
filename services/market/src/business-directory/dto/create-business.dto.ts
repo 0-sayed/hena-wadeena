@@ -16,7 +16,12 @@ export const createBusinessSchema = z.object({
     })
     .optional(),
   phone: z.string().optional(),
-  website: z.url().optional(),
+  website: z
+    .url()
+    .refine((value) => /^https?:\/\//i.test(value), {
+      message: 'website must use http or https',
+    })
+    .optional(),
   commodityIds: z.array(z.uuid()).max(50).optional(),
 });
 

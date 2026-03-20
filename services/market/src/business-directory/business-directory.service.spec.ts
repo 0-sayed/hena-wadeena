@@ -130,6 +130,11 @@ describe('BusinessDirectoryService', () => {
     });
 
     it('should link commodityIds in junction table within the same transaction', async () => {
+      // validateCommodityIds: first awaited chain resolves to matching commodities
+      mockDb.where.mockResolvedValueOnce([
+        { id: 'commodity-uuid-001' },
+        { id: 'commodity-uuid-002' },
+      ]);
       mockDb.returning.mockResolvedValueOnce([mockBusiness]);
 
       await service.create(
@@ -229,6 +234,8 @@ describe('BusinessDirectoryService', () => {
     });
 
     it('should reset verificationStatus to pending when commodityIds change on a verified business', async () => {
+      // validateCommodityIds
+      mockDb.where.mockResolvedValueOnce([{ id: 'commodity-uuid-001' }]);
       mockDb.limit.mockResolvedValueOnce([mockVerifiedBusiness]);
       mockDb.returning.mockResolvedValueOnce([
         { ...mockVerifiedBusiness, verificationStatus: 'pending' },
@@ -279,6 +286,8 @@ describe('BusinessDirectoryService', () => {
     });
 
     it('should delete old and insert new junction entries when commodityIds is provided', async () => {
+      // validateCommodityIds
+      mockDb.where.mockResolvedValueOnce([{ id: 'commodity-uuid-001' }]);
       mockDb.limit.mockResolvedValueOnce([mockVerifiedBusiness]);
       mockDb.returning.mockResolvedValueOnce([mockVerifiedBusiness]);
 
