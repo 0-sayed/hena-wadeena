@@ -44,6 +44,9 @@ ALTER TABLE "market"."business_directories" ADD COLUMN "verified_at" timestamp w
 ALTER TABLE "market"."business_directories" ADD COLUMN "rejection_reason" text;--> statement-breakpoint
 ALTER TABLE "market"."business_directories" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;--> statement-breakpoint
 ALTER TABLE "market"."business_directories" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "market"."business_commodities" ADD CONSTRAINT "business_commodities_business_id_business_directories_id_fk" FOREIGN KEY ("business_id") REFERENCES "market"."business_directories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "market"."business_commodities" ADD CONSTRAINT "business_commodities_commodity_id_commodities_id_fk" FOREIGN KEY ("commodity_id") REFERENCES "market"."commodities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "market"."commodity_prices" ADD CONSTRAINT "commodity_prices_commodity_id_commodities_id_fk" FOREIGN KEY ("commodity_id") REFERENCES "market"."commodities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_commodities_category" ON "market"."commodities" USING btree ("category");--> statement-breakpoint
 CREATE INDEX "idx_commodities_is_active" ON "market"."commodities" USING btree ("is_active");--> statement-breakpoint
 CREATE INDEX "idx_commodity_prices_commodity_date" ON "market"."commodity_prices" USING btree ("commodity_id","recorded_at" DESC NULLS LAST);--> statement-breakpoint

@@ -12,22 +12,15 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1773960760700,
-      "tag": "20260319225240_lonely_kingpin",
+      "when": 1774019597607,
+      "tag": "20260320151317_chubby_nehzno",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1773960774195,
+      "when": 1774019597608,
       "tag": "20260319225254_commodity-price-daily-unique",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1774009303690,
-      "tag": "20260320122143_flimsy_dorian_gray",
       "breakpoints": true
     }
   ]

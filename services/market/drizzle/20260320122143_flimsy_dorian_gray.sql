@@ -1,3 +1,0 @@
-ALTER TABLE "market"."business_commodities" ADD CONSTRAINT "business_commodities_business_id_business_directories_id_fk" FOREIGN KEY ("business_id") REFERENCES "market"."business_directories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "market"."business_commodities" ADD CONSTRAINT "business_commodities_commodity_id_commodities_id_fk" FOREIGN KEY ("commodity_id") REFERENCES "market"."commodities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "market"."commodity_prices" ADD CONSTRAINT "commodity_prices_commodity_id_commodities_id_fk" FOREIGN KEY ("commodity_id") REFERENCES "market"."commodities"("id") ON DELETE no action ON UPDATE no action;
