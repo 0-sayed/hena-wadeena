@@ -217,7 +217,11 @@ export class UsersService {
       .where(andRequired(eq(users.id, id), isNull(users.deletedAt)));
 
     await Promise.all([
-      this.sessionService.revokeAllUserSessions(id).then(() => this.sessionService.blockUser(id)),
+      this.sessionService.revokeAllUserSessions(id),
+      this.sessionService.blockUser(id),
+    ]);
+
+    await Promise.all([
       this.recordAudit(adminId, 'account_deleted', undefined, undefined, { targetUserId: id }),
       this.redisStreams.publish(EVENTS.USER_DELETED, { userId: id, adminId }),
     ]);
