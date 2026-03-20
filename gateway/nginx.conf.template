@@ -70,7 +70,7 @@ server {
 
     # ── CORS headers ──────────────────────────────────────────────────────────
     add_header Access-Control-Allow-Origin $cors_origin always;
-    add_header Access-Control-Allow-Methods "GET, POST, PATCH, DELETE, OPTIONS" always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" always;
     add_header Access-Control-Allow-Headers "Authorization, Content-Type, X-Request-Id" always;
     add_header Access-Control-Allow-Credentials "true" always;
     add_header Access-Control-Max-Age "86400" always;
@@ -96,6 +96,11 @@ server {
 
     # ── Preflight (CORS OPTIONS) ──────────────────────────────────────────────
     if ($request_method = OPTIONS) {
+        add_header Access-Control-Allow-Origin $cors_origin always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type, X-Request-Id" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        add_header Access-Control-Max-Age "86400" always;
         return 204;
     }
 
@@ -111,7 +116,6 @@ server {
         # Stricter rate limit on auth endpoints
         location ~ ^/api/v1/auth/(login|register|password-reset) {
             limit_req zone=auth burst=5 nodelay;
-            set $upstream_identity http://identity:8001;  # must match parent block
             proxy_pass $upstream_identity;
         }
 
