@@ -8,6 +8,20 @@
       "when": 1773348573515,
       "tag": "20260312204933_tired_lethal_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773960760700,
+      "tag": "20260319225240_lonely_kingpin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773960774195,
+      "tag": "20260319225254_commodity-price-daily-unique",
+      "breakpoints": true
     }
   ]
 }

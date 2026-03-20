@@ -9,8 +9,15 @@ export { businessDirectories } from './business-directories';
 export { reviews } from './reviews';
 export { investmentOpportunities } from './investment-opportunities';
 export { investmentApplications } from './investment-applications';
+export { commodities } from './commodities';
+export { commodityPrices } from './commodity-prices';
+export { businessCommodities } from './business-commodities';
 
 // Re-import for relation definitions
+import { businessCommodities } from './business-commodities';
+import { businessDirectories } from './business-directories';
+import { commodities } from './commodities';
+import { commodityPrices } from './commodity-prices';
 import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
 import { listings } from './listings';
@@ -38,4 +45,31 @@ export const applicationsRelations = relations(investmentApplications, ({ one })
     fields: [investmentApplications.opportunityId],
     references: [investmentOpportunities.id],
   }),
+}));
+
+export const commoditiesRelations = relations(commodities, ({ many }) => ({
+  prices: many(commodityPrices),
+  businessCommodities: many(businessCommodities),
+}));
+
+export const commodityPricesRelations = relations(commodityPrices, ({ one }) => ({
+  commodity: one(commodities, {
+    fields: [commodityPrices.commodityId],
+    references: [commodities.id],
+  }),
+}));
+
+export const businessCommoditiesRelations = relations(businessCommodities, ({ one }) => ({
+  commodity: one(commodities, {
+    fields: [businessCommodities.commodityId],
+    references: [commodities.id],
+  }),
+  business: one(businessDirectories, {
+    fields: [businessCommodities.businessId],
+    references: [businessDirectories.id],
+  }),
+}));
+
+export const businessDirectoriesRelations = relations(businessDirectories, ({ many }) => ({
+  businessCommodities: many(businessCommodities),
 }));
