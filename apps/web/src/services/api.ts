@@ -5,8 +5,17 @@
  * Currently points to mock-server; switch BASE_URL for production.
  */
 
-const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://localhost:8000/api/v1';
+import { UserRole } from '@hena-wadeena/types';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
+// ── 401 Unauthorized callback ────────────────────────────────────────────────
+
+let unauthorizedCallback: (() => void) | null = null;
+
+export function registerUnauthorizedCallback(cb: () => void) {
+  unauthorizedCallback = cb;
+}
 
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
@@ -22,6 +31,13 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     ...options,
     headers: { ...headers, ...(options?.headers as Record<string, string>) },
   });
+
+  if (res.status === 401 && token) {
+    unauthorizedCallback?.();
+    // Return a never-resolving promise so callers don't see a result or error.
+    // The page is about to redirect to /login anyway.
+    return new Promise<T>(() => {});
+  }
 
   if (!res.ok) {
     const error: { detail?: string; message?: string } = (await res
@@ -59,7 +75,7 @@ export interface AuthUser {
   full_name: string;
   display_name?: string;
   avatar_url?: string;
-  role: string;
+  role: UserRole;
   status: string;
   language: string;
 }
@@ -72,21 +88,15 @@ export interface AuthTokens {
   user: AuthUser;
 }
 
-export interface AuthResponse {
-  success: boolean;
-  message: string;
-  data: AuthTokens;
-}
-
 export const authAPI = {
   login: (body: LoginRequest) =>
-    apiFetch<AuthResponse>('/auth/login', {
+    apiFetch<AuthTokens>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
   register: (body: RegisterRequest) =>
-    apiFetch<AuthResponse>('/auth/register', {
+    apiFetch<AuthTokens>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -147,16 +157,14 @@ export interface Accommodation {
 export const tourismAPI = {
   getAttractions: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions'),
 
-  getFeatured: () =>
-    apiFetch<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
+  getFeatured: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
 
   getAttraction: (id: number) =>
     apiFetch<{ success: boolean; data: Attraction }>(`/attractions/${id}`),
 
   getGuides: () => apiFetch<{ success: boolean; data: Guide[] }>('/guides'),
 
-  getAccommodations: () =>
-    apiFetch<{ success: boolean; data: Accommodation[] }>('/accommodations'),
+  getAccommodations: () => apiFetch<{ success: boolean; data: Accommodation[] }>('/accommodations'),
 };
 
 // ── Market ──────────────────────────────────────────────────────────────────
@@ -242,8 +250,7 @@ export const logisticsAPI = {
 
   getStations: () => apiFetch<{ success: boolean; data: Station[] }>('/stations'),
 
-  getStation: (id: number) =>
-    apiFetch<{ success: boolean; data: Station }>(`/stations/${id}`),
+  getStation: (id: number) => apiFetch<{ success: boolean; data: Station }>(`/stations/${id}`),
 
   getCarpools: () => apiFetch<{ success: boolean; data: Carpool[] }>('/carpools'),
 };
@@ -278,8 +285,7 @@ export interface Startup {
 }
 
 export const investmentAPI = {
-  getOpportunities: () =>
-    apiFetch<{ success: boolean; data: Opportunity[] }>('/opportunities'),
+  getOpportunities: () => apiFetch<{ success: boolean; data: Opportunity[] }>('/opportunities'),
 
   getOpportunity: (id: number) =>
     apiFetch<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
@@ -325,9 +331,7 @@ export interface CarpoolRide {
 
 export const mapAPI = {
   getPOIs: (category?: string) =>
-    apiFetch<{ success: boolean; data: POI[] }>(
-      category ? `/pois?category=${category}` : '/pois',
-    ),
+    apiFetch<{ success: boolean; data: POI[] }>(category ? `/pois?category=${category}` : '/pois'),
   getPOI: (id: number) => apiFetch<{ success: boolean; data: POI }>(`/pois/${id}`),
   getCarpoolRides: () => apiFetch<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
   createCarpoolRide: (body: {
