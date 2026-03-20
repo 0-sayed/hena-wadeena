@@ -71,7 +71,7 @@ describe('AdminUsersController', () => {
 
     it('should change user role', async () => {
       const result = await controller.changeRole('user-uuid', { role: 'admin' }, mockAdmin);
-      expect(result?.role).toBe('admin');
+      expect(result.role).toBe('admin');
     });
   });
 
@@ -88,7 +88,7 @@ describe('AdminUsersController', () => {
         { status: 'suspended', reason: 'violation' },
         mockAdmin,
       );
-      expect(result?.status).toBe('suspended');
+      expect(result.status).toBe('suspended');
     });
   });
 

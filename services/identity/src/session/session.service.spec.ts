@@ -42,16 +42,16 @@ describe('SessionService', () => {
   });
 
   describe('blockUser', () => {
-    it('should set blocked flag in Redis with 15-min TTL', async () => {
+    it('should set blocked flag in Redis without TTL', async () => {
       await service.blockUser('user-123');
-      expect(mockRedis.set).toHaveBeenCalledWith('id:blocked:user-123', '1', 'EX', 900);
+      expect(mockRedis.set).toHaveBeenCalledWith('blocked:user-123', '1');
     });
   });
 
   describe('unblockUser', () => {
     it('should delete the blocked flag from Redis', async () => {
       await service.unblockUser('user-123');
-      expect(mockRedis.del).toHaveBeenCalledWith('id:blocked:user-123');
+      expect(mockRedis.del).toHaveBeenCalledWith('blocked:user-123');
     });
   });
 
@@ -60,7 +60,7 @@ describe('SessionService', () => {
       const futureExp = Math.floor(Date.now() / 1000) + 600; // 10 min from now
       await service.blacklistAccessToken('jti-abc', futureExp);
       expect(mockRedis.set).toHaveBeenCalledWith(
-        'id:blacklist:jti-abc',
+        'blacklist:jti-abc',
         '1',
         'EX',
         expect.any(Number),

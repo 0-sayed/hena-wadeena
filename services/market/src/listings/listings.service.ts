@@ -8,13 +8,8 @@ import {
   paginate,
 } from '@hena-wadeena/nest-common';
 import { EVENTS, slugify } from '@hena-wadeena/types';
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import type { PaginatedResponse } from '@hena-wadeena/types';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
@@ -27,7 +22,6 @@ import { UpdateListingDto } from './dto/update-listing.dto';
 
 type Listing = typeof listings.$inferSelect;
 type InsertListing = typeof listings.$inferInsert;
-
 
 const SORTABLE_FIELDS = {
   created_at: listings.createdAt,

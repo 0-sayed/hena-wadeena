@@ -44,7 +44,14 @@ export class AdminUsersController {
     @CurrentUser() admin: JwtPayload,
   ) {
     if (id === admin.sub) throw new ForbiddenException('Cannot change your own role');
-    return this.usersService.changeRole(id, dto.role, admin.sub);
+    const { passwordHash, deletedAt, ...safe } = await this.usersService.changeRole(
+      id,
+      dto.role,
+      admin.sub,
+    );
+    void passwordHash;
+    void deletedAt;
+    return safe;
   }
 
   @Patch(':id/status')
@@ -54,7 +61,15 @@ export class AdminUsersController {
     @CurrentUser() admin: JwtPayload,
   ) {
     if (id === admin.sub) throw new ForbiddenException('Cannot change your own status');
-    return this.usersService.changeStatus(id, dto.status, admin.sub, dto.reason);
+    const { passwordHash, deletedAt, ...safe } = await this.usersService.changeStatus(
+      id,
+      dto.status,
+      admin.sub,
+      dto.reason,
+    );
+    void passwordHash;
+    void deletedAt;
+    return safe;
   }
 
   @Delete(':id')

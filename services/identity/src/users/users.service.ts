@@ -129,11 +129,17 @@ export class UsersService {
     const user = await this.findByIdOrThrow(id);
     const oldRole = user.role;
 
-    const [updated] = await this.db
+    const rows = await this.db
       .update(users)
       .set({ role: role as typeof users.$inferInsert.role, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+
+    // Revoke sessions so the user must re-authenticate with the new role in JWT
+    await Promise.all([
+      this.sessionService.revokeAllUserSessions(id),
+      this.sessionService.blockUser(id),
+    ]);
 
     await Promise.all([
       this.recordAudit(adminId, 'role_changed', undefined, undefined, {
@@ -149,14 +155,14 @@ export class UsersService {
       }),
     ]);
 
-    return firstOrThrow([updated]);
+    return firstOrThrow(rows);
   }
 
   async changeStatus(id: string, status: string, adminId: string, reason?: string) {
     const user = await this.findByIdOrThrow(id);
     const previousStatus = user.status;
 
-    const [updated] = await this.db
+    const rows = await this.db
       .update(users)
       .set({ status: status as typeof users.$inferInsert.status, updatedAt: new Date() })
       .where(eq(users.id, id))
@@ -184,20 +190,22 @@ export class UsersService {
     };
     const action = statusActions[status];
     if (action) {
-      await Promise.all([
-        this.recordAudit(adminId, action.audit, undefined, undefined, auditMeta),
-        this.redisStreams.publish(action.event, eventPayload),
-      ]);
       if (action.revoke) {
-        await this.sessionService.revokeAllUserSessions(id);
-        await this.sessionService.blockUser(id);
+        await Promise.all([
+          this.sessionService.revokeAllUserSessions(id),
+          this.sessionService.blockUser(id),
+        ]);
       }
       if (action.unblock) {
         await this.sessionService.unblockUser(id);
       }
+      await Promise.all([
+        this.recordAudit(adminId, action.audit, undefined, undefined, auditMeta),
+        this.redisStreams.publish(action.event, eventPayload),
+      ]);
     }
 
-    return firstOrThrow([updated]);
+    return firstOrThrow(rows);
   }
 
   async softDelete(id: string, adminId: string) {

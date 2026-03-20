@@ -23,19 +23,19 @@ export class SessionService {
 
   async blockUser(userId: string): Promise<void> {
     // Set a "user blocked" flag in Redis — checked by JwtStrategy on every request.
-    // TTL matches max access token lifetime (15 min) so it auto-cleans.
+    // Persists until explicitly removed via unblockUser() (e.g. when admin reactivates account).
     // ONLY called by admin actions (suspend/ban/delete), NOT by password change or logout.
-    await this.redis.set(`id:blocked:${userId}`, '1', 'EX', 900);
+    await this.redis.set(`blocked:${userId}`, '1');
   }
 
   async unblockUser(userId: string): Promise<void> {
-    await this.redis.del(`id:blocked:${userId}`);
+    await this.redis.del(`blocked:${userId}`);
   }
 
   async blacklistAccessToken(jti: string, exp: number): Promise<void> {
     const ttl = exp - Math.floor(Date.now() / 1000);
     if (ttl > 0) {
-      await this.redis.set(`id:blacklist:${jti}`, '1', 'EX', ttl);
+      await this.redis.set(`blacklist:${jti}`, '1', 'EX', ttl);
     }
   }
 

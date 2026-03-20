@@ -139,7 +139,7 @@ describe('UsersService', () => {
       mockDb.limit.mockResolvedValueOnce([mockUser]); // findByIdOrThrow
       mockDb.returning.mockResolvedValueOnce([{ ...mockUser, role: 'admin' }]);
       const result = await service.changeRole('test-uuid', 'admin', 'admin-uuid');
-      expect(result?.role).toBe('admin');
+      expect(result.role).toBe('admin');
       expect(mockDb.update).toHaveBeenCalled();
     });
   });
@@ -149,7 +149,7 @@ describe('UsersService', () => {
       mockDb.limit.mockResolvedValueOnce([mockUser]); // findByIdOrThrow
       mockDb.returning.mockResolvedValueOnce([{ ...mockUser, status: 'suspended' }]);
       const result = await service.changeStatus('test-uuid', 'suspended', 'admin-uuid');
-      expect(result?.status).toBe('suspended');
+      expect(result.status).toBe('suspended');
     });
   });
 

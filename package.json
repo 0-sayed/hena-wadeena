@@ -21,11 +21,6 @@
     "knip": "knip",
     "validate": "pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm knip && pnpm audit --audit-level=high"
   },
-  "pnpm": {
-    "overrides": {
-      "fast-xml-parser": ">=5.5.6"
-    }
-  },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "@total-typescript/ts-reset": "^0.6.1",
@@ -43,7 +38,8 @@
   },
   "pnpm": {
     "overrides": {
-      "fast-xml-parser": ">=5.5.6"
+      "fast-xml-parser": ">=5.5.6",
+      "flatted": ">=3.4.2"
     }
   }
 }
