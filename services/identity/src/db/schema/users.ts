@@ -22,6 +22,7 @@ export const users = identitySchema.table(
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
     uniqueIndex('users_email_unique').on(t.email),
@@ -31,5 +32,8 @@ export const users = identitySchema.table(
     index('idx_users_role').on(t.role),
     index('idx_users_status').on(t.status),
     index('idx_users_created_at').on(t.createdAt.desc()),
+    index('idx_users_not_deleted')
+      .on(t.id)
+      .where(sql`${t.deletedAt} IS NULL`),
   ],
 );
