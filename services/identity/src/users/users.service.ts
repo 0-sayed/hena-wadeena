@@ -136,10 +136,7 @@ export class UsersService {
       .returning();
 
     // Revoke sessions so the user must re-authenticate with the new role in JWT
-    await Promise.all([
-      this.sessionService.revokeAllUserSessions(id),
-      this.sessionService.blockUser(id),
-    ]);
+    await this.sessionService.revokeAllUserSessions(id);
 
     await Promise.all([
       this.recordAudit(adminId, 'role_changed', undefined, undefined, {
