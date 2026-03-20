@@ -1,5 +1,5 @@
 import { Public } from '@hena-wadeena/nest-common';
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -25,13 +25,13 @@ export class GuidesController {
 
   @Public()
   @Get(':id')
-  findById(@Param('id') id: string) {
+  findById(@Param('id', ParseUUIDPipe) id: string) {
     return this.guidesService.findById(id);
   }
 
   @Public()
   @Get(':id/packages')
-  findGuidePackages(@Param('id') id: string, @Query() query: PaginationDto) {
+  findGuidePackages(@Param('id', ParseUUIDPipe) id: string, @Query() query: PaginationDto) {
     return this.guidesService.findGuidePackages(id, query.page, query.limit);
   }
 }
