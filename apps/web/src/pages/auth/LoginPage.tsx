@@ -23,9 +23,9 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       const res = await authAPI.login({ email: formData.email, password: formData.password });
-      localStorage.setItem('access_token', res.data.access_token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      toast.success(res.message);
+      localStorage.setItem('access_token', res.access_token);
+      localStorage.setItem('user', JSON.stringify(res.user));
+      toast.success('تم تسجيل الدخول بنجاح');
       const from = (location.state as { from?: Location })?.from?.pathname || '/';
       void navigate(from);
     } catch (err: unknown) {
