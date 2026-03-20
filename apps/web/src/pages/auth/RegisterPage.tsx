@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { DocumentUpload } from '@/components/auth/DocumentUpload';
 import { toast } from 'sonner';
-import { authAPI } from '@/services/api';
+import { useAuth } from '@/hooks/use-auth';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
 
@@ -37,6 +37,7 @@ interface UploadedDocuments {
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -66,15 +67,13 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
-      const res = await authAPI.register({
+      await auth.register({
         email: formData.email,
         phone: formData.phone,
         full_name: formData.fullName,
         password: formData.password,
         role: formData.role || 'tourist',
       });
-      localStorage.setItem('access_token', res.access_token);
-      localStorage.setItem('user', JSON.stringify(res.user));
       toast.success('تم إنشاء الحساب بنجاح');
       void navigate('/');
     } catch (err: unknown) {

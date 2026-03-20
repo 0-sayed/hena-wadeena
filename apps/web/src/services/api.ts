@@ -34,9 +34,7 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
   if (res.status === 401 && token) {
     unauthorizedCallback?.();
-    // Return a never-resolving promise so callers don't see a result or error.
-    // The page is about to redirect to /login anyway.
-    return new Promise<T>(() => {});
+    throw new Error('Unauthorized');
   }
 
   if (!res.ok) {
@@ -331,7 +329,9 @@ export interface CarpoolRide {
 
 export const mapAPI = {
   getPOIs: (category?: string) =>
-    apiFetch<{ success: boolean; data: POI[] }>(category ? `/pois?category=${category}` : '/pois'),
+    apiFetch<{ success: boolean; data: POI[] }>(
+      category ? `/pois?category=${encodeURIComponent(category)}` : '/pois',
+    ),
   getPOI: (id: number) => apiFetch<{ success: boolean; data: POI }>(`/pois/${id}`),
   getCarpoolRides: () => apiFetch<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
   createCarpoolRide: (body: {

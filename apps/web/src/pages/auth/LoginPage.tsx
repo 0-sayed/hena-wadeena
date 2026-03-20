@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { authAPI } from '@/services/api';
+import { useAuth } from '@/hooks/use-auth';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const auth = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,9 +23,7 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await authAPI.login({ email: formData.email, password: formData.password });
-      localStorage.setItem('access_token', res.access_token);
-      localStorage.setItem('user', JSON.stringify(res.user));
+      await auth.login({ email: formData.email, password: formData.password });
       toast.success('تم تسجيل الدخول بنجاح');
       const from = (location.state as { from?: Location })?.from?.pathname || '/';
       void navigate(from);

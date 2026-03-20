@@ -8,6 +8,8 @@ export const userRoleEnum = identitySchema.enum('user_role', [
   'investor',
   'student',
   'driver',
+  'moderator',
+  'reviewer',
   'admin',
 ]);
 

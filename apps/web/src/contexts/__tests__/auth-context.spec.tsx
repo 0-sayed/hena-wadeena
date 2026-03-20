@@ -11,6 +11,8 @@ vi.mock('@/services/api', () => ({
   authAPI: {
     login: vi.fn(),
     register: vi.fn(),
+    getMe: vi.fn(),
+    logout: vi.fn(),
   },
   registerUnauthorizedCallback: vi.fn(),
 }));
@@ -50,6 +52,7 @@ describe('useAuth', () => {
     };
     localStorage.setItem('access_token', 'fake-token');
     localStorage.setItem('user', JSON.stringify(storedUser));
+    vi.mocked(authAPI.getMe).mockResolvedValue(storedUser);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -95,19 +98,19 @@ describe('useAuth', () => {
   });
 
   it('logout clears state and localStorage', async () => {
+    const storedUser = {
+      id: '1',
+      email: 'x',
+      phone: '',
+      full_name: '',
+      role: UserRole.TOURIST,
+      status: 'active',
+      language: 'ar',
+    };
     localStorage.setItem('access_token', 'token');
-    localStorage.setItem(
-      'user',
-      JSON.stringify({
-        id: '1',
-        email: 'x',
-        phone: '',
-        full_name: '',
-        role: UserRole.TOURIST,
-        status: 'active',
-        language: 'ar',
-      }),
-    );
+    localStorage.setItem('user', JSON.stringify(storedUser));
+    vi.mocked(authAPI.getMe).mockResolvedValue(storedUser);
+    vi.mocked(authAPI.logout).mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -163,19 +166,18 @@ describe('useAuth', () => {
   });
 
   it('updateUser updates state and localStorage', async () => {
+    const storedUser = {
+      id: '1',
+      email: 'old@test.com',
+      phone: '',
+      full_name: 'Old',
+      role: UserRole.TOURIST,
+      status: 'active',
+      language: 'ar',
+    };
     localStorage.setItem('access_token', 'token');
-    localStorage.setItem(
-      'user',
-      JSON.stringify({
-        id: '1',
-        email: 'old@test.com',
-        phone: '',
-        full_name: 'Old',
-        role: UserRole.TOURIST,
-        status: 'active',
-        language: 'ar',
-      }),
-    );
+    localStorage.setItem('user', JSON.stringify(storedUser));
+    vi.mocked(authAPI.getMe).mockResolvedValue(storedUser);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 

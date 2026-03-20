@@ -36,27 +36,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Hydrate from localStorage on mount
+  // Hydrate from localStorage on mount, then validate with server
   useEffect(() => {
-    const token = localStorage.getItem(STORAGE_KEYS.token);
-    const storedUser = getStoredUser();
+    let cancelled = false;
 
-    if (token && storedUser) {
-      setUser(storedUser);
-    }
-    setIsLoading(false);
+    const hydrate = async () => {
+      const token = localStorage.getItem(STORAGE_KEYS.token);
+
+      if (!token) {
+        if (!cancelled) setIsLoading(false);
+        return;
+      }
+
+      // Show cached user immediately for fast UI
+      const cached = getStoredUser();
+      if (cached && !cancelled) setUser(cached);
+
+      try {
+        const currentUser = await authAPI.getMe();
+        if (cancelled) return;
+        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(currentUser));
+        setUser(currentUser);
+      } catch {
+        if (cancelled) return;
+        localStorage.removeItem(STORAGE_KEYS.token);
+        localStorage.removeItem(STORAGE_KEYS.user);
+        setUser(null);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const logout = useCallback(() => {
+  const clearAuth = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.token);
     localStorage.removeItem(STORAGE_KEYS.user);
     setUser(null);
   }, []);
 
-  // Register 401 handler
+  const logout = useCallback(() => {
+    void authAPI.logout().catch(() => undefined);
+    clearAuth();
+  }, [clearAuth]);
+
+  // Register 401 handler (uses clearAuth, not logout, to avoid calling /auth/logout on expired tokens)
   useEffect(() => {
-    registerUnauthorizedCallback(logout);
-  }, [logout]);
+    registerUnauthorizedCallback(clearAuth);
+  }, [clearAuth]);
 
   const storeAuth = useCallback((token: string, authUser: AuthUser) => {
     localStorage.setItem(STORAGE_KEYS.token, token);
