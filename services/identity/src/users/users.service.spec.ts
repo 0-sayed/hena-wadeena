@@ -1,7 +1,7 @@
-import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
-import { Test } from '@nestjs/testing';
-import { describe, it, expect, beforeEach } from 'vitest';
+import type { RedisStreamsService } from '@hena-wadeena/nest-common';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+import type { SessionService } from '../session/session.service';
 import { createMockDb } from '../test-utils/create-mock-db';
 
 import { UsersService } from './users.service';
@@ -21,20 +21,34 @@ const mockUser = {
   lastLoginAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
 };
 
 describe('UsersService', () => {
   let service: UsersService;
   let mockDb: ReturnType<typeof createMockDb>;
+  let mockSessionService: {
+    revokeAllUserSessions: ReturnType<typeof vi.fn>;
+    blockUser: ReturnType<typeof vi.fn>;
+    unblockUser: ReturnType<typeof vi.fn>;
+  };
+  let mockRedisStreams: { publish: ReturnType<typeof vi.fn> };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockDb = createMockDb();
     // Default returning to mockUser for create/update tests
     mockDb.returning.mockResolvedValue([mockUser]);
-    const module = await Test.createTestingModule({
-      providers: [UsersService, { provide: DRIZZLE_CLIENT, useValue: mockDb }],
-    }).compile();
-    service = module.get(UsersService);
+    mockSessionService = {
+      revokeAllUserSessions: vi.fn().mockResolvedValue(undefined),
+      blockUser: vi.fn().mockResolvedValue(undefined),
+      unblockUser: vi.fn().mockResolvedValue(undefined),
+    };
+    mockRedisStreams = { publish: vi.fn().mockResolvedValue('stream-id') };
+    service = new UsersService(
+      mockDb as any,
+      mockSessionService as unknown as SessionService,
+      mockRedisStreams as unknown as RedisStreamsService,
+    );
   });
 
   describe('findByEmail', () => {
@@ -92,6 +106,58 @@ describe('UsersService', () => {
     it('should update lastLoginAt timestamp', async () => {
       mockDb.returning.mockResolvedValueOnce([]);
       await service.updateLastLogin('test-uuid');
+      expect(mockDb.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('findByIdOrThrow', () => {
+    it('should return user when found', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockUser]);
+      const result = await service.findByIdOrThrow('test-uuid');
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      mockDb.limit.mockResolvedValueOnce([]);
+      await expect(service.findByIdOrThrow('nonexistent')).rejects.toThrow('User not found');
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return paginated results', async () => {
+      mockDb.where.mockResolvedValueOnce([{ count: 1 }]);
+      mockDb.offset.mockResolvedValueOnce([mockUser]);
+      const result = await service.findAll({ offset: 0, limit: 20 });
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe('changeRole', () => {
+    it('should update user role and return updated user', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockUser]); // findByIdOrThrow
+      mockDb.returning.mockResolvedValueOnce([{ ...mockUser, role: 'admin' }]);
+      const result = await service.changeRole('test-uuid', 'admin', 'admin-uuid');
+      expect(result?.role).toBe('admin');
+      expect(mockDb.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('changeStatus', () => {
+    it('should update user status', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockUser]); // findByIdOrThrow
+      mockDb.returning.mockResolvedValueOnce([{ ...mockUser, status: 'suspended' }]);
+      const result = await service.changeStatus('test-uuid', 'suspended', 'admin-uuid');
+      expect(result?.status).toBe('suspended');
+    });
+  });
+
+  describe('softDelete', () => {
+    it('should set deletedAt on user', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockUser]); // findByIdOrThrow
+      mockDb.returning.mockResolvedValueOnce([{ ...mockUser, deletedAt: new Date() }]);
+      await service.softDelete('test-uuid', 'admin-uuid');
       expect(mockDb.update).toHaveBeenCalled();
     });
   });
