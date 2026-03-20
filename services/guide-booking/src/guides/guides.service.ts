@@ -297,7 +297,52 @@ export class GuidesService {
 
   async findMyProfile(userId: string) {
     const guideId = await this.resolveGuideId(userId);
-    return this.findById(guideId);
+    return this.findByIdInternal(guideId);
+  }
+
+  private async findByIdInternal(id: string) {
+    const packageCountSq = sql<number>`(
+      SELECT COUNT(*)::int
+      FROM guide_booking.tour_packages tp
+      WHERE tp.guide_id = ${guides.id}
+        AND tp.status = 'active'
+        AND tp.deleted_at IS NULL
+    )`;
+
+    const reviewCountSq = sql<number>`(
+      SELECT COUNT(*)::int
+      FROM guide_booking.guide_reviews gr
+      WHERE gr.guide_id = ${guides.id}
+    )`;
+
+    const [row] = await this.db
+      .select({
+        id: guides.id,
+        userId: guides.userId,
+        bioAr: guides.bioAr,
+        bioEn: guides.bioEn,
+        profileImage: guides.profileImage,
+        coverImage: guides.coverImage,
+        languages: guides.languages,
+        specialties: guides.specialties,
+        areasOfOperation: guides.areasOfOperation,
+        licenseNumber: guides.licenseNumber,
+        licenseVerified: guides.licenseVerified,
+        basePrice: guides.basePrice,
+        ratingAvg: guides.ratingAvg,
+        ratingCount: guides.ratingCount,
+        active: guides.active,
+        createdAt: guides.createdAt,
+        updatedAt: guides.updatedAt,
+        packageCount: packageCountSq,
+        reviewCount: reviewCountSq,
+      })
+      .from(guides)
+      .where(and(eq(guides.id, id), isNull(guides.deletedAt)))
+      .limit(1);
+
+    if (!row) throw new NotFoundException(`Guide not found: ${id}`);
+    return row;
   }
 
   async update(userId: string, dto: UpdateGuideDto): Promise<Guide> {
