@@ -19,6 +19,27 @@
     {
       "idx": 2,
       "version": "7",
+      "when": 1773962209620,
+      "tag": "20260319231649_narrow_human_fly",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773962217948,
+      "tag": "20260319231657_add-admin-audit-event-types",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774008784531,
+      "tag": "20260320121304_majestic_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
       "when": 1774009207177,
       "tag": "20260320122007_fine_darwin",
       "breakpoints": true
