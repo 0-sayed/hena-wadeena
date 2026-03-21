@@ -1,13 +1,8 @@
 import { randomBytes, createHash, randomInt } from 'node:crypto';
 
-import {
-  DRIZZLE_CLIENT,
-  REDIS_CLIENT,
-  RedisStreamsService,
-  generateId,
-} from '@hena-wadeena/nest-common';
+import { DRIZZLE_CLIENT, RedisStreamsService, generateId } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { EVENTS } from '@hena-wadeena/types';
+import { EVENTS, UserStatus } from '@hena-wadeena/types';
 import {
   ConflictException,
   ForbiddenException,
@@ -20,12 +15,12 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { and, eq, isNull, desc } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import Redis from 'ioredis';
 import ms from 'ms';
 
 import { authTokens, auditEvents, otpCodes } from '../db/schema/index';
 import type { users } from '../db/schema/index';
 import { EmailService } from '../email/email.service';
+import { SessionService } from '../session/session.service';
 import { UsersService } from '../users/users.service';
 
 import { HashingService } from './hashing.service';
@@ -60,7 +55,7 @@ export class AuthService {
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(SessionService) private readonly sessionService: SessionService,
   ) {
     const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as Parameters<
       typeof ms
@@ -124,7 +119,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (user.status === 'suspended' || user.status === 'banned') {
+    const blockedStatuses = new Set<string>([UserStatus.SUSPENDED, UserStatus.BANNED]);
+    if (blockedStatuses.has(user.status)) {
       throw new ForbiddenException('Account is suspended');
     }
 
@@ -175,26 +171,15 @@ export class AuthService {
   }
 
   async logout(payload: JwtPayload, refreshToken?: string): Promise<void> {
-    // Blacklist the access token by its JTI until it naturally expires
     if (payload.jti && payload.exp) {
-      const ttl = payload.exp - Math.floor(Date.now() / 1000);
-      if (ttl > 0) {
-        await this.redis.set(`id:blacklist:${payload.jti}`, '1', 'EX', ttl);
-      }
+      await this.sessionService.blacklistAccessToken(payload.jti, payload.exp);
     }
 
     if (refreshToken) {
       const tokenHash = this.hashToken(refreshToken);
-      await this.db
-        .update(authTokens)
-        .set({ revokedAt: new Date() })
-        .where(and(eq(authTokens.tokenHash, tokenHash), isNull(authTokens.revokedAt)));
+      await this.sessionService.revokeRefreshToken(tokenHash);
     } else {
-      // Fallback: revoke all active refresh tokens for user
-      await this.db
-        .update(authTokens)
-        .set({ revokedAt: new Date() })
-        .where(and(eq(authTokens.userId, payload.sub), isNull(authTokens.revokedAt)));
+      await this.sessionService.revokeAllUserSessions(payload.sub);
     }
 
     await this.recordAudit(payload.sub, 'logout');
@@ -215,10 +200,7 @@ export class AuthService {
     await this.usersService.updatePassword(userId, passwordHash);
 
     // Revoke all existing sessions
-    await this.db
-      .update(authTokens)
-      .set({ revokedAt: new Date() })
-      .where(and(eq(authTokens.userId, userId), isNull(authTokens.revokedAt)));
+    await this.sessionService.revokeAllUserSessions(userId);
 
     const tokens = await this.generateTokenPair(user.id, user.email, user.role, user.language);
     await this.recordAudit(userId, 'password_changed');
@@ -281,10 +263,7 @@ export class AuthService {
     await this.usersService.updatePassword(user.id, passwordHash);
 
     // Revoke all sessions
-    await this.db
-      .update(authTokens)
-      .set({ revokedAt: new Date() })
-      .where(and(eq(authTokens.userId, user.id), isNull(authTokens.revokedAt)));
+    await this.sessionService.revokeAllUserSessions(user.id);
 
     const tokens = await this.generateTokenPair(user.id, user.email, user.role, user.language);
     await this.recordAudit(user.id, 'password_reset');

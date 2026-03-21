@@ -6,6 +6,8 @@ interface MockDbChain {
   from: Mock;
   where: Mock;
   limit: Mock;
+  offset: Mock;
+  count: Mock;
   insert: Mock;
   values: Mock;
   returning: Mock;
@@ -21,6 +23,8 @@ export function createMockDb(): MockDbChain {
     from: vi.fn(),
     where: vi.fn(),
     limit: vi.fn().mockResolvedValue([]),
+    offset: vi.fn().mockResolvedValue([]),
+    count: vi.fn().mockResolvedValue([{ count: 0 }]),
     insert: vi.fn(),
     values: vi.fn(),
     returning: vi.fn().mockResolvedValue([]),
@@ -31,6 +35,8 @@ export function createMockDb(): MockDbChain {
   chain.select.mockReturnValue(chain);
   chain.from.mockReturnValue(chain);
   chain.where.mockReturnValue(chain);
+  chain.limit.mockReturnValue(chain);
+  chain.offset.mockReturnValue(chain);
   chain.insert.mockReturnValue(chain);
   chain.values.mockReturnValue(chain);
   chain.update.mockReturnValue(chain);

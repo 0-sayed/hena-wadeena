@@ -23,6 +23,7 @@ const mockUser = {
   lastLoginAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
 };
 
 describe('AuthService', () => {
@@ -30,18 +31,22 @@ describe('AuthService', () => {
   let mockUsersService: UsersService;
   let mockHashingService: HashingService;
   let mockDb: ReturnType<typeof createMockDb>;
-  let mockRedis: {
-    get: ReturnType<typeof vi.fn>;
-    set: ReturnType<typeof vi.fn>;
-    del: ReturnType<typeof vi.fn>;
+  let mockSessionService: {
+    blacklistAccessToken: ReturnType<typeof vi.fn>;
+    revokeRefreshToken: ReturnType<typeof vi.fn>;
+    revokeAllUserSessions: ReturnType<typeof vi.fn>;
+    blockUser: ReturnType<typeof vi.fn>;
+    unblockUser: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     mockDb = createMockDb();
-    mockRedis = {
-      get: vi.fn().mockResolvedValue(null),
-      set: vi.fn().mockResolvedValue('OK'),
-      del: vi.fn().mockResolvedValue(1),
+    mockSessionService = {
+      blacklistAccessToken: vi.fn().mockResolvedValue(undefined),
+      revokeRefreshToken: vi.fn().mockResolvedValue(undefined),
+      revokeAllUserSessions: vi.fn().mockResolvedValue(undefined),
+      blockUser: vi.fn().mockResolvedValue(undefined),
+      unblockUser: vi.fn().mockResolvedValue(undefined),
     };
 
     mockUsersService = {
@@ -94,7 +99,7 @@ describe('AuthService', () => {
 
       mockDb as any,
 
-      mockRedis as any,
+      mockSessionService as any,
     );
   });
 
@@ -248,8 +253,8 @@ describe('AuthService', () => {
         jti: 'mock-jti',
         exp: Math.floor(Date.now() / 1000) + 900,
       });
-      expect(mockRedis.set).toHaveBeenCalled();
-      expect(mockDb.update).toHaveBeenCalled();
+      expect(mockSessionService.blacklistAccessToken).toHaveBeenCalled();
+      expect(mockSessionService.revokeAllUserSessions).toHaveBeenCalled();
     });
   });
 

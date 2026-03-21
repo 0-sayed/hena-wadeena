@@ -2,17 +2,14 @@ import {
   DRIZZLE_CLIENT,
   RedisStreamsService,
   S3Service,
+  andRequired,
+  firstOrThrow,
   generateId,
+  paginate,
 } from '@hena-wadeena/nest-common';
-import { EVENTS, PaginatedResponse, slugify } from '@hena-wadeena/types';
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { EVENTS, slugify } from '@hena-wadeena/types';
+import type { PaginatedResponse } from '@hena-wadeena/types';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
@@ -25,35 +22,6 @@ import { UpdateListingDto } from './dto/update-listing.dto';
 
 type Listing = typeof listings.$inferSelect;
 type InsertListing = typeof listings.$inferInsert;
-
-/** Narrows `SQL | undefined` to `SQL` — safe when and() receives ≥1 condition. */
-function andRequired(...conditions: (SQL | undefined)[]): SQL {
-  const result = and(...conditions);
-  if (!result) throw new Error('and() returned undefined — no conditions provided');
-  return result;
-}
-
-/** Extracts the first row or throws — for INSERT/UPDATE … RETURNING that must yield a row. */
-function firstOrThrow<T>(rows: T[], message = 'Expected at least one row'): T {
-  const row = rows[0];
-  if (!row) throw new InternalServerErrorException(message);
-  return row;
-}
-
-function paginate<T>(
-  data: T[],
-  total: number,
-  offset: number,
-  limit: number,
-): PaginatedResponse<T> {
-  return {
-    data,
-    total,
-    page: Math.floor(offset / limit) + 1,
-    limit,
-    hasMore: offset + limit < total,
-  };
-}
 
 const SORTABLE_FIELDS = {
   created_at: listings.createdAt,
