@@ -40,15 +40,15 @@
 
 - [X] **T05** Identity: Auth Core · M · ← T01
 - [X] **T06** Market: Core CRUD · M · ← T01, T03
-- [ ] **T07** Guide-Booking: Attractions · M · ← T01, T04
+- [x] **T07** Guide-Booking: Attractions · M · ← T01, T04
 - [ ] **T08** RAG: Ingestion Pipeline · M · ← T02, T02a
-- [ ] **F01** Frontend Foundation · M · ← F00
+- [x] **F01** Frontend Foundation · M · ← F00
 - [ ] **F12** Error Handling + Loading States · S · ← F01
 - [ ] **F14** File Upload + Image · S · ← T01, F01
 
 ## Layer 2 — Service Features
 
-- [ ] **T09** Identity: User Management · M · ← T05
+- [x] **T09** Identity: User Management · M · ← T05
 - [ ] **T10** Market: BizDir + Price Index · M · ← T06
 - [ ] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [ ] **T12** RAG: Retrieval + Chat · L · ← T08

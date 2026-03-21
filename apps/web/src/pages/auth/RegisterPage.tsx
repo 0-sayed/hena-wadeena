@@ -1,16 +1,7 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate, Link } from 'react-router';
-import {
-  User,
-  Mail,
-  Lock,
-  Phone,
-  Building2,
-  Check,
-  ArrowRight,
-  ArrowLeft,
-} from 'lucide-react';
+import { User, Mail, Lock, Phone, Building2, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,15 +15,16 @@ import {
 } from '@/components/ui/select';
 import { DocumentUpload } from '@/components/auth/DocumentUpload';
 import { toast } from 'sonner';
-import { authAPI } from '@/services/api';
+import { useAuth } from '@/hooks/use-auth';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
 
 const roles = [
-  { value: 'citizen', label: 'مواطن', description: 'مستخدم عادي يبحث عن الخدمات' },
-  { value: 'farmer', label: 'مزارع', description: 'مزارع أو منتج زراعي' },
+  { value: 'resident', label: 'مواطن', description: 'مستخدم عادي يبحث عن الخدمات' },
+  { value: 'merchant', label: 'تاجر', description: 'تاجر أو منتج محلي' },
   { value: 'investor', label: 'مستثمر', description: 'مستثمر يبحث عن فرص' },
   { value: 'tourist', label: 'سائح', description: 'زائر أو سائح' },
+  { value: 'student', label: 'طالب', description: 'طالب في الوادي الجديد' },
   { value: 'driver', label: 'سائق', description: 'سائق نقل أو كاربول' },
   { value: 'guide', label: 'مرشد سياحي', description: 'مرشد سياحي مرخص' },
 ];
@@ -45,6 +37,7 @@ interface UploadedDocuments {
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -74,16 +67,14 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
-      const res = await authAPI.register({
+      await auth.register({
         email: formData.email,
         phone: formData.phone,
         full_name: formData.fullName,
         password: formData.password,
         role: formData.role || 'tourist',
       });
-      localStorage.setItem('access_token', res.data.access_token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      toast.success(res.message);
+      toast.success('تم إنشاء الحساب بنجاح');
       void navigate('/');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'فشل إنشاء الحساب');
