@@ -2,16 +2,19 @@ import {
   DRIZZLE_CLIENT,
   RedisStreamsService,
   S3Service,
+  andRequired,
+  firstOrThrow,
   generateId,
+  paginate,
 } from '@hena-wadeena/nest-common';
-import { EVENTS, PaginatedResponse, slugify } from '@hena-wadeena/types';
+import { EVENTS, slugify } from '@hena-wadeena/types';
+import type { PaginatedResponse } from '@hena-wadeena/types';
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
 
 import { listings } from '../db/schema/listings';
-import { andRequired, firstOrThrow, paginate } from '../shared/query-helpers';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { ImageUploadDto, NearbyQueryDto, QueryListingsDto } from './dto/query-listings.dto';

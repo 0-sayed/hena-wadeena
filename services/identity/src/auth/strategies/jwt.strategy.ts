@@ -29,9 +29,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const isBlacklisted = await this.redis.get(`id:blacklist:${payload.jti}`);
+    const [isBlacklisted, isBlocked] = await this.redis.mget(
+      `blacklist:${payload.jti}`,
+      `blocked:${payload.sub}`,
+    );
     if (isBlacklisted) {
       throw new UnauthorizedException('Token has been revoked');
+    }
+    if (isBlocked) {
+      throw new UnauthorizedException('Account has been suspended');
     }
 
     return {

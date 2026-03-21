@@ -6,3 +6,4 @@ export * from './dto';
 export * from './events';
 export * from './identity';
 export * from './utils';
+export * from './identity';

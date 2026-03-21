@@ -48,7 +48,7 @@
 
 ## Layer 2 — Service Features
 
-- [ ] **T09** Identity: User Management · M · ← T05
+- [x] **T09** Identity: User Management · M · ← T05
 - [x] **T10** Market: BizDir + Price Index · M · ← T06
 - [ ] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [ ] **T12** RAG: Retrieval + Chat · L · ← T08
