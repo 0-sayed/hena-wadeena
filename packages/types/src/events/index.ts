@@ -13,6 +13,8 @@ export const EVENTS = {
   OPPORTUNITY_PUBLISHED: 'opportunity.published',
   POI_APPROVED: 'poi.approved',
   KB_REBUILD_REQUESTED: 'kb.rebuild.requested',
+  BUSINESS_VERIFIED: 'business.verified',
+  COMMODITY_PRICE_UPDATED: 'commodity_price.updated',
   USER_SUSPENDED: 'user.suspended',
   USER_BANNED: 'user.banned',
   USER_DELETED: 'user.deleted',

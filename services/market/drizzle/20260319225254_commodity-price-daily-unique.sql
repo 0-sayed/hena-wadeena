@@ -1,0 +1,2 @@
+-- Custom SQL migration file, put your code below! --
+CREATE UNIQUE INDEX uq_commodity_price_daily ON market.commodity_prices (commodity_id, region, price_type, date_trunc('day', recorded_at, 'UTC')) WHERE deleted_at IS NULL;

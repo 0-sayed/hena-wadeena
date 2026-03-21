@@ -19,6 +19,9 @@ export default defineConfig({
     include: ['test/**/*.e2e-spec.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
+    // E2E tests share a single Redis instance — run files sequentially to
+    // prevent cross-file cache interference (one flushdb clearing another's state)
+    fileParallelism: false,
   },
   plugins: [
     // SWC transforms TypeScript with emitDecoratorMetadata — required for NestJS DI in E2E tests

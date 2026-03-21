@@ -45,6 +45,8 @@ const config: KnipConfig = {
   ignore: ['apps/web/**'],
   // Enum members in packages/types are forward-looking public API for services not yet implemented
   exclude: ['enumMembers'],
+  // LinkedCommodity etc. are exported for TS return-type inference (knip can't detect this)
+  ignoreExportsUsedInFile: true,
 };
 
 export default config;
