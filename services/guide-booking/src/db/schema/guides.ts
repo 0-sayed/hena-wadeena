@@ -29,6 +29,12 @@ export const guides = guideBookingSchema.table(
       .array()
       .notNull()
       .default(sql`'{}'`),
+    profileImage: text('profile_image'),
+    coverImage: text('cover_image'),
+    areasOfOperation: text('areas_of_operation')
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
     licenseNumber: text('license_number').notNull(),
     licenseVerified: boolean('license_verified').default(false).notNull(),
     basePrice: integer('base_price').notNull(),
@@ -50,6 +56,7 @@ export const guides = guideBookingSchema.table(
     index('idx_guides_created_at').on(t.createdAt.desc()),
     index('idx_guides_languages').using('gin', t.languages),
     index('idx_guides_specialties').using('gin', t.specialties),
+    index('idx_guides_areas_of_operation').using('gin', t.areasOfOperation),
     check('chk_guides_base_price_non_neg', sql`${t.basePrice} >= 0`),
     check('chk_guides_rating_count_non_neg', sql`${t.ratingCount} >= 0`),
     check(
