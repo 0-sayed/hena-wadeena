@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DocumentUpload } from '@/components/auth/DocumentUpload';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
@@ -28,12 +27,6 @@ const roles = [
   { value: 'driver', label: 'سائق', description: 'سائق نقل أو كاربول' },
   { value: 'guide', label: 'مرشد سياحي', description: 'مرشد سياحي مرخص' },
 ];
-
-interface UploadedDocuments {
-  national_id?: File;
-  license?: File;
-  certificate?: File;
-}
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -50,12 +43,6 @@ const RegisterPage = () => {
     city: '',
     organization: '',
   });
-  const [documents, setDocuments] = useState<UploadedDocuments>({});
-
-  const handleDocUpload = (docType: keyof UploadedDocuments, file: File) => {
-    setDocuments((prev) => ({ ...prev, [docType]: file }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -322,33 +309,9 @@ const RegisterPage = () => {
                       </div>
                     )}
 
-                    {/* Step 3: Documents */}
+                    {/* Step 3: Review & Submit */}
                     {step === 3 && (
                       <div className="space-y-4">
-                        <DocumentUpload
-                          label="صورة بطاقة الرقم القومي"
-                          uploadedFile={documents.national_id}
-                          onUpload={(file) => handleDocUpload('national_id', file)}
-                        />
-
-                        {(formData.role === 'driver' || formData.role === 'guide') && (
-                          <DocumentUpload
-                            label={
-                              formData.role === 'driver' ? 'رخصة القيادة' : 'ترخيص الإرشاد السياحي'
-                            }
-                            uploadedFile={documents.license}
-                            onUpload={(file) => handleDocUpload('license', file)}
-                          />
-                        )}
-
-                        {formData.role === 'farmer' && (
-                          <DocumentUpload
-                            label="شهادة حيازة زراعية"
-                            uploadedFile={documents.certificate}
-                            onUpload={(file) => handleDocUpload('certificate', file)}
-                          />
-                        )}
-
                         {/* Summary */}
                         <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                           <h4 className="font-semibold mb-3">ملخص البيانات</h4>

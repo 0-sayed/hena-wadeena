@@ -59,20 +59,14 @@ describe('KycService', () => {
 
   describe('review — approve', () => {
     it('should approve KYC and create notification', async () => {
-      // where() is called 3 times: findByIdOrThrow → update kyc → update users
-      mockDb.where
-        .mockReturnValueOnce(mockDb) // findByIdOrThrow: needs chain so .limit() can be called
-        .mockReturnValueOnce(mockDb) // update kyc: needs chain so .returning() can be called
-        .mockResolvedValueOnce(undefined); // update users: terminal op, awaited directly
-      // findByIdOrThrow: .limit() resolves to [mockKyc]
-      mockDb.limit.mockResolvedValueOnce([mockKyc]);
-      // update kyc: .returning() resolves to approved row
+      // Inside transaction: update kyc → update users → insert audit
       mockDb.returning.mockResolvedValueOnce([{ ...mockKyc, status: 'approved' }]);
 
       await service.review('kyc-uuid', 'admin-uuid', {
         status: 'approved',
       });
 
+      expect(mockDb.transaction).toHaveBeenCalled();
       expect(mockNotifications.create).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'kyc_approved', userId: 'user-uuid' }),
       );
@@ -82,16 +76,15 @@ describe('KycService', () => {
 
   describe('review — reject', () => {
     it('should reject KYC with reason and create notification', async () => {
-      mockDb.limit.mockResolvedValueOnce([mockKyc]);
+      // Inside transaction: update kyc → insert audit
       mockDb.returning.mockResolvedValueOnce([{ ...mockKyc, status: 'rejected' }]);
-      mockDb.values.mockReturnValueOnce(mockDb);
-      mockDb.returning.mockResolvedValueOnce([{}]);
 
       await service.review('kyc-uuid', 'admin-uuid', {
         status: 'rejected',
         rejectionReason: 'Document unclear',
       });
 
+      expect(mockDb.transaction).toHaveBeenCalled();
       expect(mockNotifications.create).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'kyc_rejected', userId: 'user-uuid' }),
       );

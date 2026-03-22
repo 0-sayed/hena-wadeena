@@ -74,35 +74,51 @@ export class KycService {
   }
 
   async review(id: string, adminId: string, dto: ReviewKycDto) {
-    const [updated] = await this.db
-      .update(userKyc)
-      .set({
-        status: dto.status as (typeof kycStatusEnum.enumValues)[number],
-        reviewedBy: adminId,
-        reviewedAt: sql`now()`,
-        rejectionReason: dto.rejectionReason ?? null,
-        updatedAt: sql`now()`,
-      })
-      .where(and(eq(userKyc.id, id), eq(userKyc.status, 'pending')))
-      .returning();
+    const updated = await this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(userKyc)
+        .set({
+          status: dto.status as (typeof kycStatusEnum.enumValues)[number],
+          reviewedBy: adminId,
+          reviewedAt: sql`now()`,
+          rejectionReason: dto.rejectionReason ?? null,
+          updatedAt: sql`now()`,
+        })
+        .where(and(eq(userKyc.id, id), eq(userKyc.status, 'pending')))
+        .returning();
 
-    if (!updated) {
-      // Distinguish "not found" from "already reviewed"
-      const [exists] = await this.db
-        .select({ id: userKyc.id })
-        .from(userKyc)
-        .where(eq(userKyc.id, id))
-        .limit(1);
-      if (!exists) throw new NotFoundException('KYC submission not found');
-      throw new ConflictException('KYC submission is not pending review or was already reviewed');
-    }
+      if (!row) {
+        const [exists] = await tx
+          .select({ id: userKyc.id })
+          .from(userKyc)
+          .where(eq(userKyc.id, id))
+          .limit(1);
+        if (!exists) throw new NotFoundException('KYC submission not found');
+        throw new ConflictException('KYC submission is not pending review or was already reviewed');
+      }
 
-    if (dto.status === 'approved') {
-      await Promise.all([
-        this.db
+      if (dto.status === 'approved') {
+        await tx
           .update(users)
           .set({ verifiedAt: sql`now()` })
-          .where(eq(users.id, updated.userId)),
+          .where(eq(users.id, row.userId));
+      }
+
+      await tx.insert(auditEvents).values({
+        userId: adminId,
+        eventType: dto.status === 'approved' ? 'kyc_approved' : 'kyc_rejected',
+        metadata:
+          dto.status === 'approved'
+            ? { kycId: id, userId: row.userId }
+            : { kycId: id, userId: row.userId, reason: dto.rejectionReason },
+      });
+
+      return row;
+    });
+
+    // Non-transactional side effects: notifications + events
+    if (dto.status === 'approved') {
+      await Promise.all([
         this.redisStreams.publish(EVENTS.USER_VERIFIED, {
           userId: updated.userId,
           kycId: id,
@@ -117,25 +133,17 @@ export class KycService {
           bodyEn: 'Your verification documents have been approved',
           data: { kycId: id, docType: updated.docType },
         }),
-        this.recordAudit(adminId, 'kyc_approved', { kycId: id, userId: updated.userId }),
       ]);
     } else {
-      await Promise.all([
-        this.notificationsService.create({
-          userId: updated.userId,
-          type: NotificationType.KYC_REJECTED,
-          titleAr: 'تم رفض وثائقك',
-          titleEn: 'Documents Rejected',
-          bodyAr: `تم رفض وثائق التحقق: ${dto.rejectionReason}`,
-          bodyEn: `Verification documents rejected: ${dto.rejectionReason}`,
-          data: { kycId: id, docType: updated.docType, reason: dto.rejectionReason },
-        }),
-        this.recordAudit(adminId, 'kyc_rejected', {
-          kycId: id,
-          userId: updated.userId,
-          reason: dto.rejectionReason,
-        }),
-      ]);
+      await this.notificationsService.create({
+        userId: updated.userId,
+        type: NotificationType.KYC_REJECTED,
+        titleAr: 'تم رفض وثائقك',
+        titleEn: 'Documents Rejected',
+        bodyAr: `تم رفض وثائق التحقق: ${dto.rejectionReason}`,
+        bodyEn: `Verification documents rejected: ${dto.rejectionReason}`,
+        data: { kycId: id, docType: updated.docType, reason: dto.rejectionReason },
+      });
     }
 
     return updated;
