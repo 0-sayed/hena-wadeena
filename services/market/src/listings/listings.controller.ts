@@ -8,10 +8,14 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
+
+import { QueryReviewsDto } from '../reviews/dto/query-reviews.dto';
+import { ReviewsService } from '../reviews/reviews.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { ImageUploadDto, NearbyQueryDto, QueryListingsDto } from './dto/query-listings.dto';
@@ -20,7 +24,10 @@ import { ListingsService } from './listings.service';
 
 @Controller('listings')
 export class ListingsController {
-  constructor(private readonly listingsService: ListingsService) {}
+  constructor(
+    private readonly listingsService: ListingsService,
+    private readonly reviewsService: ReviewsService,
+  ) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {
     if ((user.role as UserRole) !== UserRole.ADMIN) {
@@ -62,6 +69,12 @@ export class ListingsController {
     const listing = await this.listingsService.findById(id, user?.sub);
     if (!listing) throw new NotFoundException('Listing not found');
     return listing;
+  }
+
+  @Get(':id/reviews')
+  @Public()
+  findReviews(@Param('id', ParseUUIDPipe) id: string, @Query() query: QueryReviewsDto) {
+    return this.reviewsService.findByListing(id, query);
   }
 
   // --- Protected: create ---
