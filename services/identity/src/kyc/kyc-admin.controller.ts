@@ -1,6 +1,6 @@
 import { CurrentUser, type JwtPayload, Roles } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Body, Controller, Get, Inject, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 
 import { KycQueryDto } from './dto/kyc-query.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
@@ -17,7 +17,11 @@ export class KycAdminController {
   }
 
   @Patch(':id')
-  review(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: ReviewKycDto) {
+  review(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ReviewKycDto,
+  ) {
     return this.kycService.review(id, user.sub, dto);
   }
 }
