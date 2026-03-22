@@ -2,6 +2,7 @@ import { DynamicModule, Global, Inject, Module, OnModuleDestroy } from '@nestjs/
 import Redis from 'ioredis';
 
 export const REDIS_CLIENT = 'REDIS_CLIENT';
+export const REDIS_STREAMS_CLIENT = 'REDIS_STREAMS_CLIENT';
 
 export interface RedisModuleOptions {
   url: string;
@@ -12,36 +13,44 @@ export interface RedisModuleOptions {
 @Global()
 @Module({})
 export class RedisModule implements OnModuleDestroy {
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(REDIS_STREAMS_CLIENT) private readonly redisStreams: Redis,
+  ) {}
 
   async onModuleDestroy() {
-    await this.redis.quit();
+    await Promise.all([this.redis.quit(), this.redisStreams.quit()]);
   }
 
   static forRoot(options: RedisModuleOptions): DynamicModule {
+    const createClient = (label: string, keyPrefix?: string) => {
+      const client = new Redis(options.url, {
+        password: options.password?.trim() ? options.password : undefined,
+        keyPrefix,
+        lazyConnect: false,
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+      });
+      client.on('error', (err: Error) => {
+        console.error(`[${label}] Connection error:`, err.message);
+      });
+      return client;
+    };
+
     const redisProvider = {
       provide: REDIS_CLIENT,
-      useFactory: () => {
-        const client = new Redis(options.url, {
-          password: options.password?.trim() ? options.password : undefined,
-          keyPrefix: options.keyPrefix,
-          lazyConnect: false,
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-        });
+      useFactory: () => createClient('Redis', options.keyPrefix),
+    };
 
-        client.on('error', (err: Error) => {
-          console.error('[Redis] Connection error:', err.message);
-        });
-
-        return client;
-      },
+    const streamsProvider = {
+      provide: REDIS_STREAMS_CLIENT,
+      useFactory: () => createClient('Redis Streams'),
     };
 
     return {
       module: RedisModule,
-      providers: [redisProvider],
-      exports: [REDIS_CLIENT],
+      providers: [redisProvider, streamsProvider],
+      exports: [REDIS_CLIENT, REDIS_STREAMS_CLIENT],
     };
   }
 }
