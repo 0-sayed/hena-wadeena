@@ -12,6 +12,7 @@ import { and, desc, asc, eq, isNull, sql, SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { listings } from '../db/schema/listings';
+import { reviewHelpfulVotes } from '../db/schema/review-helpful-votes';
 import { reviews } from '../db/schema/reviews';
 import { isUniqueViolation } from '../shared/error-helpers';
 import { firstOrThrow, paginate } from '../shared/query-helpers';
@@ -198,15 +199,26 @@ export class ReviewsService {
     });
   }
 
-  async markHelpful(id: string): Promise<Review> {
-    const [updated] = await this.db
-      .update(reviews)
-      .set({ helpfulCount: sql`${reviews.helpfulCount} + 1` })
-      .where(and(eq(reviews.id, id), eq(reviews.isActive, true)))
-      .returning();
+  async markHelpful(id: string, userId: string): Promise<Review> {
+    try {
+      return await this.db.transaction(async (tx) => {
+        await tx.insert(reviewHelpfulVotes).values({ reviewId: id, userId });
 
-    if (!updated) throw new NotFoundException('Review not found');
-    return updated;
+        const [updated] = await tx
+          .update(reviews)
+          .set({ helpfulCount: sql`${reviews.helpfulCount} + 1` })
+          .where(and(eq(reviews.id, id), eq(reviews.isActive, true)))
+          .returning();
+
+        if (!updated) throw new NotFoundException('Review not found');
+        return updated;
+      });
+    } catch (err: unknown) {
+      if (isUniqueViolation(err)) {
+        throw new ConflictException('You have already marked this review as helpful');
+      }
+      throw err;
+    }
   }
 
   async findByListing(listingId: string, query: QueryReviewsDto) {

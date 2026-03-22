@@ -56,7 +56,7 @@ export class ReviewsController {
   }
 
   @Post(':id/helpful')
-  markHelpful(@Param('id', ParseUUIDPipe) id: string) {
-    return this.reviewsService.markHelpful(id);
+  markHelpful(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.reviewsService.markHelpful(id, user.sub);
   }
 }

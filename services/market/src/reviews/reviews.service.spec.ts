@@ -164,17 +164,29 @@ describe('ReviewsService', () => {
   });
 
   describe('markHelpful', () => {
-    it('should increment helpfulCount', async () => {
+    it('should insert vote and increment helpfulCount', async () => {
+      // insert vote (inside transaction)
+      mockDb.values.mockReturnValueOnce(mockDb);
+      // update + returning
       mockDb.returning.mockResolvedValueOnce([{ ...mockReview, helpfulCount: 1 }]);
 
-      const result = await service.markHelpful(REVIEW_ID);
+      const result = await service.markHelpful(REVIEW_ID, OTHER_ID);
       expect(result.helpfulCount).toBe(1);
     });
 
     it('should throw NotFoundException when review not found or inactive', async () => {
+      mockDb.values.mockReturnValueOnce(mockDb);
       mockDb.returning.mockResolvedValueOnce([]);
 
-      await expect(service.markHelpful(REVIEW_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.markHelpful(REVIEW_ID, OTHER_ID)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException on duplicate vote', async () => {
+      const pgError = new Error('unique violation');
+      Object.assign(pgError, { code: '23505' });
+      mockDb.transaction.mockRejectedValueOnce(pgError);
+
+      await expect(service.markHelpful(REVIEW_ID, OTHER_ID)).rejects.toThrow(ConflictException);
     });
   });
 
