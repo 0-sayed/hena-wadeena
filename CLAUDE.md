@@ -100,6 +100,7 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 
 - NEVER use `float` or `decimal` for money — always integer piasters
 - NEVER modify applied Drizzle migrations
+- NEVER delete existing Drizzle migration files or snapshots — `drizzle-kit generate` is append-only by design. Do NOT use `drizzle-kit drop`. If a migration looks wrong, leave it and fix forward with a new migration.
 - NEVER append custom SQL (triggers, functions, etc.) to generated migration files — use `drizzle-kit generate --custom` instead
 - NEVER use `drizzle-kit push` — always `drizzle-kit generate` + `migrate.ts` (dev and prod alike)
 - NEVER import `@hena-wadeena/nest-common` from frontend code
