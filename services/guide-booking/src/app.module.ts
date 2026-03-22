@@ -21,6 +21,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 
 import { AttractionsModule } from './attractions/attractions.module';
 import { JwtStrategy } from './auth/jwt.strategy';
+import { BookingsModule } from './bookings/bookings.module';
 import { GuidesModule } from './guides/guides.module';
 import { TourPackagesModule } from './tour-packages/tour-packages.module';
 
@@ -77,6 +78,7 @@ function requireEnv(name: string): string {
     AttractionsModule,
     GuidesModule,
     TourPackagesModule,
+    BookingsModule,
   ],
   providers: [
     JwtStrategy,
