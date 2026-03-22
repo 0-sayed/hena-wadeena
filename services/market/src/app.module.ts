@@ -16,6 +16,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ZodValidationPipe } from 'nestjs-zod';
 
 import { AuthModule } from './auth/auth.module';
+import { BusinessDirectoryModule } from './business-directory/business-directory.module';
+import { CommodityPricesModule } from './commodity-prices/commodity-prices.module';
 import { ListingsModule } from './listings/listings.module';
 
 /** Fail fast on missing env var in production; allow empty fallback in dev. */
@@ -55,6 +57,8 @@ function requireEnv(key: string): string {
     HealthModule,
     AuthModule,
     ListingsModule,
+    CommodityPricesModule,
+    BusinessDirectoryModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

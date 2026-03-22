@@ -53,3 +53,29 @@ export const applicationStatusEnum = marketSchema.enum('application_status', [
 
 // Business directory
 export const businessStatusEnum = marketSchema.enum('business_status', ['active', 'inactive']);
+
+// Commodity prices
+export const commodityCategoryEnum = marketSchema.enum('commodity_category', [
+  'fruits',
+  'grains',
+  'vegetables',
+  'oils',
+  'livestock',
+  'other',
+]);
+export const commodityUnitEnum = marketSchema.enum('commodity_unit', [
+  'kg',
+  'ton',
+  'ardeb',
+  'kantar',
+  'liter',
+  'piece',
+  'box',
+]);
+export const priceTypeEnum = marketSchema.enum('price_type', ['wholesale', 'retail', 'farm_gate']);
+export const verificationStatusEnum = marketSchema.enum('verification_status', [
+  'pending',
+  'verified',
+  'rejected',
+  'suspended',
+]);

@@ -12,6 +12,7 @@ import type { Column, SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { attractions } from '../db/schema/index';
+import { escapeLike, pickDefined } from '../utils/query';
 
 import type {
   AttractionFiltersDto,
@@ -23,10 +24,6 @@ import { createAttractionSchema } from './dto';
 
 type Attraction = typeof attractions.$inferSelect;
 
-function escapeLike(value: string): string {
-  return value.replace(/[%_\\]/g, '\\$&');
-}
-
 function makePoint(lng: number, lat: number) {
   return sql`public.ST_SetSRID(public.ST_MakePoint(${lng}, ${lat}), 4326)`;
 }
@@ -37,10 +34,6 @@ function withinRadius(column: Column | SQL, point: SQL, meters: number) {
 
 function distanceTo(column: Column | SQL, point: SQL) {
   return sql`public.ST_Distance(${column}::public.geography, ${point}::public.geography)`;
-}
-
-function pickDefined<T extends object>(obj: T): Partial<T> {
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 @Injectable()

@@ -9,12 +9,15 @@ export { bookings } from './bookings';
 export { guides } from './guides';
 export { guideReviews } from './reviews';
 export { tourPackages } from './tour-packages';
+export { tourPackageAttractions } from './tour-package-attractions';
 
 // Re-import for relation definitions
+import { attractions } from './attractions';
 import { bookings } from './bookings';
 import { guideAvailability } from './guide-availability';
 import { guides } from './guides';
 import { guideReviews } from './reviews';
+import { tourPackageAttractions } from './tour-package-attractions';
 import { tourPackages } from './tour-packages';
 
 // --- Relations ---
@@ -32,6 +35,22 @@ export const tourPackagesRelations = relations(tourPackages, ({ one, many }) => 
     references: [guides.id],
   }),
   bookings: many(bookings),
+  packageAttractions: many(tourPackageAttractions),
+}));
+
+export const attractionsRelations = relations(attractions, ({ many }) => ({
+  packageAttractions: many(tourPackageAttractions),
+}));
+
+export const tourPackageAttractionsRelations = relations(tourPackageAttractions, ({ one }) => ({
+  package: one(tourPackages, {
+    fields: [tourPackageAttractions.packageId],
+    references: [tourPackages.id],
+  }),
+  attraction: one(attractions, {
+    fields: [tourPackageAttractions.attractionId],
+    references: [attractions.id],
+  }),
 }));
 
 export const bookingsRelations = relations(bookings, ({ one }) => ({
