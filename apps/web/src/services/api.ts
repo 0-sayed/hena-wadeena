@@ -13,12 +13,16 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 // ── Typed error ─────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
+  data?: Record<string, unknown>;
+
   constructor(
     public status: number,
     message: string,
+    data?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'ApiError';
+    this.data = data;
   }
 }
 
@@ -38,13 +42,15 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
   });
 
   if (!res.ok) {
-    const error: { detail?: string; message?: string } = (await res
-      .json()
-      .catch(() => ({ message: 'Network error' }))) as {
-      detail?: string;
-      message?: string;
-    };
-    throw new ApiError(res.status, error.detail ?? error.message ?? `API Error ${res.status}`);
+    const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
+      string,
+      unknown
+    >;
+    throw new ApiError(
+      res.status,
+      (error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`,
+      error,
+    );
   }
 
   return (await res.json()) as T;

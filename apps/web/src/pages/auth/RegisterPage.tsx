@@ -95,20 +95,18 @@ const RegisterPage = () => {
           return;
         }
         if (err.status === 400) {
-          let parsed: Array<{ property?: string; constraints?: Record<string, string> }> = [];
-          try {
-            parsed = JSON.parse(err.message) as typeof parsed;
-          } catch {
-            // not JSON array, fall through to toast
-          }
-          if (parsed.length > 0) {
+          const backendToFrontend: Record<string, string> = { full_name: 'fullName' };
+          const zodErrors = err.data?.errors as
+            | Array<{ path: string[]; message: string }>
+            | undefined;
+          if (zodErrors && zodErrors.length > 0) {
             const errs: Record<string, string> = {};
             let earliestStep: 1 | 2 = 2;
-            parsed.forEach((ve) => {
-              const field = ve.property ?? '';
-              const msg = Object.values(ve.constraints ?? {}).join(', ');
-              errs[field] = msg;
-              const s = fieldToStep[field] ?? 2;
+            zodErrors.forEach((ve) => {
+              const backendField = ve.path[0] ?? '';
+              const field = backendToFrontend[backendField] ?? backendField;
+              errs[field] = ve.message;
+              const s = fieldToStep[backendField] ?? 2;
               if (s < earliestStep) earliestStep = s;
             });
             setFieldErrors(errs);
