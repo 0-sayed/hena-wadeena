@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Link } from 'react-router';
-import { Search, Star, Clock, Users } from 'lucide-react';
+import { AlertCircle, Search, Star, Clock, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,9 +27,10 @@ import type { PackageFilters } from '@/services/api';
 const PackagesPage = () => {
   const [filters, setFilters] = useState<Omit<PackageFilters, 'page'>>({ limit: 12 });
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = usePackages(filters);
+  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    usePackages(filters);
 
-  const packages = data?.pages.flatMap((p) => p.data) ?? [];
+  const packages = data?.pages.flatMap((p) => p.data);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -102,11 +104,19 @@ const PackagesPage = () => {
                   <CardSkeleton key={i} />
                 ))}
               </div>
+            ) : isError ? (
+              <div className="text-center py-12 space-y-4">
+                <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+                <p className="text-muted-foreground text-lg">حدث خطأ أثناء تحميل الباقات</p>
+                <Button variant="outline" onClick={() => void refetch()}>
+                  إعادة المحاولة
+                </Button>
+              </div>
             ) : (
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-                    {packages.map((pkg) => (
+                    {packages?.map((pkg) => (
                       <Card
                         key={pkg.id}
                         className="hover-lift overflow-hidden rounded-2xl border-border/50 hover:border-primary/40"
@@ -140,10 +150,14 @@ const PackagesPage = () => {
                               <p className="text-sm text-foreground truncate">
                                 {pkg.guideBioAr?.slice(0, 40) ?? ''}
                               </p>
-                              {pkg.guideRatingAvg != null && (
+                              {(pkg.guideRatingAvg != null || pkg.guideLicenseVerified) && (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Star className="h-3 w-3 text-accent fill-current" />
-                                  {formatRating(pkg.guideRatingAvg)}
+                                  {pkg.guideRatingAvg != null && (
+                                    <>
+                                      <Star className="h-3 w-3 text-accent fill-current" />
+                                      {formatRating(pkg.guideRatingAvg)}
+                                    </>
+                                  )}
                                   {pkg.guideLicenseVerified && (
                                     <Badge className="h-4 text-[10px] bg-green-500/10 text-green-600 mr-1">
                                       مرخّص
@@ -182,7 +196,7 @@ const PackagesPage = () => {
                   </div>
                 </SR>
 
-                {packages.length === 0 && (
+                {packages?.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground text-lg">لا توجد باقات متاحة</p>
                   </div>

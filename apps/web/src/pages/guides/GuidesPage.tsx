@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { useNavigate } from 'react-router';
-import { Search, Star, Users } from 'lucide-react';
+import { Link } from 'react-router';
+import { AlertCircle, Search, Star, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,12 +32,12 @@ import type { GuideFilters } from '@/services/api';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 
 const GuidesPage = () => {
-  const navigate = useNavigate();
   const [filters, setFilters] = useState<Omit<GuideFilters, 'page'>>({ limit: 12 });
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useGuides(filters);
+  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useGuides(filters);
 
-  const guides = data?.pages.flatMap((p) => p.data) ?? [];
+  const guides = data?.pages.flatMap((p) => p.data);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -145,78 +146,88 @@ const GuidesPage = () => {
                   <CardSkeleton key={i} />
                 ))}
               </div>
+            ) : isError ? (
+              <div className="text-center py-12 space-y-4">
+                <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+                <p className="text-muted-foreground text-lg">حدث خطأ أثناء تحميل المرشدين</p>
+                <Button variant="outline" onClick={() => void refetch()}>
+                  إعادة المحاولة
+                </Button>
+              </div>
             ) : (
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-                    {guides.map((guide) => (
-                      <Card
+                    {guides?.map((guide) => (
+                      <Link
                         key={guide.id}
-                        className="hover-lift cursor-pointer group overflow-hidden rounded-2xl border-border/50 hover:border-primary/40"
-                        onClick={() => void navigate(`/guides/${guide.id}`)}
+                        to={`/guides/${guide.id}`}
+                        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl"
                       >
-                        <CardContent className="p-0">
-                          <div className="relative overflow-hidden">
-                            <img
-                              src={guide.profileImage ?? '/placeholder.jpg'}
-                              alt={guide.bioAr?.slice(0, 30) ?? 'مرشد'}
-                              className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-700"
-                            />
-                            {guide.licenseVerified && (
-                              <Badge className="absolute top-3 left-3 bg-green-500 text-white shadow-lg">
-                                ✓ مرخّص
-                              </Badge>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          </div>
-                          <div className="p-6 space-y-3">
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {guide.bioAr}
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {guide.specialties.map((s) => (
-                                <Badge key={s} variant="outline" className="text-xs">
-                                  {specialtyLabels[s as GuideSpecialty] ?? s}
+                        <Card className="hover-lift cursor-pointer group overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 h-full">
+                          <CardContent className="p-0">
+                            <div className="relative overflow-hidden">
+                              <img
+                                src={guide.profileImage ?? '/placeholder.jpg'}
+                                alt={guide.bioAr?.slice(0, 30) ?? 'مرشد'}
+                                className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-700"
+                              />
+                              {guide.licenseVerified && (
+                                <Badge className="absolute top-3 left-3 bg-green-500 text-white shadow-lg">
+                                  ✓ مرخّص
                                 </Badge>
-                              ))}
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {guide.languages.map((l) => (
-                                <Badge key={l} variant="secondary" className="text-xs">
-                                  {languageLabels[l as GuideLanguage] ?? l}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="flex items-center justify-between pt-4 border-t">
-                              <div className="flex items-center gap-1.5">
-                                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                                <span className="font-bold text-base">
-                                  {formatRating(guide.ratingAvg)}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  ({guide.ratingCount})
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-xl font-bold text-primary">
-                                  {piastresToEgp(guide.basePrice)}
-                                </span>
-                                <span className="text-sm text-muted-foreground mr-1">/يوم</span>
-                              </div>
-                            </div>
-                            {guide.packageCount > 0 && (
-                              <p className="text-xs text-muted-foreground">
-                                {guide.packageCount} باقة متاحة
+                            <div className="p-6 space-y-3">
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {guide.bioAr}
                               </p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                              <div className="flex flex-wrap gap-1.5">
+                                {guide.specialties.map((s) => (
+                                  <Badge key={s} variant="outline" className="text-xs">
+                                    {specialtyLabels[s as GuideSpecialty] ?? s}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {guide.languages.map((l) => (
+                                  <Badge key={l} variant="secondary" className="text-xs">
+                                    {languageLabels[l as GuideLanguage] ?? l}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <div className="flex items-center justify-between pt-4 border-t">
+                                <div className="flex items-center gap-1.5">
+                                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                                  <span className="font-bold text-base">
+                                    {formatRating(guide.ratingAvg)}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground">
+                                    ({guide.ratingCount})
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-xl font-bold text-primary">
+                                    {piastresToEgp(guide.basePrice)}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground mr-1">/يوم</span>
+                                </div>
+                              </div>
+                              {guide.packageCount > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  {guide.packageCount} باقة متاحة
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
                     ))}
                   </div>
                 </SR>
 
-                {guides.length === 0 && (
+                {guides?.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground text-lg">لا يوجد مرشدون متاحون</p>
                   </div>

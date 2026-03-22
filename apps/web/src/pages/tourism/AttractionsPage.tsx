@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
-import { Search, Star, Clock, ArrowRight, MapPin } from 'lucide-react';
+import { AlertCircle, Search, Star, Clock, ArrowRight, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { Input } from '@/components/ui/input';
@@ -29,10 +29,10 @@ const AttractionsPage = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<Omit<AttractionFilters, 'page'>>({ limit: 12 });
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useAttractions(filters);
 
-  const attractions = data?.pages.flatMap((p) => p.data) ?? [];
+  const attractions = data?.pages.flatMap((p) => p.data);
 
   const handleTypeChange = (value: string) => {
     setFilters((prev) => ({
@@ -129,14 +129,22 @@ const AttractionsPage = () => {
                 <div key={i} className="h-72 rounded-2xl bg-muted animate-pulse" />
               ))}
             </div>
+          ) : isError ? (
+            <div className="text-center py-12 space-y-4">
+              <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+              <p className="text-muted-foreground text-lg">حدث خطأ أثناء تحميل المعالم السياحية</p>
+              <Button variant="outline" onClick={() => void refetch()}>
+                إعادة المحاولة
+              </Button>
+            </div>
           ) : (
             <>
               <div className="flex items-center justify-between mb-6">
-                <p className="text-muted-foreground">عرض {attractions.length} معلم سياحي</p>
+                <p className="text-muted-foreground">عرض {attractions?.length ?? 0} معلم سياحي</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {attractions.map((attraction) => (
+                {attractions?.map((attraction) => (
                   <Card
                     key={attraction.id}
                     className="group overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer"
@@ -185,7 +193,7 @@ const AttractionsPage = () => {
                 ))}
               </div>
 
-              {attractions.length === 0 && (
+              {attractions?.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground text-lg">
                     لم يتم العثور على نتائج مطابقة لبحثك
