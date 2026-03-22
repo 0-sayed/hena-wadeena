@@ -48,6 +48,9 @@
 
 ## Layer 2 — Service Features
 
+- [ ] **T09** Identity: User Management · M · ← T05
+- [ ] **T10** Market: BizDir + Price Index · M · ← T06
+- [x] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [x] **T09** Identity: User Management · M · ← T05
 - [x] **T10** Market: BizDir + Price Index · M · ← T06
 - [ ] **T11** Guide-Booking: Profiles + Packages · L · ← T07
@@ -65,7 +68,7 @@
 - [ ] **T14** Market: Listing Reviews · M · ← T10
 - [ ] **T15** Guide-Booking: Booking State Machine · M · ← T11
 - [ ] **T16** Chat Session Management · M · ← T12
-- [ ] **T17** Market: Investment CRUD + EOI · M · ← T10
+- [x] **T17** Market: Investment CRUD + EOI · M · ← T10
 - [ ] **F06** Guide Booking Flow · S · ← T15, F02, F03
 - [ ] **F07** Notifications + Wallet · S · ← T13, F02
 - [ ] **F13** Pagination + Performance · S · ← F01, F03
