@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Search,
-  BarChart3,
-  ArrowRight,
-} from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Search, BarChart3, ArrowRight } from 'lucide-react';
+import { TrendBadge } from '@/components/market/TrendBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,94 +14,42 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useNavigate } from 'react-router';
-
-const cities = [
-  { id: 'all', name: 'جميع المدن' },
-  { id: 'kharga', name: 'الخارجة' },
-  { id: 'dakhla', name: 'الداخلة' },
-  { id: 'farafra', name: 'الفرافرة' },
-  { id: 'paris', name: 'باريس' },
-];
-
-const categories = ['الكل', 'حبوب', 'فواكه', 'خضروات', 'أعلاف', 'بقوليات'];
-
-const priceData = [
-  { id: 1, name: 'قمح', price: 1250, change: 2.5, unit: 'طن', category: 'حبوب', city: 'الخارجة' },
-  {
-    id: 2,
-    name: 'تمر سيوي',
-    price: 45,
-    change: -1.2,
-    unit: 'كجم',
-    category: 'فواكه',
-    city: 'الداخلة',
-  },
-  { id: 3, name: 'زيتون', price: 28, change: 0, unit: 'كجم', category: 'فواكه', city: 'الخارجة' },
-  {
-    id: 4,
-    name: 'برسيم',
-    price: 800,
-    change: 3.1,
-    unit: 'طن',
-    category: 'أعلاف',
-    city: 'الفرافرة',
-  },
-  { id: 5, name: 'أرز', price: 22, change: -0.5, unit: 'كجم', category: 'حبوب', city: 'الخارجة' },
-  {
-    id: 6,
-    name: 'فول سوداني',
-    price: 55,
-    change: 1.8,
-    unit: 'كجم',
-    category: 'بقوليات',
-    city: 'الداخلة',
-  },
-  { id: 7, name: 'عنب', price: 35, change: 4.2, unit: 'كجم', category: 'فواكه', city: 'الخارجة' },
-  { id: 8, name: 'طماطم', price: 12, change: -2.1, unit: 'كجم', category: 'خضروات', city: 'باريس' },
-  {
-    id: 9,
-    name: 'بطاطس',
-    price: 8,
-    change: 0.5,
-    unit: 'كجم',
-    category: 'خضروات',
-    city: 'الفرافرة',
-  },
-  { id: 10, name: 'بصل', price: 6, change: -1.0, unit: 'كجم', category: 'خضروات', city: 'الداخلة' },
-  {
-    id: 11,
-    name: 'تمر مجهول',
-    price: 120,
-    change: 5.5,
-    unit: 'كجم',
-    category: 'فواكه',
-    city: 'الخارجة',
-  },
-  { id: 12, name: 'ذرة', price: 950, change: 1.2, unit: 'طن', category: 'حبوب', city: 'الداخلة' },
-];
-
-const topGainers = priceData
-  .filter((p) => p.change > 0)
-  .sort((a, b) => b.change - a.change)
-  .slice(0, 5);
-const topLosers = priceData
-  .filter((p) => p.change < 0)
-  .sort((a, b) => a.change - b.change)
-  .slice(0, 5);
+import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
+import {
+  formatPrice,
+  districtLabel,
+  categoryLabel,
+  unitLabel,
+  DISTRICTS_WITH_ALL,
+  CATEGORY_OPTIONS,
+} from '@/lib/format';
+import { Skeleton } from '@/components/motion/Skeleton';
 
 const PricesPage = () => {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('الكل');
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredProducts = priceData.filter((p) => {
-    const matchesCity =
-      selectedCity === 'all' || p.city === cities.find((c) => c.id === selectedCity)?.name;
-    const matchesCategory = selectedCategory === 'الكل' || p.category === selectedCategory;
-    const matchesSearch = p.name.includes(searchQuery) || p.category.includes(searchQuery);
-    return matchesCity && matchesCategory && matchesSearch;
+  const regionFilter = selectedCity === 'all' ? undefined : selectedCity;
+
+  const { data: indexData, isLoading } = usePriceIndex({
+    category: selectedCategory,
+    region: regionFilter,
+    limit: 100,
   });
+  const { data: summary } = usePriceSummary();
+
+  const entries = indexData?.data ?? [];
+  const topMovers = summary?.topMovers ?? [];
+  const gainers = topMovers.filter((m) => m.direction === 'up');
+  const losers = topMovers.filter((m) => m.direction === 'down');
+
+  const filteredProducts = entries.filter(
+    (e) =>
+      e.commodity.nameAr.includes(searchQuery) ||
+      categoryLabel(e.commodity.category).includes(searchQuery),
+  );
 
   return (
     <Layout>
@@ -132,38 +74,46 @@ const PricesPage = () => {
       <section className="py-8">
         <div className="container px-4">
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <Card className="border-border/50">
-              <CardContent className="p-4 text-center">
-                <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-                <p className="text-2xl font-bold">{priceData.length}</p>
-                <p className="text-sm text-muted-foreground">منتج متاح</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50">
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-                <p className="text-2xl font-bold">{topGainers.length}</p>
-                <p className="text-sm text-muted-foreground">منتج صاعد</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50">
-              <CardContent className="p-4 text-center">
-                <TrendingDown className="h-8 w-8 text-destructive mx-auto mb-2" />
-                <p className="text-2xl font-bold">{topLosers.length}</p>
-                <p className="text-sm text-muted-foreground">منتج هابط</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50">
-              <CardContent className="p-4 text-center">
-                <Minus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-2xl font-bold">
-                  {priceData.filter((p) => p.change === 0).length}
-                </p>
-                <p className="text-sm text-muted-foreground">منتج مستقر</p>
-              </CardContent>
-            </Card>
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} h="h-24" className="rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{summary?.totalCommodities ?? 0}</p>
+                  <p className="text-sm text-muted-foreground">منتج متاح</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{gainers.length}</p>
+                  <p className="text-sm text-muted-foreground">منتج صاعد</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <TrendingDown className="h-8 w-8 text-destructive mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{losers.length}</p>
+                  <p className="text-sm text-muted-foreground">منتج هابط</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <Minus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
+                    {entries.filter((e) => (e.changePercent ?? 0) === 0).length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">منتج مستقر</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Gainers & Losers */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -176,21 +126,13 @@ const PricesPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {topGainers.map((item) => (
+                  {gainers.map((mover) => (
                     <div
-                      key={item.id}
+                      key={mover.commodity.id}
                       className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
                     >
-                      <div>
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-sm text-muted-foreground mr-2">({item.city})</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold">
-                          {item.price} جنيه/{item.unit}
-                        </span>
-                        <Badge className="bg-primary/10 text-primary">+{item.change}%</Badge>
-                      </div>
+                      <span className="font-medium">{mover.commodity.nameAr}</span>
+                      <Badge className="bg-primary/10 text-primary">+{mover.changePercent}%</Badge>
                     </div>
                   ))}
                 </div>
@@ -206,21 +148,15 @@ const PricesPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {topLosers.map((item) => (
+                  {losers.map((mover) => (
                     <div
-                      key={item.id}
+                      key={mover.commodity.id}
                       className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
                     >
-                      <div>
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-sm text-muted-foreground mr-2">({item.city})</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold">
-                          {item.price} جنيه/{item.unit}
-                        </span>
-                        <Badge className="bg-destructive/10 text-destructive">{item.change}%</Badge>
-                      </div>
+                      <span className="font-medium">{mover.commodity.nameAr}</span>
+                      <Badge className="bg-destructive/10 text-destructive">
+                        {mover.changePercent}%
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -235,7 +171,7 @@ const PricesPage = () => {
                 <SelectValue placeholder="اختر المدينة" />
               </SelectTrigger>
               <SelectContent>
-                {cities.map((city) => (
+                {DISTRICTS_WITH_ALL.map((city) => (
                   <SelectItem key={city.id} value={city.id}>
                     {city.name}
                   </SelectItem>
@@ -244,14 +180,14 @@ const PricesPage = () => {
             </Select>
 
             <div className="flex gap-2 flex-wrap">
-              {categories.map((cat) => (
+              {CATEGORY_OPTIONS.map((opt) => (
                 <Button
-                  key={cat}
-                  variant={selectedCategory === cat ? 'default' : 'outline'}
+                  key={opt.id ?? 'all'}
+                  variant={selectedCategory === opt.id ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => setSelectedCategory(opt.id)}
                 >
-                  {cat}
+                  {opt.label}
                 </Button>
               ))}
             </div>
@@ -292,44 +228,32 @@ const PricesPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.map((item, index) => (
+                    {filteredProducts.map((entry, index) => (
                       <tr
-                        key={item.id}
+                        key={entry.commodity.id}
                         className={`hover:bg-muted/30 ${index !== filteredProducts.length - 1 ? 'border-b border-border/50' : ''}`}
                       >
                         <td className="py-4 px-6">
-                          <span className="font-medium text-foreground">{item.name}</span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge variant="outline">{item.category}</Badge>
-                        </td>
-                        <td className="py-4 px-6 text-muted-foreground">{item.city}</td>
-                        <td className="py-4 px-6">
-                          <span className="font-semibold text-foreground">{item.price}</span>
-                          <span className="text-sm text-muted-foreground mr-1">
-                            جنيه/{item.unit}
+                          <span className="font-medium text-foreground">
+                            {entry.commodity.nameAr}
                           </span>
                         </td>
                         <td className="py-4 px-6">
-                          <div
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
-                              item.change > 0
-                                ? 'bg-primary/10 text-primary'
-                                : item.change < 0
-                                  ? 'bg-destructive/10 text-destructive'
-                                  : 'bg-muted text-muted-foreground'
-                            }`}
-                          >
-                            {item.change > 0 ? (
-                              <TrendingUp className="h-3.5 w-3.5" />
-                            ) : item.change < 0 ? (
-                              <TrendingDown className="h-3.5 w-3.5" />
-                            ) : (
-                              <Minus className="h-3.5 w-3.5" />
-                            )}
-                            {item.change > 0 ? '+' : ''}
-                            {item.change}%
-                          </div>
+                          <Badge variant="outline">{categoryLabel(entry.commodity.category)}</Badge>
+                        </td>
+                        <td className="py-4 px-6 text-muted-foreground">
+                          {districtLabel(entry.region)}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-semibold text-foreground">
+                            {formatPrice(entry.latestPrice)}
+                          </span>
+                          <span className="text-sm text-muted-foreground mr-1">
+                            /{unitLabel(entry.commodity.unit)}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <TrendBadge changePercent={entry.changePercent} size="sm" showSign />
                         </td>
                       </tr>
                     ))}
@@ -340,7 +264,9 @@ const PricesPage = () => {
           </Card>
 
           <p className="text-center text-sm text-muted-foreground mt-4">
-            آخر تحديث: اليوم الساعة 10:30 صباحاً
+            {summary?.lastUpdated
+              ? `آخر تحديث: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+              : 'لا تتوفر بيانات حاليا'}
           </p>
         </div>
       </section>
