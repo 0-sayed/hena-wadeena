@@ -7,6 +7,7 @@ import Redis from 'ioredis';
 
 import { commodities } from '../db/schema/commodities';
 import { commodityPrices } from '../db/schema/commodity-prices';
+import { isForeignKeyViolation, isUniqueViolation } from '../shared/error-helpers';
 import { andRequired, firstOrThrow, paginate } from '../shared/query-helpers';
 import { scanAndDelete } from '../shared/redis-helpers';
 
@@ -71,26 +72,6 @@ type PriceHistoryRow = Record<string, unknown> & {
   max_price: number;
   sample_count: string;
 };
-
-/** Returns true if the error is a PostgreSQL unique violation (code 23505). */
-function isUniqueViolation(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as Record<string, unknown>).code === '23505'
-  );
-}
-
-/** Returns true if the error is a PostgreSQL foreign key violation (code 23503). */
-function isForeignKeyViolation(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as Record<string, unknown>).code === '23503'
-  );
-}
 
 function formatPriceIndexRow(r: PriceIndexRow) {
   const changePiasters = r.previous_price !== null ? r.latest_price - r.previous_price : null;
