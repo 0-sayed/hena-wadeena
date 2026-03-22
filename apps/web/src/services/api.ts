@@ -47,7 +47,8 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     throw new Error(error.detail ?? error.message ?? `API Error ${res.status}`);
   }
 
-  return (await res.json()) as T;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -233,7 +234,7 @@ export interface Business {
 // NOTE: GET /businesses/mine returns BusinessDirectory[] (plain array, no wrapper).
 export const businessesAPI = {
   getMine: () => apiFetch<Business[]>('/businesses/mine'),
-  create: (body: { nameAr: string; description?: string; category: string; district?: string }) =>
+  create: (body: { nameAr: string; description?: string; category: string; district: string }) =>
     apiFetch<Business>('/businesses', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -278,7 +279,7 @@ export const listingsAPI = {
   getAll: (params?: { category?: string; district?: string; limit?: number; offset?: number }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
-    if (params?.district) qs.set('district', params.district);
+    if (params?.district) qs.set('area', params.district);
     if (params?.limit != null) qs.set('limit', String(params.limit));
     if (params?.offset != null) qs.set('offset', String(params.offset));
     const query = qs.toString();
