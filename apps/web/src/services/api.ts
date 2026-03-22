@@ -206,6 +206,92 @@ export const marketAPI = {
     apiFetch<{ success: boolean; data: Supplier }>(`/market/suppliers/${id}`),
 };
 
+// ── Businesses ────────────────────────────────────────────────────────────
+// NOTE: Field names match backend DB schema (business_directories table).
+
+export interface Business {
+  id: string;
+  ownerId: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: string;
+  description: string | null;
+  descriptionAr: string | null;
+  district: string | null;
+  phone: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  status: string;
+  verificationStatus: string;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// NOTE: GET /businesses/mine returns BusinessDirectory[] (plain array, no wrapper).
+export const businessesAPI = {
+  getMine: () => apiFetch<Business[]>('/businesses/mine'),
+  create: (body: { nameAr: string; description?: string; category: string; district?: string }) =>
+    apiFetch<Business>('/businesses', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<{ nameAr: string; description: string }>) =>
+    apiFetch<Business>(`/businesses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) => apiFetch<void>(`/businesses/${id}`, { method: 'DELETE' }),
+};
+
+// ── Listings ──────────────────────────────────────────────────────────────
+// NOTE: Field names match backend DB schema (listings table).
+// GET /listings returns PaginatedResponse<Listing> = { data, total, page, limit, hasMore }.
+
+export interface Listing {
+  id: string;
+  ownerId: string;
+  listingType: string;
+  transaction: string;
+  titleAr: string;
+  titleEn: string | null;
+  description: string | null;
+  category: string;
+  subCategory: string | null;
+  price: number;
+  priceUnit: string;
+  district: string | null;
+  address: string | null;
+  slug: string;
+  status: string;
+  isVerified: boolean;
+  isFeatured: boolean;
+  ratingAvg: number | null;
+  viewsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const listingsAPI = {
+  getAll: (params?: { category?: string; district?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.category) qs.set('category', params.category);
+    if (params?.district) qs.set('district', params.district);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.offset) qs.set('offset', String(params.offset));
+    const query = qs.toString();
+    return apiFetch<{
+      data: Listing[];
+      total: number;
+      page: number;
+      limit: number;
+      hasMore: boolean;
+    }>(`/listings${query ? `?${query}` : ''}`);
+  },
+};
+
 // ── Logistics ───────────────────────────────────────────────────────────────
 
 export interface TransportRoute {
