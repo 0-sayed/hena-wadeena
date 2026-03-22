@@ -7,10 +7,7 @@ describe('queryKeys', () => {
   });
 
   it('notifications.unreadCount returns stable key', () => {
-    expect(queryKeys.notifications.unreadCount()).toEqual([
-      'notifications',
-      'unread-count',
-    ]);
+    expect(queryKeys.notifications.unreadCount()).toEqual(['notifications', 'unread-count']);
   });
 
   it('tourism.attractions includes filters in key', () => {
@@ -23,14 +20,18 @@ describe('queryKeys', () => {
   });
 
   it('tourism.attractions without filters includes undefined', () => {
-    expect(queryKeys.tourism.attractions()).toEqual([
-      'tourism',
-      'attractions',
-      undefined,
-    ]);
+    expect(queryKeys.tourism.attractions()).toEqual(['tourism', 'attractions', undefined]);
   });
 
   it('guides.detail includes id in key', () => {
     expect(queryKeys.guides.detail('abc-123')).toEqual(['guides', 'abc-123']);
+  });
+
+  it('market.businesses.mine returns stable key', () => {
+    expect(queryKeys.market.businesses.mine()).toEqual(['market', 'businesses', 'mine']);
+  });
+
+  it('bookings.mine returns stable key', () => {
+    expect(queryKeys.bookings.mine()).toEqual(['bookings', 'mine']);
   });
 });
