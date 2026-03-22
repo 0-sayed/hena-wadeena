@@ -1,6 +1,15 @@
 import { CurrentUser } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Query,
+} from '@nestjs/common';
 
 import { GuidesService } from '../guides/guides.service';
 
@@ -17,7 +26,10 @@ export class MyBookingsController {
   private async resolveCaller(user: JwtPayload) {
     const guideId =
       user.role === 'guide'
-        ? await this.guidesService.resolveGuideId(user.sub).catch(() => undefined)
+        ? await this.guidesService.resolveGuideId(user.sub).catch((error) => {
+            if (error instanceof NotFoundException) return undefined;
+            throw error;
+          })
         : undefined;
     return { sub: user.sub, role: user.role, guideId };
   }

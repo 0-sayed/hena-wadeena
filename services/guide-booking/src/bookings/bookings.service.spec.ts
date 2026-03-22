@@ -97,6 +97,12 @@ function createMockDb(): MockChain {
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
+const FUTURE_BOOKING_DATE = (() => {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+  return date.toISOString().slice(0, 10);
+})();
+
 const mockPackage = {
   id: 'pkg-uuid-1',
   guideId: 'guide-uuid-1',
@@ -121,7 +127,7 @@ const mockBooking = {
   packageId: 'pkg-uuid-1',
   guideId: 'guide-uuid-1',
   touristId: 'tourist-uuid-1',
-  bookingDate: '2026-04-01',
+  bookingDate: FUTURE_BOOKING_DATE,
   startTime: '09:00',
   peopleCount: 2,
   totalPrice: 10000,
@@ -159,7 +165,7 @@ describe('BookingsService', () => {
   describe('create', () => {
     const dto = {
       packageId: 'pkg-uuid-1',
-      bookingDate: '2026-04-01',
+      bookingDate: FUTURE_BOOKING_DATE,
       startTime: '09:00',
       peopleCount: 2,
     };
@@ -445,7 +451,7 @@ describe('BookingsService', () => {
 
       const result = await service.findMyBookings(
         { sub: 'tourist-uuid-1', role: 'tourist' },
-        { page: 1, limit: 20 },
+        { offset: 0, limit: 20 },
       );
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
@@ -457,7 +463,7 @@ describe('BookingsService', () => {
 
       const result = await service.findMyBookings(
         { sub: 'guide-user-uuid', role: 'guide', guideId: 'guide-uuid-1' },
-        { page: 1, limit: 20 },
+        { offset: 0, limit: 20 },
       );
       expect(result.data).toHaveLength(1);
     });
@@ -468,7 +474,7 @@ describe('BookingsService', () => {
 
       const result = await service.findMyBookings(
         { sub: 'tourist-uuid-1', role: 'tourist' },
-        { page: 1, limit: 20 },
+        { offset: 0, limit: 20 },
       );
       expect(result.data).toEqual([]);
       expect(result.total).toBe(0);
@@ -483,7 +489,7 @@ describe('BookingsService', () => {
       mockNextQuery([mockBooking, { ...mockBooking, id: 'booking-uuid-2' }]);
       mockNextQuery([{ total: 2 }]);
 
-      const result = await service.adminFindAll({ page: 1, limit: 20 });
+      const result = await service.adminFindAll({ offset: 0, limit: 20 });
       expect(result.data).toHaveLength(2);
       expect(result.total).toBe(2);
     });

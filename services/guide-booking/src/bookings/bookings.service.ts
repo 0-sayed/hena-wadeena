@@ -36,7 +36,7 @@ interface BookingFilters {
   status?: string;
   fromDate?: string;
   toDate?: string;
-  page: number;
+  offset: number;
   limit: number;
 }
 
@@ -73,7 +73,7 @@ export class BookingsService {
       throw new BadRequestException('Guide is not available for bookings');
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
     if (dto.bookingDate <= today) {
       throw new BadRequestException('Booking date must be in the future');
     }
@@ -171,7 +171,7 @@ export class BookingsService {
 
     // start only allowed on booking date
     if (targetStatus === 'in_progress') {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
       if (booking.bookingDate !== today) {
         throw new BadRequestException('Tour can only be started on the booking date');
       }
@@ -241,7 +241,7 @@ export class BookingsService {
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
-    const offset = (filters.page - 1) * filters.limit;
+    const { offset } = filters;
 
     const [data, [countRow]] = await Promise.all([
       this.db

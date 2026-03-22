@@ -7,7 +7,7 @@ export const bookingFiltersSchema = z.object({
   status: z.enum(bookingStatusEnum.enumValues).optional(),
   fromDate: z.iso.date().optional(),
   toDate: z.iso.date().optional(),
-  page: z.coerce.number().int().positive().default(1),
+  offset: z.coerce.number().int().min(0).default(0),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
 

@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -35,7 +36,10 @@ export class BookingsController {
   async findById(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     const guideId =
       user.role === 'guide'
-        ? await this.guidesService.resolveGuideId(user.sub).catch(() => undefined)
+        ? await this.guidesService.resolveGuideId(user.sub).catch((error) => {
+            if (error instanceof NotFoundException) return undefined;
+            throw error;
+          })
         : undefined;
 
     return this.bookingsService.findById(id, {
