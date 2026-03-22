@@ -18,6 +18,8 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { AuthModule } from './auth/auth.module';
 import { BusinessDirectoryModule } from './business-directory/business-directory.module';
 import { CommodityPricesModule } from './commodity-prices/commodity-prices.module';
+import { InvestmentApplicationsModule } from './investment-applications/investment-applications.module';
+import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
 import { ListingsModule } from './listings/listings.module';
 
 /** Fail fast on missing env var in production; allow empty fallback in dev. */
@@ -59,6 +61,8 @@ function requireEnv(key: string): string {
     ListingsModule,
     CommodityPricesModule,
     BusinessDirectoryModule,
+    InvestmentOpportunitiesModule,
+    InvestmentApplicationsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
