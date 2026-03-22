@@ -9,7 +9,7 @@ import { usePriceIndex } from '@/hooks/use-price-index';
 import { formatPrice, unitLabel } from '@/lib/format';
 
 export function PriceSnapshot() {
-  const { data, isLoading } = usePriceIndex({ limit: 6 });
+  const { data, isLoading } = usePriceIndex({ region: 'kharga', limit: 6 });
   const entries = data?.data ?? [];
 
   return (

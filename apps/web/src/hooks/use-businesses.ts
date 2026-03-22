@@ -17,8 +17,11 @@ export function useBusinesses(filters?: {
 
 export function useBusiness(id: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.market.business(id!),
-    queryFn: () => businessesAPI.getById(id!),
+    queryKey: id ? queryKeys.market.business(id) : (['market', 'business', 'pending'] as const),
+    queryFn: () => {
+      if (!id) throw new Error('Business id is required');
+      return businessesAPI.getById(id);
+    },
     enabled: !!id,
   });
 }

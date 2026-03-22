@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroMarketplace from '@/assets/hero-marketplace.jpg';
 import { TrendBadge } from '@/components/market/TrendBadge';
-import { usePriceIndex } from '@/hooks/use-price-index';
+import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
 import { useBusinesses } from '@/hooks/use-businesses';
 import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from '@/lib/format';
 
@@ -33,6 +33,7 @@ const MarketplacePage = () => {
     region: selectedCity,
   });
   const { data: suppliersData, isLoading: suppliersLoading } = useBusinesses();
+  const { data: summary } = usePriceSummary();
 
   const priceEntries = pricesData?.data ?? [];
   const businesses = suppliersData?.data ?? [];
@@ -117,7 +118,9 @@ const MarketplacePage = () => {
                           أسعار {DISTRICTS.find((c) => c.id === selectedCity)?.name}
                         </h3>
                         <span className="text-sm text-muted-foreground">
-                          آخر تحديث: اليوم 10:30 ص
+                          {summary?.lastUpdated
+                            ? `آخر تحديث: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                            : 'آخر تحديث: غير متاح'}
                         </span>
                       </div>
                     </div>

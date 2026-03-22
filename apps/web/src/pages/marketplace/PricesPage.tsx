@@ -23,7 +23,7 @@ import {
   DISTRICTS_WITH_ALL,
   CATEGORY_OPTIONS,
 } from '@/lib/format';
-import { Skeleton } from '@/components/motion/Skeleton';
+import { Skeleton, TableRowSkeleton } from '@/components/motion/Skeleton';
 
 const PricesPage = () => {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ const PricesPage = () => {
     region: regionFilter,
     limit: 100,
   });
-  const { data: summary } = usePriceSummary();
+  const { data: summary, isLoading: isSummaryLoading } = usePriceSummary();
 
   const entries = indexData?.data ?? [];
   const topMovers = summary?.topMovers ?? [];
@@ -74,7 +74,7 @@ const PricesPage = () => {
       <section className="py-8">
         <div className="container px-4">
           {/* Quick Stats */}
-          {isLoading ? (
+          {isLoading || isSummaryLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} h="h-24" className="rounded-xl" />
@@ -132,7 +132,9 @@ const PricesPage = () => {
                       className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
                     >
                       <span className="font-medium">{mover.commodity.nameAr}</span>
-                      <Badge className="bg-primary/10 text-primary">+{mover.changePercent}%</Badge>
+                      <Badge className="bg-primary/10 text-primary">
+                        +{mover.changePercent ?? 0}%
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -155,7 +157,7 @@ const PricesPage = () => {
                     >
                       <span className="font-medium">{mover.commodity.nameAr}</span>
                       <Badge className="bg-destructive/10 text-destructive">
-                        {mover.changePercent}%
+                        {mover.changePercent ?? 0}%
                       </Badge>
                     </div>
                   ))}
@@ -228,35 +230,41 @@ const PricesPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.map((entry, index) => (
-                      <tr
-                        key={entry.commodity.id}
-                        className={`hover:bg-muted/30 ${index !== filteredProducts.length - 1 ? 'border-b border-border/50' : ''}`}
-                      >
-                        <td className="py-4 px-6">
-                          <span className="font-medium text-foreground">
-                            {entry.commodity.nameAr}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge variant="outline">{categoryLabel(entry.commodity.category)}</Badge>
-                        </td>
-                        <td className="py-4 px-6 text-muted-foreground">
-                          {districtLabel(entry.region)}
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="font-semibold text-foreground">
-                            {formatPrice(entry.latestPrice)}
-                          </span>
-                          <span className="text-sm text-muted-foreground mr-1">
-                            /{unitLabel(entry.commodity.unit)}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <TrendBadge changePercent={entry.changePercent} size="sm" showSign />
-                        </td>
-                      </tr>
-                    ))}
+                    {isLoading
+                      ? Array.from({ length: 8 }).map((_, i) => (
+                          <TableRowSkeleton key={i} cols={5} />
+                        ))
+                      : filteredProducts.map((entry, index) => (
+                          <tr
+                            key={entry.commodity.id}
+                            className={`hover:bg-muted/30 ${index !== filteredProducts.length - 1 ? 'border-b border-border/50' : ''}`}
+                          >
+                            <td className="py-4 px-6">
+                              <span className="font-medium text-foreground">
+                                {entry.commodity.nameAr}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <Badge variant="outline">
+                                {categoryLabel(entry.commodity.category)}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-6 text-muted-foreground">
+                              {districtLabel(entry.region)}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="font-semibold text-foreground">
+                                {formatPrice(entry.latestPrice)}
+                              </span>
+                              <span className="text-sm text-muted-foreground mr-1">
+                                جنيه/{unitLabel(entry.commodity.unit)}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <TrendBadge changePercent={entry.changePercent} size="sm" showSign />
+                            </td>
+                          </tr>
+                        ))}
                   </tbody>
                 </table>
               </div>
