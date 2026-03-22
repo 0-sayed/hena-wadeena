@@ -1,205 +1,191 @@
-# PR #23 — feat(identity): admin user management
+# PR #32 — feat: role dashboard wiring
 
-> Generated: 2026-03-20 | Branch: feat/identity-user-management | Last updated: 2026-03-20 08:38
+> Generated: 2026-03-22 | Branch: feat/role-dashboard-wiring | Last updated: 2026-03-22 15:30
 
 ## Worth Fixing
 
-- [x] Generate a migration for the new identity schema changes — @chatgpt-codex-connector <!-- thread:PRRT_kwDORjaF4M51qO4V -->
-  > **services/identity/src/db/schema/users.ts:25**
+- [x] Opportunity status shows raw English string for non-active statuses in Arabic UI — @gemini-code-assist, @coderabbitai <!-- thread:PRRT_kwDORjaF4M519NLU --> <!-- thread:PRRT_kwDORjaF4M51-gru -->
+  > **apps/web/src/pages/roles/InvestorDashboard.tsx:98**
   >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Generate a migration for the new identity schema**
+  > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
   >
-  > This commit changes the Drizzle schema (`deleted_at` on `users` here, plus new `user_role`/`audit_event_type` enum values in `src/db/enums.ts`), but there is no companion file under `services/identity/drizzle/` and `meta/_journal.json` still ends at `20260314215323_rich_wallflower`. On any already-migrated environment, the new `findByEmail`/`findById` predicates will reference a nonexistent `deleted_at` column, and writes of `moderator`/`reviewer` or the new audit events will fail with enum errors.
-  >
-  > Useful? React with 👍 / 👎.
+  > This status handling is brittle. It only explicitly handles the 'active' status, and for other statuses, it falls back to displaying the raw status string which may not be user-friendly or localized. It's better to use a status-to-label/variant mapping object, similar to the pattern used in other dashboard components (e.g., `bookingStatusLabels`). This makes the component more robust and easier to maintain as new statuses are added.
 
-- [x] Strip sensitive fields from admin mutation responses — @chatgpt-codex-connector, @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qO4X --> <!-- thread:PRRT_kwDORjaF4M51qUGu -->
-  > **services/identity/src/admin/admin-users.controller.ts:47**
-  >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Strip sensitive fields from admin mutation responses**
-  >
-  > These PATCH handlers return the raw row from `UsersService`, unlike `findOne`/`findAll` which explicitly remove `passwordHash` and `deletedAt`. Calling `/admin/users/:id/role` (and the same pattern on `/status` just below) will therefore serialize the target user's hashed password back to any admin client, which is an avoidable credential leak.
-  >
-  > Useful? React with 👍 / 👎.
-
-  > **services/identity/src/admin/admin-users.controller.ts:57**
-  >
-  > _⚠️ Potential issue_ | _🔴 Critical_
-  >
-  > **Sanitize the PATCH responses.**
-  >
-  > Unlike `findOne()` and `findAll()`, these handlers return the raw `users` row from `UsersService`. That includes `passwordHash` (and `deletedAt`), so the admin API leaks credential material.
-  >
-  >
-  > <details>
-  > <summary>🔒 Suggested fix</summary>
-  >
-  > ```diff
-  >    async changeRole(
-  >      `@Param`('id', ParseUUIDPipe) id: string,
-  >      `@Body`() dto: ChangeRoleDto,
-  >      `@CurrentUser`() admin: JwtPayload,
-  >    ) {
-  >      if (id === admin.sub) throw new ForbiddenException('Cannot change your own role');
-  > -    return this.usersService.changeRole(id, dto.role, admin.sub);
-  > +    const { passwordHash, deletedAt, ...safe } = await this.usersService.changeRole(
-  > +      id,
-  > +      dto.role,
-  > +      admin.sub,
-  > +    );
-  > +    void passwordHash;
-  > +    void deletedAt;
-  > +    return safe;
-  >    }
-  >
-  >    `@Patch`(':id/status')
-  >    async changeStatus(
-  >      `@Param`('id', ParseUUIDPipe) id: string,
-  >      `@Body`() dto: ChangeStatusDto,
-  >      `@CurrentUser`() admin: JwtPayload,
-  >    ) {
-  >      if (id === admin.sub) throw new ForbiddenException('Cannot change your own status');
-  > -    return this.usersService.changeStatus(id, dto.status, admin.sub, dto.reason);
-  > +    const { passwordHash, deletedAt, ...safe } = await this.usersService.changeStatus(
-  > +      id,
-  > +      dto.status,
-  > +      admin.sub,
-  > +      dto.reason,
-  > +    );
-  > +    void passwordHash;
-  > +    void deletedAt;
-  > +    return safe;
-  >    }
-  > ```
-  > </details>
-  >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
-
-- [x] Revoke sessions / force re-auth when admin changes a user's role — @chatgpt-codex-connector, @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qO4Y --> <!-- thread:PRRT_kwDORjaF4M51qUHD -->
-  > **services/identity/src/users/users.service.ts:136**
-  >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Revoke sessions when an admin changes a user's role**
-  >
-  > This updates the persisted role but leaves every outstanding access token untouched. `RolesGuard` authorizes from `request.user.role` in the JWT payload, so demoting an `admin` here still leaves their current bearer token able to hit admin-only endpoints until it expires. The role-change path needs the same kind of session invalidation that status changes already perform.
-  >
-  > Useful? React with 👍 / 👎.
-
-  > **services/identity/src/users/users.service.ts:153**
-  >
-  > _⚠️ Potential issue_ | _🔴 Critical_
-  >
-  > **Force re-auth when a role changes.**
-  >
-  > Access tokens carry `role`, and `RolesGuard` authorizes from that claim. Updating only `users.role` here means a demoted admin keeps an already-issued admin JWT until it expires.
-  >
-  > This endpoint needs a user-level access-token invalidation path as part of role changes, not just a DB update.
-  >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
-
-- [x] Block suspended users in other services' JWT strategies — @chatgpt-codex-connector <!-- thread:PRRT_kwDORjaF4M51qO4b -->
-  > **services/identity/src/users/users.service.ts:193**
-  >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Block suspended users in the other JWT strategies too**
-  >
-  > The new suspend/ban/delete flows only call `blockUser`, which sets `id:blocked:<userId>` in Redis. Identity's `JwtStrategy` rejects that key, but `services/market/src/auth/jwt.strategy.ts:27-39` only checks `id:blacklist:<jti>` and `services/guide-booking/src/auth/jwt.strategy.ts:22-26` does no Redis lookup at all, so the same access token continues to authorize those services after an admin suspension or deletion. If this feature is meant to disable an account platform-wide, those strategies need to honor the blocked flag (or this path needs to invalidate access tokens directly).
-  >
-  > Useful? React with 👍 / 👎.
-
-- [x] Don't hardcode the blocked-key lifetime in Redis — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qUG7 -->
-  > **services/identity/src/session/session.service.ts:28**
-  >
-  > _⚠️ Potential issue_ | _🟠 Major_
-  >
-  > **Don't hardcode the blocked-key lifetime.**
-  >
-  > `blockUser()` always uses `EX 900`, but access-token lifetime is configurable. If `JWT_ACCESS_EXPIRES_IN` is set above 15 minutes, a suspended/banned/deleted user's still-valid JWT starts working again once this Redis key expires.
-  >
-  >
-  > <details>
-  > <summary>🔐 Suggested fix</summary>
-  >
-  > ```diff
-  > -    await this.redis.set(`id:blocked:${userId}`, '1', 'EX', 900);
-  > +    await this.redis.set(`id:blocked:${userId}`, '1');
-  > ```
-  > </details>
-  >
-  > Using the explicit `unblockUser()` path is safer here than coupling security state to a separate TTL.
-  >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
-
-- [x] Execute block/unblock before audit/event I/O in changeStatus — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qUHH -->
-  > **services/identity/src/users/users.service.ts:197**
-  >
-  > _⚠️ Potential issue_ | _🔴 Critical_
-  >
-  > **Don't put `blockUser()` behind audit/event I/O.**
-  >
-  > The DB status update happens first, but the Redis block/unblock runs only after the audit and stream publish succeed. If either side effect throws, a suspended/banned user keeps authenticating on existing access tokens because `jwt.strategy.ts` only checks the Redis flag.
-  >
-  >
-  > <details>
-  > <summary>🛡️ Suggested fix</summary>
-  >
-  > ```diff
-  >      const action = statusActions[status];
-  >      if (action) {
-  > +      if (action.revoke) {
-  > +        await Promise.all([
-  > +          this.sessionService.revokeAllUserSessions(id),
-  > +          this.sessionService.blockUser(id),
-  > +        ]);
-  > +      }
-  > +      if (action.unblock) {
-  > +        await this.sessionService.unblockUser(id);
-  > +      }
-  >        await Promise.all([
-  >          this.recordAudit(adminId, action.audit, undefined, undefined, auditMeta),
-  >          this.redisStreams.publish(action.event, eventPayload),
-  >        ]);
-  > -      if (action.revoke) {
-  > -        await this.sessionService.revokeAllUserSessions(id);
-  > -        await this.sessionService.blockUser(id);
-  > -      }
-  > -      if (action.unblock) {
-  > -        await this.sessionService.unblockUser(id);
-  > -      }
-  >      }
-  > ```
-  > </details>
-  >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
-
-- [x] Type Check failing — CI
-  - [x] `Cannot find name 'PaginatedResponse'` in services/market/src/listings/listings.service.ts:195
-  - [x] `Cannot find name 'PaginatedResponse'` in services/market/src/listings/listings.service.ts:213
-  - [x] `Cannot find name 'PaginatedResponse'` in services/market/src/listings/listings.service.ts:236
-
-- [x] Security Audit failing — CI
-  - [x] Prototype Pollution via parse() in flatted <=3.4.1 (high severity, via eslint > file-entry-cache > flat-cache > flatted)
-
-## Not Worth Fixing
-
-- [ ] ~~Use exact blocked-flag matching instead of truthy check — @coderabbitai~~ <!-- thread:PRRT_kwDORjaF4M51qUGz -->
-  - _Reason: Our code only ever stores `'1'` via `blockUser()`. A truthy check is correct here — `'0'` and `'false'` are never written to this key. The suggested `=== '1'` adds no real safety._
-  > **services/identity/src/auth/strategies/jwt.strategy.ts:41**
+  > **apps/web/src/pages/roles/InvestorDashboard.tsx:99**
   >
   > _⚠️ Potential issue_ | _🟡 Minor_
   >
-  > **Use exact blocked-flag matching instead of truthy check.**
+  > **Raw status string displayed for non-active opportunities.**
   >
-  > `if (isBlocked)` will suspend on any non-empty string (e.g. `'0'`, `'false'`). Match the Redis contract explicitly (`'1'`) to avoid accidental lockouts.
-  >
+  > Non-active statuses show the raw `opp.status` value (e.g., `'closed'`, `'pending'`) directly in the Arabic UI. Other dashboards in this PR use label mappings for all statuses.
   >
   > <details>
   > <summary>Suggested fix</summary>
   >
   > ```diff
-  > -    if (isBlocked) {
-  > +    if (isBlocked === '1') {
-  >        throw new UnauthorizedException('Account has been suspended');
-  >      }
+  > +const opportunityStatusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  > +  active: { label: 'نشط', variant: 'default' },
+  > +  closed: { label: 'مغلق', variant: 'outline' },
+  > +  pending: { label: 'قيد المراجعة', variant: 'secondary' },
+  > +};
+  >
+  > // Then in the render:
+  > -                    <Badge variant={opp.status === 'active' ? 'default' : 'secondary'}>
+  > -                      {opp.status === 'active' ? 'نشط' : opp.status}
+  > -                    </Badge>
+  > +                    {(() => {
+  > +                      const st = opportunityStatusLabels[opp.status] ?? { label: opp.status, variant: 'outline' as const };
+  > +                      return <Badge variant={st.variant}>{st.label}</Badge>;
+  > +                    })()}
   > ```
   > </details>
   >
+  > <details>
+  > <summary>🤖 Prompt for AI Agents</summary>
+  >
+  > ```
+  > Verify each finding against the current code and only fix it if needed.
+  >
+  > In `@apps/web/src/pages/roles/InvestorDashboard.tsx` around lines 95 - 99, The
+  > cell currently renders the raw opp.status string in the Badge, which shows
+  > untranslated/internal values; update the rendering to use the shared status
+  > label mapping (e.g., the STATUS_LABELS or getStatusLabel function used in other
+  > dashboards) so non-active statuses display localized/pretty labels; also keep
+  > the Badge variant logic using opp.status === 'active' but pass
+  > STATUS_LABELS[opp.status] (or getStatusLabel(opp.status)) instead of opp.status
+  > to the Badge content so all statuses use the consistent label mapping.
+  > ```
+  >
+  > </details>
+  >
+  > <!-- fingerprinting:phantom:medusa:ocelot -->
+
+- [x] `limit` and `offset` truthy checks drop valid `0` values — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51-grx -->
+  > **apps/web/src/services/api.ts:283**
+  >
+  > _⚠️ Potential issue_ | _🟡 Minor_
+  >
+  > **`limit` and `offset` currently drop valid `0` values.**
+  >
+  > Line 282 and Line 283 use truthy checks; passing `0` won't be serialized. Use nullish checks so explicit zero is preserved.
+  >
+  >
+  >
+  > <details>
+  > <summary>Proposed fix</summary>
+  >
+  > ```diff
+  > -    if (params?.limit) qs.set('limit', String(params.limit));
+  > -    if (params?.offset) qs.set('offset', String(params.offset));
+  > +    if (params?.limit != null) qs.set('limit', String(params.limit));
+  > +    if (params?.offset != null) qs.set('offset', String(params.offset));
+  > ```
+  > </details>
+  >
+  > <!-- suggestion_start -->
+  >
+  > <details>
+  > <summary>📝 Committable suggestion</summary>
+  >
+  > > ‼️ **IMPORTANT**
+  > > Carefully review the code before committing. Ensure that it accurately replaces the highlighted code, contains no missing lines, and has no issues with indentation. Thoroughly test & benchmark the code to ensure it meets the requirements.
+  >
+  > ```suggestion
+  >     if (params?.limit != null) qs.set('limit', String(params.limit));
+  >     if (params?.offset != null) qs.set('offset', String(params.offset));
+  > ```
+  >
+  > </details>
+  >
+  > <!-- suggestion_end -->
+  >
+  > <details>
+  > <summary>🤖 Prompt for AI Agents</summary>
+  >
+  > ```
+  > Verify each finding against the current code and only fix it if needed.
+  >
+  > In `@apps/web/src/services/api.ts` around lines 282 - 283, The code currently uses
+  > truthy checks that drop valid zero values for params.limit and params.offset;
+  > change both conditions to explicit nullish checks so 0 is preserved — replace
+  > "if (params?.limit)" and "if (params?.offset)" with checks like "if
+  > (params?.limit !== undefined && params.limit !== null)" and "if (params?.offset
+  > !== undefined && params.offset !== null)" before calling qs.set('limit',
+  > String(params.limit)) and qs.set('offset', String(params.offset)).
+  > ```
+  >
+  > </details>
+  >
   > <!-- fingerprinting:phantom:poseidon:hawk -->
+
+## Not Worth Fixing
+
+- [ ] ~~Import `Link` from `react-router-dom` instead of `react-router` — @gemini-code-assist~~ <!-- thread:PRRT_kwDORjaF4M519NLQ --> <!-- thread:PRRT_kwDORjaF4M519NLT -->
+  - _Reason: In React Router v7, `react-router` is the correct canonical package — `react-router-dom` re-exports from it. Both work identically. This is a convention nitpick with no functional impact._
+  > **apps/web/src/components/dashboard/EmptyState.tsx:3**
+  >
+  > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
+  >
+  > For web applications, it's standard practice to import components like `Link` from `react-router-dom` rather than `react-router`. The `react-router-dom` package provides the necessary DOM bindings for web environments, and using it directly ensures clarity and alignment with the React ecosystem's conventions.
+  >
+  > ```suggestion
+  > import { Link } from 'react-router-dom';
+  > ```
+
+  > **apps/web/src/pages/roles/InvestorDashboard.tsx:2**
+  >
+  > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
+  >
+  > For web applications, it's standard practice to import components like `Link` from `react-router-dom` rather than `react-router`. The `react-router-dom` package provides the necessary DOM bindings for web environments. Using it consistently improves code clarity and maintainability.
+  >
+  > ```suggestion
+  > import { Link } from 'react-router-dom';
+  > ```
+
+- [ ] ~~Fallback to 'pending' label for unknown merchant verification statuses — @coderabbitai~~ <!-- thread:PRRT_kwDORjaF4M51-grw -->
+  - _Reason: The verification statuses come from our own enum — unexpected values are a hypothetical scenario. The current fallback to "pending" is reasonable defensive coding. Not worth the added complexity for a case that can't happen with our API._
+  > **apps/web/src/pages/roles/MerchantDashboard.tsx:95**
+  >
+  > _⚠️ Potential issue_ | _🟡 Minor_
+  >
+  > **Fallback to 'pending' label for unknown statuses may be misleading.**
+  >
+  > If `biz.verificationStatus` contains an unexpected value (e.g., a new status added by the API, or a typo in data), the fallback silently displays "قيد المراجعة" (pending). This could mislead merchants about their actual status.
+  >
+  > Consider logging unknown statuses or rendering them distinctly:
+  >
+  > <details>
+  > <summary>Suggested approach</summary>
+  >
+  > ```diff
+  > -                  const st =
+  > -                    verificationLabels[biz.verificationStatus] ?? verificationLabels.pending;
+  > +                  const st = verificationLabels[biz.verificationStatus] ?? {
+  > +                    label: biz.verificationStatus,
+  > +                    variant: 'outline' as const,
+  > +                  };
+  > ```
+  > </details>
+  >
+  > <details>
+  > <summary>🤖 Prompt for AI Agents</summary>
+  >
+  > ```
+  > Verify each finding against the current code and only fix it if needed.
+  >
+  > In `@apps/web/src/pages/roles/MerchantDashboard.tsx` around lines 93 - 95, The
+  > current fallback silently maps unknown biz.verificationStatus values to
+  > verificationLabels.pending inside the businesses.map callback, which can mislead
+  > merchants; update the logic where st is computed (in the businesses.map block
+  > using verificationLabels and biz.verificationStatus) to detect when
+  > verificationLabels[biz.verificationStatus] is undefined, log or warn the
+  > unexpected status (e.g., console.warn or a telemetry logger) including biz.id
+  > and the raw status, and render a distinct fallback label (for example "Unknown
+  > status: {biz.verificationStatus}" or a localized "غير معروف") instead of
+  > defaulting to the pending label so unknown statuses are visible to users and
+  > traceable in logs.
+  > ```
+  >
+  > </details>
+  >
+  > <!-- fingerprinting:phantom:medusa:ocelot -->

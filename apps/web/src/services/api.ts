@@ -279,8 +279,8 @@ export const listingsAPI = {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
     if (params?.district) qs.set('district', params.district);
-    if (params?.limit) qs.set('limit', String(params.limit));
-    if (params?.offset) qs.set('offset', String(params.offset));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    if (params?.offset != null) qs.set('offset', String(params.offset));
     const query = qs.toString();
     return apiFetch<{
       data: Listing[];

@@ -16,6 +16,15 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const opportunityStatusLabels: Record<
+  string,
+  { label: string; variant: 'default' | 'secondary' | 'outline' }
+> = {
+  active: { label: 'نشط', variant: 'default' },
+  closed: { label: 'مغلق', variant: 'outline' },
+  pending: { label: 'قيد المراجعة', variant: 'secondary' },
+};
+
 export default function InvestorDashboard() {
   const { data, isLoading, error } = useOpportunities();
   const opportunities = data?.data ?? [];
@@ -93,9 +102,11 @@ export default function InvestorDashboard() {
                       {opp.roi}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={opp.status === 'active' ? 'default' : 'secondary'}>
-                        {opp.status === 'active' ? 'نشط' : opp.status}
-                      </Badge>
+                      {(() => {
+                        const st =
+                          opportunityStatusLabels[opp.status] ?? opportunityStatusLabels.active;
+                        return <Badge variant={st.variant}>{st.label}</Badge>;
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))}
