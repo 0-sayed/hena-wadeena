@@ -119,7 +119,7 @@ const MarketplacePage = () => {
                         </h3>
                         <span className="text-sm text-muted-foreground">
                           {summary?.lastUpdated
-                            ? `آخر تحديث: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                            ? `آخر تحديث للبورصة: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                             : 'آخر تحديث: غير متاح'}
                         </span>
                       </div>

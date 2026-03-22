@@ -45,6 +45,10 @@ const PricesPage = () => {
   const gainers = topMovers.filter((m) => m.direction === 'up');
   const losers = topMovers.filter((m) => m.direction === 'down');
 
+  const risingCount = entries.filter((e) => (e.changePercent ?? 0) > 0).length;
+  const fallingCount = entries.filter((e) => (e.changePercent ?? 0) < 0).length;
+  const stableCount = entries.filter((e) => (e.changePercent ?? 0) === 0).length;
+
   const filteredProducts = entries.filter(
     (e) =>
       e.commodity.nameAr.includes(searchQuery) ||
@@ -85,30 +89,28 @@ const PricesPage = () => {
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{summary?.totalCommodities ?? 0}</p>
+                  <p className="text-2xl font-bold">{entries.length}</p>
                   <p className="text-sm text-muted-foreground">منتج متاح</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{gainers.length}</p>
+                  <p className="text-2xl font-bold">{risingCount}</p>
                   <p className="text-sm text-muted-foreground">منتج صاعد</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <TrendingDown className="h-8 w-8 text-destructive mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{losers.length}</p>
+                  <p className="text-2xl font-bold">{fallingCount}</p>
                   <p className="text-sm text-muted-foreground">منتج هابط</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <Minus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-2xl font-bold">
-                    {entries.filter((e) => (e.changePercent ?? 0) === 0).length}
-                  </p>
+                  <p className="text-2xl font-bold">{stableCount}</p>
                   <p className="text-sm text-muted-foreground">منتج مستقر</p>
                 </CardContent>
               </Card>
