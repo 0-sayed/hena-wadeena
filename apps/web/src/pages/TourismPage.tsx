@@ -25,15 +25,17 @@ import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 const TourismPage = () => {
   const navigate = useNavigate();
 
-  const { data: attractionsData, isLoading: loadingAttractions } = useAttractions({
+  const { data: featuredData, isLoading: loadingFeatured } = useAttractions({
     featured: true,
     limit: 6,
   });
+  const { data: allData, isLoading: loadingAll } = useAttractions({ limit: 8 });
   const { data: guidesData, isLoading: loadingGuides } = useGuides({ limit: 6 });
 
-  const attractions = attractionsData?.pages.flatMap((p) => p.data) ?? [];
+  const featuredAttractions = featuredData?.pages.flatMap((p) => p.data) ?? [];
+  const allAttractions = allData?.pages.flatMap((p) => p.data) ?? [];
   const guides = guidesData?.pages.flatMap((p) => p.data) ?? [];
-  const loading = loadingAttractions || loadingGuides;
+  const loading = loadingFeatured || loadingAll || loadingGuides;
 
   return (
     <Layout>
@@ -98,7 +100,7 @@ const TourismPage = () => {
                     </SR>
                     <SR stagger>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-                        {attractions.map((attraction) => (
+                        {featuredAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
                             className="group overflow-hidden border-border/50 hover:border-primary/40 hover-lift rounded-2xl"
@@ -168,7 +170,7 @@ const TourismPage = () => {
                     </SR>
                     <SR stagger>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                        {attractions.map((attraction) => (
+                        {allAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
                             className="group overflow-hidden border-border/50 hover:border-primary/40 hover-lift rounded-2xl cursor-pointer"
