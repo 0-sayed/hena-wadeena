@@ -30,10 +30,13 @@ const PackagesPage = () => {
 
   const packages = data?.pages.flatMap((p) => p.data) ?? [];
 
-  const handleSearchChange = useDebouncedCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const search = e.target.value || undefined;
-    setFilters((prev) => ({ ...prev, search }));
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setFilters((prev) => ({ ...prev, search: value || undefined }));
   });
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSetSearch(e.target.value);
+  };
 
   const handleAreaChange = (value: string) => {
     setFilters((prev) => ({ ...prev, area: value === 'all' ? undefined : value }));
@@ -137,7 +140,7 @@ const PackagesPage = () => {
                               <p className="text-sm text-foreground truncate">
                                 {pkg.guideBioAr?.slice(0, 40) ?? ''}
                               </p>
-                              {pkg.guideRatingAvg && (
+                              {pkg.guideRatingAvg != null && (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                   <Star className="h-3 w-3 text-accent fill-current" />
                                   {formatRating(pkg.guideRatingAvg)}

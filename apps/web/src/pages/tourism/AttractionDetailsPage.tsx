@@ -1,5 +1,5 @@
 import { Layout } from '@/components/layout/Layout';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowRight, Star, Clock, Calendar, Sun, Users, MapPin, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,7 +60,7 @@ const AttractionDetailsPage = () => {
           <Button
             variant="ghost"
             className="absolute top-4 right-4 bg-card/80 backdrop-blur-sm"
-            onClick={() => void navigate(-1)}
+            onClick={() => void navigate('/tourism/attractions')}
           >
             <ArrowRight className="h-4 w-4 ml-2" />
             رجوع
@@ -78,7 +78,7 @@ const AttractionDetailsPage = () => {
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                 {attraction.nameAr}
               </h1>
-              {attraction.ratingAvg && (
+              {attraction.ratingAvg != null && (
                 <div className="flex items-center gap-2 text-accent">
                   <Star className="h-5 w-5 fill-current" />
                   <span className="font-bold text-lg">{formatRating(attraction.ratingAvg)}</span>
@@ -222,35 +222,33 @@ const AttractionDetailsPage = () => {
                 <h2 className="text-xl font-bold text-foreground mb-4">معالم قريبة</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {nearby.map((a) => (
-                    <Card
-                      key={a.id}
-                      className="group overflow-hidden cursor-pointer hover:border-primary/40 transition-colors"
-                      onClick={() => void navigate(`/tourism/attraction/${a.slug}`)}
-                    >
-                      <div className="aspect-[4/3] overflow-hidden">
-                        <img
-                          src={a.thumbnail ?? '/placeholder.jpg'}
-                          alt={a.nameAr}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                      <CardContent className="p-4">
-                        <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {a.nameAr}
-                        </h4>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {attractionTypeLabels[a.type]}
-                          </Badge>
-                          {a.ratingAvg && (
-                            <span className="flex items-center gap-0.5 mr-1">
-                              <Star className="h-3 w-3 text-accent fill-current" />
-                              {formatRating(a.ratingAvg)}
-                            </span>
-                          )}
+                    <Link key={a.id} to={`/tourism/attraction/${a.slug}`} className="block">
+                      <Card className="group overflow-hidden cursor-pointer hover:border-primary/40 transition-colors">
+                        <div className="aspect-[4/3] overflow-hidden">
+                          <img
+                            src={a.thumbnail ?? '/placeholder.jpg'}
+                            alt={a.nameAr}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
                         </div>
-                      </CardContent>
-                    </Card>
+                        <CardContent className="p-4">
+                          <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {a.nameAr}
+                          </h4>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {attractionTypeLabels[a.type]}
+                            </Badge>
+                            {a.ratingAvg != null && (
+                              <span className="flex items-center gap-0.5 mr-1">
+                                <Star className="h-3 w-3 text-accent fill-current" />
+                                {formatRating(a.ratingAvg)}
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               </div>

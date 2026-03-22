@@ -24,12 +24,13 @@ const GuideProfilePage = () => {
   const { data: guide, isLoading, error, refetch } = useGuide(id);
   const {
     data: packagesData,
+    isLoading: isLoadingPackages,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
   } = useGuidePackages(id);
 
-  const packages = packagesData?.pages.flatMap((p) => p.data) ?? [];
+  const packages = packagesData ? packagesData.pages.flatMap((p) => p.data) : undefined;
 
   if (isLoading) {
     return (
@@ -123,11 +124,13 @@ const GuideProfilePage = () => {
           <SR>
             <div>
               <h2 className="text-2xl font-bold mb-4">الباقات المتاحة</h2>
-              {packages.length === 0 && !isFetchingNextPage ? (
+              {isLoadingPackages ? (
+                <div className="h-32 w-full rounded-2xl bg-muted animate-pulse" />
+              ) : packages && packages.length === 0 ? (
                 <p className="text-muted-foreground">لا توجد باقات متاحة حالياً</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {packages.map((pkg) => (
+                  {packages?.map((pkg) => (
                     <Card key={pkg.id} className="hover:shadow-lg transition-all">
                       <CardContent className="p-0">
                         {pkg.images?.[0] && (

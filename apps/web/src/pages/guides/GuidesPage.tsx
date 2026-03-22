@@ -38,10 +38,13 @@ const GuidesPage = () => {
 
   const guides = data?.pages.flatMap((p) => p.data) ?? [];
 
-  const handleSearchChange = useDebouncedCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const search = e.target.value || undefined;
-    setFilters((prev) => ({ ...prev, search }));
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setFilters((prev) => ({ ...prev, search: value || undefined }));
   });
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSetSearch(e.target.value);
+  };
 
   const handleLanguageChange = (value: string) => {
     setFilters((prev) => ({ ...prev, language: value === 'all' ? undefined : value }));

@@ -8,7 +8,6 @@ export function useGuides(filters?: Omit<GuideFilters, 'page'>) {
     queryFn: ({ pageParam }) => guidesAPI.getAll({ ...filters, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    maxPages: 5,
   });
 }
 
@@ -26,7 +25,6 @@ export function useGuidePackages(guideId: string) {
     queryFn: ({ pageParam }) => guidesAPI.getPackages(guideId, { page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    maxPages: 5,
     enabled: !!guideId,
   });
 }

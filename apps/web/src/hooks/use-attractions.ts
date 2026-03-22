@@ -8,7 +8,6 @@ export function useAttractions(filters?: Omit<AttractionFilters, 'page'>) {
     queryFn: ({ pageParam }) => attractionsAPI.getAll({ ...filters, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    maxPages: 5,
   });
 }
 
