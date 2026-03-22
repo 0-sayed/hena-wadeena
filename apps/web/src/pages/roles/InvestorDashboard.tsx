@@ -1,36 +1,109 @@
-import { Layout } from '@/components/layout/Layout';
-import { RoleCrudBoard } from '@/components/roles/RoleCrudBoard';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Briefcase, MapPin, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router';
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { EmptyState } from '@/components/dashboard/EmptyState';
+import { useOpportunities } from '@/hooks/use-opportunities';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InvestorDashboard() {
-  return (
-    <Layout>
-      <div className="container py-8 px-4 space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">لوحة المستثمر</h1>
-            <p className="text-muted-foreground">إدارة الفرص الاستثمارية بشكل تجريبي</p>
-          </div>
-        </div>
+  const { data, isLoading, error } = useOpportunities();
+  const opportunities = data?.data ?? [];
 
-        <RoleCrudBoard
-          title="CRUD الفرص الاستثمارية"
-          description="أضف/عدّل/احذف الفرص ومراحل متابعتها"
-          entityLabel="الفرصة"
-          initialItems={[
-            { id: 'inv-1', name: 'مشروع زراعي جديد', status: 'active', notes: 'ROI متوقع 18%' },
-            {
-              id: 'inv-2',
-              name: 'توسعة مركز لوجستي',
-              status: 'pending',
-              notes: 'في مرحلة دراسة الجدوى',
-            },
-          ]}
+  const stats = {
+    total: opportunities.length,
+    sectors: new Set(opportunities.map((o) => o.category)).size,
+    locations: new Set(opportunities.map((o) => o.location)).size,
+  };
+
+  return (
+    <DashboardShell
+      icon={TrendingUp}
+      title="لوحة المستثمر"
+      subtitle="استعراض الفرص الاستثمارية المتاحة"
+    >
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard label="الفرص المتاحة" value={isLoading ? '...' : stats.total} icon={Briefcase} />
+        <StatCard
+          label="القطاعات"
+          value={isLoading ? '...' : stats.sectors}
+          icon={BarChart3}
+          variant="success"
+        />
+        <StatCard
+          label="المواقع"
+          value={isLoading ? '...' : stats.locations}
+          icon={MapPin}
+          variant="muted"
         />
       </div>
-    </Layout>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>الفرص الاستثمارية</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : error ? (
+            <p className="text-destructive text-sm">حدث خطأ في تحميل البيانات</p>
+          ) : opportunities.length === 0 ? (
+            <EmptyState
+              icon={TrendingUp}
+              message="لا توجد فرص استثمارية حاليًا"
+              actionLabel="تصفح الاستثمارات"
+              actionHref="/investment"
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الفرصة</TableHead>
+                  <TableHead>القطاع</TableHead>
+                  <TableHead>الموقع</TableHead>
+                  <TableHead>العائد المتوقع</TableHead>
+                  <TableHead>الحالة</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {opportunities.map((opp) => (
+                  <TableRow key={opp.id}>
+                    <TableCell className="font-medium">
+                      <Link to={`/investment/opportunity/${opp.id}`} className="hover:underline">
+                        {opp.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{opp.category}</TableCell>
+                    <TableCell>{opp.location}</TableCell>
+                    <TableCell dir="ltr" className="text-right">
+                      {opp.roi}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={opp.status === 'active' ? 'default' : 'secondary'}>
+                        {opp.status === 'active' ? 'نشط' : opp.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </DashboardShell>
   );
 }
