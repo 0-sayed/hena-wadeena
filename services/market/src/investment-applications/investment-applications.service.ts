@@ -130,10 +130,30 @@ export class InvestmentApplicationsService {
     const [updated] = await this.db
       .update(investmentApplications)
       .set({ status: 'withdrawn' })
-      .where(eq(investmentApplications.id, app.id))
+      .where(
+        and(
+          eq(investmentApplications.id, app.id),
+          sql`${investmentApplications.status} = ANY(ARRAY['pending','reviewed'])`,
+        ),
+      )
       .returning();
 
-    if (!updated) throw new NotFoundException('Application not found');
+    if (!updated) {
+      throw new ConflictException('Application state changed, withdrawal failed');
+    }
+
+    // Decrement denormalized interest count (fire-and-forget, mirror of submitInterest increment)
+    void this.db
+      .update(investmentOpportunities)
+      .set({ interestCount: sql`GREATEST(${investmentOpportunities.interestCount} - 1, 0)` })
+      .where(eq(investmentOpportunities.id, opportunityId))
+      .then(
+        () => undefined,
+        (err: unknown) => {
+          this.logger.error('Failed to decrement interest count', err);
+        },
+      );
+
     return updated;
   }
 
@@ -149,10 +169,17 @@ export class InvestmentApplicationsService {
     const [updated] = await this.db
       .update(investmentApplications)
       .set({ status: dto.status as Application['status'] })
-      .where(eq(investmentApplications.id, id))
+      .where(
+        and(
+          eq(investmentApplications.id, id),
+          eq(investmentApplications.status, app.status),
+        ),
+      )
       .returning();
 
-    if (!updated) throw new NotFoundException('Application not found');
+    if (!updated) {
+      throw new ConflictException('Application state changed concurrently');
+    }
     return updated;
   }
 
@@ -255,7 +282,8 @@ export class InvestmentApplicationsService {
       }
     }
 
-    const ext = dto.filename.split('.').pop() ?? 'pdf';
+    const parts = dto.filename.split('.');
+    const ext = parts.length > 1 ? parts.pop() : 'pdf';
     const key = `investments/${opportunityId}/docs/${generateId()}.${ext}`;
 
     const { uploadUrl } = await this.s3.getPresignedUploadUrl({

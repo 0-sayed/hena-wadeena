@@ -1,205 +1,354 @@
-# PR #23 — feat(identity): admin user management
+# PR #34 — feat: market investment crud eoi
 
-> Generated: 2026-03-20 | Branch: feat/identity-user-management | Last updated: 2026-03-20 08:38
+> Generated: 2026-03-22 | Branch: feat/market-investment-crud-eoi | Last updated: 2026-03-22 18:15
 
 ## Worth Fixing
 
-- [x] Generate a migration for the new identity schema changes — @chatgpt-codex-connector <!-- thread:PRRT_kwDORjaF4M51qO4V -->
-  > **services/identity/src/db/schema/users.ts:25**
+- [x] `withdraw` doesn't decrement denormalized `interestCount`, causing counter drift — @devin-ai-integration, @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M51-bQF --> <!-- thread:PRRT_kwDORjaF4M51-d-E -->
+  > **services/market/src/investment-applications/investment-applications.service.ts:137**
   >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Generate a migration for the new identity schema**
+  > <!-- devin-review-comment {"id": "BUG_pr-review-job-89038f282e3a4f05b0e7665a70c14f8b_0001", "file_path": "services/market/src/investment-applications/investment-applications.service.ts", "start_line": 130, "end_line": 137, "side": "RIGHT"} -->
   >
-  > This commit changes the Drizzle schema (`deleted_at` on `users` here, plus new `user_role`/`audit_event_type` enum values in `src/db/enums.ts`), but there is no companion file under `services/identity/drizzle/` and `meta/_journal.json` still ends at `20260314215323_rich_wallflower`. On any already-migrated environment, the new `findByEmail`/`findById` predicates will reference a nonexistent `deleted_at` column, and writes of `moderator`/`reviewer` or the new audit events will fail with enum errors.
+  > :red_circle: **`withdraw` does not decrement the denormalized `interestCount`, causing counter drift**
   >
-  > Useful? React with 👍 / 👎.
-
-- [x] Strip sensitive fields from admin mutation responses — @chatgpt-codex-connector, @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qO4X --> <!-- thread:PRRT_kwDORjaF4M51qUGu -->
-  > **services/identity/src/admin/admin-users.controller.ts:47**
+  > `submitInterest` at `investment-applications.service.ts:108-118` fires a fire-and-forget UPDATE to increment `investmentOpportunities.interestCount` when an application is created. However, the `withdraw` method at `investment-applications.service.ts:123-138` only updates the application status to `'withdrawn'` — it never decrements the counter. Over time, as investors withdraw their interest, the `interestCount` on opportunities will become inflated and inaccurate, since it only ever goes up.
   >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Strip sensitive fields from admin mutation responses**
+  > ```suggestion
+  >     const [updated] = await this.db
+  >       .update(investmentApplications)
+  >       .set({ status: 'withdrawn' })
+  >       .where(eq(investmentApplications.id, app.id))
+  >       .returning();
   >
-  > These PATCH handlers return the raw row from `UsersService`, unlike `findOne`/`findAll` which explicitly remove `passwordHash` and `deletedAt`. Calling `/admin/users/:id/role` (and the same pattern on `/status` just below) will therefore serialize the target user's hashed password back to any admin client, which is an avoidable credential leak.
+  >     if (!updated) throw new NotFoundException('Application not found');
   >
-  > Useful? React with 👍 / 👎.
-
-  > **services/identity/src/admin/admin-users.controller.ts:57**
+  >     // Decrement denormalized interest count (fire-and-forget)
+  >     void this.db
+  >       .update(investmentOpportunities)
+  >       .set({ interestCount: sql`GREATEST(${investmentOpportunities.interestCount} - 1, 0)` })
+  >       .where(eq(investmentOpportunities.id, opportunityId))
+  >       .then(
+  >         () => undefined,
+  >         (err: unknown) => {
+  >           this.logger.error('Failed to decrement interest count', err);
+  >         },
+  >       );
   >
-  > _⚠️ Potential issue_ | _🔴 Critical_
-  >
-  > **Sanitize the PATCH responses.**
-  >
-  > Unlike `findOne()` and `findAll()`, these handlers return the raw `users` row from `UsersService`. That includes `passwordHash` (and `deletedAt`), so the admin API leaks credential material.
-  >
-  >
-  > <details>
-  > <summary>🔒 Suggested fix</summary>
-  >
-  > ```diff
-  >    async changeRole(
-  >      `@Param`('id', ParseUUIDPipe) id: string,
-  >      `@Body`() dto: ChangeRoleDto,
-  >      `@CurrentUser`() admin: JwtPayload,
-  >    ) {
-  >      if (id === admin.sub) throw new ForbiddenException('Cannot change your own role');
-  > -    return this.usersService.changeRole(id, dto.role, admin.sub);
-  > +    const { passwordHash, deletedAt, ...safe } = await this.usersService.changeRole(
-  > +      id,
-  > +      dto.role,
-  > +      admin.sub,
-  > +    );
-  > +    void passwordHash;
-  > +    void deletedAt;
-  > +    return safe;
-  >    }
-  >
-  >    `@Patch`(':id/status')
-  >    async changeStatus(
-  >      `@Param`('id', ParseUUIDPipe) id: string,
-  >      `@Body`() dto: ChangeStatusDto,
-  >      `@CurrentUser`() admin: JwtPayload,
-  >    ) {
-  >      if (id === admin.sub) throw new ForbiddenException('Cannot change your own status');
-  > -    return this.usersService.changeStatus(id, dto.status, admin.sub, dto.reason);
-  > +    const { passwordHash, deletedAt, ...safe } = await this.usersService.changeStatus(
-  > +      id,
-  > +      dto.status,
-  > +      admin.sub,
-  > +      dto.reason,
-  > +    );
-  > +    void passwordHash;
-  > +    void deletedAt;
-  > +    return safe;
-  >    }
+  >     return updated;
   > ```
-  > </details>
   >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
+  > ---
+  > *Was this helpful? React with :thumbsup: or :thumbsdown: to provide feedback.*
 
-- [x] Revoke sessions / force re-auth when admin changes a user's role — @chatgpt-codex-connector, @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qO4Y --> <!-- thread:PRRT_kwDORjaF4M51qUHD -->
-  > **services/identity/src/users/users.service.ts:136**
+  > **services/market/src/investment-applications/investment-applications.service.ts:137**
   >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Revoke sessions when an admin changes a user's role**
+  > ![high](https://www.gstatic.com/codereviewagent/high-priority.svg)
   >
-  > This updates the persisted role but leaves every outstanding access token untouched. `RolesGuard` authorizes from `request.user.role` in the JWT payload, so demoting an `admin` here still leaves their current bearer token able to hit admin-only endpoints until it expires. The role-change path needs the same kind of session invalidation that status changes already perform.
+  > The `withdraw` method correctly updates the application status to 'withdrawn', but it doesn't decrement the denormalized `interestCount` on the corresponding `investmentOpportunities` record. Since `submitInterest` increments this counter, `withdraw` should perform the opposite action to maintain data consistency. Using `GREATEST(0, ...)` is a good defensive measure to prevent the count from going below zero.
   >
-  > Useful? React with 👍 / 👎.
-
-  > **services/identity/src/users/users.service.ts:153**
+  > ```typescript
+  >     // Decrement denormalized interest count (fire-and-forget)
+  >     void this.db
+  >       .update(investmentOpportunities)
+  >       .set({ interestCount: sql`GREATEST(0, ${investmentOpportunities.interestCount} - 1)` })
+  >       .where(eq(investmentOpportunities.id, opportunityId))
+  >       .catch((err: unknown) => {
+  >         this.logger.error('Failed to decrement interest count', err);
+  >       });
   >
-  > _⚠️ Potential issue_ | _🔴 Critical_
-  >
-  > **Force re-auth when a role changes.**
-  >
-  > Access tokens carry `role`, and `RolesGuard` authorizes from that claim. Updating only `users.role` here means a demoted admin keeps an already-issued admin JWT until it expires.
-  >
-  > This endpoint needs a user-level access-token invalidation path as part of role changes, not just a DB update.
-  >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
-
-- [x] Block suspended users in other services' JWT strategies — @chatgpt-codex-connector <!-- thread:PRRT_kwDORjaF4M51qO4b -->
-  > **services/identity/src/users/users.service.ts:193**
-  >
-  > **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Block suspended users in the other JWT strategies too**
-  >
-  > The new suspend/ban/delete flows only call `blockUser`, which sets `id:blocked:<userId>` in Redis. Identity's `JwtStrategy` rejects that key, but `services/market/src/auth/jwt.strategy.ts:27-39` only checks `id:blacklist:<jti>` and `services/guide-booking/src/auth/jwt.strategy.ts:22-26` does no Redis lookup at all, so the same access token continues to authorize those services after an admin suspension or deletion. If this feature is meant to disable an account platform-wide, those strategies need to honor the blocked flag (or this path needs to invalidate access tokens directly).
-  >
-  > Useful? React with 👍 / 👎.
-
-- [x] Don't hardcode the blocked-key lifetime in Redis — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qUG7 -->
-  > **services/identity/src/session/session.service.ts:28**
-  >
-  > _⚠️ Potential issue_ | _🟠 Major_
-  >
-  > **Don't hardcode the blocked-key lifetime.**
-  >
-  > `blockUser()` always uses `EX 900`, but access-token lifetime is configurable. If `JWT_ACCESS_EXPIRES_IN` is set above 15 minutes, a suspended/banned/deleted user's still-valid JWT starts working again once this Redis key expires.
-  >
-  >
-  > <details>
-  > <summary>🔐 Suggested fix</summary>
-  >
-  > ```diff
-  > -    await this.redis.set(`id:blocked:${userId}`, '1', 'EX', 900);
-  > +    await this.redis.set(`id:blocked:${userId}`, '1');
+  >     return updated;
   > ```
-  > </details>
-  >
-  > Using the explicit `unblockUser()` path is safer here than coupling security state to a separate TTL.
-  >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
 
-- [x] Execute block/unblock before audit/event I/O in changeStatus — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51qUHH -->
-  > **services/identity/src/users/users.service.ts:197**
+- [x] Filename without a dot produces the full filename as S3 key extension — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M51-bQP -->
+  > **services/market/src/investment-applications/investment-applications.service.ts:258**
   >
-  > _⚠️ Potential issue_ | _🔴 Critical_
+  > <!-- devin-review-comment {"id": "BUG_pr-review-job-89038f282e3a4f05b0e7665a70c14f8b_0002", "file_path": "services/market/src/investment-applications/investment-applications.service.ts", "start_line": 258, "end_line": 258, "side": "RIGHT"} -->
   >
-  > **Don't put `blockUser()` behind audit/event I/O.**
+  > :yellow_circle: **Filename without a dot produces the full filename as the S3 key "extension"**
   >
-  > The DB status update happens first, but the Redis block/unblock runs only after the audit and stream publish succeed. If either side effect throws, a suspended/banned user keeps authenticating on existing access tokens because `jwt.strategy.ts` only checks the Redis flag.
+  > In `generateDocUploadUrl`, the extension is extracted via `dto.filename.split('.').pop() ?? 'pdf'`. If the filename has no dot (e.g. `"report"`), `split('.')` returns `["report"]` and `.pop()` yields `"report"` (not `undefined`), so the fallback `'pdf'` is never used. The resulting S3 key becomes something like `investments/.../docs/<id>.report`. The `DocumentUploadDto` at `document-upload.dto.ts:5` only validates `z.string().min(1)` with no requirement for a dot, so such filenames pass validation.
+  >
+  > ```suggestion
+  >     const parts = dto.filename.split('.');
+  >     const ext = parts.length > 1 ? parts.pop() : 'pdf';
+  > ```
+  >
+  > ---
+  > *Was this helpful? React with :thumbsup: or :thumbsdown: to provide feedback.*
+
+- [x] TOCTOU race and missing `updatedAt` in `withdraw` — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51-jJx -->
+  > **services/market/src/investment-applications/investment-applications.service.ts:138**
+  >
+  > _:warning: Potential issue_ | _:orange_circle: Major_
+  >
+  > **TOCTOU race and missing `updatedAt` in withdraw.**
+  >
+  > Two issues here:
+  >
+  > 1. **Race condition**: The status is checked then updated without an atomic WHERE condition. If another request transitions the application to `accepted` between the check and update, the withdraw would still succeed.
+  >
+  > 2. **Missing `updatedAt`**: Per project conventions (Drizzle/PostgreSQL), `updatedAt` should be set explicitly at the application layer on every write.
   >
   >
   > <details>
-  > <summary>🛡️ Suggested fix</summary>
+  > <summary>:wrench: Proposed fix</summary>
   >
   > ```diff
-  >      const action = statusActions[status];
-  >      if (action) {
-  > +      if (action.revoke) {
-  > +        await Promise.all([
-  > +          this.sessionService.revokeAllUserSessions(id),
-  > +          this.sessionService.blockUser(id),
-  > +        ]);
-  > +      }
-  > +      if (action.unblock) {
-  > +        await this.sessionService.unblockUser(id);
-  > +      }
-  >        await Promise.all([
-  >          this.recordAudit(adminId, action.audit, undefined, undefined, auditMeta),
-  >          this.redisStreams.publish(action.event, eventPayload),
-  >        ]);
-  > -      if (action.revoke) {
-  > -        await this.sessionService.revokeAllUserSessions(id);
-  > -        await this.sessionService.blockUser(id);
-  > -      }
-  > -      if (action.unblock) {
-  > -        await this.sessionService.unblockUser(id);
-  > -      }
+  >    async withdraw(opportunityId: string, investorId: string): Promise<Application> {
+  >      const app = await this.findByOpportunityAndInvestor(opportunityId, investorId);
+  >      if (!app) throw new NotFoundException('Application not found');
+  >      if (!WITHDRAWABLE_STATES.includes(app.status)) {
+  >        throw new ConflictException(`Cannot withdraw from ${app.status} status`);
   >      }
+  >
+  >      const [updated] = await this.db
+  >        .update(investmentApplications)
+  > -      .set({ status: 'withdrawn' })
+  > -      .where(eq(investmentApplications.id, app.id))
+  > +      .set({ status: 'withdrawn', updatedAt: new Date() })
+  > +      .where(
+  > +        and(
+  > +          eq(investmentApplications.id, app.id),
+  > +          sql`${investmentApplications.status} = ANY(${WITHDRAWABLE_STATES})`,
+  > +        ),
+  > +      )
+  >        .returning();
+  >
+  > -    if (!updated) throw new NotFoundException('Application not found');
+  > +    if (!updated) {
+  > +      throw new ConflictException('Application state changed, withdrawal failed');
+  > +    }
+  >      return updated;
+  >    }
   > ```
   > </details>
   >
-  > <!-- fingerprinting:phantom:medusa:grasshopper -->
+  > Based on learnings: "updated_at/updatedAt should be managed by the application layer at update time."
+  >
+  > <!-- fingerprinting:phantom:medusa:ocelot -->
 
-- [x] Type Check failing — CI
-  - [x] `Cannot find name 'PaginatedResponse'` in services/market/src/listings/listings.service.ts:195
-  - [x] `Cannot find name 'PaginatedResponse'` in services/market/src/listings/listings.service.ts:213
-  - [x] `Cannot find name 'PaginatedResponse'` in services/market/src/listings/listings.service.ts:236
-
-- [x] Security Audit failing — CI
-  - [x] Prototype Pollution via parse() in flatted <=3.4.1 (high severity, via eslint > file-entry-cache > flat-cache > flatted)
+- [x] TOCTOU race and missing `updatedAt` in `updateStatus` — @coderabbitai <!-- thread:PRRT_kwDORjaF4M51-jJz -->
+  > **services/market/src/investment-applications/investment-applications.service.ts:157**
+  >
+  > _:warning: Potential issue_ | _:orange_circle: Major_
+  >
+  > **Same issues in `updateStatus`: TOCTOU race and missing `updatedAt`.**
+  >
+  > The pattern repeats here—status is checked then updated without atomic verification, and `updatedAt` is not set.
+  >
+  >
+  > <details>
+  > <summary>:wrench: Proposed fix</summary>
+  >
+  > ```diff
+  >    async updateStatus(id: string, dto: UpdateApplicationStatusDto): Promise<Application> {
+  >      const app = await this.findById(id);
+  >      if (!app) throw new NotFoundException('Application not found');
+  >
+  >      const allowed = ADMIN_TRANSITIONS[app.status];
+  >      if (!allowed?.includes(dto.status)) {
+  >        throw new ConflictException(`Invalid transition: ${app.status} -> ${dto.status}`);
+  >      }
+  >
+  >      const [updated] = await this.db
+  >        .update(investmentApplications)
+  > -      .set({ status: dto.status as Application['status'] })
+  > -      .where(eq(investmentApplications.id, id))
+  > +      .set({ status: dto.status as Application['status'], updatedAt: new Date() })
+  > +      .where(
+  > +        and(
+  > +          eq(investmentApplications.id, id),
+  > +          eq(investmentApplications.status, app.status),
+  > +        ),
+  > +      )
+  >        .returning();
+  >
+  > -    if (!updated) throw new NotFoundException('Application not found');
+  > +    if (!updated) {
+  > +      throw new ConflictException('Application state changed concurrently');
+  > +    }
+  >      return updated;
+  >    }
+  > ```
+  > </details>
+  >
+  > <!-- fingerprinting:phantom:medusa:ocelot -->
 
 ## Not Worth Fixing
 
-- [ ] ~~Use exact blocked-flag matching instead of truthy check — @coderabbitai~~ <!-- thread:PRRT_kwDORjaF4M51qUGz -->
-  - _Reason: Our code only ever stores `'1'` via `blockUser()`. A truthy check is correct here — `'0'` and `'false'` are never written to this key. The suggested `=== '1'` adds no real safety._
-  > **services/identity/src/auth/strategies/jwt.strategy.ts:41**
+- [ ] ~~Move `approveOpportunity` and `toggleFeatured` to `InvestmentOpportunitiesController` — @gemini-code-assist~~ <!-- thread:PRRT_kwDORjaF4M51-d-D -->
+  - _Reason: SRP architectural opinion. These endpoints work correctly from the current controller and moving them is a refactor outside this PR's scope._
+  > **services/market/src/investment-applications/investment-applications.controller.ts:90**
   >
-  > _⚠️ Potential issue_ | _🟡 Minor_
+  > ![high](https://www.gstatic.com/codereviewagent/high-priority.svg)
   >
-  > **Use exact blocked-flag matching instead of truthy check.**
+  > The `approveOpportunity` and `toggleFeatured` methods perform administrative actions on `InvestmentOpportunity` entities. Placing them in the `InvestmentApplicationsController` violates the single-responsibility principle. These endpoints should be moved to the `InvestmentOpportunitiesController` to keep all opportunity-related logic consolidated in one place.
+
+- [ ] ~~Await cache invalidation instead of fire-and-forget — @gemini-code-assist~~ <!-- thread:PRRT_kwDORjaF4M51-d-H -->
+  - _Reason: Fire-and-forget for cache invalidation is standard practice. Awaiting would cause mutation API calls to fail on Redis issues, which is worse than briefly stale cache._
+  > **services/market/src/investment-opportunities/investment-opportunities.service.ts:105**
   >
-  > `if (isBlocked)` will suspend on any non-empty string (e.g. `'0'`, `'false'`). Match the Redis contract explicitly (`'1'`) to avoid accidental lockouts.
+  > ![high](https://www.gstatic.com/codereviewagent/high-priority.svg)
+  >
+  > The current fire-and-forget approach to cache invalidation is risky. If `scanAndDelete` fails, the API call succeeds, but the cache remains stale. This can lead to users seeing outdated information after a successful mutation.
+  >
+  > To improve data consistency, you should `await` the cache invalidation. Please change this method to be `async` and `await` all calls to it in the mutation methods (`create`, `update`, `close`, `approve`, `toggleFeatured`). For example, `this.invalidateCache()` should become `await this.invalidateCache()`.
+  >
+  > ```suggestion
+  >   private async invalidateCache(): Promise<void> {
+  >     try {
+  >       await scanAndDelete(this.redis, `${CACHE_PREFIX}:*`);
+  >     } catch (err: unknown) {
+  >       this.logger.error('Cache invalidation failed', err);
+  >     }
+  >   }
+  > ```
+
+- [ ] ~~Inconsistent singular/plural in admin route naming — @gemini-code-assist~~ <!-- thread:PRRT_kwDORjaF4M51-d-I -->
+  - _Reason: Style nitpick with no functional impact._
+  > **services/market/src/investment-applications/investment-applications.controller.ts:86**
+  >
+  > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
+  >
+  > There's an inconsistency in the naming of admin-related routes. For example, you have `admin/investment/interests` (singular `investment`) and `admin/investments/:id/approve` (plural `investments`). For better clarity and maintainability, it's recommended to use a consistent naming convention for resource paths. Consider standardizing on either singular or plural for all related routes.
+
+- [ ] ~~Catch unique constraint violation in `submitInterest` for concurrent duplicates — @coderabbitai~~ <!-- thread:PRRT_kwDORjaF4M51-jJv -->
+  - _Reason: DB unique constraint already prevents duplicates. The pre-check gives a clean error for 99.9% of cases; the remaining race window is negligible for this use case._
+  > **services/market/src/investment-applications/investment-applications.service.ts:91**
+  >
+  > _:warning: Potential issue_ | _:yellow_circle: Minor_
+  >
+  > **Duplicate check doesn't handle concurrent insert race.**
+  >
+  > The code checks for duplicates then inserts, but two concurrent requests could both pass the check. The comment mentions a DB unique constraint as backup, but the service doesn't catch the resulting DB error to return a clean `ConflictException`.
   >
   >
   > <details>
-  > <summary>Suggested fix</summary>
+  > <summary>:wrench: Catch constraint violation</summary>
   >
   > ```diff
-  > -    if (isBlocked) {
-  > +    if (isBlocked === '1') {
-  >        throw new UnauthorizedException('Account has been suspended');
-  >      }
+  > +import { isDatabaseError } from '../shared/db-errors'; // or similar helper
+  >
+  >    // Check for duplicate (DB unique constraint is backup, but we give a better error message)
+  >    const existing = await this.findByOpportunityAndInvestor(opportunityId, investorId);
+  >    if (existing) {
+  >      throw new ConflictException('ALREADY_EXPRESSED_INTEREST');
+  >    }
+  >
+  > -  const application = firstOrThrow(
+  > -    await this.db
+  > -      .insert(investmentApplications)
+  > -      .values({
+  > -        // ...
+  > -      })
+  > -      .returning(),
+  > -  );
+  > +  try {
+  > +    const application = firstOrThrow(
+  > +      await this.db
+  > +        .insert(investmentApplications)
+  > +        .values({
+  > +          // ...
+  > +        })
+  > +        .returning(),
+  > +    );
+  > +    return application;
+  > +  } catch (err) {
+  > +    if (isDatabaseError(err) && err.code === '23505') { // unique_violation
+  > +      throw new ConflictException('ALREADY_EXPRESSED_INTEREST');
+  > +    }
+  > +    throw err;
+  > +  }
   > ```
   > </details>
   >
-  > <!-- fingerprinting:phantom:poseidon:hawk -->
+  > <!-- fingerprinting:phantom:medusa:ocelot -->
+
+- [ ] ~~TOCTOU race in `close` method — @coderabbitai~~ <!-- thread:PRRT_kwDORjaF4M51-jJ5 -->
+  - _Reason: Admin-only action on a low-traffic internal tool. The race window is negligible and the consequence (closing an already-transitioning opportunity) is benign._
+  > **services/market/src/investment-opportunities/investment-opportunities.service.ts:293**
+  >
+  > _:warning: Potential issue_ | _:yellow_circle: Minor_
+  >
+  > **TOCTOU race in `close` method.**
+  >
+  > Similar to the applications service, there's a window between checking `existing.status` and performing the update where another request could change the status.
+  >
+  >
+  > <details>
+  > <summary>:wrench: Proposed fix with atomic WHERE</summary>
+  >
+  > ```diff
+  >    async close(id: string): Promise<Opportunity> {
+  >      const existing = await this.findRaw(id);
+  >      if (!existing) throw new NotFoundException('Opportunity not found');
+  >      if (existing.status === 'closed') {
+  >        throw new ConflictException('Opportunity is already closed');
+  >      }
+  >
+  >      const [updated] = await this.db
+  >        .update(investmentOpportunities)
+  >        .set({ status: 'closed', updatedAt: new Date() })
+  > -      .where(eq(investmentOpportunities.id, id))
+  > +      .where(
+  > +        and(
+  > +          eq(investmentOpportunities.id, id),
+  > +          sql`${investmentOpportunities.status} != 'closed'`,
+  > +        ),
+  > +      )
+  >        .returning();
+  >
+  > -    if (!updated) throw new NotFoundException('Opportunity not found');
+  > +    if (!updated) {
+  > +      throw new ConflictException('Opportunity is already closed');
+  > +    }
+  >
+  >      this.invalidateCache();
+  >      return updated;
+  >    }
+  > ```
+  > </details>
+  >
+  > <!-- fingerprinting:phantom:medusa:ocelot -->
+
+- [ ] ~~TOCTOU race in `approve` method — @coderabbitai~~ <!-- thread:PRRT_kwDORjaF4M51-jJ7 -->
+  - _Reason: Admin-only action, same as close. The approve method already sets `updatedAt`, so only the race condition remains, which is negligible for this context._
+  > **services/market/src/investment-opportunities/investment-opportunities.service.ts:329**
+  >
+  > _:warning: Potential issue_ | _:yellow_circle: Minor_
+  >
+  > **TOCTOU race in `approve` method.**
+  >
+  > Same race condition pattern—status could change between the check and update. Since approval is an admin action, the impact is lower, but for consistency with state machine integrity:
+  >
+  >
+  > <details>
+  > <summary>:wrench: Proposed fix</summary>
+  >
+  > ```diff
+  >      const [updated] = await this.db
+  >        .update(investmentOpportunities)
+  >        .set({
+  >          status: 'active',
+  >          isVerified: true,
+  >          approvedBy: adminId,
+  >          approvedAt: new Date(),
+  >          updatedAt: new Date(),
+  >        })
+  > -      .where(eq(investmentOpportunities.id, id))
+  > +      .where(
+  > +        and(
+  > +          eq(investmentOpportunities.id, id),
+  > +          eq(investmentOpportunities.status, 'review'),
+  > +        ),
+  > +      )
+  >        .returning();
+  >
+  > -    if (!updated) throw new NotFoundException('Opportunity not found');
+  > +    if (!updated) {
+  > +      throw new ConflictException('Opportunity status changed, approval failed');
+  > +    }
+  > ```
+  > </details>
+  >
+  > <!-- fingerprinting:phantom:medusa:ocelot -->
