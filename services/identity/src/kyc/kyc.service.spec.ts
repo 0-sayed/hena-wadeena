@@ -1,8 +1,6 @@
-import type { RedisStreamsService } from '@hena-wadeena/nest-common';
 import { NotFoundException } from '@nestjs/common';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import type { NotificationsService } from '../notifications/notifications.service';
 import { createMockDb } from '../test-utils/create-mock-db';
 
 import { KycService } from './kyc.service';
@@ -30,11 +28,7 @@ describe('KycService', () => {
     mockDb = createMockDb();
     mockNotifications = { create: vi.fn().mockResolvedValue({}) };
     mockRedisStreams = { publish: vi.fn().mockResolvedValue('stream-id') };
-    service = new KycService(
-      mockDb as any,
-      mockNotifications as unknown as NotificationsService,
-      mockRedisStreams as unknown as RedisStreamsService,
-    );
+    service = new KycService(mockDb as any, mockNotifications as any, mockRedisStreams as any);
   });
 
   describe('submit', () => {

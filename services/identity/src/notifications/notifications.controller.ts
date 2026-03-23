@@ -1,5 +1,5 @@
 import { CurrentUser, type JwtPayload } from '@hena-wadeena/nest-common';
-import { Controller, Get, Inject, Param, Patch, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationsService } from './notifications.service';
@@ -22,7 +22,7 @@ export class NotificationsController {
   }
 
   @Patch(':id/read')
-  async markRead(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+  async markRead(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     await this.notificationsService.markRead(id, user.sub);
     return { success: true };
   }
