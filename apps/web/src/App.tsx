@@ -78,10 +78,10 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Sonner />
-        <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
             {/* Auth */}
@@ -166,9 +166,9 @@ const App = () => (
           </Routes>
           {/* AI Chatbot Widget — visible on all pages */}
           <ChatWidget />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

@@ -16,7 +16,6 @@ export async function configureApp(
     'trust proxy',
     1,
   );
-  app.enableCors();
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
   app.enableShutdownHooks();
 

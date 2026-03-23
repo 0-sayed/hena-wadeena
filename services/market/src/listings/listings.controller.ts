@@ -6,6 +6,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Patch,
@@ -20,7 +21,7 @@ import { ListingsService } from './listings.service';
 
 @Controller('listings')
 export class ListingsController {
-  constructor(private readonly listingsService: ListingsService) {}
+  constructor(@Inject(ListingsService) private readonly listingsService: ListingsService) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {
     if ((user.role as UserRole) !== UserRole.ADMIN) {
