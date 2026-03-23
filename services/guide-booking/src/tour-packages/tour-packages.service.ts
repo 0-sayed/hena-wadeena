@@ -26,8 +26,8 @@ import type {
 export class TourPackagesService {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
-    private readonly s3: S3Service,
-    private readonly guidesService: GuidesService,
+    @Inject(S3Service) private readonly s3: S3Service,
+    @Inject(GuidesService) private readonly guidesService: GuidesService,
   ) {}
 
   private async assertOwnership(packageId: string, userId: string): Promise<string> {

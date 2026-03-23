@@ -124,7 +124,7 @@ export class CommodityPricesService {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    private readonly redisStreams: RedisStreamsService,
+    @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
   ) {}
 
   // --- Commodity CRUD ---
