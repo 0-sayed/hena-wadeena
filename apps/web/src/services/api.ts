@@ -7,20 +7,36 @@
 
 import { UserRole } from '@hena-wadeena/types';
 import type { PaginatedResponse } from '@hena-wadeena/types';
+import type {
+  AttractionType,
+  AttractionArea,
+  BestSeason,
+  BestTimeOfDay,
+  Difficulty,
+} from '@/lib/format';
+import { apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-// ── 401 Unauthorized callback ────────────────────────────────────────────────
+// ── Typed error ─────────────────────────────────────────────────────────────
 
-let unauthorizedCallback: (() => void) | null = null;
+export class ApiError extends Error {
+  data?: Record<string, unknown>;
 
-export function registerUnauthorizedCallback(cb: () => void) {
-  unauthorizedCallback = cb;
+  constructor(
+    public status: number,
+    message: string,
+    data?: Record<string, unknown>,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.data = data;
+  }
 }
 
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
-async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('access_token');
 
   const headers: Record<string, string> = {
@@ -33,19 +49,16 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     headers: { ...headers, ...(options?.headers as Record<string, string>) },
   });
 
-  if (res.status === 401 && token) {
-    unauthorizedCallback?.();
-    throw new Error('Unauthorized');
-  }
-
   if (!res.ok) {
-    const error: { detail?: string; message?: string } = (await res
-      .json()
-      .catch(() => ({ message: 'Network error' }))) as {
-      detail?: string;
-      message?: string;
-    };
-    throw new Error(error.detail ?? error.message ?? `API Error ${res.status}`);
+    const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
+      string,
+      unknown
+    >;
+    throw new ApiError(
+      res.status,
+      (error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`,
+      error,
+    );
   }
 
   return (await res.json()) as T;
@@ -72,7 +85,6 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string;
-  phone: string;
   full_name: string;
   password: string;
   role?: string;
@@ -98,6 +110,13 @@ export interface AuthTokens {
   user: AuthUser;
 }
 
+export interface AuthRefreshTokens {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
 export const authAPI = {
   login: (body: LoginRequest) =>
     apiFetch<AuthTokens>('/auth/login', {
@@ -111,31 +130,72 @@ export const authAPI = {
       body: JSON.stringify(body),
     }),
 
+  refresh: (body: { refresh_token: string }) =>
+    apiFetch<AuthRefreshTokens>('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
   getMe: () => apiFetch<AuthUser>('/auth/me'),
 
-  logout: () => apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({}) }),
+  logout: (refresh_token?: string) =>
+    apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
 };
 
-// ── Tourism ─────────────────────────────────────────────────────────────────
+// ── Tourism — Attractions ───────────────────────────────────────────────────
 
 export interface Attraction {
-  id: number;
-  title: string;
-  description: string;
-  long_description?: string;
-  image: string;
-  images?: string[];
-  rating: number;
-  reviews_count?: number;
-  duration: string;
-  type: string;
-  location?: string;
-  coordinates?: { lat: number; lng: number };
-  featured?: boolean;
-  opening_hours?: string;
-  ticket_price?: number;
-  highlights?: string[];
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  slug: string;
+  type: AttractionType;
+  area: AttractionArea;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  historyAr: string | null;
+  bestSeason: BestSeason | null;
+  bestTimeOfDay: BestTimeOfDay | null;
+  entryFee: {
+    adultsPiasters?: number;
+    childrenPiasters?: number;
+    foreignersPiasters?: number;
+  } | null;
+  openingHours: string | null;
+  durationHours: number | null;
+  difficulty: Difficulty | null;
+  tips: string[] | null;
+  nearbySlugs: string[] | null;
+  location: { x: number; y: number } | null;
+  images: string[] | null;
+  thumbnail: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  ratingAvg: number | null;
+  reviewCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface AttractionFilters {
+  type?: AttractionType;
+  area?: AttractionArea;
+  featured?: boolean;
+  nearLat?: number;
+  nearLng?: number;
+  radiusKm?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const attractionsAPI = {
+  getAll: (filters?: AttractionFilters) =>
+    apiFetch<PaginatedResponse<Attraction>>(`/attractions${toQueryString(filters)}`),
+  getBySlug: (slug: string) => apiFetch<Attraction>(`/attractions/${slug}`),
+  getNearby: (slug: string, limit?: number, radiusKm?: number) =>
+    apiFetch<Attraction[]>(`/attractions/${slug}/nearby${toQueryString({ limit, radiusKm })}`),
+};
 
 export interface Guide {
   id: number;
@@ -165,16 +225,19 @@ export interface Accommodation {
 }
 
 export const tourismAPI = {
-  getAttractions: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions'),
+  getAttractions: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Attraction[] }>('/attractions'),
 
-  getFeatured: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
+  getFeatured: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
 
   getAttraction: (id: number) =>
-    apiFetch<{ success: boolean; data: Attraction }>(`/attractions/${id}`),
+    apiFetchWithRefresh<{ success: boolean; data: Attraction }>(`/attractions/${id}`),
 
-  getGuides: () => apiFetch<{ success: boolean; data: Guide[] }>('/guides'),
+  getGuides: () => apiFetchWithRefresh<{ success: boolean; data: Guide[] }>('/guides'),
 
-  getAccommodations: () => apiFetch<{ success: boolean; data: Accommodation[] }>('/accommodations'),
+  getAccommodations: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Accommodation[] }>('/accommodations'),
 };
 
 // ── Market: Price Index ──────────────────────────────────────────────────
@@ -313,13 +376,14 @@ export interface Carpool {
 }
 
 export const logisticsAPI = {
-  getRoutes: () => apiFetch<{ success: boolean; data: TransportRoute[] }>('/routes'),
+  getRoutes: () => apiFetchWithRefresh<{ success: boolean; data: TransportRoute[] }>('/routes'),
 
-  getStations: () => apiFetch<{ success: boolean; data: Station[] }>('/stations'),
+  getStations: () => apiFetchWithRefresh<{ success: boolean; data: Station[] }>('/stations'),
 
-  getStation: (id: number) => apiFetch<{ success: boolean; data: Station }>(`/stations/${id}`),
+  getStation: (id: number) =>
+    apiFetchWithRefresh<{ success: boolean; data: Station }>(`/stations/${id}`),
 
-  getCarpools: () => apiFetch<{ success: boolean; data: Carpool[] }>('/carpools'),
+  getCarpools: () => apiFetchWithRefresh<{ success: boolean; data: Carpool[] }>('/carpools'),
 };
 
 // ── Investment ──────────────────────────────────────────────────────────────
@@ -352,12 +416,13 @@ export interface Startup {
 }
 
 export const investmentAPI = {
-  getOpportunities: () => apiFetch<{ success: boolean; data: Opportunity[] }>('/opportunities'),
+  getOpportunities: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Opportunity[] }>('/opportunities'),
 
   getOpportunity: (id: number) =>
-    apiFetch<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
+    apiFetchWithRefresh<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
 
-  getStartups: () => apiFetch<{ success: boolean; data: Startup[] }>('/startups'),
+  getStartups: () => apiFetchWithRefresh<{ success: boolean; data: Startup[] }>('/startups'),
 };
 
 // ── Map / POI ──────────────────────────────────────────────────────────────
@@ -398,11 +463,12 @@ export interface CarpoolRide {
 
 export const mapAPI = {
   getPOIs: (category?: string) =>
-    apiFetch<{ success: boolean; data: POI[] }>(
+    apiFetchWithRefresh<{ success: boolean; data: POI[] }>(
       category ? `/pois?category=${encodeURIComponent(category)}` : '/pois',
     ),
-  getPOI: (id: number) => apiFetch<{ success: boolean; data: POI }>(`/pois/${id}`),
-  getCarpoolRides: () => apiFetch<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
+  getPOI: (id: number) => apiFetchWithRefresh<{ success: boolean; data: POI }>(`/pois/${id}`),
+  getCarpoolRides: () =>
+    apiFetchWithRefresh<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
   createCarpoolRide: (body: {
     origin_name: string;
     destination_name: string;
@@ -411,42 +477,149 @@ export const mapAPI = {
     price_per_seat: number;
     notes?: string;
   }) =>
-    apiFetch<{ success: boolean; data: CarpoolRide }>('/carpool/rides', {
+    apiFetchWithRefresh<{ success: boolean; data: CarpoolRide }>('/carpool/rides', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 };
 
-// ── Guides / Bookings ──────────────────────────────────────────────────────
+// ── Guides ──────────────────────────────────────────────────────────────────
 
-export interface GuideProfile {
-  id: number;
-  user_id: string;
-  name: string;
-  bio_ar: string;
+export interface GuideListItem {
+  id: string;
+  bioAr: string | null;
+  bioEn: string | null;
+  profileImage: string | null;
   languages: string[];
   specialties: string[];
-  license_number: string;
-  license_verified: boolean;
-  base_price: number;
-  rating_avg: number;
-  rating_count: number;
-  active: boolean;
-  image: string;
+  areasOfOperation: string[];
+  basePrice: number;
+  ratingAvg: number | null;
+  ratingCount: number;
+  licenseVerified: boolean;
+  packageCount: number;
 }
 
-export interface TourPackage {
-  id: number;
-  guide_id: number;
-  title_ar: string;
-  description: string;
-  duration_hrs: number;
-  max_people: number;
-  price: number;
-  includes: string[];
-  images: string[];
-  status: string;
+export interface GuideDetail {
+  id: string;
+  userId: string;
+  bioAr: string | null;
+  bioEn: string | null;
+  profileImage: string | null;
+  coverImage: string | null;
+  languages: string[];
+  specialties: string[];
+  areasOfOperation: string[];
+  licenseNumber: string;
+  licenseVerified: boolean;
+  basePrice: number;
+  ratingAvg: number | null;
+  ratingCount: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  packageCount: number;
+  reviewCount: number;
 }
+
+export interface GuideFilters {
+  language?: string;
+  specialty?: string;
+  area?: string;
+  minRating?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  verified?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const guidesAPI = {
+  getAll: (filters?: GuideFilters) =>
+    apiFetch<PaginatedResponse<GuideListItem>>(`/guides${toQueryString(filters)}`),
+  getById: (id: string) => apiFetch<GuideDetail>(`/guides/${id}`),
+  getPackages: (guideId: string, params?: { page?: number; limit?: number }) =>
+    apiFetch<PaginatedResponse<GuidePackageListItem>>(
+      `/guides/${guideId}/packages${toQueryString(params)}`,
+    ),
+};
+
+// ── Tour Packages ───────────────────────────────────────────────────────────
+
+interface TourPackageBase {
+  id: string;
+  titleAr: string;
+  titleEn: string | null;
+  description: string | null;
+  durationHours: number;
+  maxPeople: number;
+  price: number;
+  includes: string[] | null;
+  images: string[] | null;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TourPackageListItem extends TourPackageBase {
+  guideId: string;
+  guideBioAr: string | null;
+  guideBioEn: string | null;
+  guideProfileImage: string | null;
+  guideRatingAvg: number | null;
+  guideRatingCount: number;
+  guideLicenseVerified: boolean;
+  attractionSlugs: string[];
+}
+
+export interface GuidePackageListItem extends TourPackageBase {
+  attractionSlugs: string[];
+}
+
+export interface TourPackageDetail extends TourPackageBase {
+  guideId: string;
+  guideBioAr: string | null;
+  guideBioEn: string | null;
+  guideProfileImage: string | null;
+  guideRatingAvg: number | null;
+  guideRatingCount: number;
+  guideLicenseVerified: boolean;
+  linkedAttractions: {
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    slug: string;
+    thumbnail: string | null;
+    type: AttractionType;
+    area: AttractionArea;
+    sortOrder: number;
+  }[];
+}
+
+export interface PackageFilters {
+  area?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minDuration?: number;
+  maxDuration?: number;
+  minPeople?: number;
+  search?: string;
+  guideId?: string;
+  attractionId?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const packagesAPI = {
+  getAll: (filters?: PackageFilters) =>
+    apiFetch<PaginatedResponse<TourPackageListItem>>(`/packages${toQueryString(filters)}`),
+  getById: (id: string) => apiFetch<TourPackageDetail>(`/packages/${id}`),
+};
+
+// ── Legacy: Bookings + Reviews (mock — no backend yet, used by BookingsPage) ──
+// TODO(T15): Replace with real booking endpoints when backend is ready
+// TODO(T18): Replace with real review endpoints when backend is ready
 
 export interface Booking {
   id: string;
@@ -474,18 +647,8 @@ export interface Review {
   created_at: string;
 }
 
-export const guidesAPI = {
-  getGuides: () => apiFetch<{ success: boolean; data: GuideProfile[] }>('/guides'),
-  getGuide: (id: number) => apiFetch<{ success: boolean; data: GuideProfile }>(`/guides/${id}`),
-  getPackages: (guideId: number) =>
-    apiFetch<{ success: boolean; data: TourPackage[] }>(`/guides/${guideId}/packages`),
-  getReviews: (guideId: number) =>
-    apiFetch<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
-  createReview: (guideId: number, body: { rating: number; comment: string }) =>
-    apiFetch<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+export const bookingsAPI = {
+  getMyBookings: () => apiFetch<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
   createBooking: (body: {
     package_id: number;
     guide_id: number;
@@ -494,11 +657,20 @@ export const guidesAPI = {
     people_count?: number;
     notes?: string;
   }) =>
-    apiFetch<{ success: boolean; message: string; data: Booking }>('/guides/bookings', {
+    apiFetchWithRefresh<{ success: boolean; message: string; data: Booking }>('/guides/bookings', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  getMyBookings: () => apiFetch<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
+};
+
+export const reviewsAPI = {
+  getReviews: (guideId: number) =>
+    apiFetch<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
+  createReview: (guideId: number, body: { rating: number; comment: string }) =>
+    apiFetch<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
@@ -525,14 +697,14 @@ export interface Transaction {
 }
 
 export const paymentsAPI = {
-  getWallet: () => apiFetch<{ success: boolean; data: Wallet }>('/payments/wallet'),
+  getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/payments/wallet'),
   topup: (body: { amount: number; method?: string }) =>
-    apiFetch<{ success: boolean; message: string; data: { new_balance: number } }>(
+    apiFetchWithRefresh<{ success: boolean; message: string; data: { new_balance: number } }>(
       '/payments/wallet/topup',
       { method: 'POST', body: JSON.stringify(body) },
     ),
   getTransactions: () =>
-    apiFetch<{ success: boolean; data: Transaction[] }>('/payments/transactions'),
+    apiFetchWithRefresh<{ success: boolean; data: Transaction[] }>('/payments/transactions'),
 };
 
 // ── Notifications ──────────────────────────────────────────────────────────
@@ -549,11 +721,13 @@ export interface Notification {
 }
 
 export const notificationsAPI = {
-  getAll: () => apiFetch<{ success: boolean; data: Notification[] }>('/notifications'),
+  getAll: () => apiFetchWithRefresh<{ success: boolean; data: Notification[] }>('/notifications'),
   getUnreadCount: () =>
-    apiFetch<{ success: boolean; data: { count: number } }>('/notifications/unread-count'),
+    apiFetchWithRefresh<{ success: boolean; data: { count: number } }>(
+      '/notifications/unread-count',
+    ),
   markRead: (id: string) =>
-    apiFetch<{ success: boolean }>(`/notifications/${id}/read`, { method: 'PUT' }),
+    apiFetchWithRefresh<{ success: boolean }>(`/notifications/${id}/read`, { method: 'PUT' }),
 };
 
 // ── Search ─────────────────────────────────────────────────────────────────
@@ -569,7 +743,7 @@ export interface SearchResult {
 
 export const searchAPI = {
   search: (q: string, type?: string) =>
-    apiFetch<{ success: boolean; data: SearchResult[]; total: number; query: string }>(
+    apiFetchWithRefresh<{ success: boolean; data: SearchResult[]; total: number; query: string }>(
       `/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`,
     ),
 };
@@ -584,7 +758,7 @@ export interface ChatResponse {
 
 export const aiAPI = {
   chat: (message: string, conversationId?: string) =>
-    apiFetch<{ success: boolean; data: ChatResponse }>('/ai/chat', {
+    apiFetchWithRefresh<{ success: boolean; data: ChatResponse }>('/ai/chat', {
       method: 'POST',
       body: JSON.stringify({ message, conversation_id: conversationId }),
     }),
