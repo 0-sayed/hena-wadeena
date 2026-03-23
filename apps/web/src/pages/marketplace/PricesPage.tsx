@@ -89,7 +89,7 @@ const PricesPage = () => {
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{entries.length}</p>
+                  <p className="text-2xl font-bold">{indexData?.total ?? entries.length}</p>
                   <p className="text-sm text-muted-foreground">منتج متاح</p>
                 </CardContent>
               </Card>
