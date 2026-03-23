@@ -72,6 +72,8 @@ export function Header() {
           .catch(() => {});
       }, 30000);
       return () => clearInterval(interval);
+    } else {
+      setUnreadCount(0);
     }
   }, [user]);
 
