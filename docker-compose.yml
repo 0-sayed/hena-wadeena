@@ -160,7 +160,7 @@ services:
       - RATE_AUTH=${RATE_AUTH:-5r/m}
       - RATE_AI=${RATE_AI:-30r/m}
     ports:
-      - '8000:80'
+      - '${GATEWAY_PORT:-8000}:80'
     depends_on:
       identity:
         condition: service_started

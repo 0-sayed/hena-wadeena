@@ -6,20 +6,29 @@
  */
 
 import { UserRole } from '@hena-wadeena/types';
+import { apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-// ── 401 Unauthorized callback ────────────────────────────────────────────────
+// ── Typed error ─────────────────────────────────────────────────────────────
 
-let unauthorizedCallback: (() => void) | null = null;
+export class ApiError extends Error {
+  data?: Record<string, unknown>;
 
-export function registerUnauthorizedCallback(cb: () => void) {
-  unauthorizedCallback = cb;
+  constructor(
+    public status: number,
+    message: string,
+    data?: Record<string, unknown>,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.data = data;
+  }
 }
 
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
-async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('access_token');
 
   const headers: Record<string, string> = {
@@ -32,19 +41,16 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     headers: { ...headers, ...(options?.headers as Record<string, string>) },
   });
 
-  if (res.status === 401 && token) {
-    unauthorizedCallback?.();
-    throw new Error('Unauthorized');
-  }
-
   if (!res.ok) {
-    const error: { detail?: string; message?: string } = (await res
-      .json()
-      .catch(() => ({ message: 'Network error' }))) as {
-      detail?: string;
-      message?: string;
-    };
-    throw new Error(error.detail ?? error.message ?? `API Error ${res.status}`);
+    const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
+      string,
+      unknown
+    >;
+    throw new ApiError(
+      res.status,
+      (error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`,
+      error,
+    );
   }
 
   return (await res.json()) as T;
@@ -60,7 +66,6 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string;
-  phone: string;
   full_name: string;
   password: string;
   role?: string;
@@ -86,6 +91,13 @@ export interface AuthTokens {
   user: AuthUser;
 }
 
+export interface AuthRefreshTokens {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
 export const authAPI = {
   login: (body: LoginRequest) =>
     apiFetch<AuthTokens>('/auth/login', {
@@ -99,9 +111,16 @@ export const authAPI = {
       body: JSON.stringify(body),
     }),
 
+  refresh: (body: { refresh_token: string }) =>
+    apiFetch<AuthRefreshTokens>('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
   getMe: () => apiFetch<AuthUser>('/auth/me'),
 
-  logout: () => apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({}) }),
+  logout: (refresh_token?: string) =>
+    apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
 };
 
 // ── Tourism ─────────────────────────────────────────────────────────────────
@@ -153,16 +172,19 @@ export interface Accommodation {
 }
 
 export const tourismAPI = {
-  getAttractions: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions'),
+  getAttractions: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Attraction[] }>('/attractions'),
 
-  getFeatured: () => apiFetch<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
+  getFeatured: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Attraction[] }>('/attractions/featured'),
 
   getAttraction: (id: number) =>
-    apiFetch<{ success: boolean; data: Attraction }>(`/attractions/${id}`),
+    apiFetchWithRefresh<{ success: boolean; data: Attraction }>(`/attractions/${id}`),
 
-  getGuides: () => apiFetch<{ success: boolean; data: Guide[] }>('/guides'),
+  getGuides: () => apiFetchWithRefresh<{ success: boolean; data: Guide[] }>('/guides'),
 
-  getAccommodations: () => apiFetch<{ success: boolean; data: Accommodation[] }>('/accommodations'),
+  getAccommodations: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Accommodation[] }>('/accommodations'),
 };
 
 // ── Market ──────────────────────────────────────────────────────────────────
@@ -198,12 +220,13 @@ export interface Supplier {
 }
 
 export const marketAPI = {
-  getPrices: () => apiFetch<{ success: boolean; data: PriceItem[] }>('/market/prices'),
+  getPrices: () => apiFetchWithRefresh<{ success: boolean; data: PriceItem[] }>('/market/prices'),
 
-  getSuppliers: () => apiFetch<{ success: boolean; data: Supplier[] }>('/market/suppliers'),
+  getSuppliers: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Supplier[] }>('/market/suppliers'),
 
   getSupplier: (id: number) =>
-    apiFetch<{ success: boolean; data: Supplier }>(`/market/suppliers/${id}`),
+    apiFetchWithRefresh<{ success: boolean; data: Supplier }>(`/market/suppliers/${id}`),
 };
 
 // ── Logistics ───────────────────────────────────────────────────────────────
@@ -244,13 +267,14 @@ export interface Carpool {
 }
 
 export const logisticsAPI = {
-  getRoutes: () => apiFetch<{ success: boolean; data: TransportRoute[] }>('/routes'),
+  getRoutes: () => apiFetchWithRefresh<{ success: boolean; data: TransportRoute[] }>('/routes'),
 
-  getStations: () => apiFetch<{ success: boolean; data: Station[] }>('/stations'),
+  getStations: () => apiFetchWithRefresh<{ success: boolean; data: Station[] }>('/stations'),
 
-  getStation: (id: number) => apiFetch<{ success: boolean; data: Station }>(`/stations/${id}`),
+  getStation: (id: number) =>
+    apiFetchWithRefresh<{ success: boolean; data: Station }>(`/stations/${id}`),
 
-  getCarpools: () => apiFetch<{ success: boolean; data: Carpool[] }>('/carpools'),
+  getCarpools: () => apiFetchWithRefresh<{ success: boolean; data: Carpool[] }>('/carpools'),
 };
 
 // ── Investment ──────────────────────────────────────────────────────────────
@@ -283,12 +307,13 @@ export interface Startup {
 }
 
 export const investmentAPI = {
-  getOpportunities: () => apiFetch<{ success: boolean; data: Opportunity[] }>('/opportunities'),
+  getOpportunities: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Opportunity[] }>('/opportunities'),
 
   getOpportunity: (id: number) =>
-    apiFetch<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
+    apiFetchWithRefresh<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
 
-  getStartups: () => apiFetch<{ success: boolean; data: Startup[] }>('/startups'),
+  getStartups: () => apiFetchWithRefresh<{ success: boolean; data: Startup[] }>('/startups'),
 };
 
 // ── Map / POI ──────────────────────────────────────────────────────────────
@@ -329,11 +354,12 @@ export interface CarpoolRide {
 
 export const mapAPI = {
   getPOIs: (category?: string) =>
-    apiFetch<{ success: boolean; data: POI[] }>(
+    apiFetchWithRefresh<{ success: boolean; data: POI[] }>(
       category ? `/pois?category=${encodeURIComponent(category)}` : '/pois',
     ),
-  getPOI: (id: number) => apiFetch<{ success: boolean; data: POI }>(`/pois/${id}`),
-  getCarpoolRides: () => apiFetch<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
+  getPOI: (id: number) => apiFetchWithRefresh<{ success: boolean; data: POI }>(`/pois/${id}`),
+  getCarpoolRides: () =>
+    apiFetchWithRefresh<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
   createCarpoolRide: (body: {
     origin_name: string;
     destination_name: string;
@@ -342,7 +368,7 @@ export const mapAPI = {
     price_per_seat: number;
     notes?: string;
   }) =>
-    apiFetch<{ success: boolean; data: CarpoolRide }>('/carpool/rides', {
+    apiFetchWithRefresh<{ success: boolean; data: CarpoolRide }>('/carpool/rides', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -406,14 +432,15 @@ export interface Review {
 }
 
 export const guidesAPI = {
-  getGuides: () => apiFetch<{ success: boolean; data: GuideProfile[] }>('/guides'),
-  getGuide: (id: number) => apiFetch<{ success: boolean; data: GuideProfile }>(`/guides/${id}`),
+  getGuides: () => apiFetchWithRefresh<{ success: boolean; data: GuideProfile[] }>('/guides'),
+  getGuide: (id: number) =>
+    apiFetchWithRefresh<{ success: boolean; data: GuideProfile }>(`/guides/${id}`),
   getPackages: (guideId: number) =>
-    apiFetch<{ success: boolean; data: TourPackage[] }>(`/guides/${guideId}/packages`),
+    apiFetchWithRefresh<{ success: boolean; data: TourPackage[] }>(`/guides/${guideId}/packages`),
   getReviews: (guideId: number) =>
-    apiFetch<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
+    apiFetchWithRefresh<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
   createReview: (guideId: number, body: { rating: number; comment: string }) =>
-    apiFetch<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
+    apiFetchWithRefresh<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -425,11 +452,12 @@ export const guidesAPI = {
     people_count?: number;
     notes?: string;
   }) =>
-    apiFetch<{ success: boolean; message: string; data: Booking }>('/guides/bookings', {
+    apiFetchWithRefresh<{ success: boolean; message: string; data: Booking }>('/guides/bookings', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  getMyBookings: () => apiFetch<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
+  getMyBookings: () =>
+    apiFetchWithRefresh<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
@@ -456,14 +484,14 @@ export interface Transaction {
 }
 
 export const paymentsAPI = {
-  getWallet: () => apiFetch<{ success: boolean; data: Wallet }>('/payments/wallet'),
+  getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/payments/wallet'),
   topup: (body: { amount: number; method?: string }) =>
-    apiFetch<{ success: boolean; message: string; data: { new_balance: number } }>(
+    apiFetchWithRefresh<{ success: boolean; message: string; data: { new_balance: number } }>(
       '/payments/wallet/topup',
       { method: 'POST', body: JSON.stringify(body) },
     ),
   getTransactions: () =>
-    apiFetch<{ success: boolean; data: Transaction[] }>('/payments/transactions'),
+    apiFetchWithRefresh<{ success: boolean; data: Transaction[] }>('/payments/transactions'),
 };
 
 // ── Notifications ──────────────────────────────────────────────────────────
@@ -480,11 +508,13 @@ export interface Notification {
 }
 
 export const notificationsAPI = {
-  getAll: () => apiFetch<{ success: boolean; data: Notification[] }>('/notifications'),
+  getAll: () => apiFetchWithRefresh<{ success: boolean; data: Notification[] }>('/notifications'),
   getUnreadCount: () =>
-    apiFetch<{ success: boolean; data: { count: number } }>('/notifications/unread-count'),
+    apiFetchWithRefresh<{ success: boolean; data: { count: number } }>(
+      '/notifications/unread-count',
+    ),
   markRead: (id: string) =>
-    apiFetch<{ success: boolean }>(`/notifications/${id}/read`, { method: 'PUT' }),
+    apiFetchWithRefresh<{ success: boolean }>(`/notifications/${id}/read`, { method: 'PUT' }),
 };
 
 // ── Search ─────────────────────────────────────────────────────────────────
@@ -500,7 +530,7 @@ export interface SearchResult {
 
 export const searchAPI = {
   search: (q: string, type?: string) =>
-    apiFetch<{ success: boolean; data: SearchResult[]; total: number; query: string }>(
+    apiFetchWithRefresh<{ success: boolean; data: SearchResult[]; total: number; query: string }>(
       `/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`,
     ),
 };
@@ -515,7 +545,7 @@ export interface ChatResponse {
 
 export const aiAPI = {
   chat: (message: string, conversationId?: string) =>
-    apiFetch<{ success: boolean; data: ChatResponse }>('/ai/chat', {
+    apiFetchWithRefresh<{ success: boolean; data: ChatResponse }>('/ai/chat', {
       method: 'POST',
       body: JSON.stringify({ message, conversation_id: conversationId }),
     }),
