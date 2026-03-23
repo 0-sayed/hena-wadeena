@@ -77,8 +77,8 @@ export class InvestmentApplicationsService {
     investorId: string,
     dto: CreateApplicationDto,
   ): Promise<Application> {
-    // Validate opportunity exists and is active
-    const opp = await this.opportunitiesService.findById(opportunityId);
+    // Use findRaw to bypass visibility filtering — we need to distinguish "not found" from "not active"
+    const opp = await this.opportunitiesService.findRaw(opportunityId);
     if (!opp) throw new NotFoundException('Opportunity not found');
     if (opp.status !== 'active') {
       throw new ConflictException('Can only express interest in active opportunities');

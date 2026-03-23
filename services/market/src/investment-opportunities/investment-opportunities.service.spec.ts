@@ -1,5 +1,10 @@
 import { EVENTS } from '@hena-wadeena/types';
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockDb, createMockRedis, createMockRedisStreams } from '../shared/test-helpers';
@@ -209,6 +214,37 @@ describe('InvestmentOpportunitiesService', () => {
       delete (expected as Record<string, unknown>).documents;
       delete (expected as Record<string, unknown>).description;
       expect(result.data).toEqual([expected]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // update — validation
+  // -------------------------------------------------------------------------
+
+  describe('update', () => {
+    it('should throw BadRequestException when partial minInvestment exceeds existing maxInvestment', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockOpportunity]); // maxInvestment: 500000
+
+      await expect(
+        service.update(mockOpportunity.id, { minInvestment: 600000 } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when partial maxInvestment is below existing minInvestment', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockOpportunity]); // minInvestment: 100000
+
+      await expect(
+        service.update(mockOpportunity.id, { maxInvestment: 50000 } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow valid partial update of minInvestment', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockOpportunity]); // maxInvestment: 500000
+      mockDb.returning.mockResolvedValueOnce([{ ...mockOpportunity, minInvestment: 200000 }]);
+
+      const result = await service.update(mockOpportunity.id, { minInvestment: 200000 } as never);
+
+      expect(result.minInvestment).toBe(200000);
     });
   });
 

@@ -2,6 +2,7 @@ import { DRIZZLE_CLIENT, REDIS_CLIENT, RedisStreamsService } from '@hena-wadeena
 import { EVENTS } from '@hena-wadeena/types';
 import type { PaginatedResponse } from '@hena-wadeena/types';
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -79,7 +80,7 @@ export class InvestmentOpportunitiesService {
     return result[0]?.count ?? 0;
   }
 
-  private async findRaw(id: string): Promise<Opportunity | null> {
+  async findRaw(id: string): Promise<Opportunity | null> {
     const [opp] = await this.db
       .select()
       .from(investmentOpportunities)
@@ -254,6 +255,13 @@ export class InvestmentOpportunitiesService {
     if (!existing) throw new NotFoundException('Opportunity not found');
     if (existing.status === 'closed') {
       throw new ConflictException('Cannot update a closed opportunity');
+    }
+
+    // Cross-validate partial min/max investment against existing DB values
+    const effectiveMin = dto.minInvestment ?? existing.minInvestment;
+    const effectiveMax = dto.maxInvestment ?? existing.maxInvestment;
+    if (effectiveMax < effectiveMin) {
+      throw new BadRequestException('maxInvestment must be >= minInvestment');
     }
 
     const { sector, ...rest } = dto;
