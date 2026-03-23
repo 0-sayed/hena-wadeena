@@ -22,6 +22,8 @@ export default defineConfig({
       '/api/v1/listings': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/market': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/prices': { target: 'http://localhost:8002', changeOrigin: true },
+      '/api/v1/price-index': { target: 'http://localhost:8002', changeOrigin: true },
+      '/api/v1/commodit': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/business': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/opportunities': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/investments': { target: 'http://localhost:8002', changeOrigin: true },
