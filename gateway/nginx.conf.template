@@ -1,0 +1,200 @@
+# Hena Wadeena — Nginx API Gateway
+# Listens on :80 (mapped to :8000 externally via docker-compose)
+# This is a template — ${BRACED} vars are replaced by envsubst at container start.
+# Nginx's own $vars (no braces) are left untouched by NGINX_ENVSUBST_FILTER.
+
+# ── Maps (evaluated before server block) ─────────────────────────────────────
+
+# CORS: validate Origin against allowed pattern
+map $http_origin $cors_origin {
+    default "";
+    "~^(?:${CORS_ORIGINS})$" $http_origin;
+}
+
+# Request ID: use client-provided header or generate one
+map $http_x_request_id $request_id_value {
+    default $http_x_request_id;
+    ""      $request_id;
+}
+
+# ── Structured JSON access log ────────────────────────────────────────────────
+
+log_format json_log escape=json
+    '{'
+        '"time":"$time_iso8601",'
+        '"remote_addr":"$remote_addr",'
+        '"request_method":"$request_method",'
+        '"request_uri":"$request_uri",'
+        '"status":$status,'
+        '"body_bytes_sent":$body_bytes_sent,'
+        '"request_time":$request_time,'
+        '"upstream_response_time":"$upstream_response_time",'
+        '"request_id":"$request_id_value",'
+        '"http_user_agent":"$http_user_agent"'
+    '}';
+
+# ── Rate limiting zones ──────────────────────────────────────────────────────
+
+limit_req_zone $binary_remote_addr zone=global:10m rate=${RATE_GLOBAL};
+limit_req_zone $binary_remote_addr zone=auth:10m   rate=${RATE_AUTH};
+limit_req_zone $binary_remote_addr zone=ai:10m     rate=${RATE_AI};
+
+server {
+    listen 80;
+    server_name _;
+
+    # ── Docker internal DNS resolver (defers upstream resolution to request time) ─
+    resolver 127.0.0.11 valid=30s ipv6=off;
+
+    # ── Logging ───────────────────────────────────────────────────────────────
+    access_log /var/log/nginx/access.log json_log;
+    error_log  /var/log/nginx/error.log  warn;
+
+    # ── Body size limit ───────────────────────────────────────────────────────
+    client_max_body_size ${MAX_BODY_SIZE};
+
+    # ── Rate limit status code ────────────────────────────────────────────────
+    limit_req_status 429;
+
+    # ── Compression ───────────────────────────────────────────────────────────
+    gzip on;
+    gzip_types application/json text/plain text/css application/javascript;
+    gzip_min_length 256;
+    gzip_vary on;
+
+    # ── Security headers ──────────────────────────────────────────────────────
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # ── CORS headers ──────────────────────────────────────────────────────────
+    add_header Access-Control-Allow-Origin $cors_origin always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Authorization, Content-Type, X-Request-Id" always;
+    add_header Access-Control-Allow-Credentials "true" always;
+    add_header Access-Control-Max-Age "86400" always;
+
+    # ── Request ID ────────────────────────────────────────────────────────────
+    add_header X-Request-Id $request_id_value always;
+
+    # ── Common proxy settings (inherited by all location blocks) ──────────────
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Request-Id $request_id_value;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+
+    # ── Custom JSON error pages ───────────────────────────────────────────────
+    error_page 429 @too_many_requests;
+    error_page 502 @bad_gateway;
+    error_page 503 @service_unavailable;
+    error_page 504 @gateway_timeout;
+    error_page 413 @payload_too_large;
+
+    # ── Preflight (CORS OPTIONS) ──────────────────────────────────────────────
+    if ($request_method = OPTIONS) {
+        add_header Access-Control-Allow-Origin $cors_origin always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type, X-Request-Id" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        add_header Access-Control-Max-Age "86400" always;
+        return 204;
+    }
+
+    # ── Block ALL /internal/* routes from external access ─────────────────────
+    location ~ ^/api/v1/internal/ {
+        return 403;
+    }
+
+    # ── Identity Service ──────────────────────────────────────────────────────
+    location ~ ^/api/v1/(auth|users|profile|kyc|notifications|saved-items)/ {
+        limit_req zone=global burst=20 nodelay;
+
+        # Stricter rate limit on auth endpoints
+        location ~ ^/api/v1/auth/(login|register|password-reset) {
+            limit_req zone=auth burst=5 nodelay;
+            proxy_pass $upstream_identity;
+        }
+
+        set $upstream_identity http://identity:8001;
+        proxy_pass $upstream_identity;
+    }
+
+    # ── Market Service ────────────────────────────────────────────────────────
+    location ~ ^/api/v1/(listings|market|prices|business|opportunities|investments)/ {
+        limit_req zone=global burst=20 nodelay;
+        set $upstream_market http://market:8002;
+        proxy_pass $upstream_market;
+    }
+
+    # ── Guide-Booking Service ─────────────────────────────────────────────────
+    location ~ ^/api/v1/(guides|packages|bookings|attractions|admin)/ {
+        limit_req zone=global burst=20 nodelay;
+        set $upstream_guide http://guide-booking:8003;
+        proxy_pass $upstream_guide;
+    }
+
+    # ── Map Service ───────────────────────────────────────────────────────────
+    location ~ ^/api/v1/(pois|carpool)/ {
+        limit_req zone=global burst=20 nodelay;
+        set $upstream_map http://map:8004;
+        proxy_pass $upstream_map;
+    }
+
+    # ── AI Service (SSE support) ──────────────────────────────────────────────
+    location ~ ^/api/v1/(chat|ai)/ {
+        limit_req zone=ai burst=10 nodelay;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
+        proxy_cache off;
+        set $upstream_ai http://ai:8005;
+        proxy_pass $upstream_ai;
+    }
+
+    # ── Search ────────────────────────────────────────────────────────────────
+    location ~ ^/api/v1/search {
+        limit_req zone=global burst=20 nodelay;
+        set $upstream_identity http://identity:8001;
+        proxy_pass $upstream_identity;
+    }
+
+    # ── Gateway Health ────────────────────────────────────────────────────────
+    location /health {
+        default_type application/json;
+        return 200 '{"status":"ok","service":"gateway"}';
+    }
+
+    # ── Error page locations ──────────────────────────────────────────────────
+    location @too_many_requests {
+        default_type application/json;
+        return 429 '{"statusCode":429,"message":"Too many requests, please try again later","error":"Too Many Requests"}';
+    }
+
+    location @bad_gateway {
+        default_type application/json;
+        return 502 '{"statusCode":502,"message":"Service temporarily unavailable","error":"Bad Gateway"}';
+    }
+
+    location @service_unavailable {
+        default_type application/json;
+        return 503 '{"statusCode":503,"message":"Service is under maintenance","error":"Service Unavailable"}';
+    }
+
+    location @gateway_timeout {
+        default_type application/json;
+        return 504 '{"statusCode":504,"message":"Service did not respond in time","error":"Gateway Timeout"}';
+    }
+
+    location @payload_too_large {
+        default_type application/json;
+        return 413 '{"statusCode":413,"message":"Request body exceeds size limit","error":"Payload Too Large"}';
+    }
+
+    # ── Default ───────────────────────────────────────────────────────────────
+    location / {
+        return 404;
+    }
+}
