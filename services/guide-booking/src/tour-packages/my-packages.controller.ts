@@ -8,6 +8,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -31,7 +32,7 @@ class MyPackagesQueryDto extends createZodDto(myPackagesQuerySchema) {}
 @Roles(UserRole.GUIDE)
 @Controller('my/packages')
 export class MyPackagesController {
-  constructor(private readonly tourPackagesService: TourPackagesService) {}
+  constructor(@Inject(TourPackagesService) private readonly tourPackagesService: TourPackagesService) {}
 
   @Get()
   findMyPackages(@Query() query: MyPackagesQueryDto, @CurrentUser() user: JwtPayload) {

@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -25,7 +26,7 @@ import {
 @Roles(UserRole.ADMIN)
 @Controller('admin/attractions')
 export class AdminAttractionsController {
-  constructor(private readonly attractionsService: AttractionsService) {}
+  constructor(@Inject(AttractionsService) private readonly attractionsService: AttractionsService) {}
 
   @Get()
   adminFindAll(

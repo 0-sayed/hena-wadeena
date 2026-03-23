@@ -1,5 +1,5 @@
 import { Public } from '@hena-wadeena/nest-common';
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -15,7 +15,7 @@ class PaginationDto extends createZodDto(paginationSchema) {}
 
 @Controller('guides')
 export class GuidesController {
-  constructor(private readonly guidesService: GuidesService) {}
+  constructor(@Inject(GuidesService) private readonly guidesService: GuidesService) {}
 
   @Public()
   @Get()
