@@ -1,12 +1,12 @@
 import { Public } from '@hena-wadeena/nest-common';
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
 
 import { AttractionsService } from './attractions.service';
 import { AttractionFiltersDto, NearbyQueryDto } from './dto';
 
 @Controller('attractions')
 export class AttractionsController {
-  constructor(private readonly attractionsService: AttractionsService) {}
+  constructor(@Inject(AttractionsService) private readonly attractionsService: AttractionsService) {}
 
   @Public()
   @Get()
