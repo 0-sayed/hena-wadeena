@@ -6,6 +6,15 @@
  */
 
 import { UserRole } from '@hena-wadeena/types';
+import type { PaginatedResponse } from '@hena-wadeena/types';
+import type {
+  AttractionType,
+  AttractionArea,
+  BestSeason,
+  BestTimeOfDay,
+  Difficulty,
+} from '@/lib/format';
+import { toQueryString } from '@/lib/query-string';
 import { apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -123,26 +132,60 @@ export const authAPI = {
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
 };
 
-// ── Tourism ─────────────────────────────────────────────────────────────────
+// ── Tourism — Attractions ───────────────────────────────────────────────────
 
 export interface Attraction {
-  id: number;
-  title: string;
-  description: string;
-  long_description?: string;
-  image: string;
-  images?: string[];
-  rating: number;
-  reviews_count?: number;
-  duration: string;
-  type: string;
-  location?: string;
-  coordinates?: { lat: number; lng: number };
-  featured?: boolean;
-  opening_hours?: string;
-  ticket_price?: number;
-  highlights?: string[];
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  slug: string;
+  type: AttractionType;
+  area: AttractionArea;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  historyAr: string | null;
+  bestSeason: BestSeason | null;
+  bestTimeOfDay: BestTimeOfDay | null;
+  entryFee: {
+    adultsPiasters?: number;
+    childrenPiasters?: number;
+    foreignersPiasters?: number;
+  } | null;
+  openingHours: string | null;
+  durationHours: number | null;
+  difficulty: Difficulty | null;
+  tips: string[] | null;
+  nearbySlugs: string[] | null;
+  location: { x: number; y: number } | null;
+  images: string[] | null;
+  thumbnail: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  ratingAvg: number | null;
+  reviewCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface AttractionFilters {
+  type?: AttractionType;
+  area?: AttractionArea;
+  featured?: boolean;
+  nearLat?: number;
+  nearLng?: number;
+  radiusKm?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const attractionsAPI = {
+  getAll: (filters?: AttractionFilters) =>
+    apiFetch<PaginatedResponse<Attraction>>(`/attractions${toQueryString(filters)}`),
+  getBySlug: (slug: string) => apiFetch<Attraction>(`/attractions/${slug}`),
+  getNearby: (slug: string, limit?: number, radiusKm?: number) =>
+    apiFetch<Attraction[]>(`/attractions/${slug}/nearby${toQueryString({ limit, radiusKm })}`),
+};
 
 export interface Guide {
   id: number;
@@ -374,36 +417,143 @@ export const mapAPI = {
     }),
 };
 
-// ── Guides / Bookings ──────────────────────────────────────────────────────
+// ── Guides ──────────────────────────────────────────────────────────────────
 
-export interface GuideProfile {
-  id: number;
-  user_id: string;
-  name: string;
-  bio_ar: string;
+export interface GuideListItem {
+  id: string;
+  bioAr: string | null;
+  bioEn: string | null;
+  profileImage: string | null;
   languages: string[];
   specialties: string[];
-  license_number: string;
-  license_verified: boolean;
-  base_price: number;
-  rating_avg: number;
-  rating_count: number;
-  active: boolean;
-  image: string;
+  areasOfOperation: string[];
+  basePrice: number;
+  ratingAvg: number | null;
+  ratingCount: number;
+  licenseVerified: boolean;
+  packageCount: number;
 }
 
-export interface TourPackage {
-  id: number;
-  guide_id: number;
-  title_ar: string;
-  description: string;
-  duration_hrs: number;
-  max_people: number;
-  price: number;
-  includes: string[];
-  images: string[];
-  status: string;
+export interface GuideDetail {
+  id: string;
+  userId: string;
+  bioAr: string | null;
+  bioEn: string | null;
+  profileImage: string | null;
+  coverImage: string | null;
+  languages: string[];
+  specialties: string[];
+  areasOfOperation: string[];
+  licenseNumber: string;
+  licenseVerified: boolean;
+  basePrice: number;
+  ratingAvg: number | null;
+  ratingCount: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  packageCount: number;
+  reviewCount: number;
 }
+
+export interface GuideFilters {
+  language?: string;
+  specialty?: string;
+  area?: string;
+  minRating?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  verified?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const guidesAPI = {
+  getAll: (filters?: GuideFilters) =>
+    apiFetch<PaginatedResponse<GuideListItem>>(`/guides${toQueryString(filters)}`),
+  getById: (id: string) => apiFetch<GuideDetail>(`/guides/${id}`),
+  getPackages: (guideId: string, params?: { page?: number; limit?: number }) =>
+    apiFetch<PaginatedResponse<GuidePackageListItem>>(
+      `/guides/${guideId}/packages${toQueryString(params)}`,
+    ),
+};
+
+// ── Tour Packages ───────────────────────────────────────────────────────────
+
+interface TourPackageBase {
+  id: string;
+  titleAr: string;
+  titleEn: string | null;
+  description: string | null;
+  durationHours: number;
+  maxPeople: number;
+  price: number;
+  includes: string[] | null;
+  images: string[] | null;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TourPackageListItem extends TourPackageBase {
+  guideId: string;
+  guideBioAr: string | null;
+  guideBioEn: string | null;
+  guideProfileImage: string | null;
+  guideRatingAvg: number | null;
+  guideRatingCount: number;
+  guideLicenseVerified: boolean;
+  attractionSlugs: string[];
+}
+
+export interface GuidePackageListItem extends TourPackageBase {
+  attractionSlugs: string[];
+}
+
+export interface TourPackageDetail extends TourPackageBase {
+  guideId: string;
+  guideBioAr: string | null;
+  guideBioEn: string | null;
+  guideProfileImage: string | null;
+  guideRatingAvg: number | null;
+  guideRatingCount: number;
+  guideLicenseVerified: boolean;
+  linkedAttractions: {
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    slug: string;
+    thumbnail: string | null;
+    type: AttractionType;
+    area: AttractionArea;
+    sortOrder: number;
+  }[];
+}
+
+export interface PackageFilters {
+  area?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minDuration?: number;
+  maxDuration?: number;
+  minPeople?: number;
+  search?: string;
+  guideId?: string;
+  attractionId?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const packagesAPI = {
+  getAll: (filters?: PackageFilters) =>
+    apiFetch<PaginatedResponse<TourPackageListItem>>(`/packages${toQueryString(filters)}`),
+  getById: (id: string) => apiFetch<TourPackageDetail>(`/packages/${id}`),
+};
+
+// ── Legacy: Bookings + Reviews (mock — no backend yet, used by BookingsPage) ──
+// TODO(T15): Replace with real booking endpoints when backend is ready
+// TODO(T18): Replace with real review endpoints when backend is ready
 
 export interface Booking {
   id: string;
@@ -431,19 +581,8 @@ export interface Review {
   created_at: string;
 }
 
-export const guidesAPI = {
-  getGuides: () => apiFetchWithRefresh<{ success: boolean; data: GuideProfile[] }>('/guides'),
-  getGuide: (id: number) =>
-    apiFetchWithRefresh<{ success: boolean; data: GuideProfile }>(`/guides/${id}`),
-  getPackages: (guideId: number) =>
-    apiFetchWithRefresh<{ success: boolean; data: TourPackage[] }>(`/guides/${guideId}/packages`),
-  getReviews: (guideId: number) =>
-    apiFetchWithRefresh<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
-  createReview: (guideId: number, body: { rating: number; comment: string }) =>
-    apiFetchWithRefresh<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+export const bookingsAPI = {
+  getMyBookings: () => apiFetch<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
   createBooking: (body: {
     package_id: number;
     guide_id: number;
@@ -456,8 +595,16 @@ export const guidesAPI = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  getMyBookings: () =>
-    apiFetchWithRefresh<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
+};
+
+export const reviewsAPI = {
+  getReviews: (guideId: number) =>
+    apiFetch<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
+  createReview: (guideId: number, body: { rating: number; comment: string }) =>
+    apiFetch<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────

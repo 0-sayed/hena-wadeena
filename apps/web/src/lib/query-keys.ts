@@ -9,12 +9,15 @@ export const queryKeys = {
   tourism: {
     attractions: (filters?: Record<string, unknown>) =>
       ['tourism', 'attractions', filters] as const,
-    attraction: (id: string) => ['tourism', 'attractions', id] as const,
+    attraction: (slug: string) => ['tourism', 'attractions', slug] as const,
   },
   guides: {
     all: (filters?: Record<string, unknown>) => ['guides', filters] as const,
     detail: (id: string) => ['guides', id] as const,
     packages: (guideId: string) => ['guides', guideId, 'packages'] as const,
+  },
+  packages: {
+    all: (filters?: Record<string, unknown>) => ['packages', filters] as const,
   },
   market: {
     listings: (filters?: Record<string, unknown>) => ['market', 'listings', filters] as const,

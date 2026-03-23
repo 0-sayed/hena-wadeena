@@ -54,7 +54,7 @@
 - [ ] **T12** RAG: Retrieval + Chat · L · ← T08
 - [x] **T20** API Gateway (Nginx) · M · ← T05
 - [ ] **F02** Auth Flow Integration · S · ← T05, F01
-- [ ] **F03** Tourism + Guides · M · ← T07, T11, F01
+- [x] **F03** Tourism + Guides · M · ← T07, T11, F01
 - [ ] **F04** Market · M · ← T06, T10, F01
 - [ ] **F08** AI Chatbot · S · ← T12, F01
 - [ ] **F11** Role Dashboard Wiring · S · ← F02
