@@ -65,7 +65,7 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
 }
 
 /** Build ?key=value&... from object, skipping undefined values */
-function toQueryString(params?: Record<string, unknown>): string {
+function toQueryString(params?: object): string {
   if (!params) return '';
   const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null);
   if (entries.length === 0) return '';
