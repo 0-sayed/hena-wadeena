@@ -55,7 +55,7 @@
 - [x] **T10** Market: BizDir + Price Index · M · ← T06
 - [ ] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [ ] **T12** RAG: Retrieval + Chat · L · ← T08
-- [ ] **T20** API Gateway (Nginx) · M · ← T05
+- [x] **T20** API Gateway (Nginx) · M · ← T05
 - [ ] **F02** Auth Flow Integration · S · ← T05, F01
 - [ ] **F03** Tourism + Guides · M · ← T07, T11, F01
 - [ ] **F04** Market · M · ← T06, T10, F01
