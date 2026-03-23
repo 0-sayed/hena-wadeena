@@ -139,8 +139,8 @@ describe('ReviewsService', () => {
   describe('remove', () => {
     it('should soft-delete when caller is author', async () => {
       mockDb.limit.mockResolvedValueOnce([mockReview]);
-      // transaction: update.execute + recalculate.execute
-      mockDb.execute.mockResolvedValueOnce([]);
+      // transaction: update.returning (soft-delete) + recalculate.execute
+      mockDb.returning.mockResolvedValueOnce([{ id: REVIEW_ID }]);
       mockDb.execute.mockResolvedValueOnce([]);
 
       await expect(service.remove(REVIEW_ID, REVIEWER_ID, 'tourist')).resolves.not.toThrow();
@@ -148,7 +148,7 @@ describe('ReviewsService', () => {
 
     it('should soft-delete when caller is admin', async () => {
       mockDb.limit.mockResolvedValueOnce([mockReview]);
-      mockDb.execute.mockResolvedValueOnce([]);
+      mockDb.returning.mockResolvedValueOnce([{ id: REVIEW_ID }]);
       mockDb.execute.mockResolvedValueOnce([]);
 
       await expect(service.remove(REVIEW_ID, ADMIN_ID, 'admin')).resolves.not.toThrow();

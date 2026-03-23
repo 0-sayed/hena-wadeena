@@ -14,7 +14,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { listings } from '../db/schema/listings';
 import { reviewHelpfulVotes } from '../db/schema/review-helpful-votes';
 import { reviews } from '../db/schema/reviews';
-import { isUniqueViolation } from '../shared/error-helpers';
+import { isForeignKeyViolation, isUniqueViolation } from '../shared/error-helpers';
 import { firstOrThrow, paginate } from '../shared/query-helpers';
 
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -70,38 +70,42 @@ export class ReviewsService {
     return review;
   }
 
-  private buildSort(sort: string): SQL {
+  private buildSort(sort: string): SQL[] {
     const [field, direction] = sort.split('|');
-    if (!field || !(field in SORTABLE_FIELDS)) return desc(reviews.createdAt);
+    if (!field || !(field in SORTABLE_FIELDS)) {
+      return [desc(reviews.createdAt), desc(reviews.id)];
+    }
     const column = SORTABLE_FIELDS[field as keyof typeof SORTABLE_FIELDS];
-    return direction === 'asc' ? asc(column) : desc(column);
+    const primary = direction === 'asc' ? asc(column) : desc(column);
+    const tieBreaker = direction === 'asc' ? asc(reviews.id) : desc(reviews.id);
+    return [primary, tieBreaker];
   }
 
   async create(dto: CreateReviewDto, reviewerId: string): Promise<Review> {
-    // 1. Verify listing exists and is active
-    const [listing] = await this.db
-      .select({ id: listings.id, ownerId: listings.ownerId })
-      .from(listings)
-      .where(
-        and(
-          eq(listings.id, dto.listingId),
-          eq(listings.status, 'active'),
-          isNull(listings.deletedAt),
-        ),
-      )
-      .limit(1);
-
-    if (!listing) throw new NotFoundException('Listing not found');
-
-    // 3. Cannot review own listing
-    if (listing.ownerId === reviewerId) {
-      throw new ForbiddenException('Cannot review your own listing');
-    }
-
-    // 4. Insert + recalculate in transaction
     let review: Review;
     try {
       review = await this.db.transaction(async (tx) => {
+        // 1. Verify listing exists and is active (inside tx for atomicity)
+        const [listing] = await tx
+          .select({ id: listings.id, ownerId: listings.ownerId })
+          .from(listings)
+          .where(
+            and(
+              eq(listings.id, dto.listingId),
+              eq(listings.status, 'active'),
+              isNull(listings.deletedAt),
+            ),
+          )
+          .limit(1);
+
+        if (!listing) throw new NotFoundException('Listing not found');
+
+        // 2. Cannot review own listing
+        if (listing.ownerId === reviewerId) {
+          throw new ForbiddenException('Cannot review your own listing');
+        }
+
+        // 3. Insert + recalculate
         const created = firstOrThrow(
           await tx
             .insert(reviews)
@@ -164,8 +168,10 @@ export class ReviewsService {
           ...(dto.images !== undefined && { images: dto.images }),
           updatedAt: new Date(),
         })
-        .where(eq(reviews.id, id))
+        .where(and(eq(reviews.id, id), eq(reviews.isActive, true)))
         .returning();
+
+      if (!row) throw new NotFoundException('Review not found');
 
       if (ratingChanged) {
         await this.recalculateRating(tx, existing.listingId);
@@ -174,7 +180,6 @@ export class ReviewsService {
       return row;
     });
 
-    if (!updated) throw new NotFoundException('Review not found');
     return updated;
   }
 
@@ -189,11 +194,13 @@ export class ReviewsService {
     }
 
     await this.db.transaction(async (tx) => {
-      await tx
+      const [deleted] = await tx
         .update(reviews)
         .set({ isActive: false, updatedAt: new Date() })
-        .where(eq(reviews.id, id))
-        .execute();
+        .where(and(eq(reviews.id, id), eq(reviews.isActive, true)))
+        .returning({ id: reviews.id });
+
+      if (!deleted) throw new NotFoundException('Review not found');
 
       await this.recalculateRating(tx, existing.listingId);
     });
@@ -216,6 +223,9 @@ export class ReviewsService {
     } catch (err: unknown) {
       if (isUniqueViolation(err)) {
         throw new ConflictException('You have already marked this review as helpful');
+      }
+      if (isForeignKeyViolation(err)) {
+        throw new NotFoundException('Review not found');
       }
       throw err;
     }
@@ -243,7 +253,7 @@ export class ReviewsService {
         .select()
         .from(reviews)
         .where(filters)
-        .orderBy(orderBy)
+        .orderBy(...orderBy)
         .limit(query.limit)
         .offset(query.offset),
       this.db
