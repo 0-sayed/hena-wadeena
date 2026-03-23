@@ -106,7 +106,7 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 - NEVER import `@hena-wadeena/nest-common` from frontend code
 - NEVER add cross-schema JOINs in database queries
 - NEVER commit `.env` files or real secrets
-- NEVER use `any` without justification (error-level ESLint rule)
+- NEVER use `any` without justification (error-level ESLint rule in source code; relaxed in `*.spec.ts` test files where `as any` is allowed for mock casts)
 - NEVER skip `strict: true` in TypeScript configs
 - NEVER add `eslint-disable` comments to satisfy a warning-level rule — warnings are intentional review signals, not errors to suppress
 - NEVER add `as unknown as T` double-casts — if a single `as T` triggers a warning, let it warn
