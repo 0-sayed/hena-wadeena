@@ -14,7 +14,6 @@ import type {
   BestTimeOfDay,
   Difficulty,
 } from '@/lib/format';
-import { toQueryString } from '@/lib/query-string';
 import { apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -63,6 +62,17 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
   }
 
   return (await res.json()) as T;
+}
+
+/** Build ?key=value&... from object, skipping undefined values */
+function toQueryString(params?: object): string {
+  if (!params) return '';
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null);
+  if (entries.length === 0) return '';
+  return (
+    '?' +
+    entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&')
+  );
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -230,46 +240,102 @@ export const tourismAPI = {
     apiFetchWithRefresh<{ success: boolean; data: Accommodation[] }>('/accommodations'),
 };
 
-// ── Market ──────────────────────────────────────────────────────────────────
+// ── Market: Price Index ──────────────────────────────────────────────────
 
-export interface PriceItem {
-  id: number;
-  name: string;
-  price: number;
-  change: number;
+export interface PriceIndexCommodity {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
   unit: string;
   category: string;
 }
 
-export interface SupplierProduct {
-  name: string;
-  price: number;
+export interface PriceIndexEntry {
+  commodity: PriceIndexCommodity;
+  latestPrice: number;
+  previousPrice: number | null;
+  changePiasters: number | null;
+  changePercent: number | null;
+  region: string;
+  priceType: string;
+  recordedAt: string;
+}
+
+export interface TopMover {
+  commodity: { id: string; nameAr: string };
+  changePercent: number | null;
+  direction: 'up' | 'down' | null;
+}
+
+export interface PriceSummaryResponse {
+  totalCommodities: number;
+  totalPriceEntries: number;
+  lastUpdated: string | null;
+  topMovers: TopMover[];
+  categoryAverages: Array<{
+    category: string;
+    avgPrice: number;
+    commodityCount: number;
+  }>;
+}
+
+// ── Market: Business Directory ───────────────────────────────────────────
+
+export interface LinkedCommodity {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: string;
   unit: string;
 }
 
-export interface Supplier {
-  id: number;
-  name: string;
-  specialties: string[];
-  city: string;
-  rating: number;
-  reviews: number;
-  verified: boolean;
-  description?: string;
-  phone?: string;
-  email?: string;
-  image?: string;
-  products?: SupplierProduct[];
+export interface BusinessEntry {
+  id: string;
+  ownerId: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: string;
+  description: string | null;
+  descriptionAr: string | null;
+  district: string | null;
+  location: unknown;
+  phone: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  status: string;
+  verificationStatus: string;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  commodities: LinkedCommodity[];
 }
 
-export const marketAPI = {
-  getPrices: () => apiFetchWithRefresh<{ success: boolean; data: PriceItem[] }>('/market/prices'),
+export const priceIndexAPI = {
+  getIndex: (params?: {
+    category?: string;
+    region?: string;
+    price_type?: string;
+    limit?: number;
+    offset?: number;
+  }) => apiFetch<PaginatedResponse<PriceIndexEntry>>(`/price-index${toQueryString(params)}`),
 
-  getSuppliers: () =>
-    apiFetchWithRefresh<{ success: boolean; data: Supplier[] }>('/market/suppliers'),
+  getSummary: () => apiFetch<PriceSummaryResponse>('/price-index/summary'),
+};
 
-  getSupplier: (id: number) =>
-    apiFetchWithRefresh<{ success: boolean; data: Supplier }>(`/market/suppliers/${id}`),
+export const businessesAPI = {
+  getAll: (params?: {
+    category?: string;
+    district?: string;
+    commodity_id?: string;
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }) => apiFetch<PaginatedResponse<BusinessEntry>>(`/businesses${toQueryString(params)}`),
+
+  getById: (id: string) => apiFetch<BusinessEntry>(`/businesses/${id}`),
 };
 
 // ── Logistics ───────────────────────────────────────────────────────────────
