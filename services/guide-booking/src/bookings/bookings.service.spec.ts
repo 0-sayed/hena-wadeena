@@ -297,7 +297,9 @@ describe('BookingsService', () => {
     });
 
     it('start: confirmed → in_progress on booking date, no event published', async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Africa/Cairo',
+      });
       mockNextQuery([{ ...mockBooking, status: 'confirmed', bookingDate: today }]);
       mockNextQuery([{ ...mockBooking, status: 'in_progress', bookingDate: today }]);
 
@@ -390,7 +392,9 @@ describe('BookingsService', () => {
     });
 
     it('tourist cannot start booking: throws ForbiddenException', async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Africa/Cairo',
+      });
       mockNextQuery([{ ...mockBooking, status: 'confirmed', bookingDate: today }]);
 
       await expect(
