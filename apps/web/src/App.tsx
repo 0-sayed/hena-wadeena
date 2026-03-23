@@ -2,6 +2,8 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router';
+import { UserRole } from '@hena-wadeena/types';
+import { AuthProvider } from '@/contexts/auth-context';
 import { ChatWidget } from '@/components/ai/ChatWidget';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { RequireRole } from '@/components/auth/RequireRole';
@@ -63,91 +65,108 @@ import AttractionsPage from './pages/tourism/AttractionsPage';
 import AttractionDetailsPage from './pages/tourism/AttractionDetailsPage';
 import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* Auth */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          {/* Profile / User Dashboard */}
-          <Route element={<RequireAuth />}>
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/bookings" element={<BookingsPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-          </Route>
-          {/* Guides */}
-          <Route path="/guides" element={<GuidesPage />} />
-          <Route path="/guides/:id" element={<GuideProfilePage />} />
-          {/* Admin Dashboards */}
-          <Route element={<RequireAuth />}>
-            <Route element={<RequireRole roles={['admin']} />}>
-              <Route path="/admin" element={<AdminDashboard />} />
+    <AuthProvider>
+      <TooltipProvider>
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* Auth */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            {/* Profile / User Dashboard */}
+            <Route element={<RequireAuth />}>
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/wallet" element={<WalletPage />} />
+              <Route path="/bookings" element={<BookingsPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
             </Route>
-            <Route element={<RequireRole roles={['admin', 'moderator']} />}>
-              <Route path="/moderator" element={<ModeratorDashboard />} />
+            {/* Guides */}
+            <Route path="/guides" element={<GuidesPage />} />
+            <Route path="/guides/:id" element={<GuideProfilePage />} />
+            {/* Admin Dashboards */}
+            <Route element={<RequireAuth />}>
+              <Route element={<RequireRole roles={[UserRole.ADMIN]} />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Route>
+              <Route element={<RequireRole roles={[UserRole.ADMIN, UserRole.MODERATOR]} />}>
+                <Route path="/moderator" element={<ModeratorDashboard />} />
+              </Route>
+              <Route
+                element={
+                  <RequireRole roles={[UserRole.ADMIN, UserRole.MODERATOR, UserRole.REVIEWER]} />
+                }
+              >
+                <Route path="/reviewer" element={<ReviewerDashboard />} />
+              </Route>
             </Route>
-            <Route element={<RequireRole roles={['admin', 'moderator', 'reviewer']} />}>
-              <Route path="/reviewer" element={<ReviewerDashboard />} />
+            {/* Role Dashboards */}
+            <Route element={<RequireAuth />}>
+              <Route element={<RequireRole roles={[UserRole.MERCHANT]} />}>
+                <Route path="/dashboard/merchant" element={<MerchantDashboard />} />
+              </Route>
+              <Route element={<RequireRole roles={[UserRole.DRIVER]} />}>
+                <Route path="/dashboard/driver" element={<DriverDashboard />} />
+              </Route>
+              <Route element={<RequireRole roles={[UserRole.INVESTOR]} />}>
+                <Route path="/dashboard/investor" element={<InvestorDashboard />} />
+              </Route>
+              <Route element={<RequireRole roles={[UserRole.TOURIST]} />}>
+                <Route path="/dashboard/tourist" element={<TouristDashboard />} />
+              </Route>
+              <Route element={<RequireRole roles={[UserRole.STUDENT]} />}>
+                <Route path="/dashboard/student" element={<StudentDashboard />} />
+              </Route>
+              <Route element={<RequireRole roles={[UserRole.RESIDENT]} />}>
+                <Route path="/dashboard/resident" element={<ResidentDashboard />} />
+              </Route>
             </Route>
-          </Route>
-          {/* Role Dashboards */}
-          <Route element={<RequireAuth />}>
-            <Route element={<RequireRole roles={['merchant']} />}>
-              <Route path="/dashboard/merchant" element={<MerchantDashboard />} />
-            </Route>
-            <Route element={<RequireRole roles={['driver']} />}>
-              <Route path="/dashboard/driver" element={<DriverDashboard />} />
-            </Route>
-            <Route element={<RequireRole roles={['investor']} />}>
-              <Route path="/dashboard/investor" element={<InvestorDashboard />} />
-            </Route>
-            <Route element={<RequireRole roles={['tourist']} />}>
-              <Route path="/dashboard/tourist" element={<TouristDashboard />} />
-            </Route>
-            <Route element={<RequireRole roles={['student']} />}>
-              <Route path="/dashboard/student" element={<StudentDashboard />} />
-            </Route>
-            <Route element={<RequireRole roles={['resident']} />}>
-              <Route path="/dashboard/resident" element={<ResidentDashboard />} />
-            </Route>
-          </Route>
-          {/* Search */}
-          <Route path="/search" element={<SearchResultsPage />} />
-          {/* Tourism */}
-          <Route path="/tourism" element={<TourismPage />} />
-          <Route path="/tourism/attractions" element={<AttractionsPage />} />
-          <Route path="/tourism/attraction/:id" element={<AttractionDetailsPage />} />
-          <Route path="/tourism/guide-booking/:id" element={<GuideBookingPage />} />
-          <Route path="/tourism/accommodation/:id" element={<AccommodationDetailsPage />} />
-          <Route path="/tourism/accommodation-inquiry/:id" element={<AccommodationInquiryPage />} />
-          {/* Logistics */}
-          <Route path="/logistics" element={<LogisticsPage />} />
-          <Route path="/logistics/create-trip" element={<CreateTripPage />} />
-          <Route path="/logistics/book/:id" element={<BookTripPage />} />
-          <Route path="/logistics/route/:id" element={<RouteDetailsPage />} />
-          <Route path="/logistics/station/:id" element={<StationDetailsPage />} />
-          {/* Marketplace */}
-          <Route path="/marketplace" element={<MarketplacePage />} />
-          <Route path="/marketplace/prices" element={<PricesPage />} />
-          <Route path="/marketplace/supplier/:id" element={<SupplierDetailsPage />} />
-          {/* Investment */}
-          <Route path="/investment" element={<InvestmentPage />} />
-          <Route path="/investment/opportunity/:id" element={<OpportunityDetailsPage />} />
-          <Route path="/investment/contact/:id" element={<ContactPage />} />
-          {/* 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        {/* AI Chatbot Widget — visible on all pages */}
-        <ChatWidget />
-      </BrowserRouter>
-    </TooltipProvider>
+            {/* Search */}
+            <Route path="/search" element={<SearchResultsPage />} />
+            {/* Tourism */}
+            <Route path="/tourism" element={<TourismPage />} />
+            <Route path="/tourism/attractions" element={<AttractionsPage />} />
+            <Route path="/tourism/attraction/:id" element={<AttractionDetailsPage />} />
+            <Route path="/tourism/guide-booking/:id" element={<GuideBookingPage />} />
+            <Route path="/tourism/accommodation/:id" element={<AccommodationDetailsPage />} />
+            <Route
+              path="/tourism/accommodation-inquiry/:id"
+              element={<AccommodationInquiryPage />}
+            />
+            {/* Logistics */}
+            <Route path="/logistics" element={<LogisticsPage />} />
+            <Route path="/logistics/create-trip" element={<CreateTripPage />} />
+            <Route path="/logistics/book/:id" element={<BookTripPage />} />
+            <Route path="/logistics/route/:id" element={<RouteDetailsPage />} />
+            <Route path="/logistics/station/:id" element={<StationDetailsPage />} />
+            {/* Marketplace */}
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/marketplace/prices" element={<PricesPage />} />
+            <Route path="/marketplace/supplier/:id" element={<SupplierDetailsPage />} />
+            {/* Investment */}
+            <Route path="/investment" element={<InvestmentPage />} />
+            <Route path="/investment/opportunity/:id" element={<OpportunityDetailsPage />} />
+            <Route path="/investment/contact/:id" element={<ContactPage />} />
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          {/* AI Chatbot Widget — visible on all pages */}
+          <ChatWidget />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

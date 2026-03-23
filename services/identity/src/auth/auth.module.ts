@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import type { StringValue } from 'ms';
 
 import { EmailModule } from '../email/email.module';
+import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthController } from './auth.controller';
@@ -27,6 +28,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
     UsersModule,
     EmailModule,
+    SessionModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, HashingService, JwtStrategy, RedisStreamsService],

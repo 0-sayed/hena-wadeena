@@ -6,7 +6,15 @@ export enum UserRole {
   INVESTOR = 'investor',
   STUDENT = 'student',
   DRIVER = 'driver',
+  MODERATOR = 'moderator',
+  REVIEWER = 'reviewer',
   ADMIN = 'admin',
+}
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  BANNED = 'banned',
 }
 
 export enum KycStatus {
@@ -165,12 +173,37 @@ export enum NvDistrict {
   DAKHLA = 'dakhla',
   FARAFRA = 'farafra',
   BARIS = 'baris',
+  BALAT = 'balat',
 }
 
 export enum CommodityUnit {
   KG = 'kg',
   TON = 'ton',
+  ARDEB = 'ardeb',
+  KANTAR = 'kantar',
   BOX = 'box',
   PIECE = 'piece',
   LITER = 'liter',
+}
+
+export enum CommodityCategory {
+  FRUITS = 'fruits',
+  GRAINS = 'grains',
+  VEGETABLES = 'vegetables',
+  OILS = 'oils',
+  LIVESTOCK = 'livestock',
+  OTHER = 'other',
+}
+
+export enum PriceType {
+  WHOLESALE = 'wholesale',
+  RETAIL = 'retail',
+  FARM_GATE = 'farm_gate',
+}
+
+export enum VerificationStatus {
+  PENDING = 'pending',
+  VERIFIED = 'verified',
+  REJECTED = 'rejected',
+  SUSPENDED = 'suspended',
 }
