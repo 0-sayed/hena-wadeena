@@ -1,4 +1,3 @@
-import { RedisStreamsService } from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
 
 import {
@@ -10,6 +9,6 @@ import { CommodityPricesService } from './commodity-prices.service';
 
 @Module({
   controllers: [CommoditiesController, CommodityPricesAdminController, PriceIndexController],
-  providers: [CommodityPricesService, RedisStreamsService],
+  providers: [CommodityPricesService],
 })
 export class CommodityPricesModule {}
