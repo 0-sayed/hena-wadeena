@@ -326,19 +326,6 @@ export const priceIndexAPI = {
   getSummary: () => apiFetch<PriceSummaryResponse>('/price-index/summary'),
 };
 
-export const businessesAPI = {
-  getAll: (params?: {
-    category?: string;
-    district?: string;
-    commodity_id?: string;
-    q?: string;
-    limit?: number;
-    offset?: number;
-  }) => apiFetch<PaginatedResponse<BusinessEntry>>(`/businesses${toQueryString(params)}`),
-
-  getById: (id: string) => apiFetch<BusinessEntry>(`/businesses/${id}`),
-};
-
 // ── Businesses ────────────────────────────────────────────────────────────
 // NOTE: Field names match backend DB schema (business_directories table).
 
@@ -365,6 +352,15 @@ export interface Business {
 
 // NOTE: GET /businesses/mine returns BusinessDirectory[] (plain array, no wrapper).
 export const businessesAPI = {
+  getAll: (params?: {
+    category?: string;
+    district?: string;
+    commodity_id?: string;
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }) => apiFetch<PaginatedResponse<BusinessEntry>>(`/businesses${toQueryString(params)}`),
+  getById: (id: string) => apiFetch<BusinessEntry>(`/businesses/${id}`),
   getMine: () => apiFetch<Business[]>('/businesses/mine'),
   create: (body: { nameAr: string; description?: string; category: string; district: string }) =>
     apiFetch<Business>('/businesses', {
