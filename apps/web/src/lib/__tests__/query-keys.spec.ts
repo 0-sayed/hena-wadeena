@@ -52,4 +52,8 @@ describe('queryKeys', () => {
   it('market.business includes id in key', () => {
     expect(queryKeys.market.business('uuid-123')).toEqual(['market', 'businesses', 'uuid-123']);
   });
+
+  it('bookings.mine returns stable key', () => {
+    expect(queryKeys.bookings.mine()).toEqual(['bookings', 'mine']);
+  });
 });
