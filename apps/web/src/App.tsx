@@ -62,6 +62,9 @@ import ContactPage from './pages/investment/ContactPage';
 import AttractionsPage from './pages/tourism/AttractionsPage';
 import AttractionDetailsPage from './pages/tourism/AttractionDetailsPage';
 import PackagesPage from './pages/tourism/PackagesPage';
+import GuideBookingPage from './pages/tourism/GuideBookingPage';
+import AccommodationDetailsPage from './pages/tourism/AccommodationDetailsPage';
+import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -138,6 +141,12 @@ const App = () => (
             <Route path="/tourism/attractions" element={<AttractionsPage />} />
             <Route path="/tourism/attraction/:slug" element={<AttractionDetailsPage />} />
             <Route path="/tourism/packages" element={<PackagesPage />} />
+            <Route path="/tourism/guide-booking/:id" element={<GuideBookingPage />} />
+            <Route path="/tourism/accommodation/:id" element={<AccommodationDetailsPage />} />
+            <Route
+              path="/tourism/accommodation-inquiry/:id"
+              element={<AccommodationInquiryPage />}
+            />
             {/* Logistics */}
             <Route path="/logistics" element={<LogisticsPage />} />
             <Route path="/logistics/create-trip" element={<CreateTripPage />} />
