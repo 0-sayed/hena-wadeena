@@ -1,6 +1,8 @@
 import { DynamicModule, Global, Inject, Module, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 
+import { RedisStreamsService } from './redis-streams.service';
+
 export const REDIS_CLIENT = 'REDIS_CLIENT';
 
 export interface RedisModuleOptions {
@@ -40,8 +42,8 @@ export class RedisModule implements OnModuleDestroy {
 
     return {
       module: RedisModule,
-      providers: [redisProvider],
-      exports: [REDIS_CLIENT],
+      providers: [redisProvider, RedisStreamsService],
+      exports: [REDIS_CLIENT, RedisStreamsService],
     };
   }
 }

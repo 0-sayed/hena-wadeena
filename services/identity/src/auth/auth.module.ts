@@ -1,4 +1,4 @@
-import { getJwtConfig, RedisStreamsService } from '@hena-wadeena/nest-common';
+import { getJwtConfig } from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -31,7 +31,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     SessionModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, HashingService, JwtStrategy, RedisStreamsService],
+  providers: [AuthService, HashingService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
