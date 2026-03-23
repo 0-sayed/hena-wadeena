@@ -203,7 +203,12 @@ describe('InvestmentOpportunitiesService', () => {
       expect(result.limit).toBe(20);
       expect(result.total).toBe(50);
       expect(result.hasMore).toBe(true);
-      expect(result.data).toEqual([mockOpportunity]);
+      // Public list endpoints strip sensitive fields (contact, documents, description)
+      const expected = { ...mockOpportunity };
+      delete (expected as Record<string, unknown>).contact;
+      delete (expected as Record<string, unknown>).documents;
+      delete (expected as Record<string, unknown>).description;
+      expect(result.data).toEqual([expected]);
     });
   });
 

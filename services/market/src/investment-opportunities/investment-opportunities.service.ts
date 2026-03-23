@@ -22,6 +22,7 @@ import { QueryOpportunitiesDto } from './dto/query-opportunities.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 
 type Opportunity = typeof investmentOpportunities.$inferSelect;
+type PublicOpportunity = Omit<Opportunity, 'contact' | 'documents' | 'description'>;
 type InsertOpportunity = typeof investmentOpportunities.$inferInsert;
 
 function stripSensitiveFields(
@@ -170,10 +171,10 @@ export class InvestmentOpportunitiesService {
     return opp;
   }
 
-  async findAll(query: QueryOpportunitiesDto): Promise<PaginatedResponse<Opportunity>> {
+  async findAll(query: QueryOpportunitiesDto): Promise<PaginatedResponse<PublicOpportunity>> {
     const cacheKey = this.buildCacheKey('list', query);
     const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as PaginatedResponse<Opportunity>;
+    if (cached) return JSON.parse(cached) as PaginatedResponse<PublicOpportunity>;
 
     const filters = this.buildFilters(query);
 
@@ -188,7 +189,7 @@ export class InvestmentOpportunitiesService {
       this.countOpportunities(filters),
     ]);
 
-    const result = paginate(results, total, query.offset, query.limit);
+    const result = paginate(results.map(stripSensitiveFields), total, query.offset, query.limit);
 
     this.redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL).catch((err: unknown) => {
       this.logger.error('Cache set failed', err);
@@ -197,10 +198,10 @@ export class InvestmentOpportunitiesService {
     return result;
   }
 
-  async findFeatured(query: QueryOpportunitiesDto): Promise<PaginatedResponse<Opportunity>> {
+  async findFeatured(query: QueryOpportunitiesDto): Promise<PaginatedResponse<PublicOpportunity>> {
     const cacheKey = this.buildCacheKey('featured', { offset: query.offset, limit: query.limit });
     const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as PaginatedResponse<Opportunity>;
+    if (cached) return JSON.parse(cached) as PaginatedResponse<PublicOpportunity>;
 
     const filters = andRequired(
       eq(investmentOpportunities.status, 'active'),
@@ -218,7 +219,7 @@ export class InvestmentOpportunitiesService {
       this.countOpportunities(filters),
     ]);
 
-    const result = paginate(results, total, query.offset, query.limit);
+    const result = paginate(results.map(stripSensitiveFields), total, query.offset, query.limit);
 
     this.redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL).catch((err: unknown) => {
       this.logger.error('Cache set failed', err);

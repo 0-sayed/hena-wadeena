@@ -8,7 +8,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { investmentApplications } from '../db/schema/investment-applications';
@@ -30,7 +30,7 @@ const ADMIN_TRANSITIONS: Record<string, string[]> = {
 };
 
 /** States from which an investor can withdraw */
-const WITHDRAWABLE_STATES = ['pending', 'reviewed'];
+const WITHDRAWABLE_STATES = ['pending', 'reviewed'] as const;
 
 @Injectable()
 export class InvestmentApplicationsService {
@@ -133,7 +133,7 @@ export class InvestmentApplicationsService {
       .where(
         and(
           eq(investmentApplications.id, app.id),
-          sql`${investmentApplications.status} = ANY(ARRAY['pending','reviewed'])`,
+          inArray(investmentApplications.status, [...WITHDRAWABLE_STATES]),
         ),
       )
       .returning();
@@ -169,12 +169,7 @@ export class InvestmentApplicationsService {
     const [updated] = await this.db
       .update(investmentApplications)
       .set({ status: dto.status as Application['status'] })
-      .where(
-        and(
-          eq(investmentApplications.id, id),
-          eq(investmentApplications.status, app.status),
-        ),
-      )
+      .where(and(eq(investmentApplications.id, id), eq(investmentApplications.status, app.status)))
       .returning();
 
     if (!updated) {
@@ -269,7 +264,7 @@ export class InvestmentApplicationsService {
     callerId: string,
     dto: DocumentUploadDto,
   ): Promise<{ uploadUrl: string; key: string }> {
-    const opp = await this.opportunitiesService.findById(opportunityId);
+    const opp = await this.opportunitiesService.findById(opportunityId, callerId);
     if (!opp) throw new NotFoundException('Opportunity not found');
 
     // Caller must be owner OR have an accepted application
