@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { User, Wallet, Bell, CalendarCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { notificationsAPI, type AuthUser } from '@/services/api';
+import type { AuthUser } from '@/services/api';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 import { SR } from '@/components/motion/ScrollReveal';
 
 const quickLinks = [
@@ -39,16 +40,13 @@ const quickLinks = [
 
 export function QuickAccess() {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { data: unreadData } = useUnreadNotificationCount();
+  const unreadCount = unreadData?.count ?? 0;
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) {
       setUser(JSON.parse(stored) as AuthUser);
-      notificationsAPI
-        .getUnreadCount()
-        .then((r) => setUnreadCount(r.data.count))
-        .catch(() => {});
     }
   }, []);
 
