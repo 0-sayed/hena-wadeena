@@ -1,6 +1,6 @@
 import { Roles } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Query } from '@nestjs/common';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -28,7 +28,7 @@ class SetStatusBodyDto extends createZodDto(setStatusBodySchema) {}
 @Roles(UserRole.ADMIN)
 @Controller('admin/guides')
 export class AdminGuidesController {
-  constructor(private readonly guidesService: GuidesService) {}
+  constructor(@Inject(GuidesService) private readonly guidesService: GuidesService) {}
 
   @Get()
   adminFindAll(@Query() filters: GuideFiltersDto, @Query() adminFilters: AdminGuideFiltersDto) {

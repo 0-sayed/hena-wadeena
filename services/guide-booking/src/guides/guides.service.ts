@@ -15,7 +15,7 @@ type Guide = typeof guides.$inferSelect;
 export class GuidesService {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
-    private readonly s3: S3Service,
+    @Inject(S3Service) private readonly s3: S3Service,
   ) {}
 
   async resolveGuideId(userId: string): Promise<string> {

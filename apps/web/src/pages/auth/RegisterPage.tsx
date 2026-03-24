@@ -1,22 +1,17 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate, Link } from 'react-router';
-import { User, Mail, Lock, Phone, Building2, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
+import { z } from 'zod';
+import { ApiError } from '@/services/api';
 
 const roles = [
   { value: 'resident', label: 'مواطن', description: 'مستخدم عادي يبحث عن الخدمات' },
@@ -28,6 +23,30 @@ const roles = [
   { value: 'guide', label: 'مرشد سياحي', description: 'مرشد سياحي مرخص' },
 ];
 
+const step1Schema = z
+  .object({
+    fullName: z.string().min(1, 'الاسم مطلوب').max(100, 'الاسم طويل جداً'),
+    email: z.string().min(1, 'البريد الإلكتروني مطلوب').email('بريد إلكتروني غير صالح'),
+    password: z.string().min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'كلمتا المرور غير متطابقتين',
+    path: ['confirmPassword'],
+  });
+
+const step2Schema = z.object({
+  role: z.string().min(1, 'يرجى اختيار نوع الحساب'),
+});
+
+// Map backend field names to frontend step numbers
+const fieldToStep: Record<string, 1 | 2> = {
+  email: 1,
+  password: 1,
+  full_name: 1,
+  role: 2,
+};
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -36,34 +55,66 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
     role: '',
-    city: '',
-    organization: '',
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('كلمتا المرور غير متطابقتين');
+    const step2Result = step2Schema.safeParse({ role: formData.role });
+    if (!step2Result.success) {
+      const errs: Record<string, string> = {};
+      step2Result.error.errors.forEach((err) => {
+        const key = err.path[0] as string;
+        errs[key] = err.message;
+      });
+      setFieldErrors(errs);
       return;
     }
 
     setIsLoading(true);
+    setFieldErrors({});
 
     try {
       await auth.register({
         email: formData.email,
-        phone: formData.phone,
         full_name: formData.fullName,
         password: formData.password,
-        role: formData.role || 'tourist',
+        role: formData.role,
       });
       toast.success('تم إنشاء الحساب بنجاح');
       void navigate('/');
     } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setStep(1);
+          setFieldErrors({ email: 'هذا البريد مسجل بالفعل' });
+          return;
+        }
+        if (err.status === 400) {
+          const backendToFrontend: Record<string, string> = { full_name: 'fullName' };
+          const zodErrors = err.data?.errors as
+            | Array<{ path: string[]; message: string }>
+            | undefined;
+          if (zodErrors && zodErrors.length > 0) {
+            const errs: Record<string, string> = {};
+            let earliestStep: 1 | 2 = 2;
+            zodErrors.forEach((ve) => {
+              const backendField = ve.path[0] ?? '';
+              const field = backendToFrontend[backendField] ?? backendField;
+              errs[field] = ve.message;
+              const s = fieldToStep[backendField] ?? 2;
+              if (s < earliestStep) earliestStep = s;
+            });
+            setFieldErrors(errs);
+            setStep(earliestStep);
+            return;
+          }
+        }
+      }
       toast.error(err instanceof Error ? err.message : 'فشل إنشاء الحساب');
     } finally {
       setIsLoading(false);
@@ -71,21 +122,18 @@ const RegisterPage = () => {
   };
 
   const nextStep = () => {
-    if (step === 1) {
-      if (!formData.fullName || !formData.email || !formData.phone || !formData.password) {
-        toast.error('يرجى ملء جميع الحقول المطلوبة');
-        return;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        toast.error('كلمتا المرور غير متطابقتين');
-        return;
-      }
-    }
-    if (step === 2 && !formData.role) {
-      toast.error('يرجى اختيار نوع الحساب');
+    const result = step1Schema.safeParse(formData);
+    if (!result.success) {
+      const errs: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        const key = err.path[0] as string;
+        if (!errs[key]) errs[key] = err.message;
+      });
+      setFieldErrors(errs);
       return;
     }
-    setStep(step + 1);
+    setFieldErrors({});
+    setStep(2);
   };
 
   return (
@@ -97,7 +145,7 @@ const RegisterPage = () => {
             {/* Progress */}
             <SR>
               <div className="flex items-center justify-center gap-4 mb-10">
-                {[1, 2, 3].map((s) => (
+                {[1, 2].map((s) => (
                   <div key={s} className="flex items-center gap-2">
                     <div
                       className={`h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
@@ -111,9 +159,9 @@ const RegisterPage = () => {
                       {step > s ? <Check className="h-5 w-5" /> : s}
                     </div>
                     <span className="text-sm font-semibold hidden sm:inline">
-                      {s === 1 ? 'البيانات الأساسية' : s === 2 ? 'نوع الحساب' : 'المستندات'}
+                      {s === 1 ? 'البيانات الأساسية' : 'نوع الحساب'}
                     </span>
-                    {s < 3 && <div className="h-px w-10 bg-border" />}
+                    {s < 2 && <div className="h-px w-10 bg-border" />}
                   </div>
                 ))}
               </div>
@@ -124,11 +172,7 @@ const RegisterPage = () => {
                 <CardHeader className="text-center pb-2">
                   <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
                   <p className="text-muted-foreground">
-                    {step === 1
-                      ? 'أدخل بياناتك الأساسية'
-                      : step === 2
-                        ? 'اختر نوع حسابك'
-                        : 'ارفع المستندات المطلوبة'}
+                    {step === 1 ? 'أدخل بياناتك الأساسية' : 'اختر نوع حسابك'}
                   </p>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -144,13 +188,17 @@ const RegisterPage = () => {
                               id="fullName"
                               placeholder="أدخل اسمك الكامل"
                               value={formData.fullName}
-                              onChange={(e) =>
-                                setFormData({ ...formData, fullName: e.target.value })
-                              }
+                              onChange={(e) => {
+                                setFormData({ ...formData, fullName: e.target.value });
+                                if (fieldErrors.fullName)
+                                  setFieldErrors({ ...fieldErrors, fullName: '' });
+                              }}
                               className="pr-10"
-                              required
                             />
                           </div>
+                          {fieldErrors.fullName && (
+                            <p className="text-xs text-red-500">{fieldErrors.fullName}</p>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -162,27 +210,17 @@ const RegisterPage = () => {
                               type="email"
                               placeholder="example@email.com"
                               value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              onChange={(e) => {
+                                setFormData({ ...formData, email: e.target.value });
+                                if (fieldErrors.email)
+                                  setFieldErrors({ ...fieldErrors, email: '' });
+                              }}
                               className="pr-10"
-                              required
                             />
                           </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">رقم الهاتف *</Label>
-                          <div className="relative">
-                            <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="phone"
-                              type="tel"
-                              placeholder="01xxxxxxxxx"
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              className="pr-10"
-                              required
-                            />
-                          </div>
+                          {fieldErrors.email && (
+                            <p className="text-xs text-red-500">{fieldErrors.email}</p>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,13 +233,17 @@ const RegisterPage = () => {
                                 type="password"
                                 placeholder="••••••••"
                                 value={formData.password}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, password: e.target.value })
-                                }
+                                onChange={(e) => {
+                                  setFormData({ ...formData, password: e.target.value });
+                                  if (fieldErrors.password)
+                                    setFieldErrors({ ...fieldErrors, password: '' });
+                                }}
                                 className="pr-10"
-                                required
                               />
                             </div>
+                            {fieldErrors.password && (
+                              <p className="text-xs text-red-500">{fieldErrors.password}</p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="confirmPassword">تأكيد كلمة المرور *</Label>
@@ -212,13 +254,17 @@ const RegisterPage = () => {
                                 type="password"
                                 placeholder="••••••••"
                                 value={formData.confirmPassword}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, confirmPassword: e.target.value })
-                                }
+                                onChange={(e) => {
+                                  setFormData({ ...formData, confirmPassword: e.target.value });
+                                  if (fieldErrors.confirmPassword)
+                                    setFieldErrors({ ...fieldErrors, confirmPassword: '' });
+                                }}
                                 className="pr-10"
-                                required
                               />
                             </div>
+                            {fieldErrors.confirmPassword && (
+                              <p className="text-xs text-red-500">{fieldErrors.confirmPassword}</p>
+                            )}
                           </div>
                         </div>
 
@@ -234,7 +280,7 @@ const RegisterPage = () => {
                       </div>
                     )}
 
-                    {/* Step 2: Role Selection */}
+                    {/* Step 2: Role + Confirm */}
                     {step === 2 && (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -246,7 +292,10 @@ const RegisterPage = () => {
                                   ? 'border-primary bg-primary/5 shadow-md'
                                   : 'border-border hover:border-primary/50 hover:shadow-sm'
                               }`}
-                              onClick={() => setFormData({ ...formData, role: role.value })}
+                              onClick={() => {
+                                setFormData({ ...formData, role: role.value });
+                                if (fieldErrors.role) setFieldErrors({ ...fieldErrors, role: '' });
+                              }}
                             >
                               <p className="font-medium text-foreground">{role.label}</p>
                               <p className="text-xs text-muted-foreground mt-1">
@@ -255,63 +304,10 @@ const RegisterPage = () => {
                             </div>
                           ))}
                         </div>
+                        {fieldErrors.role && (
+                          <p className="text-xs text-red-500">{fieldErrors.role}</p>
+                        )}
 
-                        <div className="space-y-2">
-                          <Label htmlFor="city">المدينة</Label>
-                          <Select
-                            value={formData.city}
-                            onValueChange={(value) => setFormData({ ...formData, city: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="اختر المدينة" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="kharga">الخارجة</SelectItem>
-                              <SelectItem value="dakhla">الداخلة</SelectItem>
-                              <SelectItem value="farafra">الفرافرة</SelectItem>
-                              <SelectItem value="paris">باريس</SelectItem>
-                              <SelectItem value="balat">بلاط</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="organization">اسم المؤسسة (اختياري)</Label>
-                          <div className="relative">
-                            <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="organization"
-                              placeholder="اسم الشركة أو المؤسسة"
-                              value={formData.organization}
-                              onChange={(e) =>
-                                setFormData({ ...formData, organization: e.target.value })
-                              }
-                              className="pr-10"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => setStep(1)}
-                          >
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                            السابق
-                          </Button>
-                          <Button type="button" className="flex-1" onClick={nextStep}>
-                            التالي
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 3: Review & Submit */}
-                    {step === 3 && (
-                      <div className="space-y-4">
                         {/* Summary */}
                         <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                           <h4 className="font-semibold mb-3">ملخص البيانات</h4>
@@ -324,12 +320,10 @@ const RegisterPage = () => {
                             <span dir="ltr">{formData.email}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">الهاتف</span>
-                            <span dir="ltr">{formData.phone}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">نوع الحساب</span>
-                            <span>{roles.find((r) => r.value === formData.role)?.label}</span>
+                            <span>
+                              {roles.find((r) => r.value === formData.role)?.label ?? '—'}
+                            </span>
                           </div>
                         </div>
 
@@ -338,7 +332,7 @@ const RegisterPage = () => {
                             type="button"
                             variant="outline"
                             className="flex-1"
-                            onClick={() => setStep(2)}
+                            onClick={() => setStep(1)}
                           >
                             <ArrowRight className="h-4 w-4 ml-2" />
                             السابق

@@ -1,31 +1,53 @@
-import { Layout } from '@/components/layout/Layout';
-import { RoleCrudBoard } from '@/components/roles/RoleCrudBoard';
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, CalendarCheck, Home, BookOpen } from 'lucide-react';
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { EmptyState } from '@/components/dashboard/EmptyState';
+import { BookingsCard } from '@/components/dashboard/BookingsCard';
+import { useMyBookings } from '@/hooks/use-my-bookings';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function StudentDashboard() {
-  return (
-    <Layout>
-      <div className="container py-8 px-4 space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <GraduationCap className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">لوحة الطالب</h1>
-            <p className="text-muted-foreground">إدارة طلبات السكن والدعم الأكاديمي بشكل تجريبي</p>
-          </div>
-        </div>
+  const { data, isLoading, error } = useMyBookings();
+  const bookings = data?.data ?? [];
 
-        <RoleCrudBoard
-          title="CRUD الطلبات الطلابية"
-          description="إدارة الطلبات ومراحل تنفيذها"
-          entityLabel="الطلب"
-          initialItems={[
-            { id: 's-1', name: 'طلب سكن قريب من الجامعة', status: 'pending', notes: 'لفصل الربيع' },
-            { id: 's-2', name: 'طلب مواصلات يومية', status: 'active', notes: 'الخط الداخلي' },
-          ]}
+  const stats = {
+    bookings: bookings.length,
+    upcoming: bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending').length,
+  };
+
+  return (
+    <DashboardShell
+      icon={GraduationCap}
+      title="لوحة الطالب"
+      subtitle="متابعة السكن والحجوزات والخدمات الطلابية"
+    >
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard label="حجوزاتي" value={isLoading ? '...' : stats.bookings} icon={CalendarCheck} />
+        <StatCard
+          label="قادمة"
+          value={isLoading ? '...' : stats.upcoming}
+          icon={BookOpen}
+          variant="warning"
         />
+        <StatCard label="السكن" value="تصفح" icon={Home} variant="muted" />
       </div>
-    </Layout>
+
+      <BookingsCard bookings={bookings} isLoading={isLoading} error={error} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>البحث عن سكن</CardTitle>
+          <CardDescription>تصفح الإعلانات المتاحة للسكن الطلابي</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EmptyState
+            icon={Home}
+            message="ابحث عن سكن قريب من جامعتك"
+            actionLabel="تصفح الإعلانات"
+            actionHref="/marketplace"
+          />
+        </CardContent>
+      </Card>
+    </DashboardShell>
   );
 }
