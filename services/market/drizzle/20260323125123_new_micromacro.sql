@@ -1,0 +1,2 @@
+ALTER TABLE "market"."reviews" DROP CONSTRAINT "reviews_reviewer_listing_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "reviews_reviewer_listing_active_unique" ON "market"."reviews" USING btree ("reviewer_id","listing_id") WHERE "market"."reviews"."is_active" = true;

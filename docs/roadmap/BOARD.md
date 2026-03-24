@@ -48,24 +48,21 @@
 
 ## Layer 2 — Service Features
 
-- [ ] **T09** Identity: User Management · M · ← T05
-- [ ] **T10** Market: BizDir + Price Index · M · ← T06
+- [X] **T09** Identity: User Management · M · ← T05
+- [X] **T10** Market: BizDir + Price Index · M · ← T06
 - [x] **T11** Guide-Booking: Profiles + Packages · L · ← T07
-- [x] **T09** Identity: User Management · M · ← T05
-- [x] **T10** Market: BizDir + Price Index · M · ← T06
-- [ ] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [ ] **T12** RAG: Retrieval + Chat · L · ← T08
-- [ ] **T20** API Gateway (Nginx) · M · ← T05
+- [x] **T20** API Gateway (Nginx) · M · ← T05
 - [ ] **F02** Auth Flow Integration · S · ← T05, F01
-- [ ] **F03** Tourism + Guides · M · ← T07, T11, F01
-- [ ] **F04** Market · M · ← T06, T10, F01
+- [x] **F03** Tourism + Guides · M · ← T07, T11, F01
+- [x] **F04** Market · M · ← T06, T10, F01
 - [ ] **F08** AI Chatbot · S · ← T12, F01
-- [ ] **F11** Role Dashboard Wiring · S · ← F02
+- [X] **F11** Role Dashboard Wiring · S · ← F02
 
 ## Layer 3 — Advanced Features
 
-- [ ] **T13** Identity: Notifications + Admin · M · ← T09
-- [ ] **T14** Market: Listing Reviews · M · ← T10
+- [x] **T13** Identity: Notifications + Admin · M · ← T09
+- [x] **T14** Market: Listing Reviews · M · ← T10
 - [x] **T15** Guide-Booking: Booking State Machine · M · ← T11
 - [ ] **T16** Chat Session Management · M · ← T12
 - [ ] **T17** Market: Investment CRUD + EOI · M · ← T10

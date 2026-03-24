@@ -16,6 +16,8 @@ import { ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { KycModule } from './kyc/kyc.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -37,6 +39,8 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     AdminModule,
+    NotificationsModule,
+    KycModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

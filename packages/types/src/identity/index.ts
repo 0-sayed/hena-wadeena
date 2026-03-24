@@ -1,5 +1,7 @@
 import type { UserRole, UserStatus } from '../enums';
 
+export * from './notifications';
+
 export interface PublicUser {
   id: string;
   email: string;

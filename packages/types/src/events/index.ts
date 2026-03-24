@@ -20,6 +20,7 @@ export const EVENTS = {
   USER_DELETED: 'user.deleted',
   USER_ROLE_CHANGED: 'user.role_changed',
   USER_ACTIVATED: 'user.activated',
+  USER_VERIFIED: 'user.verified',
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
