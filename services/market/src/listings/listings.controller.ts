@@ -6,6 +6,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -25,8 +26,8 @@ import { ListingsService } from './listings.service';
 @Controller('listings')
 export class ListingsController {
   constructor(
-    private readonly listingsService: ListingsService,
-    private readonly reviewsService: ReviewsService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(ReviewsService) private readonly reviewsService: ReviewsService,
   ) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {

@@ -6,6 +6,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -21,7 +22,7 @@ import { VerifyBusinessDto } from './dto/verify-business.dto';
 
 @Controller('businesses')
 export class BusinessDirectoryController {
-  constructor(private readonly service: BusinessDirectoryService) {}
+  constructor(@Inject(BusinessDirectoryService) private readonly service: BusinessDirectoryService) {}
 
   // Static paths MUST come before /:id
 

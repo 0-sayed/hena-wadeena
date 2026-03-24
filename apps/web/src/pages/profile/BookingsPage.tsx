@@ -3,7 +3,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Calendar, Clock, Users, CalendarCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { guidesAPI, type Booking } from '@/services/api';
+import { bookingsAPI, type Booking } from '@/services/api';
 import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
@@ -27,7 +27,7 @@ const BookingsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    guidesAPI
+    bookingsAPI
       .getMyBookings()
       .then((r) => setBookings(r.data))
       .catch(console.error)

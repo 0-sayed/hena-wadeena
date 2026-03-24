@@ -1,16 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
-import {
-  Search,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  MapPin,
-  Star,
-  Phone,
-  BarChart3,
-} from 'lucide-react';
+import { Search, MapPin, Phone, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,37 +14,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { marketAPI, type PriceItem, type Supplier } from '@/services/api';
 import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroMarketplace from '@/assets/hero-marketplace.jpg';
-
-const cities = [
-  { id: 'kharga', name: 'الخارجة' },
-  { id: 'dakhla', name: 'الداخلة' },
-  { id: 'farafra', name: 'الفرافرة' },
-  { id: 'paris', name: 'باريس' },
-];
+import { TrendBadge } from '@/components/market/TrendBadge';
+import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
+import { useBusinesses } from '@/hooks/use-businesses';
+import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from '@/lib/format';
 
 const MarketplacePage = () => {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState('kharga');
   const [searchQuery, setSearchQuery] = useState('');
-  const [priceData, setPriceData] = useState<PriceItem[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    void Promise.all([
-      marketAPI.getPrices().then((r) => setPriceData(r.data)),
-      marketAPI.getSuppliers().then((r) => setSuppliers(r.data)),
-    ]).finally(() => setLoading(false));
-  }, []);
+  const { data: pricesData, isLoading: pricesLoading } = usePriceIndex({
+    region: selectedCity,
+  });
+  const { data: suppliersData, isLoading: suppliersLoading } = useBusinesses();
+  const { data: summary } = usePriceSummary();
 
-  const filteredProducts = priceData.filter(
-    (p) => p.name.includes(searchQuery) || p.category.includes(searchQuery),
+  const priceEntries = pricesData?.data ?? [];
+  const businesses = suppliersData?.data ?? [];
+
+  const filteredProducts = priceEntries.filter(
+    (e) =>
+      e.commodity.nameAr.includes(searchQuery) ||
+      categoryLabel(e.commodity.category).includes(searchQuery),
   );
 
   return (
@@ -103,7 +91,7 @@ const MarketplacePage = () => {
                         <SelectValue placeholder="اختر المدينة" />
                       </SelectTrigger>
                       <SelectContent>
-                        {cities.map((city) => (
+                        {DISTRICTS.map((city) => (
                           <SelectItem key={city.id} value={city.id}>
                             {city.name}
                           </SelectItem>
@@ -127,15 +115,17 @@ const MarketplacePage = () => {
                     <div className="bg-primary/5 px-6 py-5 border-b border-border">
                       <div className="flex items-center justify-between">
                         <h3 className="font-bold text-foreground text-lg">
-                          أسعار {cities.find((c) => c.id === selectedCity)?.name}
+                          أسعار {DISTRICTS.find((c) => c.id === selectedCity)?.name}
                         </h3>
                         <span className="text-sm text-muted-foreground">
-                          آخر تحديث: اليوم 10:30 ص
+                          {summary?.lastUpdated
+                            ? `آخر تحديث للبورصة: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                            : 'آخر تحديث: غير متاح'}
                         </span>
                       </div>
                     </div>
                     <CardContent className="p-0">
-                      {loading ? (
+                      {pricesLoading ? (
                         <div className="p-6 space-y-4">
                           {[1, 2, 3, 4, 5].map((i) => (
                             <Skeleton key={i} h="h-12" />
@@ -161,40 +151,31 @@ const MarketplacePage = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {filteredProducts.map((item, index) => (
+                              {filteredProducts.map((entry, index) => (
                                 <tr
-                                  key={item.name}
+                                  key={entry.commodity.id}
                                   className={`hover:bg-muted/20 transition-colors duration-200 ${index !== filteredProducts.length - 1 ? 'border-b border-border/50' : ''}`}
                                 >
                                   <td className="py-5 px-6">
                                     <span className="font-semibold text-foreground">
-                                      {item.name}
+                                      {entry.commodity.nameAr}
                                     </span>
                                   </td>
                                   <td className="py-5 px-6">
-                                    <Badge variant="outline">{item.category}</Badge>
+                                    <Badge variant="outline">
+                                      {categoryLabel(entry.commodity.category)}
+                                    </Badge>
                                   </td>
                                   <td className="py-5 px-6">
                                     <span className="font-bold text-lg text-foreground">
-                                      {item.price}
+                                      {formatPrice(entry.latestPrice)}
                                     </span>
                                     <span className="text-sm text-muted-foreground mr-1">
-                                      جنيه/{item.unit}
+                                      جنيه/{unitLabel(entry.commodity.unit)}
                                     </span>
                                   </td>
                                   <td className="py-5 px-6">
-                                    <div
-                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${item.change > 0 ? 'bg-primary/10 text-primary' : item.change < 0 ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'}`}
-                                    >
-                                      {item.change > 0 ? (
-                                        <TrendingUp className="h-4 w-4" />
-                                      ) : item.change < 0 ? (
-                                        <TrendingDown className="h-4 w-4" />
-                                      ) : (
-                                        <Minus className="h-4 w-4" />
-                                      )}
-                                      {Math.abs(item.change)}%
-                                    </div>
+                                    <TrendBadge changePercent={entry.changePercent} />
                                   </td>
                                 </tr>
                               ))}
@@ -216,7 +197,7 @@ const MarketplacePage = () => {
                   </div>
                 </SR>
 
-                {loading ? (
+                {suppliersLoading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[1, 2, 3, 4].map((i) => (
                       <Skeleton key={i} h="h-56" className="rounded-2xl" />
@@ -225,9 +206,9 @@ const MarketplacePage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-                      {suppliers.map((supplier) => (
+                      {businesses.map((biz) => (
                         <Card
-                          key={supplier.id}
+                          key={biz.id}
                           className="border-border/50 hover:border-primary/40 hover-lift rounded-2xl"
                         >
                           <CardContent className="p-7">
@@ -235,29 +216,22 @@ const MarketplacePage = () => {
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
                                   <h3 className="text-lg font-bold text-foreground">
-                                    {supplier.name}
+                                    {biz.nameAr}
                                   </h3>
-                                  {supplier.verified && (
+                                  {biz.verificationStatus === 'verified' && (
                                     <Badge className="bg-primary/10 text-primary">موثق</Badge>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                   <MapPin className="h-4 w-4" />
-                                  {supplier.city}
+                                  {districtLabel(biz.district ?? '')}
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-accent">
-                                <Star className="h-5 w-5 fill-current" />
-                                <span className="font-bold text-base">{supplier.rating}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  ({supplier.reviews})
-                                </span>
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-1.5 mb-5">
-                              {supplier.specialties.map((specialty) => (
-                                <Badge key={specialty} variant="secondary">
-                                  {specialty}
+                              {biz.commodities.map((c) => (
+                                <Badge key={c.id} variant="secondary">
+                                  {c.nameAr}
                                 </Badge>
                               ))}
                             </div>
@@ -265,14 +239,14 @@ const MarketplacePage = () => {
                               <Button
                                 variant="outline"
                                 className="flex-1 hover:scale-[1.02] transition-transform"
-                                onClick={() => void navigate(`/marketplace/supplier/${supplier.id}`)}
+                                onClick={() => void navigate(`/marketplace/supplier/${biz.id}`)}
                               >
                                 عرض الملف
                               </Button>
                               <Button
                                 className="flex-1 hover:scale-[1.02] transition-transform"
                                 onClick={() =>
-                                  alert(`للتواصل مع ${supplier.name}: اتصل أو أرسل واتساب`)
+                                  alert(`للتواصل مع ${biz.nameAr}: اتصل أو أرسل واتساب`)
                                 }
                               >
                                 <Phone className="h-4 w-4 ml-2" />

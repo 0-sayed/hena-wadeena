@@ -1,9 +1,7 @@
 FROM nginx:1.27-alpine
 
-# Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
-
-COPY nginx.conf /etc/nginx/conf.d/hena-wadeena.conf
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 # Health check
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 \

@@ -1,6 +1,6 @@
 import { Roles } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -16,7 +16,7 @@ class AdminPackageFiltersDto extends createZodDto(adminPackageFiltersSchema) {}
 @Roles(UserRole.ADMIN)
 @Controller('admin/packages')
 export class AdminPackagesController {
-  constructor(private readonly tourPackagesService: TourPackagesService) {}
+  constructor(@Inject(TourPackagesService) private readonly tourPackagesService: TourPackagesService) {}
 
   @Get()
   adminFindAll(@Query() filters: PackageFiltersDto, @Query() adminFilters: AdminPackageFiltersDto) {
