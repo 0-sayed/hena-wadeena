@@ -7,5 +7,6 @@ export function useListings(params?: { category?: string; district?: string; lim
     // Use existing queryKeys.market.listings() — no new namespace needed.
     queryKey: queryKeys.market.listings(params),
     queryFn: () => listingsAPI.getAll(params),
+    staleTime: 2 * 60 * 1000,
   });
 }
