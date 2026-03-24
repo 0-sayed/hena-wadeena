@@ -44,10 +44,10 @@ const GuideBookingPage = () => {
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Tomorrow as min date
+  // Tomorrow as min date (in Cairo timezone to match the booking flow)
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toLocaleDateString('en-CA');
+  const minDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
 
   const totalPrice = pkg ? pkg.price * peopleCount : 0;
 
