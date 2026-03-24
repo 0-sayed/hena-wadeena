@@ -3,6 +3,9 @@ import { Controller, Get, Inject, Param, ParseUUIDPipe, Query } from '@nestjs/co
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
+import { QueryReviewsDto } from '../reviews/dto';
+import { ReviewsService } from '../reviews/reviews.service';
+
 import { GuideFiltersDto } from './dto';
 import { GuidesService } from './guides.service';
 
@@ -15,7 +18,10 @@ class PaginationDto extends createZodDto(paginationSchema) {}
 
 @Controller('guides')
 export class GuidesController {
-  constructor(@Inject(GuidesService) private readonly guidesService: GuidesService) {}
+  constructor(
+    @Inject(GuidesService) private readonly guidesService: GuidesService,
+    private readonly reviewsService: ReviewsService,
+  ) {}
 
   @Public()
   @Get()
@@ -33,5 +39,11 @@ export class GuidesController {
   @Get(':id/packages')
   findGuidePackages(@Param('id', ParseUUIDPipe) id: string, @Query() query: PaginationDto) {
     return this.guidesService.findGuidePackages(id, query.page, query.limit);
+  }
+
+  @Public()
+  @Get(':id/reviews')
+  findGuideReviews(@Param('id', ParseUUIDPipe) id: string, @Query() query: QueryReviewsDto) {
+    return this.reviewsService.findByGuide(id, query);
   }
 }
