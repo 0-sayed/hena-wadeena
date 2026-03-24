@@ -40,7 +40,10 @@ export function usePaginatedQuery<
   const limit = options.limit ?? 20;
 
   const query = useInfiniteQuery({
-    queryKey: options.queryKey,
+    queryKey: [
+      ...(Array.isArray(options.queryKey) ? options.queryKey : [options.queryKey]),
+      { _limit: limit },
+    ],
     queryFn: ({ pageParam }) =>
       options.queryFn({
         ...options.filters,
