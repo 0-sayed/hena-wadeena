@@ -2,7 +2,7 @@ import { EventName } from '@hena-wadeena/types';
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 
-import { REDIS_CLIENT } from './redis.module';
+import { REDIS_STREAMS_CLIENT } from './redis.module';
 
 export interface StreamMessage<T = Record<string, unknown>> {
   stream: string;
@@ -22,7 +22,7 @@ export class RedisStreamsService implements OnModuleDestroy {
   private readonly retryCount = new Map<string, number>();
   private readonly maxRetries = 3;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(@Inject(REDIS_STREAMS_CLIENT) private readonly redis: Redis) {}
 
   /** Publish an event to a Redis Stream */
   async publish(eventName: EventName, payload: Record<string, string>): Promise<string> {

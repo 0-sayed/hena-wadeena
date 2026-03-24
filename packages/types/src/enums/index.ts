@@ -154,6 +154,14 @@ export enum NotificationType {
   SYSTEM = 'system',
 }
 
+export enum KycDocType {
+  NATIONAL_ID = 'national_id',
+  STUDENT_ID = 'student_id',
+  GUIDE_LICENSE = 'guide_license',
+  COMMERCIAL_REGISTER = 'commercial_register',
+  BUSINESS_DOCUMENT = 'business_document',
+}
+
 export enum SavedItemType {
   LISTING = 'listing',
   GUIDE = 'guide',

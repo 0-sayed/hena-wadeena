@@ -14,6 +14,7 @@ interface MockDbChain {
   update: Mock;
   set: Mock;
   orderBy: Mock;
+  transaction: Mock;
 }
 
 /** Chain-style mock for Drizzle query builder. Shared across unit tests. */
@@ -31,7 +32,11 @@ export function createMockDb(): MockDbChain {
     update: vi.fn(),
     set: vi.fn(),
     orderBy: vi.fn(),
+    transaction: vi.fn(),
   };
+  chain.transaction.mockImplementation(async (cb: (tx: MockDbChain) => Promise<unknown>) =>
+    cb(chain),
+  );
   chain.select.mockReturnValue(chain);
   chain.from.mockReturnValue(chain);
   chain.where.mockReturnValue(chain);
