@@ -67,7 +67,7 @@
 - [ ] **T16** Chat Session Management · M · ← T12
 - [ ] **T17** Market: Investment CRUD + EOI · M · ← T10
 - [ ] **F06** Guide Booking Flow · S · ← T15, F02, F03
-- [ ] **F07** Notifications + Wallet · S · ← T13, F02
+- [x] **F07** Notifications + Wallet · S · ← T13, F02
 - [ ] **F13** Pagination + Performance · S · ← F01, F03
 
 ## Layer 4 — Secondary Services + Reviews
