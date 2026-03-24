@@ -25,16 +25,12 @@ import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 const TourismPage = () => {
   const navigate = useNavigate();
 
-  const { data: featuredData, isLoading: loadingFeatured } = useAttractions({
-    featured: true,
-    limit: 6,
-  });
-  const { data: allData, isLoading: loadingAll } = useAttractions({ limit: 8 });
-  const { data: guidesData, isLoading: loadingGuides } = useGuides({ limit: 6 });
-
-  const featuredAttractions = featuredData?.pages.flatMap((p) => p.data) ?? [];
-  const allAttractions = allData?.pages.flatMap((p) => p.data) ?? [];
-  const guides = guidesData?.pages.flatMap((p) => p.data) ?? [];
+  const { data: featuredAttractions, isLoading: loadingFeatured } = useAttractions(
+    { featured: true },
+    6,
+  );
+  const { data: allAttractions, isLoading: loadingAll } = useAttractions(undefined, 8);
+  const { data: guides, isLoading: loadingGuides } = useGuides(undefined, 6);
   const loading = loadingFeatured || loadingAll || loadingGuides;
 
   return (

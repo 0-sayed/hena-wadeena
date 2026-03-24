@@ -25,12 +25,17 @@ import { areaLabels, piastresToEgp, formatRating } from '@/lib/format';
 import type { PackageFilters } from '@/services/api';
 
 const PackagesPage = () => {
-  const [filters, setFilters] = useState<Omit<PackageFilters, 'page'>>({ limit: 12 });
+  const [filters, setFilters] = useState<Omit<PackageFilters, 'page' | 'limit'>>({});
 
-  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
-    usePackages(filters);
-
-  const packages = data?.pages.flatMap((p) => p.data);
+  const {
+    data: packages,
+    isLoading,
+    isError,
+    refetch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = usePackages(filters, 12);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -116,7 +121,7 @@ const PackagesPage = () => {
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-                    {packages?.map((pkg) => (
+                    {packages.map((pkg) => (
                       <Card
                         key={pkg.id}
                         className="hover-lift overflow-hidden rounded-2xl border-border/50 hover:border-primary/40"
@@ -196,7 +201,7 @@ const PackagesPage = () => {
                   </div>
                 </SR>
 
-                {packages?.length === 0 && (
+                {packages.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground text-lg">لا توجد باقات متاحة</p>
                   </div>

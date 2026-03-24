@@ -32,12 +32,17 @@ import type { GuideFilters } from '@/services/api';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 
 const GuidesPage = () => {
-  const [filters, setFilters] = useState<Omit<GuideFilters, 'page'>>({ limit: 12 });
+  const [filters, setFilters] = useState<Omit<GuideFilters, 'page' | 'limit'>>({});
 
-  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
-    useGuides(filters);
-
-  const guides = data?.pages.flatMap((p) => p.data);
+  const {
+    data: guides,
+    isLoading,
+    isError,
+    refetch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useGuides(filters, 12);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -158,7 +163,7 @@ const GuidesPage = () => {
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-                    {guides?.map((guide) => (
+                    {guides.map((guide) => (
                       <Link
                         key={guide.id}
                         to={`/guides/${guide.id}`}
@@ -227,7 +232,7 @@ const GuidesPage = () => {
                   </div>
                 </SR>
 
-                {guides?.length === 0 && (
+                {guides.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground text-lg">لا يوجد مرشدون متاحون</p>
                   </div>

@@ -36,11 +36,10 @@ const PricesPage = () => {
   const { data: indexData, isLoading } = usePriceIndex({
     category: selectedCategory,
     region: regionFilter,
-    limit: 100,
   });
   const { data: summary, isLoading: isSummaryLoading } = usePriceSummary();
 
-  const entries = indexData?.data ?? [];
+  const entries = indexData;
   const topMovers = summary?.topMovers ?? [];
   const gainers = topMovers.filter((m) => m.direction === 'up');
   const losers = topMovers.filter((m) => m.direction === 'down');
