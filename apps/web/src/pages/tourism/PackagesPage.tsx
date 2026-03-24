@@ -23,9 +23,12 @@ import { usePackages } from '@/hooks/use-packages';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { areaLabels, piastresToEgp, formatRating } from '@/lib/format';
 import type { PackageFilters } from '@/services/api';
+import { useCanBook } from '@/hooks/use-bookings';
 
 const PackagesPage = () => {
   const [filters, setFilters] = useState<Omit<PackageFilters, 'page'>>({ limit: 12 });
+
+  const canBook = useCanBook();
 
   const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
     usePackages(filters);
@@ -187,8 +190,15 @@ const PackagesPage = () => {
                           <div className="flex justify-between items-center pt-2 border-t border-border/50">
                             <span className="text-xl font-bold text-primary">
                               {piastresToEgp(pkg.price)}
+                              <span className="text-xs font-normal text-muted-foreground mr-1">
+                                / فرد
+                              </span>
                             </span>
-                            <span className="text-xs text-muted-foreground">/ فرد</span>
+                            {canBook && (
+                              <Link to={`/tourism/book-package/${pkg.id}`}>
+                                <Button size="sm">احجز الآن</Button>
+                              </Link>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
