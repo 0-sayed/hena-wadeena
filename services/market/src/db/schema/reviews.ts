@@ -1,6 +1,15 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { marketSchema } from '../schema';
 
@@ -26,7 +35,9 @@ export const reviews = marketSchema.table(
   },
   (t) => [
     check('rating_range', sql`${t.rating} >= 1 AND ${t.rating} <= 5`),
-    unique('reviews_reviewer_listing_unique').on(t.reviewerId, t.listingId),
+    uniqueIndex('reviews_reviewer_listing_active_unique')
+      .on(t.reviewerId, t.listingId)
+      .where(sql`${t.isActive} = true`),
     index('idx_reviews_listing_id').on(t.listingId),
     index('idx_reviews_reviewer_id').on(t.reviewerId),
     index('idx_reviews_created_at').on(t.createdAt.desc()),

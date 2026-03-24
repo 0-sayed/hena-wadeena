@@ -62,7 +62,7 @@
 ## Layer 3 — Advanced Features
 
 - [x] **T13** Identity: Notifications + Admin · M · ← T09
-- [ ] **T14** Market: Listing Reviews · M · ← T10
+- [x] **T14** Market: Listing Reviews · M · ← T10
 - [ ] **T15** Guide-Booking: Booking State Machine · M · ← T11
 - [ ] **T16** Chat Session Management · M · ← T12
 - [ ] **T17** Market: Investment CRUD + EOI · M · ← T10
