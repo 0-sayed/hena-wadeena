@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,10 +13,33 @@ export function LoadMoreButton({
   isFetchingNextPage,
   fetchNextPage,
 }: LoadMoreButtonProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isFetchingRef = useRef(isFetchingNextPage);
+  const fetchNextPageRef = useRef(fetchNextPage);
+  isFetchingRef.current = isFetchingNextPage;
+  fetchNextPageRef.current = fetchNextPage;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && !isFetchingRef.current) {
+          void fetchNextPageRef.current();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage]);
+
   if (!hasNextPage) return null;
 
   return (
-    <div className="flex justify-center mt-10">
+    <div ref={containerRef} className="flex justify-center mt-10">
       <Button
         variant="outline"
         size="lg"
