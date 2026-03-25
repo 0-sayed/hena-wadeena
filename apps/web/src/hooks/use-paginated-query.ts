@@ -41,7 +41,7 @@ export function usePaginatedQuery<
 
   const query = useInfiniteQuery({
     queryKey: [
-      ...(Array.isArray(options.queryKey) ? options.queryKey : [options.queryKey]),
+      ...((Array.isArray(options.queryKey) ? options.queryKey : [options.queryKey]) as unknown[]),
       { _limit: limit },
     ],
     queryFn: ({ pageParam }) =>
