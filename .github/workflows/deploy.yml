@@ -112,7 +112,10 @@ jobs:
             pid_guide_booking=$!
             docker compose run --rm -w /app/services/map map node dist/db/migrate.js &
             pid_map=$!
-            wait "$pid_identity" "$pid_market" "$pid_guide_booking" "$pid_map"
+            wait "$pid_identity"
+            wait "$pid_market"
+            wait "$pid_guide_booking"
+            wait "$pid_map"
 
             echo "==> Restarting services"
             docker compose up -d --wait --timeout 120
