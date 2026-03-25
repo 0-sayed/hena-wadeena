@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
 import {
   Bell,
@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/hooks/use-auth';
 import { formatRelativeTime } from '@/lib/dates';
+import { toast } from 'sonner';
 import { NotificationType } from '@hena-wadeena/types';
 import type { Notification } from '@hena-wadeena/types';
 
@@ -77,6 +78,7 @@ const NotificationsPage = () => {
     queryKey: queryKeys.notifications.list({ page, limit: PAGE_SIZE }),
     queryFn: () => notificationsAPI.getAll(page, PAGE_SIZE),
     enabled: isAuthenticated,
+    placeholderData: keepPreviousData,
   });
 
   // unreadCount comes from the list response envelope — no separate polling query needed.
@@ -95,11 +97,13 @@ const NotificationsPage = () => {
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationsAPI.markRead(id),
     onSuccess: invalidateAll,
+    onError: () => toast.error('تعذر تحديث الإشعار'),
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: () => notificationsAPI.markAllRead(),
     onSuccess: invalidateAll,
+    onError: () => toast.error('تعذر تحديث الإشعارات'),
   });
 
   const handleMarkRead = (n: Notification) => {
