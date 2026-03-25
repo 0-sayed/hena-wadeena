@@ -9,7 +9,7 @@ export default function TouristDashboard() {
   const bookings = data?.data ?? [];
 
   const stats = {
-    total: bookings.length,
+    total: data?.total ?? bookings.length,
     upcoming: bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending').length,
     completed: bookings.filter((b) => b.status === 'completed').length,
   };

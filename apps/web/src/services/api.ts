@@ -700,24 +700,30 @@ export const packagesAPI = {
   getById: (id: string) => apiFetch<TourPackageDetail>(`/packages/${id}`),
 };
 
-// ── Legacy: Bookings + Reviews (mock — no backend yet, used by BookingsPage) ──
-// TODO(T15): Replace with real booking endpoints when backend is ready
-// TODO(T18): Replace with real review endpoints when backend is ready
+// ── Bookings ───────────────────────────────────────────────────────────────
 
 export interface Booking {
   id: string;
-  package_id: number;
-  guide_id: number;
-  guide_name: string;
-  tourist_id: string;
-  package_title: string;
-  booking_date: string;
-  start_time: string;
-  people_count: number;
-  total_price: number;
-  status: string;
-  created_at: string;
+  packageId: string;
+  guideId: string;
+  touristId: string;
+  bookingDate: string; // YYYY-MM-DD
+  startTime: string; // HH:MM:SS from Postgres
+  peopleCount: number;
+  totalPrice: number; // integer piasters
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  notes: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Present in list responses (joined from tour_packages)
+  packageTitleAr?: string | null;
+  packageTitleEn?: string | null;
 }
+
+// ── Reviews ────────────────────────────────────────────────────────────────
+// TODO(T18): Replace with real review endpoints when backend is ready
 
 export interface Review {
   id: string;
@@ -731,19 +737,35 @@ export interface Review {
 }
 
 export const bookingsAPI = {
-  getMyBookings: () => apiFetch<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
+  getMyBookings: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Booking>>(`/bookings/mine${toQueryString(params)}`),
+
   createBooking: (body: {
-    package_id: number;
-    guide_id: number;
-    booking_date: string;
-    start_time?: string;
-    people_count?: number;
+    packageId: string;
+    bookingDate: string;
+    startTime: string;
+    peopleCount: number;
     notes?: string;
   }) =>
-    apiFetchWithRefresh<{ success: boolean; message: string; data: Booking }>('/guides/bookings', {
+    apiFetchWithRefresh<Booking>('/bookings', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  confirmBooking: (id: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/confirm`, { method: 'PATCH' }),
+
+  startBooking: (id: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/start`, { method: 'PATCH' }),
+
+  cancelBooking: (id: string, cancelReason: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/cancel`, {
+      method: 'PATCH',
+      body: JSON.stringify({ cancelReason }),
+    }),
+
+  completeBooking: (id: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/complete`, { method: 'PATCH' }),
 };
 
 export const reviewsAPI = {

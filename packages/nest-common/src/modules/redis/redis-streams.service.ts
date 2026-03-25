@@ -2,7 +2,7 @@ import { EventName } from '@hena-wadeena/types';
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 
-import { REDIS_STREAMS_CLIENT } from './redis.module';
+import { REDIS_STREAMS_CLIENT } from './redis.tokens';
 
 export interface StreamMessage<T = Record<string, unknown>> {
   stream: string;
