@@ -27,12 +27,17 @@ import type { AttractionFilters } from '@/services/api';
 
 const AttractionsPage = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<Omit<AttractionFilters, 'page'>>({ limit: 12 });
+  const [filters, setFilters] = useState<Omit<AttractionFilters, 'page' | 'limit'>>({});
 
-  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
-    useAttractions(filters);
-
-  const attractions = data?.pages.flatMap((p) => p.data);
+  const {
+    data: attractions,
+    isLoading,
+    isError,
+    refetch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useAttractions(filters, 12);
 
   const handleTypeChange = (value: string) => {
     setFilters((prev) => ({
@@ -140,11 +145,11 @@ const AttractionsPage = () => {
           ) : (
             <>
               <div className="flex items-center justify-between mb-6">
-                <p className="text-muted-foreground">عرض {attractions?.length ?? 0} معلم سياحي</p>
+                <p className="text-muted-foreground">عرض {attractions.length} معلم سياحي</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {attractions?.map((attraction) => (
+                {attractions.map((attraction) => (
                   <Card
                     key={attraction.id}
                     className="group overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer"
@@ -193,7 +198,7 @@ const AttractionsPage = () => {
                 ))}
               </div>
 
-              {attractions?.length === 0 && (
+              {attractions.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground text-lg">
                     لم يتم العثور على نتائج مطابقة لبحثك

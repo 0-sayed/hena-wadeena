@@ -1,13 +1,15 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { guidesAPI, type GuideFilters } from '@/services/api';
+import { usePaginatedQuery } from './use-paginated-query';
 
-export function useGuides(filters?: Omit<GuideFilters, 'page'>) {
-  return useInfiniteQuery({
+export function useGuides(filters?: Omit<GuideFilters, 'page' | 'limit'>, limit?: number) {
+  return usePaginatedQuery({
     queryKey: queryKeys.guides.all(filters),
-    queryFn: ({ pageParam }) => guidesAPI.getAll({ ...filters, page: pageParam }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    queryFn: (params) => guidesAPI.getAll(params),
+    filters,
+    limit,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -20,11 +22,10 @@ export function useGuide(id: string) {
 }
 
 export function useGuidePackages(guideId: string) {
-  return useInfiniteQuery({
+  return usePaginatedQuery({
     queryKey: queryKeys.guides.packages(guideId),
-    queryFn: ({ pageParam }) => guidesAPI.getPackages(guideId, { page: pageParam }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    queryFn: (params) => guidesAPI.getPackages(guideId, params),
+    staleTime: 5 * 60 * 1000,
     enabled: !!guideId,
   });
 }
