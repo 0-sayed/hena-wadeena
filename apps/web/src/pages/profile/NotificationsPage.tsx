@@ -1,50 +1,113 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
-import { Bell, CheckCheck } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Trophy,
+  Star,
+  ShieldCheck,
+  ShieldX,
+  ChevronRight,
+  ChevronLeft,
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { notificationsAPI, type Notification } from '@/services/api';
+import { notificationsAPI } from '@/services/api';
 import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { queryKeys } from '@/lib/query-keys';
+import { useAuth } from '@/hooks/use-auth';
+import { formatRelativeTime } from '@/lib/dates';
+import { toast } from 'sonner';
+import { NotificationType } from '@hena-wadeena/types';
+import type { Notification } from '@hena-wadeena/types';
 
-const typeIcons: Record<string, string> = {
-  booking_confirmed: '✅',
-  payment_received: '💰',
-  new_review: '⭐',
-  kyc_approved: '🛡️',
-  system: '🔔',
-  carpool_match: '🚗',
+const PAGE_SIZE = 20;
+
+const typeConfig: Record<string, { icon: React.ReactNode; color: string }> = {
+  [NotificationType.BOOKING_REQUESTED]: {
+    icon: <Calendar className="h-5 w-5" />,
+    color: 'text-blue-500 bg-blue-500/10',
+  },
+  [NotificationType.BOOKING_CONFIRMED]: {
+    icon: <CheckCircle2 className="h-5 w-5" />,
+    color: 'text-green-500 bg-green-500/10',
+  },
+  [NotificationType.BOOKING_CANCELLED]: {
+    icon: <XCircle className="h-5 w-5" />,
+    color: 'text-red-500 bg-red-500/10',
+  },
+  [NotificationType.BOOKING_COMPLETED]: {
+    icon: <Trophy className="h-5 w-5" />,
+    color: 'text-green-600 bg-green-600/10',
+  },
+  [NotificationType.REVIEW_SUBMITTED]: {
+    icon: <Star className="h-5 w-5" />,
+    color: 'text-yellow-500 bg-yellow-500/10',
+  },
+  [NotificationType.KYC_APPROVED]: {
+    icon: <ShieldCheck className="h-5 w-5" />,
+    color: 'text-green-500 bg-green-500/10',
+  },
+  [NotificationType.KYC_REJECTED]: {
+    icon: <ShieldX className="h-5 w-5" />,
+    color: 'text-red-500 bg-red-500/10',
+  },
+  [NotificationType.SYSTEM]: {
+    icon: <Bell className="h-5 w-5" />,
+    color: 'text-muted-foreground bg-muted',
+  },
 };
 
+function getTypeConfig(type: string) {
+  return typeConfig[type] ?? typeConfig[NotificationType.SYSTEM];
+}
+
 const NotificationsPage = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    void Promise.all([
-      notificationsAPI.getAll().then((r) => setNotifications(r.data)),
-      notificationsAPI.getUnreadCount().then((r) => setUnreadCount(r.data.count)),
-    ]).finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading, error } = useQuery({
+    queryKey: queryKeys.notifications.list({ page, limit: PAGE_SIZE }),
+    queryFn: () => notificationsAPI.getAll(page, PAGE_SIZE),
+    enabled: isAuthenticated,
+    placeholderData: keepPreviousData,
+  });
 
-  const markAsRead = async (id: string) => {
-    await notificationsAPI.markRead(id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
-    );
-    setUnreadCount((c) => Math.max(0, c - 1));
+  // unreadCount comes from the list response envelope — no separate polling query needed.
+  // The header's useUnreadNotificationCount hook handles 60s background polling independently.
+  // Mutations invalidate both the list and unreadCount caches, keeping both in sync.
+  const notifications = data?.data ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
+  const hasMore = data?.hasMore ?? false;
+  const totalPages = data?.total ? Math.ceil(data.total / PAGE_SIZE) : 1;
+
+  // all() = ['notifications'] — prefix-matches both list queries and unreadCount in one shot
+  const invalidateAll = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
   };
 
-  const markAllRead = async () => {
-    const unread = notifications.filter((n) => !n.read_at);
-    for (const n of unread) await notificationsAPI.markRead(n.id);
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, read_at: n.read_at || new Date().toISOString() })),
-    );
-    setUnreadCount(0);
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => notificationsAPI.markRead(id),
+    onSuccess: invalidateAll,
+    onError: () => toast.error('تعذر تحديث الإشعار'),
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => notificationsAPI.markAllRead(),
+    onSuccess: invalidateAll,
+    onError: () => toast.error('تعذر تحديث الإشعارات'),
+  });
+
+  const handleMarkRead = (n: Notification) => {
+    if (!n.readAt) markReadMutation.mutate(n.id);
   };
 
   return (
@@ -69,7 +132,8 @@ const NotificationsPage = () => {
                     variant="ghost"
                     size="sm"
                     className="hover:scale-[1.03] transition-transform"
-                    onClick={() => void markAllRead()}
+                    disabled={markAllReadMutation.isPending}
+                    onClick={() => markAllReadMutation.mutate()}
                   >
                     <CheckCheck className="h-4 w-4 ml-1" />
                     قراءة الكل
@@ -79,8 +143,26 @@ const NotificationsPage = () => {
             </SR>
 
             <div className="space-y-3">
-              {loading ? (
+              {isLoading ? (
                 [1, 2, 3, 4].map((i) => <Skeleton key={i} h="h-20" className="rounded-2xl" />)
+              ) : error ? (
+                <Card className="rounded-2xl">
+                  <CardContent className="p-14 text-center text-muted-foreground text-lg">
+                    حدث خطأ في تحميل الإشعارات
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 mx-auto block"
+                      onClick={() =>
+                        void queryClient.invalidateQueries({
+                          queryKey: queryKeys.notifications.list({ page, limit: PAGE_SIZE }),
+                        })
+                      }
+                    >
+                      إعادة المحاولة
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : notifications.length === 0 ? (
                 <Card className="rounded-2xl">
                   <CardContent className="p-14 text-center text-muted-foreground text-lg">
@@ -88,42 +170,70 @@ const NotificationsPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-                notifications.map((n, idx) => (
-                  <SR key={n.id} delay={idx * 40}>
-                    <Card
-                      className={`hover-lift cursor-pointer rounded-2xl transition-all duration-250 ${!n.read_at ? 'border-primary/30 bg-primary/5 shadow-sm' : 'border-border/50'}`}
-                      onClick={() => !n.read_at && void markAsRead(n.id)}
-                    >
-                      <CardContent className="p-5 flex items-start gap-4">
-                        <span className="text-3xl mt-1">{typeIcons[n.type] || '🔔'}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3
-                              className={`font-bold text-sm ${!n.read_at ? 'text-foreground' : 'text-muted-foreground'}`}
-                            >
-                              {n.title_ar}
-                            </h3>
-                            {!n.read_at && (
-                              <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 flex-shrink-0 animate-pulse" />
-                            )}
+                notifications.map((n, idx) => {
+                  const config = getTypeConfig(n.type);
+                  return (
+                    <SR key={n.id} delay={idx * 40}>
+                      <Card
+                        className={`hover-lift cursor-pointer rounded-2xl transition-all duration-250 ${!n.readAt ? 'border-primary/30 bg-primary/5 shadow-sm' : 'border-border/50'}`}
+                        onClick={() => handleMarkRead(n)}
+                      >
+                        <CardContent className="p-5 flex items-start gap-4">
+                          <div
+                            className={`h-10 w-10 rounded-xl flex items-center justify-center mt-0.5 ${config.color}`}
+                          >
+                            {config.icon}
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1.5">{n.body_ar}</p>
-                          <p className="text-xs text-muted-foreground mt-2.5">
-                            {new Date(n.created_at).toLocaleDateString('ar-EG', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </SR>
-                ))
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h3
+                                className={`font-bold text-sm ${!n.readAt ? 'text-foreground' : 'text-muted-foreground'}`}
+                              >
+                                {n.titleAr}
+                              </h3>
+                              {!n.readAt && (
+                                <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 flex-shrink-0 animate-pulse" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1.5">{n.bodyAr}</p>
+                            <p className="text-xs text-muted-foreground mt-2.5">
+                              {formatRelativeTime(n.createdAt)}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </SR>
+                  );
+                })
               )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <SR>
+                <div className="flex items-center justify-center gap-4 mt-8">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasMore}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+              </SR>
+            )}
           </div>
         </section>
       </PageTransition>

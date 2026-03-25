@@ -6,7 +6,7 @@
  */
 
 import { UserRole } from '@hena-wadeena/types';
-import type { PaginatedResponse } from '@hena-wadeena/types';
+import type { PaginatedResponse, NotificationListResponse } from '@hena-wadeena/types';
 import type {
   AttractionType,
   AttractionArea,
@@ -814,25 +814,24 @@ export const paymentsAPI = {
 
 // ── Notifications ──────────────────────────────────────────────────────────
 
-export interface Notification {
-  id: string;
-  type: string;
-  title_ar: string;
-  body_ar: string;
-  data: Record<string, unknown>;
-  channel: string[];
-  read_at: string | null;
-  created_at: string;
-}
-
 export const notificationsAPI = {
-  getAll: () => apiFetchWithRefresh<{ success: boolean; data: Notification[] }>('/notifications'),
-  getUnreadCount: () =>
-    apiFetchWithRefresh<{ success: boolean; data: { count: number } }>(
-      '/notifications/unread-count',
-    ),
+  getAll: (page = 1, limit = 20, unreadOnly = false) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (unreadOnly) params.set('unreadOnly', 'true');
+    return apiFetchWithRefresh<NotificationListResponse>(`/notifications?${params}`);
+  },
+
+  getUnreadCount: () => apiFetchWithRefresh<{ count: number }>('/notifications/unread-count'),
+
   markRead: (id: string) =>
-    apiFetchWithRefresh<{ success: boolean }>(`/notifications/${id}/read`, { method: 'PUT' }),
+    apiFetchWithRefresh<{ success: boolean }>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    }),
+
+  markAllRead: () =>
+    apiFetchWithRefresh<{ success: boolean }>('/notifications/read-all', {
+      method: 'PATCH',
+    }),
 };
 
 // ── Search ─────────────────────────────────────────────────────────────────

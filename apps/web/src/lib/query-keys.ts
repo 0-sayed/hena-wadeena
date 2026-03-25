@@ -4,6 +4,9 @@ export const queryKeys = {
   },
   notifications: {
     all: () => ['notifications'] as const,
+    lists: () => ['notifications', 'list'] as const,
+    list: (filters: { page: number; limit: number; unreadOnly?: boolean }) =>
+      [...queryKeys.notifications.lists(), filters] as const,
     unreadCount: () => ['notifications', 'unread-count'] as const,
   },
   tourism: {
