@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useNavigate } from 'react-router';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import {
   formatPrice,
   districtLabel,
@@ -37,6 +38,9 @@ const PricesPage = () => {
     data: entries,
     total: totalProducts,
     isLoading,
+    hasNextPage: pricesHasNext,
+    isFetchingNextPage: pricesFetchingNext,
+    fetchNextPage: pricesFetchNext,
   } = usePriceIndex(
     {
       category: selectedCategory,
@@ -276,6 +280,12 @@ const PricesPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          <LoadMoreButton
+            hasNextPage={pricesHasNext}
+            isFetchingNextPage={pricesFetchingNext}
+            fetchNextPage={pricesFetchNext}
+          />
 
           <p className="text-center text-sm text-muted-foreground mt-4">
             {summary?.lastUpdated

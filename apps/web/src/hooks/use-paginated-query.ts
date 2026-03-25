@@ -1,10 +1,5 @@
 import type { PaginatedResponse } from '@hena-wadeena/types';
-import {
-  useInfiniteQuery,
-  keepPreviousData,
-  type QueryKey,
-  type InfiniteData,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, type QueryKey, type InfiniteData } from '@tanstack/react-query';
 
 interface UsePaginatedQueryOptions<
   TItem,
@@ -53,7 +48,6 @@ export function usePaginatedQuery<
     initialPageParam: 1,
     getNextPageParam: (lastPage: PaginatedResponse<TItem>) =>
       lastPage.hasMore ? lastPage.page + 1 : undefined,
-    placeholderData: keepPreviousData,
     enabled: options.enabled,
     staleTime: options.staleTime,
     select: (data: InfiniteData<PaginatedResponse<TItem>>) => ({
