@@ -155,15 +155,21 @@ export class ReviewsService {
   }
 
   async update(id: string, dto: UpdateReviewDto, callerId: string): Promise<Review> {
-    const existing = await this.findActiveReview(id);
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(guideReviews)
+        .where(and(eq(guideReviews.id, id), eq(guideReviews.isActive, true)))
+        .limit(1);
 
-    if (existing.reviewerId !== callerId) {
-      throw new ForbiddenException('Not the review author');
-    }
+      if (!existing) throw new NotFoundException('Review not found');
 
-    const ratingChanged = dto.rating !== undefined && dto.rating !== existing.rating;
+      if (existing.reviewerId !== callerId) {
+        throw new ForbiddenException('Not the review author');
+      }
 
-    const updated = await this.db.transaction(async (tx) => {
+      const ratingChanged = dto.rating !== undefined && dto.rating !== existing.rating;
+
       const [row] = await tx
         .update(guideReviews)
         .set({
@@ -184,28 +190,29 @@ export class ReviewsService {
 
       return row;
     });
-
-    return updated;
   }
 
   async remove(id: string, callerId: string, callerRole: string): Promise<void> {
-    const existing = await this.findActiveReview(id);
-
-    const isAuthor = existing.reviewerId === callerId;
-    const isModerator = MODERATOR_ROLES.has(callerRole);
-
-    if (!isAuthor && !isModerator) {
-      throw new ForbiddenException('Not the review author');
-    }
-
     await this.db.transaction(async (tx) => {
-      const [deleted] = await tx
+      const [existing] = await tx
+        .select()
+        .from(guideReviews)
+        .where(and(eq(guideReviews.id, id), eq(guideReviews.isActive, true)))
+        .limit(1);
+
+      if (!existing) throw new NotFoundException('Review not found');
+
+      const isAuthor = existing.reviewerId === callerId;
+      const isModerator = MODERATOR_ROLES.has(callerRole);
+
+      if (!isAuthor && !isModerator) {
+        throw new ForbiddenException('Not the review author');
+      }
+
+      await tx
         .update(guideReviews)
         .set({ isActive: false, updatedAt: new Date() })
-        .where(and(eq(guideReviews.id, id), eq(guideReviews.isActive, true)))
-        .returning({ id: guideReviews.id });
-
-      if (!deleted) throw new NotFoundException('Review not found');
+        .where(eq(guideReviews.id, id));
 
       await this.recalculateRating(tx, existing.guideId);
     });
@@ -247,6 +254,15 @@ export class ReviewsService {
   async markHelpful(id: string, userId: string): Promise<Review> {
     try {
       return await this.db.transaction(async (tx) => {
+        // Verify review exists and is active before accepting the vote
+        const [review] = await tx
+          .select({ id: guideReviews.id })
+          .from(guideReviews)
+          .where(and(eq(guideReviews.id, id), eq(guideReviews.isActive, true)))
+          .limit(1);
+
+        if (!review) throw new NotFoundException('Review not found');
+
         await tx.insert(guideReviewHelpfulVotes).values({ reviewId: id, userId });
 
         const [updated] = await tx

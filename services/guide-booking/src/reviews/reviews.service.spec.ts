@@ -202,11 +202,18 @@ describe('ReviewsService', () => {
 
   describe('markHelpful', () => {
     it('should insert vote and increment helpfulCount', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ id: REVIEW_ID }]); // active review check
       mockDb.values.mockReturnValueOnce(mockDb); // insert vote
       mockDb.returning.mockResolvedValueOnce([{ ...mockReview, helpfulCount: 1 }]);
 
       const result = await service.markHelpful(REVIEW_ID, OTHER_ID);
       expect(result.helpfulCount).toBe(1);
+    });
+
+    it('should throw NotFoundException when review is inactive', async () => {
+      mockDb.limit.mockResolvedValueOnce([]); // active review check → not found
+
+      await expect(service.markHelpful(REVIEW_ID, OTHER_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ConflictException on duplicate vote', async () => {

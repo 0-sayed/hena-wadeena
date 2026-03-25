@@ -1,4 +1,3 @@
-// services/guide-booking/src/reviews/reviews.module.ts
 import { RedisStreamsService } from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
 

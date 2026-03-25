@@ -1,4 +1,3 @@
-// services/guide-booking/src/reviews/reviews.controller.ts
 import { CurrentUser, Public, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
@@ -7,6 +6,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -50,6 +51,7 @@ export class ReviewsController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.reviewsService.remove(id, user.sub, user.role);
   }
