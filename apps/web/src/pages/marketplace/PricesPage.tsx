@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useNavigate } from 'react-router';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import {
   formatPrice,
   districtLabel,
@@ -33,14 +34,21 @@ const PricesPage = () => {
 
   const regionFilter = selectedCity === 'all' ? undefined : selectedCity;
 
-  const { data: indexData, isLoading } = usePriceIndex({
-    category: selectedCategory,
-    region: regionFilter,
-    limit: 100,
-  });
+  const {
+    data: entries,
+    total: totalProducts,
+    isLoading,
+    hasNextPage: pricesHasNext,
+    isFetchingNextPage: pricesFetchingNext,
+    fetchNextPage: pricesFetchNext,
+  } = usePriceIndex(
+    {
+      category: selectedCategory,
+      region: regionFilter,
+    },
+    100,
+  );
   const { data: summary, isLoading: isSummaryLoading } = usePriceSummary();
-
-  const entries = indexData?.data ?? [];
   const topMovers = summary?.topMovers ?? [];
   const gainers = topMovers.filter((m) => m.direction === 'up');
   const losers = topMovers.filter((m) => m.direction === 'down');
@@ -89,7 +97,7 @@ const PricesPage = () => {
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{indexData?.total ?? entries.length}</p>
+                  <p className="text-2xl font-bold">{totalProducts}</p>
                   <p className="text-sm text-muted-foreground">منتج متاح</p>
                 </CardContent>
               </Card>
@@ -272,6 +280,12 @@ const PricesPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          <LoadMoreButton
+            hasNextPage={pricesHasNext}
+            isFetchingNextPage={pricesFetchingNext}
+            fetchNextPage={pricesFetchNext}
+          />
 
           <p className="text-center text-sm text-muted-foreground mt-4">
             {summary?.lastUpdated

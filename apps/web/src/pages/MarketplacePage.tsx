@@ -22,6 +22,7 @@ import heroMarketplace from '@/assets/hero-marketplace.jpg';
 import { TrendBadge } from '@/components/market/TrendBadge';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
 import { useBusinesses } from '@/hooks/use-businesses';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from '@/lib/format';
 
 const MarketplacePage = () => {
@@ -29,14 +30,22 @@ const MarketplacePage = () => {
   const [selectedCity, setSelectedCity] = useState('kharga');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: pricesData, isLoading: pricesLoading } = usePriceIndex({
-    region: selectedCity,
-  });
-  const { data: suppliersData, isLoading: suppliersLoading } = useBusinesses();
-  const { data: summary } = usePriceSummary();
+  const {
+    data: priceEntries,
+    isLoading: pricesLoading,
+    hasNextPage: pricesHasNext,
+    isFetchingNextPage: pricesFetchingNext,
+    fetchNextPage: pricesFetchNext,
+  } = usePriceIndex({ region: selectedCity });
 
-  const priceEntries = pricesData?.data ?? [];
-  const businesses = suppliersData?.data ?? [];
+  const {
+    data: businesses,
+    isLoading: suppliersLoading,
+    hasNextPage: suppliersHasNext,
+    isFetchingNextPage: suppliersFetchingNext,
+    fetchNextPage: suppliersFetchNext,
+  } = useBusinesses();
+  const { data: summary } = usePriceSummary();
 
   const filteredProducts = priceEntries.filter(
     (e) =>
@@ -186,6 +195,11 @@ const MarketplacePage = () => {
                     </CardContent>
                   </Card>
                 </SR>
+                <LoadMoreButton
+                  hasNextPage={pricesHasNext}
+                  isFetchingNextPage={pricesFetchingNext}
+                  fetchNextPage={pricesFetchNext}
+                />
               </TabsContent>
 
               {/* Suppliers Tab */}
@@ -259,6 +273,11 @@ const MarketplacePage = () => {
                     </div>
                   </SR>
                 )}
+                <LoadMoreButton
+                  hasNextPage={suppliersHasNext}
+                  isFetchingNextPage={suppliersFetchingNext}
+                  fetchNextPage={suppliersFetchNext}
+                />
               </TabsContent>
             </Tabs>
           </div>

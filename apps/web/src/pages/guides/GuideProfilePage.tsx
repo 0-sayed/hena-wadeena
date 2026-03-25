@@ -16,6 +16,7 @@ import {
   areaLabels,
 } from '@/lib/format';
 import { GuideLanguage, GuideSpecialty, NvDistrict } from '@hena-wadeena/types';
+import { useCanBook } from '@/hooks/use-bookings';
 
 const GuideProfilePage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -23,14 +24,14 @@ const GuideProfilePage = () => {
 
   const { data: guide, isLoading, error, refetch } = useGuide(id);
   const {
-    data: packagesData,
+    data: packages,
     isLoading: isLoadingPackages,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
   } = useGuidePackages(id);
 
-  const packages = packagesData ? packagesData.pages.flatMap((p) => p.data) : undefined;
+  const canBook = useCanBook();
 
   if (isLoading) {
     return (
@@ -126,11 +127,11 @@ const GuideProfilePage = () => {
               <h2 className="text-2xl font-bold mb-4">الباقات المتاحة</h2>
               {isLoadingPackages ? (
                 <div className="h-32 w-full rounded-2xl bg-muted animate-pulse" />
-              ) : packages && packages.length === 0 ? (
+              ) : packages.length === 0 ? (
                 <p className="text-muted-foreground">لا توجد باقات متاحة حالياً</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {packages?.map((pkg) => (
+                  {packages.map((pkg) => (
                     <Card key={pkg.id} className="hover:shadow-lg transition-all">
                       <CardContent className="p-0">
                         {pkg.images?.[0] && (
@@ -185,6 +186,11 @@ const GuideProfilePage = () => {
                               {piastresToEgp(pkg.price)}{' '}
                               <span className="text-sm font-normal">/ فرد</span>
                             </span>
+                            {canBook && (
+                              <Link to={`/tourism/book-package/${pkg.id}`}>
+                                <Button size="sm">احجز الآن</Button>
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </CardContent>

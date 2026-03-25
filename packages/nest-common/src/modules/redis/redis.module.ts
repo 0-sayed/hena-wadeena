@@ -2,9 +2,9 @@ import { DynamicModule, Global, Inject, Module, OnModuleDestroy } from '@nestjs/
 import Redis from 'ioredis';
 
 import { RedisStreamsService } from './redis-streams.service';
+import { REDIS_CLIENT, REDIS_STREAMS_CLIENT } from './redis.tokens';
 
-export const REDIS_CLIENT = 'REDIS_CLIENT';
-export const REDIS_STREAMS_CLIENT = 'REDIS_STREAMS_CLIENT';
+export { REDIS_CLIENT, REDIS_STREAMS_CLIENT };
 
 export interface RedisModuleOptions {
   url: string;

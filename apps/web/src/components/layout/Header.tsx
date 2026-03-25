@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { notificationsAPI } from '@/services/api';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -53,29 +53,12 @@ function ThemeToggle() {
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const authCtx = useAuth();
   const { user } = authCtx;
 
-  // Fetch unread notification count
-  useEffect(() => {
-    if (user) {
-      notificationsAPI
-        .getUnreadCount()
-        .then((r) => setUnreadCount(r.data.count))
-        .catch(() => {});
-      const interval = setInterval(() => {
-        notificationsAPI
-          .getUnreadCount()
-          .then((r) => setUnreadCount(r.data.count))
-          .catch(() => {});
-      }, 30000);
-      return () => clearInterval(interval);
-    } else {
-      setUnreadCount(0);
-    }
-  }, [user]);
+  const { data: unreadData } = useUnreadNotificationCount();
+  const unreadCount = unreadData?.count ?? 0;
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
