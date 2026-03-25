@@ -12,14 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-
-type Booking = {
-  id: string;
-  package_title: string;
-  guide_name: string;
-  booking_date: string;
-  status: string;
-};
+import type { Booking } from '@/services/api';
 
 type BookingsCardProps = {
   bookings: Booking[];
@@ -53,8 +46,7 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>الجولة</TableHead>
-                <TableHead>المرشد</TableHead>
+                <TableHead>الباقة</TableHead>
                 <TableHead>التاريخ</TableHead>
                 <TableHead>الحالة</TableHead>
               </TableRow>
@@ -64,10 +56,11 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
                 const st = bookingStatusLabels[booking.status] ?? bookingStatusLabels.pending;
                 return (
                   <TableRow key={booking.id}>
-                    <TableCell className="font-medium">{booking.package_title}</TableCell>
-                    <TableCell>{booking.guide_name}</TableCell>
+                    <TableCell className="font-medium truncate max-w-[140px]">
+                      {booking.packageTitleAr ?? `#${booking.id.slice(0, 8)}`}
+                    </TableCell>
                     <TableCell dir="ltr" className="text-right">
-                      {new Date(booking.booking_date).toLocaleDateString('ar-EG')}
+                      {new Date(booking.bookingDate).toLocaleDateString('ar-EG')}
                     </TableCell>
                     <TableCell>
                       <Badge variant={st.variant}>{st.label}</Badge>

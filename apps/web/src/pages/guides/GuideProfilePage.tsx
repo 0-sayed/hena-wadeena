@@ -16,6 +16,7 @@ import {
   areaLabels,
 } from '@/lib/format';
 import { GuideLanguage, GuideSpecialty, NvDistrict } from '@hena-wadeena/types';
+import { useCanBook } from '@/hooks/use-bookings';
 
 const GuideProfilePage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -29,6 +30,8 @@ const GuideProfilePage = () => {
     hasNextPage,
     fetchNextPage,
   } = useGuidePackages(id);
+
+  const canBook = useCanBook();
 
   if (isLoading) {
     return (
@@ -183,6 +186,11 @@ const GuideProfilePage = () => {
                               {piastresToEgp(pkg.price)}{' '}
                               <span className="text-sm font-normal">/ فرد</span>
                             </span>
+                            {canBook && (
+                              <Link to={`/tourism/book-package/${pkg.id}`}>
+                                <Button size="sm">احجز الآن</Button>
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </CardContent>
