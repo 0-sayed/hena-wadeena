@@ -21,6 +21,7 @@ export const queryKeys = {
   },
   packages: {
     all: (filters?: Record<string, unknown>) => ['packages', filters] as const,
+    detail: (id: string) => ['packages', id] as const,
   },
   market: {
     listings: (filters?: Record<string, unknown>) => ['market', 'listings', filters] as const,
@@ -31,7 +32,10 @@ export const queryKeys = {
     business: (id: string) => ['market', 'businesses', id] as const,
   },
   bookings: {
-    mine: () => ['bookings', 'mine'] as const,
+    mine: (filters?: Record<string, unknown>) =>
+      filters !== undefined
+        ? (['bookings', 'mine', filters] as const)
+        : (['bookings', 'mine'] as const),
   },
   investment: {
     opportunities: (filters?: Record<string, unknown>) =>
