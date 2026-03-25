@@ -128,9 +128,7 @@ const GuideBookingPage = () => {
                     className="h-14 w-14 rounded-full object-cover"
                   />
                   <div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {pkg.guideBioAr?.slice(0, 40)}
-                    </p>
+                    <p className="text-sm text-muted-foreground line-clamp-1">{pkg.guideBioAr}</p>
                     <div className="flex items-center gap-1">
                       {pkg.guideRatingAvg != null && (
                         <>

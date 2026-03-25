@@ -266,6 +266,9 @@ const BookingsPage = () => {
                         <CardContent className="p-7">
                           <div className="flex items-start justify-between mb-5">
                             <div>
+                              {b.packageTitleAr && (
+                                <h3 className="font-bold">{b.packageTitleAr}</h3>
+                              )}
                               <p className="text-sm text-muted-foreground">
                                 حجز #{b.id.slice(0, 8)}
                               </p>

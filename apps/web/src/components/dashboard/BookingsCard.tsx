@@ -46,8 +46,8 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>الباقة</TableHead>
                 <TableHead>التاريخ</TableHead>
-                <TableHead>الأفراد</TableHead>
                 <TableHead>الحالة</TableHead>
               </TableRow>
             </TableHeader>
@@ -56,10 +56,12 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
                 const st = bookingStatusLabels[booking.status] ?? bookingStatusLabels.pending;
                 return (
                   <TableRow key={booking.id}>
+                    <TableCell className="font-medium truncate max-w-[140px]">
+                      {booking.packageTitleAr ?? `#${booking.id.slice(0, 8)}`}
+                    </TableCell>
                     <TableCell dir="ltr" className="text-right">
                       {new Date(booking.bookingDate).toLocaleDateString('ar-EG')}
                     </TableCell>
-                    <TableCell>{booking.peopleCount}</TableCell>
                     <TableCell>
                       <Badge variant={st.variant}>{st.label}</Badge>
                     </TableCell>

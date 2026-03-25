@@ -717,6 +717,9 @@ export interface Booking {
   cancelReason: string | null;
   createdAt: string;
   updatedAt: string;
+  // Present in list responses (joined from tour_packages)
+  packageTitleAr?: string | null;
+  packageTitleEn?: string | null;
 }
 
 // ── Reviews ────────────────────────────────────────────────────────────────
