@@ -16,6 +16,8 @@ async function main() {
     await sql`CREATE SCHEMA IF NOT EXISTS market`;
     await migrate(db, {
       migrationsFolder: './drizzle',
+      // Per-service table prevents cross-service migration collisions.
+      // Safe because no prior deployment succeeded with the default table.
       migrationsTable: '__drizzle_migrations_market',
     });
   } finally {
