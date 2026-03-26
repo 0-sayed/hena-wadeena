@@ -18,3 +18,18 @@ export function firstOrThrow<T>(rows: T[], message = 'Expected at least one row'
 export function escapeLike(value: string): string {
   return value.replace(/[%_\\]/g, '\\$&');
 }
+
+function isPgErrorCode(err: unknown, code: string): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as Record<string, unknown>).code === code
+  );
+}
+
+/** Checks whether a caught error is a PostgreSQL unique-constraint violation (23505). */
+export const isUniqueViolation = (err: unknown): boolean => isPgErrorCode(err, '23505');
+
+/** Checks whether a caught error is a PostgreSQL foreign-key violation (23503). */
+export const isForeignKeyViolation = (err: unknown): boolean => isPgErrorCode(err, '23503');

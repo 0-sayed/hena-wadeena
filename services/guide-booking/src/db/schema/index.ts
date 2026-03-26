@@ -8,6 +8,7 @@ export { guideAvailability } from './guide-availability';
 export { bookings } from './bookings';
 export { guides } from './guides';
 export { guideReviews } from './reviews';
+export { guideReviewHelpfulVotes } from './guide-review-helpful-votes';
 export { tourPackages } from './tour-packages';
 export { tourPackageAttractions } from './tour-package-attractions';
 
