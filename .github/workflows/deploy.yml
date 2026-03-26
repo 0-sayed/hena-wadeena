@@ -92,6 +92,10 @@ jobs:
             echo "==> Logging into GHCR"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
+            echo "==> Resetting working tree"
+            git reset --hard
+            git clean -fd
+
             echo "==> Checking out built commit"
             git fetch origin main
             git checkout "$DEPLOY_SHA"
