@@ -7,13 +7,19 @@ if (!connectionString) throw new Error('DATABASE_URL is required');
 
 const sql = postgres(connectionString, {
   max: 1,
-  connection: { search_path: 'map' },
+  connection: { search_path: 'map, public' },
 });
 const db = drizzle(sql);
 
 async function main() {
   try {
-    await migrate(db, { migrationsFolder: './drizzle' });
+    await sql`CREATE SCHEMA IF NOT EXISTS map`;
+    await migrate(db, {
+      migrationsFolder: './drizzle',
+      // Per-service table prevents cross-service migration collisions.
+      // Safe because no prior deployment succeeded with the default table.
+      migrationsTable: '__drizzle_migrations_map',
+    });
   } finally {
     await sql.end();
   }

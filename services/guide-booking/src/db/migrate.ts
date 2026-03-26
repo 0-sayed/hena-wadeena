@@ -13,7 +13,13 @@ const db = drizzle(sql);
 
 async function main() {
   try {
-    await migrate(db, { migrationsFolder: './drizzle' });
+    await sql`CREATE SCHEMA IF NOT EXISTS guide_booking`;
+    await migrate(db, {
+      migrationsFolder: './drizzle',
+      // Per-service table prevents cross-service migration collisions.
+      // Safe because no prior deployment succeeded with the default table.
+      migrationsTable: '__drizzle_migrations_guide_booking',
+    });
   } finally {
     await sql.end();
   }
