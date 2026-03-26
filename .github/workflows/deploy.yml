@@ -107,19 +107,11 @@ jobs:
                 "ghcr.io/$GHCR_USER/hena-wadeena/$svc:latest"
             done
 
-            echo "==> Running migrations (parallel — each service has its own schema)"
-            docker compose run --rm -w /app/services/identity identity node dist/db/migrate.js &
-            pid_identity=$!
-            docker compose run --rm -w /app/services/market market node dist/db/migrate.js &
-            pid_market=$!
-            docker compose run --rm -w /app/services/guide-booking guide-booking node dist/db/migrate.js &
-            pid_guide_booking=$!
-            docker compose run --rm -w /app/services/map map node dist/db/migrate.js &
-            pid_map=$!
-            wait "$pid_identity"
-            wait "$pid_market"
-            wait "$pid_guide_booking"
-            wait "$pid_map"
+            echo "==> Running migrations (sequential — shared drizzle tracking table)"
+            docker compose run --rm -w /app/services/identity identity node dist/db/migrate.js
+            docker compose run --rm -w /app/services/market market node dist/db/migrate.js
+            docker compose run --rm -w /app/services/guide-booking guide-booking node dist/db/migrate.js
+            docker compose run --rm -w /app/services/map map node dist/db/migrate.js
 
             echo "==> Restarting services"
             docker compose up -d --wait --timeout 120

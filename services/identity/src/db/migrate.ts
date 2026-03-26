@@ -14,7 +14,11 @@ const db = drizzle(sql);
 async function main() {
   try {
     console.warn('Running identity migrations...');
-    await migrate(db, { migrationsFolder: './drizzle' });
+    await sql`CREATE SCHEMA IF NOT EXISTS identity`;
+    await migrate(db, {
+      migrationsFolder: './drizzle',
+      migrationsTable: '__drizzle_migrations_identity',
+    });
     console.warn('Identity migrations complete.');
   } finally {
     await sql.end();

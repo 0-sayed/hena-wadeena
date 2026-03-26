@@ -1,4 +1,4 @@
-CREATE SCHEMA "market";
+CREATE SCHEMA IF NOT EXISTS "market";
 --> statement-breakpoint
 CREATE TYPE "market"."application_status" AS ENUM('pending', 'reviewed', 'accepted', 'rejected', 'withdrawn');--> statement-breakpoint
 CREATE TYPE "market"."business_status" AS ENUM('active', 'inactive');--> statement-breakpoint

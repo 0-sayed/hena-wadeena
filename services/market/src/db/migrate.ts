@@ -7,13 +7,17 @@ if (!connectionString) throw new Error('DATABASE_URL is required');
 
 const sql = postgres(connectionString, {
   max: 1,
-  connection: { search_path: 'market' },
+  connection: { search_path: 'market, public' },
 });
 const db = drizzle(sql);
 
 async function main() {
   try {
-    await migrate(db, { migrationsFolder: './drizzle' });
+    await sql`CREATE SCHEMA IF NOT EXISTS market`;
+    await migrate(db, {
+      migrationsFolder: './drizzle',
+      migrationsTable: '__drizzle_migrations_market',
+    });
   } finally {
     await sql.end();
   }
