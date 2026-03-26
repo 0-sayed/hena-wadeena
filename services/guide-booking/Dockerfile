@@ -13,8 +13,8 @@ COPY packages/types/package.json packages/types/
 COPY packages/nest-common/package.json packages/nest-common/
 COPY services/guide-booking/package.json services/guide-booking/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (--ignore-scripts skips lefthook install which needs .git)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY tsconfig.json tsconfig.build.json ./
@@ -43,6 +43,7 @@ COPY --from=build /app/packages/nest-common/package.json packages/nest-common/
 COPY --from=build /app/packages/nest-common/dist packages/nest-common/dist/
 COPY --from=build /app/services/guide-booking/package.json services/guide-booking/
 COPY --from=build /app/services/guide-booking/dist services/guide-booking/dist/
+COPY --from=build /app/services/guide-booking/drizzle services/guide-booking/drizzle/
 
 # Install production deps only
 RUN pnpm install --frozen-lockfile --prod
