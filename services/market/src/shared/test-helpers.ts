@@ -14,6 +14,7 @@ interface MockDbChain {
   update: MockFn;
   set: MockFn;
   orderBy: MockFn;
+  groupBy: MockFn;
   execute: MockFn;
   transaction: MockFn;
   innerJoin: MockFn;
@@ -44,6 +45,7 @@ export function createMockDb(): MockDbChain {
   chain.update = vi.fn().mockReturnValue(chain);
   chain.set = vi.fn().mockReturnValue(chain);
   chain.orderBy = vi.fn().mockReturnValue(chain);
+  chain.groupBy = vi.fn().mockReturnValue(chain);
   chain.execute = vi.fn().mockResolvedValue([]);
   chain.transaction = vi
     .fn()

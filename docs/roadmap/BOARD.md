@@ -65,7 +65,7 @@
 - [x] **T14** Market: Listing Reviews · M · ← T10
 - [x] **T15** Guide-Booking: Booking State Machine · M · ← T11
 - [ ] **T16** Chat Session Management · M · ← T12
-- [ ] **T17** Market: Investment CRUD + EOI · M · ← T10
+- [x] **T17** Market: Investment CRUD + EOI · M · ← T10
 - [x] **F06** Guide Booking Flow · S · ← T15, F02, F03
 - [x] **F07** Notifications + Wallet · S · ← T13, F02
 - [x] **F13** Pagination + Performance · S · ← F01, F03

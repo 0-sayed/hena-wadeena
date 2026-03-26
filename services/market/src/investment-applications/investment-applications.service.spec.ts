@@ -15,6 +15,7 @@ const mockS3 = {
 
 const mockOpportunitiesService = {
   findById: vi.fn(),
+  findRaw: vi.fn(),
 };
 
 // ---------------------------------------------------------------------------
@@ -58,6 +59,7 @@ describe('InvestmentApplicationsService', () => {
     mockDb = createMockDb();
     vi.clearAllMocks();
     mockOpportunitiesService.findById.mockResolvedValue(mockOpportunity);
+    mockOpportunitiesService.findRaw.mockResolvedValue(mockOpportunity);
     service = new InvestmentApplicationsService(
       mockDb as never,
       mockS3 as never,
@@ -90,7 +92,7 @@ describe('InvestmentApplicationsService', () => {
     });
 
     it('should throw NotFoundException when opportunity does not exist', async () => {
-      mockOpportunitiesService.findById.mockResolvedValue(null);
+      mockOpportunitiesService.findRaw.mockResolvedValue(null);
 
       await expect(
         service.submitInterest('nonexistent', 'investor-uuid-001', createDto as never),
@@ -98,7 +100,7 @@ describe('InvestmentApplicationsService', () => {
     });
 
     it('should throw ConflictException when opportunity is not active', async () => {
-      mockOpportunitiesService.findById.mockResolvedValue({
+      mockOpportunitiesService.findRaw.mockResolvedValue({
         ...mockOpportunity,
         status: 'draft',
       });
@@ -123,7 +125,7 @@ describe('InvestmentApplicationsService', () => {
       expect(result.status).toBe('withdrawn');
     });
 
-    it('should throw NotFoundException when caller is not the applicant', async () => {
+    it('should throw NotFoundException when no application found', async () => {
       mockDb.limit.mockResolvedValueOnce([]);
 
       await expect(service.withdraw('opp-uuid-001', 'different-user')).rejects.toThrow(

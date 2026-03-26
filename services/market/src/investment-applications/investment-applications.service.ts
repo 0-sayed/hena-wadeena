@@ -1,4 +1,5 @@
-import { DRIZZLE_CLIENT, S3Service, firstOrThrow, generateId } from '@hena-wadeena/nest-common';
+import { DRIZZLE_CLIENT, S3Service, generateId } from '@hena-wadeena/nest-common';
+import type { PaginatedResponse } from '@hena-wadeena/types';
 import {
   ConflictException,
   ForbiddenException,
@@ -7,40 +8,29 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { investmentApplications } from '../db/schema/investment-applications';
+import { investmentOpportunities } from '../db/schema/investment-opportunities';
+import { InvestmentOpportunitiesService } from '../investment-opportunities/investment-opportunities.service';
+import { andRequired, firstOrThrow, paginate } from '../shared/query-helpers';
+
+import { CreateApplicationDto } from './dto/create-application.dto';
+import { DocumentUploadDto } from './dto/document-upload.dto';
+import { QueryApplicationsDto } from './dto/query-applications.dto';
+import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 
 type Application = typeof investmentApplications.$inferSelect;
-type InsertApplication = typeof investmentApplications.$inferInsert;
 
-interface OpportunitiesService {
-  findById(id: string): Promise<{ id: string; ownerId: string; status: string } | null>;
-}
-
-interface CreateApplicationDto {
-  amountProposed?: number;
-  message?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-}
-
-interface UpdateStatusDto {
-  status: Application['status'];
-}
-
-interface FileUploadDto {
-  filename: string;
-  contentType: string;
-}
-
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ['reviewed', 'rejected'],
+/** Valid admin state transitions: current -> allowed next states */
+const ADMIN_TRANSITIONS: Record<string, string[]> = {
+  pending: ['reviewed'],
   reviewed: ['accepted', 'rejected'],
 };
 
-const TERMINAL_STATUSES = new Set(['accepted', 'rejected', 'withdrawn']);
+/** States from which an investor can withdraw */
+const WITHDRAWABLE_STATES = ['pending', 'reviewed'] as const;
 
 @Injectable()
 export class InvestmentApplicationsService {
@@ -49,42 +39,16 @@ export class InvestmentApplicationsService {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     private readonly s3: S3Service,
-    private readonly opportunitiesService: OpportunitiesService,
+    private readonly opportunitiesService: InvestmentOpportunitiesService,
   ) {}
 
-  async submitInterest(
+  // --- Private helpers ---
+
+  private async findByOpportunityAndInvestor(
     opportunityId: string,
     investorId: string,
-    dto: CreateApplicationDto,
-  ): Promise<Application> {
-    const opportunity = await this.opportunitiesService.findById(opportunityId);
-    if (!opportunity) throw new NotFoundException('Opportunity not found');
-    if (opportunity.status !== 'active') {
-      throw new ConflictException('Opportunity is not accepting applications');
-    }
-
-    const application = firstOrThrow(
-      await this.db
-        .insert(investmentApplications)
-        .values({
-          id: generateId(),
-          opportunityId,
-          investorId,
-          amountProposed: dto.amountProposed,
-          message: dto.message,
-          contactEmail: dto.contactEmail,
-          contactPhone: dto.contactPhone,
-          status: 'pending',
-        } satisfies InsertApplication)
-        .returning(),
-    );
-
-    this.logger.log(`Application submitted for opportunity ${opportunityId} by ${investorId}`);
-    return application;
-  }
-
-  async withdraw(opportunityId: string, investorId: string): Promise<Application> {
-    const [existing] = await this.db
+  ): Promise<Application | null> {
+    const [app] = await this.db
       .select()
       .from(investmentApplications)
       .where(
@@ -94,80 +58,235 @@ export class InvestmentApplicationsService {
         ),
       )
       .limit(1);
-
-    if (!existing) throw new NotFoundException('Application not found');
-    if (existing.status === 'accepted' || existing.status === 'rejected') {
-      throw new ConflictException(`Cannot withdraw a ${existing.status} application`);
-    }
-
-    return firstOrThrow(
-      await this.db
-        .update(investmentApplications)
-        .set({ status: 'withdrawn' })
-        .where(eq(investmentApplications.id, existing.id))
-        .returning(),
-    );
+    return app ?? null;
   }
 
-  async updateStatus(applicationId: string, dto: UpdateStatusDto): Promise<Application> {
-    const [existing] = await this.db
+  private async findById(id: string): Promise<Application | null> {
+    const [app] = await this.db
       .select()
       .from(investmentApplications)
-      .where(eq(investmentApplications.id, applicationId))
+      .where(eq(investmentApplications.id, id))
       .limit(1);
+    return app ?? null;
+  }
 
-    if (!existing) throw new NotFoundException('Application not found');
+  // --- Public methods ---
 
-    if (TERMINAL_STATUSES.has(existing.status)) {
-      throw new ConflictException(`Cannot transition from terminal status "${existing.status}"`);
+  async submitInterest(
+    opportunityId: string,
+    investorId: string,
+    dto: CreateApplicationDto,
+  ): Promise<Application> {
+    // Use findRaw to bypass visibility filtering — we need to distinguish "not found" from "not active"
+    const opp = await this.opportunitiesService.findRaw(opportunityId);
+    if (!opp) throw new NotFoundException('Opportunity not found');
+    if (opp.status !== 'active') {
+      throw new ConflictException('Can only express interest in active opportunities');
     }
 
-    const allowed = VALID_TRANSITIONS[existing.status];
-    if (!allowed?.includes(dto.status)) {
-      throw new ConflictException(
-        `Invalid transition from "${existing.status}" to "${dto.status}"`,
-      );
+    // Check for duplicate (DB unique constraint is backup, but we give a better error message)
+    const existing = await this.findByOpportunityAndInvestor(opportunityId, investorId);
+    if (existing) {
+      throw new ConflictException('ALREADY_EXPRESSED_INTEREST');
     }
 
-    return firstOrThrow(
+    const application = firstOrThrow(
       await this.db
-        .update(investmentApplications)
-        .set({ status: dto.status })
-        .where(eq(investmentApplications.id, applicationId))
+        .insert(investmentApplications)
+        .values({
+          opportunityId,
+          investorId,
+          message: dto.message,
+          contactEmail: dto.contactEmail,
+          contactPhone: dto.contactPhone,
+          amountProposed: dto.amountProposed,
+          status: 'pending',
+        })
         .returning(),
     );
+
+    // Increment denormalized interest count (fire-and-forget)
+    void this.db
+      .update(investmentOpportunities)
+      .set({ interestCount: sql`${investmentOpportunities.interestCount} + 1` })
+      .where(eq(investmentOpportunities.id, opportunityId))
+      .then(
+        () => undefined,
+        (err: unknown) => {
+          this.logger.error('Failed to increment interest count', err);
+        },
+      );
+
+    return application;
+  }
+
+  async withdraw(opportunityId: string, investorId: string): Promise<Application> {
+    const app = await this.findByOpportunityAndInvestor(opportunityId, investorId);
+    if (!app) throw new NotFoundException('Application not found');
+    if (!WITHDRAWABLE_STATES.includes(app.status)) {
+      throw new ConflictException(`Cannot withdraw from ${app.status} status`);
+    }
+
+    const [updated] = await this.db
+      .update(investmentApplications)
+      .set({ status: 'withdrawn' })
+      .where(
+        and(
+          eq(investmentApplications.id, app.id),
+          inArray(investmentApplications.status, [...WITHDRAWABLE_STATES]),
+        ),
+      )
+      .returning();
+
+    if (!updated) {
+      throw new ConflictException('Application state changed, withdrawal failed');
+    }
+
+    // Decrement denormalized interest count (fire-and-forget, mirror of submitInterest increment)
+    void this.db
+      .update(investmentOpportunities)
+      .set({ interestCount: sql`GREATEST(${investmentOpportunities.interestCount} - 1, 0)` })
+      .where(eq(investmentOpportunities.id, opportunityId))
+      .then(
+        () => undefined,
+        (err: unknown) => {
+          this.logger.error('Failed to decrement interest count', err);
+        },
+      );
+
+    return updated;
+  }
+
+  async updateStatus(id: string, dto: UpdateApplicationStatusDto): Promise<Application> {
+    const app = await this.findById(id);
+    if (!app) throw new NotFoundException('Application not found');
+
+    const allowed = ADMIN_TRANSITIONS[app.status];
+    if (!allowed?.includes(dto.status)) {
+      throw new ConflictException(`Invalid transition: ${app.status} -> ${dto.status}`);
+    }
+
+    const [updated] = await this.db
+      .update(investmentApplications)
+      .set({ status: dto.status as Application['status'] })
+      .where(and(eq(investmentApplications.id, id), eq(investmentApplications.status, app.status)))
+      .returning();
+
+    if (!updated) {
+      throw new ConflictException('Application state changed concurrently');
+    }
+    return updated;
+  }
+
+  async findByOpportunity(
+    opportunityId: string,
+    query: QueryApplicationsDto,
+  ): Promise<PaginatedResponse<Application>> {
+    const conditions = [eq(investmentApplications.opportunityId, opportunityId)];
+    if (query.status !== undefined) {
+      conditions.push(eq(investmentApplications.status, query.status as Application['status']));
+    }
+
+    const where = andRequired(...conditions);
+
+    const [results, countResult] = await Promise.all([
+      this.db
+        .select()
+        .from(investmentApplications)
+        .where(where)
+        .orderBy(desc(investmentApplications.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(investmentApplications)
+        .where(where),
+    ]);
+
+    return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
+  }
+
+  async findByInvestor(
+    investorId: string,
+    query: QueryApplicationsDto,
+  ): Promise<PaginatedResponse<Application>> {
+    const conditions = [eq(investmentApplications.investorId, investorId)];
+    if (query.status !== undefined) {
+      conditions.push(eq(investmentApplications.status, query.status as Application['status']));
+    }
+
+    const where = andRequired(...conditions);
+
+    const [results, countResult] = await Promise.all([
+      this.db
+        .select()
+        .from(investmentApplications)
+        .where(where)
+        .orderBy(desc(investmentApplications.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(investmentApplications)
+        .where(where),
+    ]);
+
+    return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
+  }
+
+  async findAllAdmin(query: QueryApplicationsDto): Promise<PaginatedResponse<Application>> {
+    const conditions = [];
+    if (query.status !== undefined) {
+      conditions.push(eq(investmentApplications.status, query.status as Application['status']));
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [results, countResult] = await Promise.all([
+      this.db
+        .select()
+        .from(investmentApplications)
+        .where(where)
+        .orderBy(desc(investmentApplications.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(investmentApplications)
+        .where(where),
+    ]);
+
+    return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
   }
 
   async generateDocUploadUrl(
     opportunityId: string,
     callerId: string,
-    fileDto: FileUploadDto,
+    dto: DocumentUploadDto,
   ): Promise<{ uploadUrl: string; key: string }> {
-    const opportunity = await this.opportunitiesService.findById(opportunityId);
-    if (!opportunity) throw new NotFoundException('Opportunity not found');
+    const opp = await this.opportunitiesService.findById(opportunityId, callerId);
+    if (!opp) throw new NotFoundException('Opportunity not found');
 
-    if (opportunity.ownerId !== callerId) {
-      const [accepted] = await this.db
-        .select()
-        .from(investmentApplications)
-        .where(
-          and(
-            eq(investmentApplications.opportunityId, opportunityId),
-            eq(investmentApplications.investorId, callerId),
-            eq(investmentApplications.status, 'accepted'),
-          ),
-        )
-        .limit(1);
-
-      if (!accepted) throw new ForbiddenException('Not authorized to upload documents');
+    // Caller must be owner OR have an accepted application
+    if (opp.ownerId !== callerId) {
+      const app = await this.findByOpportunityAndInvestor(opportunityId, callerId);
+      if (app?.status !== 'accepted') {
+        throw new ForbiddenException(
+          'Only the opportunity owner or an investor with accepted EOI can upload documents',
+        );
+      }
     }
 
-    const key = `investments/${opportunityId}/docs/${generateId()}-${fileDto.filename}`;
-    const result = await this.s3.getPresignedUploadUrl({
+    const parts = dto.filename.split('.');
+    const ext = parts.length > 1 ? parts.pop() : 'pdf';
+    const key = `investments/${opportunityId}/docs/${generateId()}.${ext}`;
+
+    const { uploadUrl } = await this.s3.getPresignedUploadUrl({
       key,
-      contentType: fileDto.contentType,
+      contentType: dto.contentType,
+      expiresIn: 300,
     });
 
-    return { uploadUrl: result.uploadUrl, key };
+    return { uploadUrl, key };
   }
 }
