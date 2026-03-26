@@ -114,7 +114,9 @@ jobs:
             docker compose run --rm -w /app/services/map map node dist/db/migrate.js
 
             echo "==> Restarting services"
-            docker compose up -d --wait --timeout 120
+            docker compose up -d --wait --timeout 120 postgres redis qdrant identity market guide-booking map ai gateway
+            # Start caddy without --wait (health depends on DNS/TLS — non-blocking)
+            docker compose up -d caddy
 
             echo "==> Cleaning up old images"
             docker image prune -f
