@@ -6,7 +6,7 @@
  */
 
 import { UserRole } from '@hena-wadeena/types';
-import type { PaginatedResponse } from '@hena-wadeena/types';
+import type { PaginatedResponse, NotificationListResponse } from '@hena-wadeena/types';
 import type {
   AttractionType,
   AttractionArea,
@@ -700,24 +700,30 @@ export const packagesAPI = {
   getById: (id: string) => apiFetch<TourPackageDetail>(`/packages/${id}`),
 };
 
-// ── Legacy: Bookings + Reviews (mock — no backend yet, used by BookingsPage) ──
-// TODO(T15): Replace with real booking endpoints when backend is ready
-// TODO(T18): Replace with real review endpoints when backend is ready
+// ── Bookings ───────────────────────────────────────────────────────────────
 
 export interface Booking {
   id: string;
-  package_id: number;
-  guide_id: number;
-  guide_name: string;
-  tourist_id: string;
-  package_title: string;
-  booking_date: string;
-  start_time: string;
-  people_count: number;
-  total_price: number;
-  status: string;
-  created_at: string;
+  packageId: string;
+  guideId: string;
+  touristId: string;
+  bookingDate: string; // YYYY-MM-DD
+  startTime: string; // HH:MM:SS from Postgres
+  peopleCount: number;
+  totalPrice: number; // integer piasters
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  notes: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Present in list responses (joined from tour_packages)
+  packageTitleAr?: string | null;
+  packageTitleEn?: string | null;
 }
+
+// ── Reviews ────────────────────────────────────────────────────────────────
+// TODO(T18): Replace with real review endpoints when backend is ready
 
 export interface Review {
   id: string;
@@ -731,19 +737,35 @@ export interface Review {
 }
 
 export const bookingsAPI = {
-  getMyBookings: () => apiFetch<{ success: boolean; data: Booking[] }>('/guides/bookings/my'),
+  getMyBookings: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Booking>>(`/bookings/mine${toQueryString(params)}`),
+
   createBooking: (body: {
-    package_id: number;
-    guide_id: number;
-    booking_date: string;
-    start_time?: string;
-    people_count?: number;
+    packageId: string;
+    bookingDate: string;
+    startTime: string;
+    peopleCount: number;
     notes?: string;
   }) =>
-    apiFetchWithRefresh<{ success: boolean; message: string; data: Booking }>('/guides/bookings', {
+    apiFetchWithRefresh<Booking>('/bookings', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  confirmBooking: (id: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/confirm`, { method: 'PATCH' }),
+
+  startBooking: (id: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/start`, { method: 'PATCH' }),
+
+  cancelBooking: (id: string, cancelReason: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/cancel`, {
+      method: 'PATCH',
+      body: JSON.stringify({ cancelReason }),
+    }),
+
+  completeBooking: (id: string) =>
+    apiFetchWithRefresh<Booking>(`/bookings/${id}/complete`, { method: 'PATCH' }),
 };
 
 export const reviewsAPI = {
@@ -792,25 +814,24 @@ export const paymentsAPI = {
 
 // ── Notifications ──────────────────────────────────────────────────────────
 
-export interface Notification {
-  id: string;
-  type: string;
-  title_ar: string;
-  body_ar: string;
-  data: Record<string, unknown>;
-  channel: string[];
-  read_at: string | null;
-  created_at: string;
-}
-
 export const notificationsAPI = {
-  getAll: () => apiFetchWithRefresh<{ success: boolean; data: Notification[] }>('/notifications'),
-  getUnreadCount: () =>
-    apiFetchWithRefresh<{ success: boolean; data: { count: number } }>(
-      '/notifications/unread-count',
-    ),
+  getAll: (page = 1, limit = 20, unreadOnly = false) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (unreadOnly) params.set('unreadOnly', 'true');
+    return apiFetchWithRefresh<NotificationListResponse>(`/notifications?${params}`);
+  },
+
+  getUnreadCount: () => apiFetchWithRefresh<{ count: number }>('/notifications/unread-count'),
+
   markRead: (id: string) =>
-    apiFetchWithRefresh<{ success: boolean }>(`/notifications/${id}/read`, { method: 'PUT' }),
+    apiFetchWithRefresh<{ success: boolean }>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    }),
+
+  markAllRead: () =>
+    apiFetchWithRefresh<{ success: boolean }>('/notifications/read-all', {
+      method: 'PATCH',
+    }),
 };
 
 // ── Search ─────────────────────────────────────────────────────────────────

@@ -9,8 +9,7 @@ import { useAttractions } from '@/hooks/use-attractions';
 import { attractionTypeLabels, formatRating } from '@/lib/format';
 
 export function FeaturedSection() {
-  const { data, isLoading } = useAttractions({ featured: true, limit: 4 });
-  const featuredAttractions = data?.pages.flatMap((p) => p.data) ?? [];
+  const { data: featuredAttractions, isLoading } = useAttractions({ featured: true }, 4);
 
   return (
     <section className="py-24">

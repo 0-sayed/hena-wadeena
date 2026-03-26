@@ -1,0 +1,3 @@
+api.hena-wadeena.online {
+	reverse_proxy gateway:80
+}

@@ -9,7 +9,7 @@
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "postinstall": "lefthook install",
+    "postinstall": "lefthook install || true",
     "dev": "pnpm --filter './services/*' run dev",
     "build": "pnpm --filter './packages/*' run build && pnpm --filter './services/*' run build && pnpm --filter './apps/*' run build",
     "test": "pnpm --filter './services/*' --filter './packages/*' --filter './apps/*' run test",
@@ -39,7 +39,8 @@
   "pnpm": {
     "overrides": {
       "fast-xml-parser": ">=5.5.6",
-      "flatted": ">=3.4.2"
+      "flatted": ">=3.4.2",
+      "picomatch": ">=4.0.4"
     }
   }
 }

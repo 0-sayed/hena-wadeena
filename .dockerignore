@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.git/
+.env
+.env.*
+*.log
+docs/
+coverage/
+.vscode/
+.idea/
+apps/web/
+.claude/

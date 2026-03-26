@@ -74,6 +74,7 @@ function createMockDb(): MockChain {
   for (const method of [
     'select',
     'from',
+    'leftJoin',
     'where',
     'orderBy',
     'limit',
@@ -137,6 +138,12 @@ const mockBooking = {
   cancelReason: null,
   createdAt: new Date('2026-03-20'),
   updatedAt: new Date('2026-03-20'),
+};
+
+const mockBookingListItem = {
+  ...mockBooking,
+  packageTitleAr: 'جولة الواحات',
+  packageTitleEn: 'Oasis Tour',
 };
 
 // ─── BookingsService ────────────────────────────────────────────────────────
@@ -449,8 +456,8 @@ describe('BookingsService', () => {
   // ─── findMyBookings ─────────────────────────────────────────────────────
 
   describe('findMyBookings', () => {
-    it('as tourist: returns bookings where touristId matches', async () => {
-      mockNextQuery([mockBooking]); // data
+    it('as tourist: returns bookings with package titles', async () => {
+      mockNextQuery([mockBookingListItem]); // data (joined)
       mockNextQuery([{ total: 1 }]); // count
 
       const result = await service.findMyBookings(
@@ -459,10 +466,11 @@ describe('BookingsService', () => {
       );
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
+      expect(result.data[0]?.packageTitleAr).toBe('جولة الواحات');
     });
 
     it('as guide: returns bookings where guideId matches', async () => {
-      mockNextQuery([mockBooking]);
+      mockNextQuery([mockBookingListItem]);
       mockNextQuery([{ total: 1 }]);
 
       const result = await service.findMyBookings(
@@ -490,7 +498,7 @@ describe('BookingsService', () => {
 
   describe('adminFindAll', () => {
     it('returns all bookings paginated', async () => {
-      mockNextQuery([mockBooking, { ...mockBooking, id: 'booking-uuid-2' }]);
+      mockNextQuery([mockBookingListItem, { ...mockBookingListItem, id: 'booking-uuid-2' }]);
       mockNextQuery([{ total: 2 }]);
 
       const result = await service.adminFindAll({ offset: 0, limit: 20 });

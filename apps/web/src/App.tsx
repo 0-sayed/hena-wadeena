@@ -93,6 +93,20 @@ const App = () => (
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route
+                element={
+                  <RequireRole
+                    roles={[
+                      UserRole.TOURIST,
+                      UserRole.STUDENT,
+                      UserRole.INVESTOR,
+                      UserRole.RESIDENT,
+                    ]}
+                  />
+                }
+              >
+                <Route path="/tourism/book-package/:packageId" element={<GuideBookingPage />} />
+              </Route>
             </Route>
             {/* Guides */}
             <Route path="/guides" element={<GuidesPage />} />
@@ -141,7 +155,6 @@ const App = () => (
             <Route path="/tourism/attractions" element={<AttractionsPage />} />
             <Route path="/tourism/attraction/:slug" element={<AttractionDetailsPage />} />
             <Route path="/tourism/packages" element={<PackagesPage />} />
-            <Route path="/tourism/guide-booking/:id" element={<GuideBookingPage />} />
             <Route path="/tourism/accommodation/:id" element={<AccommodationDetailsPage />} />
             <Route
               path="/tourism/accommodation-inquiry/:id"

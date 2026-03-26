@@ -91,7 +91,7 @@ CREATE TABLE "guide_booking"."tour_packages" (
 ALTER TABLE "guide_booking"."bookings" ADD CONSTRAINT "bookings_package_id_tour_packages_id_fk" FOREIGN KEY ("package_id") REFERENCES "guide_booking"."tour_packages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guide_booking"."bookings" ADD CONSTRAINT "bookings_guide_id_guides_id_fk" FOREIGN KEY ("guide_id") REFERENCES "guide_booking"."guides"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guide_booking"."guide_availability" ADD CONSTRAINT "guide_availability_guide_id_guides_id_fk" FOREIGN KEY ("guide_id") REFERENCES "guide_booking"."guides"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "guide_booking"."guide_reviews" ADD CONSTRAINT "fk_guide_reviews_booking_guide" FOREIGN KEY ("booking_id","guide_id") REFERENCES "guide_booking"."bookings"("id","guide_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "guide_booking"."guide_reviews" ADD CONSTRAINT "fk_guide_reviews_booking" FOREIGN KEY ("booking_id") REFERENCES "guide_booking"."bookings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guide_booking"."tour_packages" ADD CONSTRAINT "tour_packages_guide_id_guides_id_fk" FOREIGN KEY ("guide_id") REFERENCES "guide_booking"."guides"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_bookings_package_id" ON "guide_booking"."bookings" USING btree ("package_id");--> statement-breakpoint
 CREATE INDEX "idx_bookings_guide_id" ON "guide_booking"."bookings" USING btree ("guide_id");--> statement-breakpoint
@@ -99,7 +99,6 @@ CREATE INDEX "idx_bookings_tourist_id" ON "guide_booking"."bookings" USING btree
 CREATE INDEX "idx_bookings_status" ON "guide_booking"."bookings" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_bookings_booking_date" ON "guide_booking"."bookings" USING btree ("booking_date");--> statement-breakpoint
 CREATE INDEX "idx_bookings_created_at" ON "guide_booking"."bookings" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
-CREATE UNIQUE INDEX "uq_bookings_id_guide_id" ON "guide_booking"."bookings" USING btree ("id","guide_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "uq_guide_availability_guide_date" ON "guide_booking"."guide_availability" USING btree ("guide_id","date");--> statement-breakpoint
 CREATE INDEX "idx_guide_availability_guide_id" ON "guide_booking"."guide_availability" USING btree ("guide_id");--> statement-breakpoint
 CREATE INDEX "idx_guide_availability_date" ON "guide_booking"."guide_availability" USING btree ("date");--> statement-breakpoint

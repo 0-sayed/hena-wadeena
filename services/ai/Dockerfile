@@ -19,7 +19,7 @@ HEALTHCHECK --interval=15s --timeout=10s --retries=5 \
   CMD curl -sf http://localhost:8005/health || exit 1
 
 RUN groupadd --gid 1001 appuser && \
-    useradd --uid 1001 --gid appuser --shell /bin/sh --no-create-home appuser && \
+    useradd --uid 1001 --gid appuser --shell /bin/sh --create-home appuser && \
     chown -R appuser:appuser /app
 USER appuser
 

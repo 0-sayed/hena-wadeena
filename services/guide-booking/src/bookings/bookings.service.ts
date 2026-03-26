@@ -17,6 +17,7 @@ import {
 import { and, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { getTableColumns } from 'drizzle-orm/utils';
 
 import { bookings, guideAvailability, guides, tourPackages } from '../db/schema/index';
 
@@ -25,6 +26,10 @@ import type { CreateBookingDto } from './dto';
 
 type Booking = typeof bookings.$inferSelect;
 type BookingStatus = typeof bookings.$inferSelect.status;
+type BookingListItem = Booking & {
+  packageTitleAr: string | null;
+  packageTitleEn: string | null;
+};
 
 export interface BookingCaller {
   sub: string;
@@ -211,7 +216,7 @@ export class BookingsService {
   async findMyBookings(
     caller: BookingCaller,
     filters: BookingFilters,
-  ): Promise<PaginatedResponse<Booking>> {
+  ): Promise<PaginatedResponse<BookingListItem>> {
     const ownerCondition =
       caller.role === 'guide' && caller.guideId
         ? eq(bookings.guideId, caller.guideId)
@@ -220,14 +225,14 @@ export class BookingsService {
     return this.findBookings([ownerCondition], filters);
   }
 
-  async adminFindAll(filters: BookingFilters): Promise<PaginatedResponse<Booking>> {
+  async adminFindAll(filters: BookingFilters): Promise<PaginatedResponse<BookingListItem>> {
     return this.findBookings([], filters);
   }
 
   private async findBookings(
     baseConditions: SQL[],
     filters: BookingFilters,
-  ): Promise<PaginatedResponse<Booking>> {
+  ): Promise<PaginatedResponse<BookingListItem>> {
     const conditions = [...baseConditions];
 
     if (filters.status) {
@@ -245,8 +250,13 @@ export class BookingsService {
 
     const [data, [countRow]] = await Promise.all([
       this.db
-        .select()
+        .select({
+          ...getTableColumns(bookings),
+          packageTitleAr: tourPackages.titleAr,
+          packageTitleEn: tourPackages.titleEn,
+        })
         .from(bookings)
+        .leftJoin(tourPackages, eq(bookings.packageId, tourPackages.id))
         .where(where)
         .orderBy(desc(bookings.createdAt))
         .limit(filters.limit)

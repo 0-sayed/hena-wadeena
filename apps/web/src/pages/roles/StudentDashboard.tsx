@@ -11,7 +11,7 @@ export default function StudentDashboard() {
   const bookings = data?.data ?? [];
 
   const stats = {
-    bookings: bookings.length,
+    bookings: data?.total ?? bookings.length,
     upcoming: bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending').length,
   };
 

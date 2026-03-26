@@ -23,14 +23,22 @@ import { usePackages } from '@/hooks/use-packages';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { areaLabels, piastresToEgp, formatRating } from '@/lib/format';
 import type { PackageFilters } from '@/services/api';
+import { useCanBook } from '@/hooks/use-bookings';
 
 const PackagesPage = () => {
-  const [filters, setFilters] = useState<Omit<PackageFilters, 'page'>>({ limit: 12 });
+  const [filters, setFilters] = useState<Omit<PackageFilters, 'page' | 'limit'>>({});
 
-  const { data, isLoading, isError, refetch, isFetchingNextPage, hasNextPage, fetchNextPage } =
-    usePackages(filters);
+  const canBook = useCanBook();
 
-  const packages = data?.pages.flatMap((p) => p.data);
+  const {
+    data: packages,
+    isLoading,
+    isError,
+    refetch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = usePackages(filters, 12);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -116,7 +124,7 @@ const PackagesPage = () => {
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-                    {packages?.map((pkg) => (
+                    {packages.map((pkg) => (
                       <Card
                         key={pkg.id}
                         className="hover-lift overflow-hidden rounded-2xl border-border/50 hover:border-primary/40"
@@ -187,8 +195,15 @@ const PackagesPage = () => {
                           <div className="flex justify-between items-center pt-2 border-t border-border/50">
                             <span className="text-xl font-bold text-primary">
                               {piastresToEgp(pkg.price)}
+                              <span className="text-xs font-normal text-muted-foreground mr-1">
+                                / فرد
+                              </span>
                             </span>
-                            <span className="text-xs text-muted-foreground">/ فرد</span>
+                            {canBook && (
+                              <Link to={`/tourism/book-package/${pkg.id}`}>
+                                <Button size="sm">احجز الآن</Button>
+                              </Link>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -196,7 +211,7 @@ const PackagesPage = () => {
                   </div>
                 </SR>
 
-                {packages?.length === 0 && (
+                {packages.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground text-lg">لا توجد باقات متاحة</p>
                   </div>
