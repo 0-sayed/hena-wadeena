@@ -45,6 +45,41 @@ jobs:
       - name: Build
         run: pnpm build
 
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: wadeena_db_test
+          POSTGRES_USER: hena
+          POSTGRES_PASSWORD: hena_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hena"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://hena:hena_dev@localhost:5432/wadeena_db_test
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: ./.github/actions/setup-node-pnpm
+      - name: Initialize database schemas
+        run: psql "$DATABASE_URL" -f scripts/init-schemas.sql
+      - name: Build services
+        run: pnpm build
+      - name: Run all migrations
+        run: |
+          set -euo pipefail
+          for svc in identity market guide-booking map; do
+            echo "==> Migrating $svc"
+            (cd "services/$svc" && node dist/db/migrate.js)
+          done
+
   test:
     name: Test
     runs-on: ubuntu-latest

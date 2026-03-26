@@ -187,27 +187,6 @@
           "with": {},
           "method": "btree",
           "concurrently": false
-        },
-        "uq_bookings_id_guide_id": {
-          "name": "uq_bookings_id_guide_id",
-          "columns": [
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "guide_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
         }
       },
       "foreignKeys": {
@@ -531,18 +510,16 @@
         }
       },
       "foreignKeys": {
-        "fk_guide_reviews_booking_guide": {
-          "name": "fk_guide_reviews_booking_guide",
+        "fk_guide_reviews_booking": {
+          "name": "fk_guide_reviews_booking",
           "tableFrom": "guide_reviews",
           "columnsFrom": [
-            "booking_id",
-            "guide_id"
+            "booking_id"
           ],
           "tableTo": "bookings",
           "schemaTo": "guide_booking",
           "columnsTo": [
-            "id",
-            "guide_id"
+            "id"
           ],
           "onUpdate": "no action",
           "onDelete": "no action"
