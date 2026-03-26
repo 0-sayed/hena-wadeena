@@ -76,6 +76,7 @@ services:
   # ─── NestJS Services ────────────────────────────────────────────────────────
   identity:
     <<: *nestjs-service
+    image: ghcr.io/0-sayed/hena-wadeena/identity:latest
     build:
       context: .
       dockerfile: services/identity/Dockerfile
@@ -85,10 +86,15 @@ services:
       DB_SCHEMA: identity
     healthcheck:
       <<: *nestjs-healthcheck
-      test: ['CMD-SHELL', 'curl -sf http://localhost:8001/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://localhost:8001/health\").then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"',
+        ]
 
   market:
     <<: *nestjs-service
+    image: ghcr.io/0-sayed/hena-wadeena/market:latest
     build:
       context: .
       dockerfile: services/market/Dockerfile
@@ -98,10 +104,15 @@ services:
       DB_SCHEMA: market
     healthcheck:
       <<: *nestjs-healthcheck
-      test: ['CMD-SHELL', 'curl -sf http://localhost:8002/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://localhost:8002/health\").then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"',
+        ]
 
   guide-booking:
     <<: *nestjs-service
+    image: ghcr.io/0-sayed/hena-wadeena/guide-booking:latest
     build:
       context: .
       dockerfile: services/guide-booking/Dockerfile
@@ -111,10 +122,15 @@ services:
       DB_SCHEMA: guide_booking
     healthcheck:
       <<: *nestjs-healthcheck
-      test: ['CMD-SHELL', 'curl -sf http://localhost:8003/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://localhost:8003/health\").then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"',
+        ]
 
   map:
     <<: *nestjs-service
+    image: ghcr.io/0-sayed/hena-wadeena/map:latest
     build:
       context: .
       dockerfile: services/map/Dockerfile
@@ -124,10 +140,15 @@ services:
       DB_SCHEMA: map
     healthcheck:
       <<: *nestjs-healthcheck
-      test: ['CMD-SHELL', 'curl -sf http://localhost:8004/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://localhost:8004/health\").then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"',
+        ]
 
   ai:
     <<: *nestjs-service
+    image: ghcr.io/0-sayed/hena-wadeena/ai:latest
     build:
       context: services/ai
       dockerfile: Dockerfile
@@ -148,12 +169,20 @@ services:
 
   # ─── Gateway ────────────────────────────────────────────────────────────────
   gateway:
+    image: ghcr.io/0-sayed/hena-wadeena/gateway:latest
     build:
       context: gateway
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - '8000:80'
+    environment:
+      - NGINX_ENVSUBST_FILTER=^CORS_|^MAX_|^RATE_
+      - CORS_ORIGINS=${CORS_ORIGINS:-.*}
+      - MAX_BODY_SIZE=${MAX_BODY_SIZE:-10m}
+      - RATE_GLOBAL=${RATE_GLOBAL:-100r/m}
+      - RATE_AUTH=${RATE_AUTH:-5r/m}
+      - RATE_AI=${RATE_AI:-30r/m}
+    expose:
+      - '80'
     depends_on:
       identity:
         condition: service_started
@@ -168,10 +197,33 @@ services:
     networks:
       - hena-internal
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - gateway
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO /dev/null http://localhost:2019/config/ 2>/dev/null']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - hena-internal
+
 volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  caddy-data:
+  caddy-config:
 
 networks:
   hena-internal:

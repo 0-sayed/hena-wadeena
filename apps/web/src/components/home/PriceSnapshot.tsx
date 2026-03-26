@@ -1,23 +1,15 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { ArrowLeft, BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { marketAPI, type PriceItem } from '@/services/api';
 import { SR, FloatingBlob } from '@/components/motion/ScrollReveal';
 import { TableRowSkeleton } from '@/components/motion/Skeleton';
+import { TrendBadge } from '@/components/market/TrendBadge';
+import { usePriceIndex } from '@/hooks/use-price-index';
+import { formatPrice, unitLabel } from '@/lib/format';
 
 export function PriceSnapshot() {
-  const [priceData, setPriceData] = useState<PriceItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    marketAPI
-      .getPrices()
-      .then((r) => setPriceData(r.data.slice(0, 6)))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: entries, isLoading } = usePriceIndex({ region: 'kharga' }, 6);
 
   return (
     <section className="py-24 bg-muted/30 relative overflow-hidden">
@@ -71,45 +63,30 @@ export function PriceSnapshot() {
                     </tr>
                   </thead>
                   <tbody>
-                    {loading
+                    {isLoading
                       ? Array.from({ length: 4 }).map((_, i) => (
                           <TableRowSkeleton key={i} cols={3} />
                         ))
-                      : priceData.map((item, index) => (
+                      : entries.map((entry, index) => (
                           <tr
-                            key={item.name}
-                            className={`hover:bg-muted/20 transition-colors duration-200 ${index !== priceData.length - 1 ? 'border-b border-border/50' : ''}`}
+                            key={entry.commodity.id}
+                            className={`hover:bg-muted/20 transition-colors duration-200 ${index !== entries.length - 1 ? 'border-b border-border/50' : ''}`}
                           >
                             <td className="py-5 px-6">
-                              <span className="font-semibold text-foreground">{item.name}</span>
+                              <span className="font-semibold text-foreground">
+                                {entry.commodity.nameAr}
+                              </span>
                             </td>
                             <td className="py-5 px-6">
                               <span className="font-bold text-lg text-foreground">
-                                {item.price}
+                                {formatPrice(entry.latestPrice)}
                               </span>
                               <span className="text-sm text-muted-foreground mr-1">
-                                جنيه/{item.unit}
+                                جنيه/{unitLabel(entry.commodity.unit)}
                               </span>
                             </td>
                             <td className="py-5 px-6">
-                              <div
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                                  item.change > 0
-                                    ? 'bg-primary/10 text-primary'
-                                    : item.change < 0
-                                      ? 'bg-destructive/10 text-destructive'
-                                      : 'bg-muted text-muted-foreground'
-                                }`}
-                              >
-                                {item.change > 0 ? (
-                                  <TrendingUp className="h-4 w-4" />
-                                ) : item.change < 0 ? (
-                                  <TrendingDown className="h-4 w-4" />
-                                ) : (
-                                  <Minus className="h-4 w-4" />
-                                )}
-                                {Math.abs(item.change)}%
-                              </div>
+                              <TrendBadge changePercent={entry.changePercent} />
                             </td>
                           </tr>
                         ))}

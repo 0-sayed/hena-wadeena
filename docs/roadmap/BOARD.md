@@ -32,14 +32,14 @@
 - [x] **T01** Repo Scaffold + Shared Pkgs · L · ← _no deps_
 - [x] **T02** AI Service Scaffold · M · ← _no deps_
 - [ ] **T02a** Arabic Embedding Validation Spike · S · ← _no deps_
-- [X] **T03** Market Schema Design · S · ← _no deps_
+- [x] **T03** Market Schema Design · S · ← _no deps_
 - [x] **T04** Guide + Map Schema Design · S · ← _no deps_
 - [x] **F00** Move Frontend into Monorepo · S · ← T01
 
 ## Layer 1 — Core Services
 
-- [X] **T05** Identity: Auth Core · M · ← T01
-- [X] **T06** Market: Core CRUD · M · ← T01, T03
+- [x] **T05** Identity: Auth Core · M · ← T01
+- [x] **T06** Market: Core CRUD · M · ← T01, T03
 - [x] **T07** Guide-Booking: Attractions · M · ← T01, T04
 - [ ] **T08** RAG: Ingestion Pipeline · M · ← T02, T02a
 - [x] **F01** Frontend Foundation · M · ← F00
@@ -48,30 +48,27 @@
 
 ## Layer 2 — Service Features
 
-- [ ] **T09** Identity: User Management · M · ← T05
-- [ ] **T10** Market: BizDir + Price Index · M · ← T06
-- [x] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [x] **T09** Identity: User Management · M · ← T05
 - [x] **T10** Market: BizDir + Price Index · M · ← T06
-- [ ] **T11** Guide-Booking: Profiles + Packages · L · ← T07
+- [x] **T11** Guide-Booking: Profiles + Packages · L · ← T07
 - [ ] **T12** RAG: Retrieval + Chat · L · ← T08
-- [ ] **T20** API Gateway (Nginx) · M · ← T05
-- [ ] **F02** Auth Flow Integration · S · ← T05, F01
-- [ ] **F03** Tourism + Guides · M · ← T07, T11, F01
-- [ ] **F04** Market · M · ← T06, T10, F01
+- [x] **T20** API Gateway (Nginx) · M · ← T05
+- [x] **F02** Auth Flow Integration · S · ← T05, F01
+- [x] **F03** Tourism + Guides · M · ← T07, T11, F01
+- [x] **F04** Market · M · ← T06, T10, F01
 - [ ] **F08** AI Chatbot · S · ← T12, F01
-- [ ] **F11** Role Dashboard Wiring · S · ← F02
+- [x] **F11** Role Dashboard Wiring · S · ← F02
 
 ## Layer 3 — Advanced Features
 
-- [ ] **T13** Identity: Notifications + Admin · M · ← T09
-- [ ] **T14** Market: Listing Reviews · M · ← T10
-- [ ] **T15** Guide-Booking: Booking State Machine · M · ← T11
+- [x] **T13** Identity: Notifications + Admin · M · ← T09
+- [x] **T14** Market: Listing Reviews · M · ← T10
+- [x] **T15** Guide-Booking: Booking State Machine · M · ← T11
 - [ ] **T16** Chat Session Management · M · ← T12
 - [x] **T17** Market: Investment CRUD + EOI · M · ← T10
-- [ ] **F06** Guide Booking Flow · S · ← T15, F02, F03
-- [ ] **F07** Notifications + Wallet · S · ← T13, F02
-- [ ] **F13** Pagination + Performance · S · ← F01, F03
+- [x] **F06** Guide Booking Flow · S · ← T15, F02, F03
+- [x] **F07** Notifications + Wallet · S · ← T13, F02
+- [x] **F13** Pagination + Performance · S · ← F01, F03
 
 ## Layer 4 — Secondary Services + Reviews
 

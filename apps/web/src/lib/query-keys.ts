@@ -4,21 +4,38 @@ export const queryKeys = {
   },
   notifications: {
     all: () => ['notifications'] as const,
+    lists: () => ['notifications', 'list'] as const,
+    list: (filters: { page: number; limit: number; unreadOnly?: boolean }) =>
+      [...queryKeys.notifications.lists(), filters] as const,
     unreadCount: () => ['notifications', 'unread-count'] as const,
   },
   tourism: {
     attractions: (filters?: Record<string, unknown>) =>
       ['tourism', 'attractions', filters] as const,
-    attraction: (id: string) => ['tourism', 'attractions', id] as const,
+    attraction: (slug: string) => ['tourism', 'attractions', slug] as const,
   },
   guides: {
     all: (filters?: Record<string, unknown>) => ['guides', filters] as const,
     detail: (id: string) => ['guides', id] as const,
     packages: (guideId: string) => ['guides', guideId, 'packages'] as const,
   },
+  packages: {
+    all: (filters?: Record<string, unknown>) => ['packages', filters] as const,
+    detail: (id: string) => ['packages', id] as const,
+  },
   market: {
     listings: (filters?: Record<string, unknown>) => ['market', 'listings', filters] as const,
     listing: (id: string) => ['market', 'listings', id] as const,
+    priceIndex: (filters?: Record<string, unknown>) => ['market', 'price-index', filters] as const,
+    priceSummary: () => ['market', 'price-summary'] as const,
+    businesses: (filters?: Record<string, unknown>) => ['market', 'businesses', filters] as const,
+    business: (id: string) => ['market', 'businesses', id] as const,
+  },
+  bookings: {
+    mine: (filters?: Record<string, unknown>) =>
+      filters !== undefined
+        ? (['bookings', 'mine', filters] as const)
+        : (['bookings', 'mine'] as const),
   },
   investment: {
     opportunities: (filters?: Record<string, unknown>) =>

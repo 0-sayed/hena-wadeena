@@ -6,6 +6,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -28,7 +29,7 @@ import { UpdateCommodityDto } from './dto/update-commodity.dto';
 
 @Controller('commodities')
 export class CommoditiesController {
-  constructor(private readonly service: CommodityPricesService) {}
+  constructor(@Inject(CommodityPricesService) private readonly service: CommodityPricesService) {}
 
   // Static paths MUST come before /:id
 
@@ -75,7 +76,7 @@ export class CommoditiesController {
 
 @Controller('commodity-prices')
 export class CommodityPricesAdminController {
-  constructor(private readonly service: CommodityPricesService) {}
+  constructor(@Inject(CommodityPricesService) private readonly service: CommodityPricesService) {}
 
   // Static paths MUST come before /:id
 
@@ -110,7 +111,7 @@ export class CommodityPricesAdminController {
 
 @Controller('price-index')
 export class PriceIndexController {
-  constructor(private readonly service: CommodityPricesService) {}
+  constructor(@Inject(CommodityPricesService) private readonly service: CommodityPricesService) {}
 
   // Static paths MUST come before dynamic
 

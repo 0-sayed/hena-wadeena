@@ -7,6 +7,7 @@ export { listings } from './listings';
 export { priceSnapshots } from './price-snapshots';
 export { businessDirectories } from './business-directories';
 export { reviews } from './reviews';
+export { reviewHelpfulVotes } from './review-helpful-votes';
 export { investmentOpportunities } from './investment-opportunities';
 export { investmentApplications } from './investment-applications';
 export { commodities } from './commodities';
@@ -21,6 +22,7 @@ import { commodityPrices } from './commodity-prices';
 import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
 import { listings } from './listings';
+import { reviewHelpfulVotes } from './review-helpful-votes';
 import { reviews } from './reviews';
 
 // --- Relations ---
@@ -29,10 +31,18 @@ export const listingsRelations = relations(listings, ({ many }) => ({
   reviews: many(reviews),
 }));
 
-export const reviewsRelations = relations(reviews, ({ one }) => ({
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
   listing: one(listings, {
     fields: [reviews.listingId],
     references: [listings.id],
+  }),
+  helpfulVotes: many(reviewHelpfulVotes),
+}));
+
+export const reviewHelpfulVotesRelations = relations(reviewHelpfulVotes, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewHelpfulVotes.reviewId],
+    references: [reviews.id],
   }),
 }));
 

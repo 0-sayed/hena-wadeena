@@ -30,4 +30,33 @@ export const auditEventTypeEnum = identitySchema.enum('audit_event_type', [
   'role_changed',
   'account_activated',
   'account_deleted',
+  'kyc_submitted',
+  'kyc_approved',
+  'kyc_rejected',
+]);
+
+export const notificationTypeEnum = identitySchema.enum('notification_type', [
+  'booking_requested',
+  'booking_confirmed',
+  'booking_cancelled',
+  'booking_completed',
+  'review_submitted',
+  'kyc_approved',
+  'kyc_rejected',
+  'system',
+]);
+
+export const kycStatusEnum = identitySchema.enum('kyc_status', [
+  'pending',
+  'under_review',
+  'approved',
+  'rejected',
+]);
+
+export const kycDocTypeEnum = identitySchema.enum('kyc_doc_type', [
+  'national_id',
+  'student_id',
+  'guide_license',
+  'commercial_register',
+  'business_document',
 ]);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import {
   Menu,
   MapPin,
@@ -14,8 +14,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { notificationsAPI, type AuthUser } from '@/services/api';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/hooks/use-auth';
 
 const navigation = [
   { name: 'الرئيسية', href: '/' },
@@ -52,61 +53,16 @@ function ThemeToggle() {
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
-  const navigate = useNavigate();
+  const authCtx = useAuth();
+  const { user } = authCtx;
 
-  // Check if user is logged in
-  const [user, setUser] = useState<AuthUser | null>(null);
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const stored = localStorage.getItem('user');
-    if (!token || !stored) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      setUser(null);
-      setUnreadCount(0);
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(stored) as AuthUser);
-    } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      setUser(null);
-      setUnreadCount(0);
-    }
-  }, [location.pathname]);
-
-  // Fetch unread notification count
-  useEffect(() => {
-    if (user) {
-      notificationsAPI
-        .getUnreadCount()
-        .then((r) => setUnreadCount(r.data.count))
-        .catch(() => {});
-      const interval = setInterval(() => {
-        notificationsAPI
-          .getUnreadCount()
-          .then((r) => setUnreadCount(r.data.count))
-          .catch(() => {});
-      }, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
+  const { data: unreadData } = useUnreadNotificationCount();
+  const unreadCount = unreadData?.count ?? 0;
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setProfileOpen(false);
-    void navigate('/');
   };
 
   return (
@@ -239,7 +195,10 @@ export function Header() {
                       </div>
                       <div className="border-t border-border pt-1">
                         <button
-                          onClick={handleLogout}
+                          onClick={() => {
+                            void authCtx.logout();
+                            setProfileOpen(false);
+                          }}
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         >
                           <LogOut className="h-4 w-4" /> تسجيل الخروج
@@ -357,7 +316,7 @@ export function Header() {
                     </Link>
                     <button
                       onClick={() => {
-                        handleLogout();
+                        void authCtx.logout();
                         setIsOpen(false);
                       }}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"

@@ -1,115 +1,65 @@
+import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
-import { Search, Star, Clock, ArrowRight, MapPin } from 'lucide-react';
+import { AlertCircle, Search, Star, Clock, ArrowRight, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
-
-const allAttractions = [
-  {
-    id: 1,
-    title: 'واحة الخارجة',
-    description:
-      'أكبر واحات الوادي الجديد، تضم آثاراً فرعونية ورومانية فريدة من معبد هيبس ومقابر البجوات',
-    image: 'https://images.unsplash.com/photo-1539768942893-daf53e448371?w=800',
-    rating: 4.8,
-    duration: 'يوم كامل',
-    type: 'أثري',
-    location: 'الخارجة',
-  },
-  {
-    id: 2,
-    title: 'الصحراء البيضاء',
-    description:
-      'تشكيلات صخرية بيضاء ساحرة من الطباشير تحت سماء مليئة بالنجوم، تجربة تخييم لا تُنسى',
-    image: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800',
-    rating: 4.9,
-    duration: '٢-٣ أيام',
-    type: 'طبيعي',
-    location: 'الفرافرة',
-  },
-  {
-    id: 3,
-    title: 'عين السبيل',
-    description:
-      'عين مياه ساخنة طبيعية للاسترخاء والعلاج الطبيعي، مياه كبريتية ذات فوائد صحية متعددة',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
-    rating: 4.6,
-    duration: 'نصف يوم',
-    type: 'استشفائي',
-    location: 'الخارجة',
-  },
-  {
-    id: 4,
-    title: 'معبد الغويطة',
-    description:
-      'معبد بطلمي يعود للقرن السادس قبل الميلاد، يضم نقوشاً فريدة تحكي قصص الآلهة المصرية',
-    image: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800',
-    rating: 4.5,
-    duration: '٣ ساعات',
-    type: 'أثري',
-    location: 'الخارجة',
-  },
-  {
-    id: 5,
-    title: 'الصحراء السوداء',
-    description: 'تلال بركانية سوداء مذهلة تشكّلت منذ ملايين السنين، منظر فريد في قلب الصحراء',
-    image: 'https://images.unsplash.com/photo-1682686581030-7fa4ea2b96c3?w=800',
-    rating: 4.7,
-    duration: 'يوم كامل',
-    type: 'طبيعي',
-    location: 'الباويطي',
-  },
-  {
-    id: 6,
-    title: 'مقابر البجوات',
-    description:
-      'أكبر مقبرة مسيحية في العالم تعود للقرن الرابع الميلادي، تضم 263 قبة مزينة برسوم قبطية',
-    image: 'https://images.unsplash.com/photo-1553913861-c0fddf2619ee?w=800',
-    rating: 4.8,
-    duration: '٣ ساعات',
-    type: 'أثري',
-    location: 'الخارجة',
-  },
-  {
-    id: 7,
-    title: 'بحيرة الكريستال',
-    description: 'بحيرة صافية وسط الصحراء بمياه زرقاء كريستالية، مكان مثالي للسباحة والاسترخاء',
-    image: 'https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=800',
-    rating: 4.6,
-    duration: 'نصف يوم',
-    type: 'طبيعي',
-    location: 'سيوة',
-  },
-  {
-    id: 8,
-    title: 'عين كليوباترا',
-    description: 'عين مياه طبيعية تاريخية يُقال أن الملكة كليوباترا استحمت فيها',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
-    rating: 4.4,
-    duration: 'ساعتين',
-    type: 'استشفائي',
-    location: 'سيوة',
-  },
-];
-
-const types = ['الكل', 'أثري', 'طبيعي', 'استشفائي'];
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useAttractions } from '@/hooks/use-attractions';
+import { useDebouncedCallback } from '@/hooks/use-debounce';
+import {
+  attractionTypeLabels,
+  areaLabels,
+  formatRating,
+  type AttractionType,
+  type AttractionArea,
+} from '@/lib/format';
+import type { AttractionFilters } from '@/services/api';
 
 const AttractionsPage = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('الكل');
+  const [filters, setFilters] = useState<Omit<AttractionFilters, 'page' | 'limit'>>({});
 
-  const filteredAttractions = allAttractions.filter((attraction) => {
-    const matchesSearch =
-      attraction.title.includes(searchQuery) ||
-      attraction.description.includes(searchQuery) ||
-      attraction.location.includes(searchQuery);
-    const matchesType = selectedType === 'الكل' || attraction.type === selectedType;
-    return matchesSearch && matchesType;
+  const {
+    data: attractions,
+    isLoading,
+    isError,
+    refetch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useAttractions(filters, 12);
+
+  const handleTypeChange = (value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      type: value === 'all' ? undefined : (value as AttractionType),
+    }));
+  };
+
+  const handleAreaChange = (value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      area: value === 'all' ? undefined : (value as AttractionArea),
+    }));
+  };
+
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setFilters((prev) => ({ ...prev, search: value || undefined }));
   });
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSetSearch(e.target.value);
+  };
 
   return (
     <Layout>
@@ -137,22 +87,39 @@ const AttractionsPage = () => {
                 <Input
                   placeholder="ابحث عن معلم سياحي..."
                   className="pr-12 h-12"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                 />
               </div>
-              <div className="flex gap-2 flex-wrap">
-                {types.map((type) => (
-                  <Button
-                    key={type}
-                    variant={selectedType === type ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedType(type)}
-                  >
-                    {type}
-                  </Button>
-                ))}
-              </div>
+              <Select onValueChange={handleTypeChange} defaultValue="all">
+                <SelectTrigger className="h-12 w-40">
+                  <SelectValue placeholder="النوع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الأنواع</SelectItem>
+                  {(Object.entries(attractionTypeLabels) as [AttractionType, string][]).map(
+                    ([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+              <Select onValueChange={handleAreaChange} defaultValue="all">
+                <SelectTrigger className="h-12 w-40">
+                  <SelectValue placeholder="المنطقة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع المناطق</SelectItem>
+                  {(Object.entries(areaLabels) as [AttractionArea, string][]).map(
+                    ([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -161,72 +128,90 @@ const AttractionsPage = () => {
       {/* Attractions Grid */}
       <section className="py-12">
         <div className="container px-4">
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-muted-foreground">عرض {filteredAttractions.length} معلم سياحي</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAttractions.map((attraction) => (
-              <Card
-                key={attraction.id}
-                className="group overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer"
-                onClick={() => void navigate(`/tourism/attraction/${attraction.id}`)}
-              >
-                <div className="aspect-[4/3] overflow-hidden relative">
-                  <img
-                    src={attraction.image}
-                    alt={attraction.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <Badge className="absolute top-4 right-4 bg-card/90 text-foreground backdrop-blur-sm">
-                    {attraction.type}
-                  </Badge>
-                </div>
-                <CardContent className="p-5">
-                  <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {attraction.title}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">
-                    {attraction.description}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {attraction.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {attraction.duration}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div className="flex items-center gap-1 text-accent-foreground">
-                      <Star className="h-4 w-4 fill-current" />
-                      <span className="font-medium">{attraction.rating}</span>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      عرض التفاصيل
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredAttractions.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg">لم يتم العثور على نتائج مطابقة لبحثك</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedType('الكل');
-                }}
-              >
-                إعادة تعيين البحث
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-72 rounded-2xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12 space-y-4">
+              <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+              <p className="text-muted-foreground text-lg">حدث خطأ أثناء تحميل المعالم السياحية</p>
+              <Button variant="outline" onClick={() => void refetch()}>
+                إعادة المحاولة
               </Button>
             </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-muted-foreground">عرض {attractions.length} معلم سياحي</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {attractions.map((attraction) => (
+                  <Card
+                    key={attraction.id}
+                    className="group overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => void navigate(`/tourism/attraction/${attraction.slug}`)}
+                  >
+                    <div className="aspect-[4/3] overflow-hidden relative">
+                      <img
+                        src={attraction.thumbnail ?? '/placeholder.jpg'}
+                        alt={attraction.nameAr}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <Badge className="absolute top-4 right-4 bg-card/90 text-foreground backdrop-blur-sm">
+                        {attractionTypeLabels[attraction.type]}
+                      </Badge>
+                    </div>
+                    <CardContent className="p-5">
+                      <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                        {attraction.nameAr}
+                      </h3>
+                      <p className="text-muted-foreground mb-4 line-clamp-2">
+                        {attraction.descriptionAr}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {areaLabels[attraction.area]}
+                        </div>
+                        {attraction.durationHours && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {attraction.durationHours} ساعة
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-border">
+                        <div className="flex items-center gap-1 text-accent-foreground">
+                          <Star className="h-4 w-4 fill-current" />
+                          <span className="font-medium">{formatRating(attraction.ratingAvg)}</span>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          عرض التفاصيل
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {attractions.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground text-lg">
+                    لم يتم العثور على نتائج مطابقة لبحثك
+                  </p>
+                </div>
+              )}
+
+              <LoadMoreButton
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                fetchNextPage={fetchNextPage}
+              />
+            </>
           )}
         </div>
       </section>

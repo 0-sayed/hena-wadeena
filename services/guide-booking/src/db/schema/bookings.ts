@@ -1,16 +1,6 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { sql } from 'drizzle-orm';
-import {
-  check,
-  date,
-  index,
-  integer,
-  text,
-  time,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { check, date, index, integer, text, time, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { bookingStatusEnum } from '../enums';
 import { guideBookingSchema } from '../schema';
@@ -49,6 +39,5 @@ export const bookings = guideBookingSchema.table(
     index('idx_bookings_created_at').on(t.createdAt.desc()),
     check('chk_bookings_total_price_non_neg', sql`${t.totalPrice} >= 0`),
     check('chk_bookings_people_count_positive', sql`${t.peopleCount} >= 1`),
-    uniqueIndex('uq_bookings_id_guide_id').on(t.id, t.guideId),
   ],
 );

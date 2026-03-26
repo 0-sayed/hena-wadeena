@@ -13,8 +13,8 @@ COPY packages/types/package.json packages/types/
 COPY packages/nest-common/package.json packages/nest-common/
 COPY services/market/package.json services/market/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (--ignore-scripts skips lefthook install which needs .git)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY tsconfig.json tsconfig.build.json ./
@@ -43,6 +43,7 @@ COPY --from=build /app/packages/nest-common/package.json packages/nest-common/
 COPY --from=build /app/packages/nest-common/dist packages/nest-common/dist/
 COPY --from=build /app/services/market/package.json services/market/
 COPY --from=build /app/services/market/dist services/market/dist/
+COPY --from=build /app/services/market/drizzle services/market/drizzle/
 
 # Install production deps only
 RUN pnpm install --frozen-lockfile --prod

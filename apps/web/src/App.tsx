@@ -59,10 +59,11 @@ import OpportunityDetailsPage from './pages/investment/OpportunityDetailsPage';
 import ContactPage from './pages/investment/ContactPage';
 
 // Tourism pages
-import GuideBookingPage from './pages/tourism/GuideBookingPage';
-import AccommodationDetailsPage from './pages/tourism/AccommodationDetailsPage';
 import AttractionsPage from './pages/tourism/AttractionsPage';
 import AttractionDetailsPage from './pages/tourism/AttractionDetailsPage';
+import PackagesPage from './pages/tourism/PackagesPage';
+import GuideBookingPage from './pages/tourism/GuideBookingPage';
+import AccommodationDetailsPage from './pages/tourism/AccommodationDetailsPage';
 import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
 
 const queryClient = new QueryClient({
@@ -77,10 +78,10 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Sonner />
-        <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
             {/* Auth */}
@@ -92,6 +93,20 @@ const App = () => (
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route
+                element={
+                  <RequireRole
+                    roles={[
+                      UserRole.TOURIST,
+                      UserRole.STUDENT,
+                      UserRole.INVESTOR,
+                      UserRole.RESIDENT,
+                    ]}
+                  />
+                }
+              >
+                <Route path="/tourism/book-package/:packageId" element={<GuideBookingPage />} />
+              </Route>
             </Route>
             {/* Guides */}
             <Route path="/guides" element={<GuidesPage />} />
@@ -138,8 +153,8 @@ const App = () => (
             {/* Tourism */}
             <Route path="/tourism" element={<TourismPage />} />
             <Route path="/tourism/attractions" element={<AttractionsPage />} />
-            <Route path="/tourism/attraction/:id" element={<AttractionDetailsPage />} />
-            <Route path="/tourism/guide-booking/:id" element={<GuideBookingPage />} />
+            <Route path="/tourism/attraction/:slug" element={<AttractionDetailsPage />} />
+            <Route path="/tourism/packages" element={<PackagesPage />} />
             <Route path="/tourism/accommodation/:id" element={<AccommodationDetailsPage />} />
             <Route
               path="/tourism/accommodation-inquiry/:id"
@@ -164,9 +179,9 @@ const App = () => (
           </Routes>
           {/* AI Chatbot Widget — visible on all pages */}
           <ChatWidget />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

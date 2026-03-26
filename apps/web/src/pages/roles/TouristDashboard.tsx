@@ -1,36 +1,42 @@
-import { Layout } from '@/components/layout/Layout';
-import { RoleCrudBoard } from '@/components/roles/RoleCrudBoard';
-import { MapPinned } from 'lucide-react';
+import { MapPinned, CalendarCheck, Clock, CheckCircle } from 'lucide-react';
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { BookingsCard } from '@/components/dashboard/BookingsCard';
+import { useMyBookings } from '@/hooks/use-my-bookings';
 
 export default function TouristDashboard() {
-  return (
-    <Layout>
-      <div className="container py-8 px-4 space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MapPinned className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">لوحة السائح</h1>
-            <p className="text-muted-foreground">إدارة برامج الرحلات والحجوزات بشكل تجريبي</p>
-          </div>
-        </div>
+  const { data, isLoading, error } = useMyBookings();
+  const bookings = data?.data ?? [];
 
-        <RoleCrudBoard
-          title="CRUD خطط الرحلات"
-          description="تنظيم خطط الزيارة لكل يوم"
-          entityLabel="الخطة"
-          initialItems={[
-            { id: 't-1', name: 'جولة الكثبان الرملية', status: 'active', notes: 'الساعة 8 صباحًا' },
-            {
-              id: 't-2',
-              name: 'زيارة السوق التراثي',
-              status: 'pending',
-              notes: 'بانتظار تأكيد المرشد',
-            },
-          ]}
+  const stats = {
+    total: data?.total ?? bookings.length,
+    upcoming: bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending').length,
+    completed: bookings.filter((b) => b.status === 'completed').length,
+  };
+
+  return (
+    <DashboardShell icon={MapPinned} title="لوحة السائح" subtitle="متابعة حجوزاتك ورحلاتك">
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard
+          label="إجمالي الحجوزات"
+          value={isLoading ? '...' : stats.total}
+          icon={CalendarCheck}
+        />
+        <StatCard
+          label="قادمة"
+          value={isLoading ? '...' : stats.upcoming}
+          icon={Clock}
+          variant="warning"
+        />
+        <StatCard
+          label="مكتملة"
+          value={isLoading ? '...' : stats.completed}
+          icon={CheckCircle}
+          variant="success"
         />
       </div>
-    </Layout>
+
+      <BookingsCard bookings={bookings} isLoading={isLoading} error={error} />
+    </DashboardShell>
   );
 }

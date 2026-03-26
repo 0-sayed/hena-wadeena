@@ -1,24 +1,15 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft, MapPin, Star, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { tourismAPI, type Attraction } from '@/services/api';
 import { SR } from '@/components/motion/ScrollReveal';
 import { CardGridSkeleton } from '@/components/motion/Skeleton';
+import { useAttractions } from '@/hooks/use-attractions';
+import { attractionTypeLabels, formatRating } from '@/lib/format';
 
 export function FeaturedSection() {
-  const [featuredAttractions, setFeaturedAttractions] = useState<Attraction[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    tourismAPI
-      .getFeatured()
-      .then((r) => setFeaturedAttractions(r.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: featuredAttractions, isLoading } = useAttractions({ featured: true }, 4);
 
   return (
     <section className="py-24">
@@ -48,41 +39,45 @@ export function FeaturedSection() {
           </Link>
         </SR>
 
-        {loading ? (
+        {isLoading ? (
           <CardGridSkeleton count={3} />
         ) : (
           <SR stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
             {featuredAttractions.map((attraction) => (
-              <Link key={attraction.id} to={`/tourism/attraction/${attraction.id}`}>
+              <Link key={attraction.id} to={`/tourism/attraction/${attraction.slug}`}>
                 <Card className="group h-full overflow-hidden border-border/50 hover:border-primary/40 hover-lift rounded-2xl hover:shadow-xl transition-all duration-400">
                   <div className="aspect-[4/3] overflow-hidden relative">
                     <img
-                      src={attraction.image}
-                      alt={attraction.title}
+                      src={attraction.thumbnail ?? '/placeholder.jpg'}
+                      alt={attraction.nameAr}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       loading="lazy"
                     />
                     <Badge className="absolute top-4 right-4 glass text-foreground font-medium">
-                      {attraction.type}
+                      {attractionTypeLabels[attraction.type]}
                     </Badge>
                     <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
                   <CardContent className="p-6">
                     <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
-                      {attraction.title}
+                      {attraction.nameAr}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {attraction.description}
+                      {attraction.descriptionAr}
                     </p>
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-1.5 text-accent">
                         <Star className="h-5 w-5 fill-current" />
-                        <span className="font-bold text-base">{attraction.rating}</span>
+                        <span className="font-bold text-base">
+                          {formatRating(attraction.ratingAvg)}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{attraction.duration}</span>
-                      </div>
+                      {attraction.durationHours && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{attraction.durationHours} ساعة</span>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

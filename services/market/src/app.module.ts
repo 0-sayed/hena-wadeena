@@ -21,6 +21,7 @@ import { CommodityPricesModule } from './commodity-prices/commodity-prices.modul
 import { InvestmentApplicationsModule } from './investment-applications/investment-applications.module';
 import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
 import { ListingsModule } from './listings/listings.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 /** Fail fast on missing env var in production; allow empty fallback in dev. */
 function requireEnv(key: string): string {
@@ -63,6 +64,7 @@ function requireEnv(key: string): string {
     BusinessDirectoryModule,
     InvestmentOpportunitiesModule,
     InvestmentApplicationsModule,
+    ReviewsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
