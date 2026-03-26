@@ -94,7 +94,7 @@ jobs:
 
             echo "==> Resetting working tree"
             git reset --hard
-            git clean -fd
+            git clean -fd -e .env
 
             echo "==> Checking out built commit"
             git fetch origin main
