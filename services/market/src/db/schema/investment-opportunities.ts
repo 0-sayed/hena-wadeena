@@ -1,5 +1,5 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { sql } from 'drizzle-orm';
+import { SQL, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
@@ -15,6 +15,8 @@ import {
 
 import { investmentSectorEnum, opportunityStatusEnum } from '../enums';
 import { marketSchema } from '../schema';
+
+import { tsvector } from './types';
 
 export const investmentOpportunities = marketSchema.table(
   'investment_opportunities',
@@ -47,6 +49,10 @@ export const investmentOpportunities = marketSchema.table(
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${investmentOpportunities.titleEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.description}, ''))), 'B') || setweight(to_tsvector('simple', coalesce(${investmentOpportunities.area}, '')), 'C')`,
+    ),
   },
   (t) => [
     check('investment_min_non_negative', sql`${t.minInvestment} >= 0`),
@@ -55,5 +61,8 @@ export const investmentOpportunities = marketSchema.table(
     index('idx_opportunities_status').on(t.status),
     index('idx_opportunities_sector').on(t.sector),
     index('idx_opportunities_owner_id').on(t.ownerId),
+    index('idx_opportunities_search_vector').using('gin', t.searchVector),
+    index('idx_opportunities_title_ar_trgm').using('gin', sql`${t.titleAr} gin_trgm_ops`),
+    index('idx_opportunities_title_en_trgm').using('gin', sql`${t.titleEn} gin_trgm_ops`),
   ],
 );

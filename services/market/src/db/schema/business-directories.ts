@@ -1,8 +1,11 @@
 import { generateId } from '@hena-wadeena/nest-common';
+import { SQL, sql } from 'drizzle-orm';
 import { geometry, index, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { businessStatusEnum, verificationStatusEnum } from '../enums';
 import { marketSchema } from '../schema';
+
+import { tsvector } from './types';
 
 export const businessDirectories = marketSchema.table(
   'business_directories',
@@ -27,6 +30,10 @@ export const businessDirectories = marketSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${businessDirectories.nameAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${businessDirectories.nameEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${businessDirectories.descriptionAr}, ''))), 'B') || setweight(to_tsvector('simple', coalesce(${businessDirectories.description}, '')), 'B') || setweight(to_tsvector('simple', coalesce(${businessDirectories.district}, '')), 'C') || setweight(to_tsvector('simple', coalesce(${businessDirectories.category}, '')), 'C')`,
+    ),
   },
   (t) => [
     index('idx_business_dir_owner_id').on(t.ownerId),
@@ -34,5 +41,8 @@ export const businessDirectories = marketSchema.table(
     index('idx_business_dir_location').using('gist', t.location),
     index('idx_biz_dir_verification_status').on(t.verificationStatus),
     index('idx_biz_dir_district').on(t.district),
+    index('idx_biz_dir_search_vector').using('gin', t.searchVector),
+    index('idx_biz_dir_name_ar_trgm').using('gin', sql`${t.nameAr} gin_trgm_ops`),
+    index('idx_biz_dir_name_en_trgm').using('gin', sql`${t.nameEn} gin_trgm_ops`),
   ],
 );

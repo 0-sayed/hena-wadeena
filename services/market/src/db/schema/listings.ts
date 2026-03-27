@@ -1,5 +1,5 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { sql } from 'drizzle-orm';
+import { SQL, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
@@ -21,6 +21,8 @@ import {
   listingStatusEnum,
 } from '../enums';
 import { marketSchema } from '../schema';
+
+import { tsvector } from './types';
 
 export const listings = marketSchema.table(
   'listings',
@@ -61,6 +63,10 @@ export const listings = marketSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${listings.titleEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.description}, ''))), 'B') || setweight(to_tsvector('simple', coalesce(${listings.address}, '')), 'C') || setweight(to_tsvector('simple', coalesce(${listings.district}, '')), 'C') || setweight(to_tsvector('simple', coalesce(${listings.subCategory}, '')), 'C')`,
+    ),
   },
   (t) => [
     uniqueIndex('listings_slug_active_unique')
@@ -74,5 +80,8 @@ export const listings = marketSchema.table(
     index('idx_listings_location').using('gist', t.location),
     index('idx_listings_tags').using('gin', t.tags),
     check('chk_listings_price_non_neg', sql`${t.price} >= 0`),
+    index('idx_listings_search_vector').using('gin', t.searchVector),
+    index('idx_listings_title_ar_trgm').using('gin', sql`${t.titleAr} gin_trgm_ops`),
+    index('idx_listings_title_en_trgm').using('gin', sql`${t.titleEn} gin_trgm_ops`),
   ],
 );

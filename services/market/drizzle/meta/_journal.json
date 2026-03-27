@@ -36,6 +36,27 @@
       "when": 1774270283303,
       "tag": "20260323125123_new_micromacro",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774585633143,
+      "tag": "20260327042713_normalize-arabic-fn",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774585984660,
+      "tag": "20260327043304_brief_fat_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774587467953,
+      "tag": "20260327045747_fix-normalize-arabic-replacements",
+      "breakpoints": true
     }
   ]
 }
