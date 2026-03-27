@@ -40,36 +40,15 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1774585633143,
-      "tag": "20260327042713_normalize-arabic-fn",
+      "when": 1774592616705,
+      "tag": "20260327062336_normalize-arabic-fn",
       "breakpoints": true
     },
     {
       "idx": 6,
       "version": "7",
-      "when": 1774585984660,
-      "tag": "20260327043304_brief_fat_cobra",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1774587467953,
-      "tag": "20260327045747_fix-normalize-arabic-replacements",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1774590173850,
-      "tag": "20260327054253_stiff_jane_foster",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1774591616146,
-      "tag": "20260327060656_illegal_the_spike",
+      "when": 1774592646188,
+      "tag": "20260327062406_nifty_the_hand",
       "breakpoints": true
     }
   ]

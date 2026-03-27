@@ -1,10 +1,10 @@
--- Fix: replace \u escape sequences in replacement strings with actual Unicode characters.
--- PostgreSQL regexp_replace patterns support \uHHHH syntax but replacement strings do not.
+-- Arabic text normalization function for full-text search
+-- Used by generated tsvector columns on listings, investment_opportunities, business_directories
+-- Strips diacritics, normalizes alef variants, converts taa marbuta, removes tatweel
 
 CREATE OR REPLACE FUNCTION market.normalize_arabic(input text)
 RETURNS text AS $$
-BEGIN
-  RETURN regexp_replace(
+  SELECT regexp_replace(
     regexp_replace(
       regexp_replace(
         regexp_replace(
@@ -18,5 +18,4 @@ BEGIN
     ),
     'ـ', '', 'g'
   );
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+$$ LANGUAGE sql IMMUTABLE STRICT;
