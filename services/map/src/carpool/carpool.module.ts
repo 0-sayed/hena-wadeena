@@ -5,7 +5,7 @@ import { CarpoolService } from './carpool.service';
 import { MyCarpoolController } from './my-carpool.controller';
 
 @Module({
-  controllers: [CarpoolController, MyCarpoolController],
+  controllers: [MyCarpoolController, CarpoolController],
   providers: [CarpoolService],
   exports: [CarpoolService],
 })

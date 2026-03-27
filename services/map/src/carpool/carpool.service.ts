@@ -153,29 +153,44 @@ export class CarpoolService {
       const passenger = await this.findPassengerInternal(passengerId, tx);
       const ride = await this.findRideInternal(rideId, tx);
 
-      if (ride.driverId !== driverId) {
-        throw new ForbiddenException('Only the ride driver can perform this action');
+      if (passenger.rideId !== rideId) {
+        throw new BadRequestException('Passenger does not belong to this ride');
       }
 
-      if (passenger.status !== 'requested') {
-        throw new BadRequestException('Passenger is not in requested status');
+      if (ride.driverId !== driverId) {
+        throw new ForbiddenException('Only the ride driver can perform this action');
       }
 
       const [updatedPassenger] = await tx
         .update(carpoolPassengers)
         .set({ status: 'confirmed' })
-        .where(eq(carpoolPassengers.id, passengerId))
+        .where(
+          and(eq(carpoolPassengers.id, passengerId), eq(carpoolPassengers.status, 'requested')),
+        )
         .returning();
 
-      const newSeatsTaken = ride.seatsTaken + passenger.seats;
-      const newStatus = newSeatsTaken >= ride.seatsTotal ? 'full' : ride.status;
+      if (!updatedPassenger) {
+        throw new ConflictException('Passenger could not be confirmed. Status may have changed.');
+      }
 
-      await tx
+      const [updatedRide] = await tx
         .update(carpoolRides)
-        .set({ seatsTaken: newSeatsTaken, status: newStatus })
-        .where(eq(carpoolRides.id, rideId));
+        .set({
+          seatsTaken: sql`${carpoolRides.seatsTaken} + ${passenger.seats}`,
+          status: sql`CASE WHEN ${carpoolRides.seatsTaken} + ${passenger.seats} >= ${carpoolRides.seatsTotal} THEN 'full' ELSE ${carpoolRides.status} END`,
+        })
+        .where(
+          and(
+            eq(carpoolRides.id, rideId),
+            sql`${carpoolRides.seatsTaken} + ${passenger.seats} <= ${carpoolRides.seatsTotal}`,
+          ),
+        )
+        .returning();
 
-      if (!updatedPassenger) throw new NotFoundException('Passenger not found after update');
+      if (!updatedRide) {
+        throw new BadRequestException('Not enough available seats');
+      }
+
       return updatedPassenger;
     });
   }
@@ -188,84 +203,95 @@ export class CarpoolService {
     const passenger = await this.findPassengerInternal(passengerId);
     const ride = await this.findRideInternal(rideId);
 
-    if (ride.driverId !== driverId) {
-      throw new ForbiddenException('Only the ride driver can perform this action');
+    if (passenger.rideId !== rideId) {
+      throw new BadRequestException('Passenger does not belong to this ride');
     }
 
-    if (passenger.status !== 'requested') {
-      throw new BadRequestException('Passenger is not in requested status');
+    if (ride.driverId !== driverId) {
+      throw new ForbiddenException('Only the ride driver can perform this action');
     }
 
     const [updated] = await this.db
       .update(carpoolPassengers)
       .set({ status: 'declined' })
-      .where(eq(carpoolPassengers.id, passengerId))
+      .where(and(eq(carpoolPassengers.id, passengerId), eq(carpoolPassengers.status, 'requested')))
       .returning();
 
-    if (!updated) throw new NotFoundException('Passenger not found after update');
+    if (!updated) {
+      throw new ConflictException(
+        'Passenger could not be declined. They may have already been confirmed, declined, or cancelled.',
+      );
+    }
     return updated;
   }
 
   async cancelJoin(rideId: string, userId: string): Promise<{ message: string }> {
-    const passengers = await this.db
-      .select()
-      .from(carpoolPassengers)
-      .where(
-        and(
-          eq(carpoolPassengers.rideId, rideId),
-          eq(carpoolPassengers.userId, userId),
-          or(eq(carpoolPassengers.status, 'requested'), eq(carpoolPassengers.status, 'confirmed')),
-        ),
-      );
+    return this.db.transaction(async (tx) => {
+      const [passenger] = await tx
+        .select()
+        .from(carpoolPassengers)
+        .where(
+          and(
+            eq(carpoolPassengers.rideId, rideId),
+            eq(carpoolPassengers.userId, userId),
+            or(
+              eq(carpoolPassengers.status, 'requested'),
+              eq(carpoolPassengers.status, 'confirmed'),
+            ),
+          ),
+        );
 
-    const [passenger] = passengers;
-    if (!passenger) throw new NotFoundException('Join request not found');
+      if (!passenger) throw new NotFoundException('Join request not found');
 
-    await this.db
-      .update(carpoolPassengers)
-      .set({ status: 'cancelled' })
-      .where(eq(carpoolPassengers.id, passenger.id));
+      await tx
+        .update(carpoolPassengers)
+        .set({ status: 'cancelled' })
+        .where(eq(carpoolPassengers.id, passenger.id));
 
-    if (passenger.status === 'confirmed') {
-      const ride = await this.findRideInternal(rideId);
-      const newSeatsTaken = Math.max(0, ride.seatsTaken - passenger.seats);
-      const newStatus =
-        ride.status === 'full' && newSeatsTaken < ride.seatsTotal ? 'open' : ride.status;
+      if (passenger.status === 'confirmed') {
+        await tx
+          .update(carpoolRides)
+          .set({
+            seatsTaken: sql`GREATEST(0, ${carpoolRides.seatsTaken} - ${passenger.seats})`,
+            status: sql`CASE WHEN ${carpoolRides.status} = 'full' AND ${carpoolRides.seatsTaken} - ${passenger.seats} < ${carpoolRides.seatsTotal} THEN 'open' ELSE ${carpoolRides.status} END`,
+          })
+          .where(eq(carpoolRides.id, rideId));
+      }
 
-      await this.db
-        .update(carpoolRides)
-        .set({ seatsTaken: newSeatsTaken, status: newStatus })
-        .where(eq(carpoolRides.id, rideId));
-    }
-
-    return { message: 'Join request cancelled' };
+      return { message: 'Join request cancelled' };
+    });
   }
 
   async cancelRide(rideId: string, driverId: string): Promise<Ride> {
-    const ride = await this.findRideInternal(rideId);
+    return this.db.transaction(async (tx) => {
+      const ride = await this.findRideInternal(rideId, tx);
 
-    if (ride.driverId !== driverId) {
-      throw new ForbiddenException('Only the ride driver can perform this action');
-    }
+      if (ride.driverId !== driverId) {
+        throw new ForbiddenException('Only the ride driver can perform this action');
+      }
 
-    const [cancelled] = await this.db
-      .update(carpoolRides)
-      .set({ status: 'cancelled' })
-      .where(eq(carpoolRides.id, rideId))
-      .returning();
+      const [cancelled] = await tx
+        .update(carpoolRides)
+        .set({ status: 'cancelled' })
+        .where(eq(carpoolRides.id, rideId))
+        .returning();
 
-    await this.db
-      .update(carpoolPassengers)
-      .set({ status: 'cancelled' })
-      .where(
-        and(
-          eq(carpoolPassengers.rideId, rideId),
-          or(eq(carpoolPassengers.status, 'requested'), eq(carpoolPassengers.status, 'confirmed')),
-        ),
-      );
+      await tx
+        .update(carpoolPassengers)
+        .set({ status: 'cancelled' })
+        .where(
+          and(
+            eq(carpoolPassengers.rideId, rideId),
+            or(
+              eq(carpoolPassengers.status, 'requested'),
+              eq(carpoolPassengers.status, 'confirmed'),
+            ),
+          ),
+        );
 
-    if (!cancelled) throw new NotFoundException('Ride not found after update');
-    return cancelled;
+      if (!cancelled) throw new NotFoundException('Ride not found after update');
+      return cancelled;
+    });
   }
 
   async myRides(userId: string): Promise<{ asDriver: Ride[]; asPassenger: Passenger[] }> {
