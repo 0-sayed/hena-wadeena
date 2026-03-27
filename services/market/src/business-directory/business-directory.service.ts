@@ -336,9 +336,8 @@ export class BusinessDirectoryService {
       );
     }
     if (q) {
-      const pattern = `%${q}%`;
       conditions.push(
-        sql`(${businessDirectories.nameAr} ILIKE ${pattern} OR ${businessDirectories.nameEn} ILIKE ${pattern} OR ${businessDirectories.description} ILIKE ${pattern})`,
+        sql`${businessDirectories.searchVector} @@ websearch_to_tsquery('simple', market.normalize_arabic(${q}))`,
       );
     }
 

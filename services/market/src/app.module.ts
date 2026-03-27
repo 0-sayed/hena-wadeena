@@ -22,6 +22,7 @@ import { InvestmentApplicationsModule } from './investment-applications/investme
 import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
 import { ListingsModule } from './listings/listings.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SearchModule } from './search/search.module';
 
 /** Fail fast on missing env var in production; allow empty fallback in dev. */
 function requireEnv(key: string): string {
@@ -65,6 +66,7 @@ function requireEnv(key: string): string {
     InvestmentOpportunitiesModule,
     InvestmentApplicationsModule,
     ReviewsModule,
+    SearchModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
