@@ -189,13 +189,13 @@ export class SearchService {
     }>(sql`
       SELECT l.id, l.title_ar, l.title_en, l.description,
         greatest(
-          similarity(l.title_ar, market.normalize_arabic(${q})),
+          similarity(market.normalize_arabic(l.title_ar), market.normalize_arabic(${q})),
           similarity(coalesce(l.title_en, ''), ${q})
         ) AS rank,
         l.category, l.district, l.status
       FROM market.listings l
       WHERE (
-        similarity(l.title_ar, market.normalize_arabic(${q})) > 0.3
+        similarity(market.normalize_arabic(l.title_ar), market.normalize_arabic(${q})) > 0.3
         OR similarity(coalesce(l.title_en, ''), ${q}) > 0.3
       )
         AND l.status = 'active' AND l.is_published = true AND l.deleted_at IS NULL
@@ -233,13 +233,13 @@ export class SearchService {
     }>(sql`
       SELECT o.id, o.title_ar, o.title_en, o.description,
         greatest(
-          similarity(o.title_ar, market.normalize_arabic(${q})),
+          similarity(market.normalize_arabic(o.title_ar), market.normalize_arabic(${q})),
           similarity(coalesce(o.title_en, ''), ${q})
         ) AS rank,
         o.sector, o.area, o.status
       FROM market.investment_opportunities o
       WHERE (
-        similarity(o.title_ar, market.normalize_arabic(${q})) > 0.3
+        similarity(market.normalize_arabic(o.title_ar), market.normalize_arabic(${q})) > 0.3
         OR similarity(coalesce(o.title_en, ''), ${q}) > 0.3
       )
         AND o.status = 'active'
@@ -277,13 +277,13 @@ export class SearchService {
     }>(sql`
       SELECT b.id, b.name_ar, b.name_en, b.description,
         greatest(
-          similarity(b.name_ar, market.normalize_arabic(${q})),
+          similarity(market.normalize_arabic(b.name_ar), market.normalize_arabic(${q})),
           similarity(coalesce(b.name_en, ''), ${q})
         ) AS rank,
         b.category, b.district, b.status
       FROM market.business_directories b
       WHERE (
-        similarity(b.name_ar, market.normalize_arabic(${q})) > 0.3
+        similarity(market.normalize_arabic(b.name_ar), market.normalize_arabic(${q})) > 0.3
         OR similarity(coalesce(b.name_en, ''), ${q}) > 0.3
       )
         AND b.status = 'active' AND b.verification_status = 'verified' AND b.deleted_at IS NULL
