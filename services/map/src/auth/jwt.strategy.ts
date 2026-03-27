@@ -33,7 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) implements OnModuleD
   }
 
   async validate(payload: JwtPayload): Promise<JwtPayload> {
-    if (!payload.jti) {
+    if (!payload.jti || !payload.sub || !payload.role) {
       throw new UnauthorizedException('Invalid token');
     }
 

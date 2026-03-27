@@ -7,7 +7,6 @@ import {
   REDIS_PREFIX,
   RedisModule,
   RolesGuard,
-  validateEnv,
 } from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -20,11 +19,12 @@ import { ZodValidationPipe } from 'nestjs-zod';
 
 import { JwtStrategy } from './auth/jwt.strategy';
 import { CarpoolModule } from './carpool/carpool.module';
+import { validateMapEnv } from './config/env.config';
 import { PoisModule } from './pois/pois.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ConfigModule.forRoot({ isGlobal: true, validate: validateMapEnv }),
     LoggerModule.forRoot('Map'),
     DrizzleModule.forRoot({
       connectionString: process.env.DATABASE_URL ?? '',
@@ -33,7 +33,7 @@ import { PoisModule } from './pois/pois.module';
     PassportModule,
     JwtModule.register(
       getJwtConfig(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by validateEnv
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by validateMapEnv
         process.env.JWT_ACCESS_SECRET!,
         (process.env.JWT_ACCESS_EXPIRES_IN ?? '15m') as StringValue,
       ),
@@ -57,9 +57,9 @@ import { PoisModule } from './pois/pois.module';
   providers: [
     JwtStrategy,
     { provide: APP_PIPE, useClass: ZodValidationPipe },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}
