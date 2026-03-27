@@ -42,7 +42,7 @@ describe('SearchService', () => {
           metadata: {},
         },
       ],
-      total: 1,
+      hasMore: false,
       query: 'فندق',
     });
     mockRedis.get.mockResolvedValueOnce(cachedData);
@@ -51,7 +51,7 @@ describe('SearchService', () => {
 
     expect(result.data).toHaveLength(1);
     expect(result.data[0]!.type).toBe('listing');
-    expect(mockDb.select).not.toHaveBeenCalled();
+    expect(mockDb.execute).not.toHaveBeenCalled();
   });
 
   it('generates deterministic cache keys', () => {
