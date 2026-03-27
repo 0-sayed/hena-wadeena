@@ -147,7 +147,7 @@ export class SearchService {
       FROM market.business_directories b,
         websearch_to_tsquery('simple', market.normalize_arabic(${q})) AS query
       WHERE b.search_vector @@ query
-        AND b.status = 'active' AND b.deleted_at IS NULL
+        AND b.status = 'active' AND b.verification_status = 'verified' AND b.deleted_at IS NULL
       ORDER BY rank DESC
       LIMIT ${limit}
     `);
@@ -286,7 +286,7 @@ export class SearchService {
         similarity(b.name_ar, market.normalize_arabic(${q})) > 0.3
         OR similarity(coalesce(b.name_en, ''), ${q}) > 0.3
       )
-        AND b.status = 'active' AND b.deleted_at IS NULL
+        AND b.status = 'active' AND b.verification_status = 'verified' AND b.deleted_at IS NULL
         ${excludeList ? sql`AND b.id NOT IN (${excludeList})` : sql``}
       ORDER BY rank DESC
       LIMIT ${limit}
