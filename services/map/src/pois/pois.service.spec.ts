@@ -1,4 +1,3 @@
-import type { RedisStreamsService } from '@hena-wadeena/nest-common';
 import { EVENTS } from '@hena-wadeena/types';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -66,7 +65,7 @@ describe('PoisService', () => {
   beforeEach(() => {
     mockDb = createMockDb();
     mockRedisStreams = { publish: vi.fn().mockResolvedValue(undefined) };
-    service = new PoisService(mockDb as never, mockRedisStreams as unknown as RedisStreamsService);
+    service = new PoisService(mockDb as never, mockRedisStreams as any);
   });
 
   describe('findAll', () => {

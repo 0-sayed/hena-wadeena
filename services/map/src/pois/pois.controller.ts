@@ -11,6 +11,7 @@ export class PoisController {
   @Public()
   @Get()
   findAll(@Query() filters: PoiFiltersDto) {
+    filters.status = 'approved';
     return this.poisService.findAll(filters);
   }
 

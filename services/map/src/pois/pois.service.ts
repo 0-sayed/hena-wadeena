@@ -97,11 +97,7 @@ export class PoisService {
   }
 
   async approve(id: string, adminId: string): Promise<Poi> {
-    const existing = await this.findByIdInternal(id);
-
-    if (existing.status !== 'pending') {
-      throw new BadRequestException('POI is not pending');
-    }
+    await this.findByIdInternal(id);
 
     const [approved] = await this.db
       .update(pointsOfInterest)
@@ -110,10 +106,10 @@ export class PoisService {
         approvedBy: adminId,
         updatedAt: new Date(),
       })
-      .where(eq(pointsOfInterest.id, id))
+      .where(and(eq(pointsOfInterest.id, id), eq(pointsOfInterest.status, 'pending')))
       .returning();
 
-    if (!approved) throw new Error('Update did not return a row');
+    if (!approved) throw new BadRequestException('POI is not pending or was already processed');
 
     this.redisStreams
       .publish(EVENTS.POI_APPROVED, {
@@ -131,19 +127,15 @@ export class PoisService {
   }
 
   async reject(id: string): Promise<Poi> {
-    const existing = await this.findByIdInternal(id);
-
-    if (existing.status !== 'pending') {
-      throw new BadRequestException('POI is not pending');
-    }
+    await this.findByIdInternal(id);
 
     const [row] = await this.db
       .update(pointsOfInterest)
       .set({ status: 'rejected', updatedAt: new Date() })
-      .where(eq(pointsOfInterest.id, id))
+      .where(and(eq(pointsOfInterest.id, id), eq(pointsOfInterest.status, 'pending')))
       .returning();
 
-    if (!row) throw new Error('Update did not return a row');
+    if (!row) throw new BadRequestException('POI is not pending or was already processed');
     return row;
   }
 
