@@ -65,7 +65,7 @@ export const listings = marketSchema.table(
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     searchVector: tsvector('search_vector').generatedAlwaysAs(
       (): SQL =>
-        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${listings.titleEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.description}, ''))), 'B') || setweight(to_tsvector('simple', coalesce(${listings.address}, '')), 'C') || setweight(to_tsvector('simple', coalesce(${listings.district}, '')), 'C') || setweight(to_tsvector('simple', coalesce(${listings.subCategory}, '')), 'C')`,
+        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${listings.titleEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.description}, ''))), 'B') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.address}, ''))), 'C') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.district}, ''))), 'C') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${listings.subCategory}, ''))), 'C')`,
     ),
   },
   (t) => [

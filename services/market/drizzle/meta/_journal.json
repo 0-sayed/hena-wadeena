@@ -57,6 +57,13 @@
       "when": 1774587467953,
       "tag": "20260327045747_fix-normalize-arabic-replacements",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774590173850,
+      "tag": "20260327054253_stiff_jane_foster",
+      "breakpoints": true
     }
   ]
 }

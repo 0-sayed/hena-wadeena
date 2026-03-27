@@ -51,7 +51,7 @@ export const investmentOpportunities = marketSchema.table(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     searchVector: tsvector('search_vector').generatedAlwaysAs(
       (): SQL =>
-        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${investmentOpportunities.titleEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.description}, ''))), 'B') || setweight(to_tsvector('simple', coalesce(${investmentOpportunities.area}, '')), 'C')`,
+        sql`setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${investmentOpportunities.titleEn}, '')), 'A') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.description}, ''))), 'B') || setweight(to_tsvector('simple', market.normalize_arabic(coalesce(${investmentOpportunities.area}, ''))), 'C')`,
     ),
   },
   (t) => [
