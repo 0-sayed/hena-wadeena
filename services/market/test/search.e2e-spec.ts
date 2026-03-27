@@ -249,7 +249,7 @@ describe('Internal Search (e2e)', () => {
         .expect(200);
 
       expect(res.body.data).toEqual([]);
-      expect(res.body.total).toBe(0);
+      expect(res.body.hasMore).toBe(false);
     });
   });
 });

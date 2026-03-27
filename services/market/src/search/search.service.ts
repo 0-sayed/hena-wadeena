@@ -52,7 +52,7 @@ export class SearchService {
     const paginated = finalResults.slice(offset, offset + limit);
     const response: SearchResponse = {
       data: paginated,
-      total: finalResults.length,
+      hasMore: finalResults.length > offset + limit,
       query: q,
     };
 
