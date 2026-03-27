@@ -75,7 +75,7 @@ export class SearchService {
       status: string;
     }>(sql`
       SELECT l.id, l.title_ar, l.title_en,
-        ts_headline('simple', coalesce(l.description, ''), query, 'MaxFragments=2, MaxWords=30') AS snippet,
+        ts_headline('simple', market.normalize_arabic(coalesce(l.description, '')), query, 'MaxFragments=2, MaxWords=30') AS snippet,
         ts_rank_cd(l.search_vector, query) AS rank,
         l.category, l.district, l.status
       FROM market.listings l,
@@ -108,7 +108,7 @@ export class SearchService {
       status: string;
     }>(sql`
       SELECT o.id, o.title_ar, o.title_en,
-        ts_headline('simple', coalesce(o.description, ''), query, 'MaxFragments=2, MaxWords=30') AS snippet,
+        ts_headline('simple', market.normalize_arabic(coalesce(o.description, '')), query, 'MaxFragments=2, MaxWords=30') AS snippet,
         ts_rank_cd(o.search_vector, query) AS rank,
         o.sector, o.area, o.status
       FROM market.investment_opportunities o,
@@ -141,7 +141,7 @@ export class SearchService {
       status: string;
     }>(sql`
       SELECT b.id, b.name_ar, b.name_en,
-        ts_headline('simple', coalesce(b.description, coalesce(b.description_ar, '')), query, 'MaxFragments=2, MaxWords=30') AS snippet,
+        ts_headline('simple', market.normalize_arabic(coalesce(b.description, coalesce(b.description_ar, ''))), query, 'MaxFragments=2, MaxWords=30') AS snippet,
         ts_rank_cd(b.search_vector, query) AS rank,
         b.category, b.district, b.status
       FROM market.business_directories b,
