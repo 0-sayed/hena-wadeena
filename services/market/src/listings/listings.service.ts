@@ -16,11 +16,17 @@ import { getTableColumns } from 'drizzle-orm/utils';
 
 import { listings } from '../db/schema/listings';
 
+// Exclude searchVector (tsvector generated column) from query results
+const allColumns = getTableColumns(listings);
+const listingColumns = Object.fromEntries(
+  Object.entries(allColumns).filter(([key]) => key !== 'searchVector'),
+) as Omit<typeof allColumns, 'searchVector'>;
+
 import { CreateListingDto } from './dto/create-listing.dto';
 import { ImageUploadDto, NearbyQueryDto, QueryListingsDto } from './dto/query-listings.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 
-type Listing = typeof listings.$inferSelect;
+type Listing = Omit<typeof listings.$inferSelect, 'searchVector'>;
 type InsertListing = typeof listings.$inferInsert;
 
 const SORTABLE_FIELDS = {
@@ -94,7 +100,7 @@ export class ListingsService {
   /** Raw find by id — ignores status, used for ownership checks */
   private async findRaw(id: string): Promise<Listing | null> {
     const [listing] = await this.db
-      .select()
+      .select(listingColumns)
       .from(listings)
       .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
       .limit(1);
@@ -163,7 +169,7 @@ export class ListingsService {
 
   async findById(id: string, callerId?: string): Promise<Listing | null> {
     const [listing] = await this.db
-      .select()
+      .select(listingColumns)
       .from(listings)
       .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
       .limit(1);
@@ -176,7 +182,7 @@ export class ListingsService {
 
   async findBySlug(slug: string, callerId?: string): Promise<Listing | null> {
     const [listing] = await this.db
-      .select()
+      .select(listingColumns)
       .from(listings)
       .where(and(eq(listings.slug, slug), isNull(listings.deletedAt)))
       .limit(1);
@@ -192,7 +198,7 @@ export class ListingsService {
 
     const [results, total] = await Promise.all([
       this.db
-        .select()
+        .select(listingColumns)
         .from(listings)
         .where(filters)
         .orderBy(orderBy)
@@ -213,7 +219,7 @@ export class ListingsService {
 
     const [results, total] = await Promise.all([
       this.db
-        .select()
+        .select(listingColumns)
         .from(listings)
         .where(filters)
         .orderBy(desc(listings.createdAt))
@@ -246,7 +252,7 @@ export class ListingsService {
 
     const [results, countResult] = await Promise.all([
       this.db
-        .select({ ...getTableColumns(listings), distance_km: distanceExpr })
+        .select({ ...listingColumns, distance_km: distanceExpr })
         .from(listings)
         .where(nearbyFilters)
         .orderBy(distanceExpr)

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { SQL, and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { getTableColumns } from 'drizzle-orm/utils';
 import Redis from 'ioredis';
 
 import { businessCommodities } from '../db/schema/business-commodities';
@@ -24,7 +25,10 @@ import { QueryBusinessesDto } from './dto/query-businesses.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { VerifyBusinessDto } from './dto/verify-business.dto';
 
-type BusinessDirectory = typeof businessDirectories.$inferSelect;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { searchVector, ...bizDirColumns } = getTableColumns(businessDirectories);
+
+type BusinessDirectory = Omit<typeof businessDirectories.$inferSelect, 'searchVector'>;
 type InsertBusinessDirectory = typeof businessDirectories.$inferInsert;
 
 export interface LinkedCommodity {
@@ -110,7 +114,7 @@ export class BusinessDirectoryService {
 
   private async findByIdOrThrow(id: string): Promise<BusinessDirectory> {
     const [business] = await this.db
-      .select()
+      .select(bizDirColumns)
       .from(businessDirectories)
       .where(andRequired(eq(businessDirectories.id, id), isNull(businessDirectories.deletedAt)))
       .limit(1);
@@ -270,7 +274,7 @@ export class BusinessDirectoryService {
 
   async findById(id: string): Promise<BusinessDirectory & { commodities: LinkedCommodity[] }> {
     const [business] = await this.db
-      .select()
+      .select(bizDirColumns)
       .from(businessDirectories)
       .where(
         andRequired(
@@ -344,7 +348,7 @@ export class BusinessDirectoryService {
     const whereClause = and(...conditions);
 
     const rows = await this.db
-      .select()
+      .select(bizDirColumns)
       .from(businessDirectories)
       .where(whereClause)
       .orderBy(businessDirectories.createdAt)
@@ -372,7 +376,7 @@ export class BusinessDirectoryService {
 
   async findMine(userId: string): Promise<BusinessDirectory[]> {
     return this.db
-      .select()
+      .select(bizDirColumns)
       .from(businessDirectories)
       .where(
         andRequired(eq(businessDirectories.ownerId, userId), isNull(businessDirectories.deletedAt)),
@@ -391,7 +395,7 @@ export class BusinessDirectoryService {
     );
 
     const rows = await this.db
-      .select()
+      .select(bizDirColumns)
       .from(businessDirectories)
       .where(condition)
       .orderBy(businessDirectories.createdAt)
