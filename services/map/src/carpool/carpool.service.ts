@@ -243,10 +243,25 @@ export class CarpoolService {
 
       if (!passenger) throw new NotFoundException('Join request not found');
 
-      await tx
+      const [cancelled] = await tx
         .update(carpoolPassengers)
         .set({ status: 'cancelled' })
-        .where(eq(carpoolPassengers.id, passenger.id));
+        .where(
+          and(
+            eq(carpoolPassengers.id, passenger.id),
+            or(
+              eq(carpoolPassengers.status, 'requested'),
+              eq(carpoolPassengers.status, 'confirmed'),
+            ),
+          ),
+        )
+        .returning();
+
+      if (!cancelled) {
+        throw new ConflictException(
+          'Join request could not be cancelled. Status may have changed.',
+        );
+      }
 
       if (passenger.status === 'confirmed') {
         await tx
@@ -344,7 +359,7 @@ export class CarpoolService {
 
     if (filters.date) {
       const dayStart = new Date(`${filters.date}T00:00:00Z`);
-      const dayEnd = new Date(`${filters.date}T23:59:59.999Z`);
+      const dayEnd = new Date(dayStart.getTime() + 86_400_000);
       conditions.push(gte(carpoolRides.departureTime, dayStart));
       conditions.push(lt(carpoolRides.departureTime, dayEnd));
     }
