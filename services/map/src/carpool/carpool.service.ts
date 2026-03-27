@@ -200,29 +200,33 @@ export class CarpoolService {
     passengerId: string,
     driverId: string,
   ): Promise<Passenger> {
-    const passenger = await this.findPassengerInternal(passengerId);
-    const ride = await this.findRideInternal(rideId);
+    return this.db.transaction(async (tx) => {
+      const passenger = await this.findPassengerInternal(passengerId, tx);
+      const ride = await this.findRideInternal(rideId, tx);
 
-    if (passenger.rideId !== rideId) {
-      throw new BadRequestException('Passenger does not belong to this ride');
-    }
+      if (passenger.rideId !== rideId) {
+        throw new BadRequestException('Passenger does not belong to this ride');
+      }
 
-    if (ride.driverId !== driverId) {
-      throw new ForbiddenException('Only the ride driver can perform this action');
-    }
+      if (ride.driverId !== driverId) {
+        throw new ForbiddenException('Only the ride driver can perform this action');
+      }
 
-    const [updated] = await this.db
-      .update(carpoolPassengers)
-      .set({ status: 'declined' })
-      .where(and(eq(carpoolPassengers.id, passengerId), eq(carpoolPassengers.status, 'requested')))
-      .returning();
+      const [updated] = await tx
+        .update(carpoolPassengers)
+        .set({ status: 'declined' })
+        .where(
+          and(eq(carpoolPassengers.id, passengerId), eq(carpoolPassengers.status, 'requested')),
+        )
+        .returning();
 
-    if (!updated) {
-      throw new ConflictException(
-        'Passenger could not be declined. They may have already been confirmed, declined, or cancelled.',
-      );
-    }
-    return updated;
+      if (!updated) {
+        throw new ConflictException(
+          'Passenger could not be declined. They may have already been confirmed, declined, or cancelled.',
+        );
+      }
+      return updated;
+    });
   }
 
   async cancelJoin(rideId: string, userId: string): Promise<{ message: string }> {
