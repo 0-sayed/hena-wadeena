@@ -93,7 +93,7 @@ export class CarpoolService {
         destination: { x: dto.destination.lng, y: dto.destination.lat },
         originName: dto.originName,
         destinationName: dto.destinationName,
-        departureTime: dto.departureTime,
+        departureTime: new Date(dto.departureTime),
         seatsTotal: dto.seatsTotal,
         pricePerSeat: dto.pricePerSeat,
         notes: dto.notes,
