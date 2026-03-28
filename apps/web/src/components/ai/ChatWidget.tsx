@@ -80,7 +80,10 @@ export function ChatWidget() {
 
         if (savedSessionId) {
           try {
-            const session = await aiAPI.getSession(savedSessionId);
+            const firstPage = await aiAPI.getSession(savedSessionId, 1, 20);
+            const totalPages = firstPage.pagination.total_pages;
+            const session =
+              totalPages > 1 ? await aiAPI.getSession(savedSessionId, totalPages, 20) : firstPage;
             setSessionId(savedSessionId);
             const restored = mapSessionMessages(session);
             setMessages(restored);

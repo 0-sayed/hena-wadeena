@@ -202,17 +202,23 @@ async def delete_document(
         )
     except Exception as exc:
         logger.exception("Partial delete failure for document {}", doc_id)
-        await mongo.collection("audit_logs").insert_one(
-            {
-                "event": "document_delete_failed",
-                "doc_id": doc_id,
-                "created_at": deleted_at,
-                "partial_failure": True,
-                "qdrant_ids": qdrant_ids,
-                "qdrant_deleted": qdrant_deleted,
-                "error": str(exc),
-            }
-        )
+        try:
+            await mongo.collection("audit_logs").insert_one(
+                {
+                    "event": "document_delete_failed",
+                    "doc_id": doc_id,
+                    "created_at": deleted_at,
+                    "partial_failure": True,
+                    "qdrant_ids": qdrant_ids,
+                    "qdrant_deleted": qdrant_deleted,
+                    "error": str(exc),
+                }
+            )
+        except Exception as audit_exc:
+            logger.opt(exception=audit_exc).warning(
+                "Failed to persist delete-failure audit log for document {}",
+                doc_id,
+            )
         raise
     return {
         "doc_id": doc_id,

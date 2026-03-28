@@ -111,6 +111,86 @@ describe('ChatWidget', () => {
     expect(screen.getByText('Welcome from test')).toBeInTheDocument();
   });
 
+
+  it('restores the most recent session page when history spans multiple pages', async () => {
+    mockUseAuth.mockReturnValue({
+      ...buildUnauthedContext(),
+      user: {
+        id: 'user-1',
+        email: 'user-1@example.com',
+        phone: '+2000000000',
+        full_name: 'User One',
+        role: UserRole.TOURIST,
+        status: 'active',
+        language: 'en',
+      },
+      isAuthenticated: true,
+    });
+
+    localStorage.setItem('ai_chat_session:user-1', 'sess-1');
+
+    mockGetSession
+      .mockResolvedValueOnce({
+        session_id: 'sess-1',
+        user_id: 'user-1',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_active: true,
+        message_count: 45,
+        messages: [
+          {
+            message_id: 'old-msg-1',
+            role: 'assistant',
+            content: 'Old page content',
+            language: 'en',
+            created_at: new Date().toISOString(),
+            sources: [],
+          },
+        ],
+        pagination: {
+          page: 1,
+          per_page: 20,
+          total_messages: 45,
+          total_pages: 3,
+        },
+      })
+      .mockResolvedValueOnce({
+        session_id: 'sess-1',
+        user_id: 'user-1',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_active: true,
+        message_count: 45,
+        messages: [
+          {
+            message_id: 'recent-msg-1',
+            role: 'assistant',
+            content: 'Most recent page content',
+            language: 'en',
+            created_at: new Date().toISOString(),
+            sources: [],
+          },
+        ],
+        pagination: {
+          page: 3,
+          per_page: 20,
+          total_messages: 45,
+          total_pages: 3,
+        },
+      });
+
+    renderWidget();
+    fireEvent.click(screen.getByLabelText('AI assistant'));
+
+    await waitFor(() => {
+      expect(mockGetSession).toHaveBeenCalledTimes(2);
+    });
+
+    expect(mockGetSession).toHaveBeenNthCalledWith(1, 'sess-1', 1, 20);
+    expect(mockGetSession).toHaveBeenNthCalledWith(2, 'sess-1', 3, 20);
+    expect(mockCreateSession).not.toHaveBeenCalled();
+    expect(screen.getByText('Most recent page content')).toBeInTheDocument();
+  });
   it('sends messages through session endpoint and appends assistant reply', async () => {
     mockUseAuth.mockReturnValue({
       ...buildUnauthedContext(),
