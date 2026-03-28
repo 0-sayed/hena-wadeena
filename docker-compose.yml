@@ -211,8 +211,7 @@ services:
     expose:
       - '80'
     depends_on:
-      # --- NestJS Services ---
-  identity:
+      identity:
         condition: service_started
       market:
         condition: service_started
@@ -257,6 +256,7 @@ volumes:
 networks:
   hena-internal:
     driver: bridge
+
 
 
 
