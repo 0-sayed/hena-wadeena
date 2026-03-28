@@ -13,37 +13,37 @@ import {
 } from '@/components/ui/table';
 import type { CarpoolRide } from '@/services/api';
 
-// Demo data matching CarpoolRide interface — will be replaced by mapAPI.getCarpoolRides() when Map service is ready
+// Demo data matching CarpoolRide interface — will be replaced by mapAPI.getRides() when Map service is ready
 const DEMO_RIDES: CarpoolRide[] = [
   {
-    id: 1,
-    driver_id: 'demo',
-    driver_name: 'أنت',
-    origin_name: 'الداخلة',
-    destination_name: 'الخارجة',
-    origin: { lat: 25.49, lng: 29.0 },
-    destination: { lat: 25.44, lng: 30.56 },
-    departure_time: '2026-03-22T08:00:00Z',
-    seats_total: 4,
-    seats_taken: 2,
-    price_per_seat: 15000,
+    id: 'demo-1',
+    driverId: 'demo',
+    originName: 'الداخلة',
+    destinationName: 'الخارجة',
+    origin: { x: 29.0, y: 25.49 },
+    destination: { x: 30.56, y: 25.44 },
+    departureTime: '2026-03-22T08:00:00Z',
+    seatsTotal: 4,
+    seatsTaken: 2,
+    pricePerSeat: 15000,
+    notes: null,
     status: 'open',
-    car_model: 'تويوتا هايلكس',
+    createdAt: '2026-03-20T00:00:00Z',
   },
   {
-    id: 2,
-    driver_id: 'demo',
-    driver_name: 'أنت',
-    origin_name: 'الخارجة',
-    destination_name: 'الفرافرة',
-    origin: { lat: 25.44, lng: 30.56 },
-    destination: { lat: 27.06, lng: 27.97 },
-    departure_time: '2026-03-23T06:30:00Z',
-    seats_total: 3,
-    seats_taken: 0,
-    price_per_seat: 25000,
+    id: 'demo-2',
+    driverId: 'demo',
+    originName: 'الخارجة',
+    destinationName: 'الفرافرة',
+    origin: { x: 30.56, y: 25.44 },
+    destination: { x: 27.97, y: 27.06 },
+    departureTime: '2026-03-23T06:30:00Z',
+    seatsTotal: 3,
+    seatsTaken: 0,
+    pricePerSeat: 25000,
+    notes: null,
     status: 'open',
-    car_model: 'نيسان باترول',
+    createdAt: '2026-03-20T00:00:00Z',
   },
 ];
 
@@ -61,8 +61,8 @@ export default function DriverDashboard() {
   const rides = DEMO_RIDES;
   const stats = {
     total: rides.length,
-    available: rides.reduce((sum, r) => sum + (r.seats_total - r.seats_taken), 0),
-    booked: rides.reduce((sum, r) => sum + r.seats_taken, 0),
+    available: rides.reduce((sum, r) => sum + (r.seatsTotal - r.seatsTaken), 0),
+    booked: rides.reduce((sum, r) => sum + r.seatsTaken, 0),
   };
 
   return (
@@ -99,20 +99,20 @@ export default function DriverDashboard() {
                 return (
                   <TableRow key={ride.id}>
                     <TableCell className="font-medium">
-                      {ride.origin_name} ← {ride.destination_name}
+                      {ride.originName} ← {ride.destinationName}
                     </TableCell>
                     <TableCell dir="ltr" className="text-right">
-                      {new Date(ride.departure_time).toLocaleDateString('ar-EG', {
+                      {new Date(ride.departureTime).toLocaleDateString('ar-EG', {
                         weekday: 'short',
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </TableCell>
                     <TableCell>
-                      {ride.seats_taken}/{ride.seats_total}
+                      {ride.seatsTaken}/{ride.seatsTotal}
                     </TableCell>
                     <TableCell dir="ltr" className="text-right">
-                      {(ride.price_per_seat / 100).toFixed(0)} ج.م
+                      {(ride.pricePerSeat / 100).toFixed(0)} ج.م
                     </TableCell>
                     <TableCell>
                       <Badge variant={st.variant}>{st.label}</Badge>

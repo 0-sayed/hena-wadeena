@@ -45,10 +45,8 @@ import ResidentDashboard from './pages/roles/ResidentDashboard';
 import SearchResultsPage from './pages/search/SearchResultsPage';
 
 // Logistics pages
-import CreateTripPage from './pages/logistics/CreateTripPage';
-import BookTripPage from './pages/logistics/BookTripPage';
-import RouteDetailsPage from './pages/logistics/RouteDetailsPage';
-import StationDetailsPage from './pages/logistics/StationDetailsPage';
+import CreateRidePage from './pages/logistics/CreateRidePage';
+import RideDetailPage from './pages/logistics/RideDetailPage';
 
 // Marketplace pages
 import PricesPage from './pages/marketplace/PricesPage';
@@ -162,10 +160,8 @@ const App = () => (
             />
             {/* Logistics */}
             <Route path="/logistics" element={<LogisticsPage />} />
-            <Route path="/logistics/create-trip" element={<CreateTripPage />} />
-            <Route path="/logistics/book/:id" element={<BookTripPage />} />
-            <Route path="/logistics/route/:id" element={<RouteDetailsPage />} />
-            <Route path="/logistics/station/:id" element={<StationDetailsPage />} />
+            <Route path="/logistics/create-ride" element={<CreateRidePage />} />
+            <Route path="/logistics/ride/:id" element={<RideDetailPage />} />
             {/* Marketplace */}
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/marketplace/prices" element={<PricesPage />} />
