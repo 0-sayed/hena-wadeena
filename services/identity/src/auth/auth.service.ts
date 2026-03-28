@@ -321,6 +321,7 @@ export class AuthService {
 
   private async getKycStatus(userId: string): Promise<string | undefined> {
     const submissions = await this.kycService.findByUser(userId);
+    if (submissions.some((s) => s.status === 'approved')) return 'approved';
     return submissions.at(-1)?.status;
   }
 
