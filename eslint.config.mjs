@@ -66,12 +66,13 @@ export default tseslint.config(
   },
   {
     // Test files: mocks legitimately need escape hatches
-    files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
+    files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts', '**/test/e2e-helpers.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-type-assertion': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
