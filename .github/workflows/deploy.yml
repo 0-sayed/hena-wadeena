@@ -84,13 +84,11 @@ jobs:
           : "${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is not set}"
           : "${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is not set}"
           : "${OPENAI_API_KEY:?OPENAI_API_KEY is not set}"
-          : "${CORS_ORIGINS:?CORS_ORIGINS is not set}"
         env:
           MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
           MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
@@ -128,7 +126,9 @@ jobs:
             upsert_env "MONGODB_URI" "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@mongodb:27017/nakheel_db?authSource=admin"
             upsert_env "JWT_ACCESS_SECRET" "$JWT_ACCESS_SECRET"
             upsert_env "OPENAI_API_KEY" "$OPENAI_API_KEY"
-            upsert_env "CORS_ORIGINS" "${CORS_ORIGINS:?CORS_ORIGINS is not set}"
+            if [ -n "${CORS_ORIGINS:-}" ]; then
+              upsert_env "CORS_ORIGINS" "$CORS_ORIGINS"
+            fi
 
             echo "==> Pulling images by SHA and tagging as :latest"
             for svc in identity market guide-booking map ai gateway; do

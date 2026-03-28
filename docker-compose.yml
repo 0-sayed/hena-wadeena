@@ -203,7 +203,7 @@ services:
     restart: unless-stopped
     environment:
       - NGINX_ENVSUBST_FILTER=^CORS_|^MAX_|^RATE_
-      - CORS_ORIGINS=${CORS_ORIGINS:-.*}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
       - MAX_BODY_SIZE=${MAX_BODY_SIZE:-10m}
       - RATE_GLOBAL=${RATE_GLOBAL:-100r/m}
       - RATE_AUTH=${RATE_AUTH:-5r/m}
@@ -256,7 +256,3 @@ volumes:
 networks:
   hena-internal:
     driver: bridge
-
-
-
-
