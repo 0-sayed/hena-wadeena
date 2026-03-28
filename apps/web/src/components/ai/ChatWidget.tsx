@@ -42,7 +42,10 @@ export function ChatWidget() {
   );
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const endElement = endRef.current;
+    if (endElement && typeof endElement.scrollIntoView === 'function') {
+      endElement.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   useEffect(() => {
