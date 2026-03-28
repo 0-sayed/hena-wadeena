@@ -17,6 +17,7 @@ export const ADMIN_ID = 'aaaaaaaa-bbbb-cccc-dddd-000000000003';
 export const MERCHANT_ID = 'aaaaaaaa-bbbb-cccc-dddd-000000000001';
 export const INVESTOR_ID = 'aaaaaaaa-bbbb-cccc-dddd-000000000002';
 export const TOURIST_ID = 'aaaaaaaa-bbbb-cccc-dddd-000000000004';
+export const RESIDENT_ID = 'aaaaaaaa-bbbb-cccc-dddd-000000000005';
 
 export interface E2eContext {
   app: INestApplication;
@@ -57,16 +58,25 @@ export async function createE2eApp(): Promise<E2eContext> {
 export function createTokenFactory(jwtService: JwtService) {
   let jtiSeq = 0;
 
-  function makeToken(sub: string, role: string): string {
+  function makeToken(sub: string, role: string, opts?: { kycStatus?: string }): string {
     const jti = `test-jti-${++jtiSeq}`;
-    return `Bearer ${jwtService.sign({ sub, role, email: `${role}@test.com`, jti })}`;
+    return `Bearer ${jwtService.sign({
+      sub,
+      role,
+      email: `${role}@test.com`,
+      jti,
+      ...(opts?.kycStatus && { kycStatus: opts.kycStatus }),
+    })}`;
   }
 
   return {
     makeToken,
     adminToken: () => makeToken(ADMIN_ID, UserRole.ADMIN),
-    merchantToken: () => makeToken(MERCHANT_ID, UserRole.MERCHANT),
-    investorToken: () => makeToken(INVESTOR_ID, UserRole.INVESTOR),
+    merchantToken: (opts?: { kycStatus?: string }) =>
+      makeToken(MERCHANT_ID, UserRole.MERCHANT, opts),
+    investorToken: (opts?: { kycStatus?: string }) =>
+      makeToken(INVESTOR_ID, UserRole.INVESTOR, opts),
     touristToken: () => makeToken(TOURIST_ID, UserRole.TOURIST),
+    residentToken: () => makeToken(RESIDENT_ID, UserRole.RESIDENT),
   };
 }

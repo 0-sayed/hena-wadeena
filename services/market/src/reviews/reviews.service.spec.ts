@@ -64,7 +64,14 @@ describe('ReviewsService', () => {
       expect(result).toEqual(mockReview);
       expect(mockRedisStreams.publish).toHaveBeenCalledWith(
         EVENTS.REVIEW_SUBMITTED,
-        expect.objectContaining({ reviewId: REVIEW_ID, targetType: 'listing' }),
+        expect.objectContaining({
+          reviewId: REVIEW_ID,
+          targetType: 'listing',
+          targetId: LISTING_ID,
+          rating: String(mockReview.rating),
+          reviewerId: REVIEWER_ID,
+          listingOwnerId: OWNER_ID,
+        }),
       );
     });
 

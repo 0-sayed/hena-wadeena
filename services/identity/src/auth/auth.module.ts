@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import type { StringValue } from 'ms';
 
 import { EmailModule } from '../email/email.module';
+import { KycModule } from '../kyc/kyc.module';
 import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
 
@@ -29,6 +30,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     UsersModule,
     EmailModule,
     SessionModule,
+    KycModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, HashingService, JwtStrategy],
