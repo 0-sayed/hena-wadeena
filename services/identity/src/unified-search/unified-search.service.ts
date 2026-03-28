@@ -36,12 +36,16 @@ export class UnifiedSearchService {
     const { q, type, limit, offset } = params;
     const normalizedQ = normalizeArabic(q);
 
-    const cacheKey = `id:usearch:${normalizedQ}:${(type ?? ['all']).join(',')}:${limit}:${offset}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as UnifiedSearchResponse;
+    const cacheKey = `usearch:${normalizedQ}:${(type ?? ['all']).join(',')}:${limit}:${offset}`;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return { ...(JSON.parse(cached) as UnifiedSearchResponse), query: q };
+    } catch (err: unknown) {
+      this.logger.warn('Unified search cache read failed', err);
+    }
 
     const requestedTypes = type as SearchResultType[] | undefined;
-    const perServiceLimit = limit * 2;
+    const perServiceLimit = Math.max(limit * 2, offset + limit);
     const sources: string[] = [];
     const allResults: SearchResult[] = [];
 

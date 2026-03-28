@@ -25,9 +25,13 @@ export class SearchService {
     const { q, limit, offset } = params;
 
     const normalizedQ = normalizeArabic(q);
-    const key = `id:search:${normalizedQ}:${limit}:${offset}`;
-    const cached = await this.redis.get(key);
-    if (cached) return JSON.parse(cached) as ServiceSearchResponse;
+    const key = `search:${normalizedQ}:${limit}:${offset}`;
+    try {
+      const cached = await this.redis.get(key);
+      if (cached) return { ...(JSON.parse(cached) as ServiceSearchResponse), query: q };
+    } catch (err: unknown) {
+      this.logger.warn('Search cache read failed', err);
+    }
 
     const fetchLimit = limit + offset + 1;
     const roleList = sql.join(
@@ -80,7 +84,7 @@ export class SearchService {
         AND u.role IN (${roleList})
         AND u.status = 'active'
         AND u.deleted_at IS NULL
-      ORDER BY rank DESC
+      ORDER BY rank DESC, u.id ASC
       LIMIT ${limit}
     `);
 
@@ -116,7 +120,7 @@ export class SearchService {
         AND u.status = 'active'
         AND u.deleted_at IS NULL
         ${excludeList ? sql`AND u.id NOT IN (${excludeList})` : sql``}
-      ORDER BY rank DESC
+      ORDER BY rank DESC, u.id ASC
       LIMIT ${limit}
     `);
 
