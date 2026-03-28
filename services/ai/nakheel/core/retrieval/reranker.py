@@ -1,8 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import io
 import os
+import threading
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
@@ -62,20 +63,40 @@ class RerankerService:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
         self._model = None
+        self._loading_started = False
+        self._loading_done = threading.Event()
+        self._load_lock = threading.Lock()
         _quiet_third_party_output()
-        if FlagReranker is not None:
-            try:
-                self._model = _run_quietly(
-                    FlagReranker,
-                    settings.BGE_RERANKER_MODEL,
-                    use_fp16=settings.BGE_USE_FP16,
-                )
-            except Exception:
-                self._model = None
+
+    def _start_background_load(self) -> None:
+        """Load the heavy reranker model in the background so startup is never blocked."""
+
+        if FlagReranker is None:
+            self._loading_done.set()
+            return
+
+        with self._load_lock:
+            if self._loading_started:
+                return
+            self._loading_started = True
+            threading.Thread(target=self._load_model, name="reranker-loader", daemon=True).start()
+
+    def _load_model(self) -> None:
+        try:
+            self._model = _run_quietly(
+                FlagReranker,
+                self.settings.BGE_RERANKER_MODEL,
+                use_fp16=self.settings.BGE_USE_FP16,
+            )
+        except Exception:
+            self._model = None
+        finally:
+            self._loading_done.set()
 
     def rerank(self, query: str, candidates: list[CandidateChunk]) -> list[ScoredChunk]:
         """Score candidates synchronously using the configured reranker or fallback."""
 
+        self._start_background_load()
         if not candidates:
             return []
         if self._model is not None:
@@ -101,9 +122,13 @@ class RerankerService:
         return await asyncio.to_thread(self.rerank, query, candidates)
 
     def is_model_loaded(self) -> bool:
+        self._start_background_load()
         return self._model is not None
 
     def startup_check(self) -> dict[str, str | bool]:
+        self._start_background_load()
+        if not self._loading_done.is_set():
+            return {"ok": True, "detail": "reranker model is loading in background"}
         if self._model is None:
             return {"ok": True, "detail": "using heuristic fallback reranker"}
         try:
