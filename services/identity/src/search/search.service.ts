@@ -115,7 +115,8 @@ export class SearchService {
         public.similarity(identity.normalize_arabic(u.full_name), identity.normalize_arabic(${q})) AS rank,
         u.role
       FROM identity.users u
-      WHERE public.similarity(identity.normalize_arabic(u.full_name), identity.normalize_arabic(${q})) > 0.3
+      WHERE identity.normalize_arabic(u.full_name) OPERATOR(public.%) identity.normalize_arabic(${q})
+        AND public.similarity(identity.normalize_arabic(u.full_name), identity.normalize_arabic(${q})) > 0.3
         AND u.role IN (${roleList})
         AND u.status = 'active'
         AND u.deleted_at IS NULL

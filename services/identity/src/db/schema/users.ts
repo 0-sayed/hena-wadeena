@@ -44,7 +44,7 @@ export const users = identitySchema.table(
     index('idx_users_search_vector').using('gin', t.searchVector),
     index('idx_users_full_name_trgm').using(
       'gin',
-      sql`identity.normalize_arabic(${t.fullName}) gin_trgm_ops`,
+      sql`identity.normalize_arabic(${t.fullName}) public.gin_trgm_ops`,
     ),
   ],
 );

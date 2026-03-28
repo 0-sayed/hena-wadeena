@@ -64,10 +64,13 @@ export class UnifiedSearchService {
       ),
     ]);
 
+    let degraded = false;
+
     if (identityResult.status === 'fulfilled' && identityResult.value) {
       allResults.push(...identityResult.value.data);
       sources.push('identity');
     } else if (identityResult.status === 'rejected') {
+      degraded = true;
       this.logger.warn('Identity search failed', identityResult.reason);
     }
 
@@ -78,8 +81,11 @@ export class UnifiedSearchService {
       if (result.status === 'fulfilled' && result.value) {
         allResults.push(...result.value.data);
         sources.push(svc.name);
-      } else if (result.status === 'rejected') {
-        this.logger.warn(`Search service ${svc.name} failed: ${String(result.reason)}`);
+      } else {
+        degraded = true;
+        if (result.status === 'rejected') {
+          this.logger.warn(`Search service ${svc.name} failed: ${String(result.reason)}`);
+        }
       }
     }
 
@@ -99,11 +105,14 @@ export class UnifiedSearchService {
       sources,
     };
 
-    this.redis
-      .set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL_SECONDS)
-      .catch((err: unknown) => {
-        this.logger.warn('Unified search cache set failed', err);
-      });
+    // Only cache complete responses — don't persist partial results from transient failures
+    if (!degraded) {
+      this.redis
+        .set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL_SECONDS)
+        .catch((err: unknown) => {
+          this.logger.warn('Unified search cache set failed', err);
+        });
+    }
 
     return response;
   }
