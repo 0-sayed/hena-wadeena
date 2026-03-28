@@ -288,7 +288,7 @@ class FakeSessionManager:
             retrieved_chunks=kwargs.get("retrieved_chunks", []),
         )
 
-    async def build_context_window(self, _session_id, current_user_message):
+    async def build_context_window(self, _session_id, current_user_message, exclude_message_id=None):
         return [{"role": "user", "content": current_user_message}]
 
     async def get_messages(self, _session_id, page=1, per_page=20):
@@ -387,6 +387,12 @@ def test_chat_requires_jwt():
     assert response.status_code == 401
 
 
+def test_documents_require_jwt():
+    client = build_test_client()
+    response = client.get("/api/v1/documents")
+    assert response.status_code == 401
+
+
 def test_create_session_endpoint_and_force_new():
     client = build_test_client()
 
@@ -438,7 +444,11 @@ def test_legacy_ai_chat_shim_returns_compat_shape():
 
 def test_inject_raw_text_endpoint():
     client = build_test_client()
-    response = client.post("/api/v1/documents/inject-text", json={"content": "Copied text about New Valley"})
+    response = client.post(
+        "/api/v1/documents/inject-text",
+        json={"content": "Copied text about New Valley"},
+        headers=_auth_headers(),
+    )
     assert response.status_code == 200
     assert response.json()["doc_id"] == "doc-text-1"
 
@@ -449,13 +459,14 @@ def test_parse_document_returns_download_url_and_downloads_markdown():
         "/api/v1/documents/parse",
         files=[("file", ("sample.pdf", b"%PDF-1.4 sample", "application/pdf"))],
         data={"format": "markdown"},
+        headers=_auth_headers(),
     )
     assert response.status_code == 200
     body = response.json()
     assert body["parse_id"] == "parsed-1"
     assert body["download_url"].endswith("/api/v1/documents/parsed/parsed-1/download")
 
-    download_response = client.get("/api/v1/documents/parsed/parsed-1/download")
+    download_response = client.get("/api/v1/documents/parsed/parsed-1/download", headers=_auth_headers())
     assert download_response.status_code == 200
     assert download_response.text == "# Parsed"
 
@@ -469,6 +480,7 @@ def test_inject_documents_creates_batch():
             ("files", ("second.pdf", b"%PDF-1.4 second", "application/pdf")),
         ],
         data={"language": "auto"},
+        headers=_auth_headers(),
     )
     assert response.status_code == 202
     body = response.json()
@@ -483,8 +495,9 @@ def test_get_document_batch_status_endpoint():
         "/api/v1/documents/inject",
         files=[("files", ("first.pdf", b"%PDF-1.4 first", "application/pdf"))],
         data={"language": "auto"},
+        headers=_auth_headers(),
     )
-    response = client.get("/api/v1/documents/batches/batch-1")
+    response = client.get("/api/v1/documents/batches/batch-1", headers=_auth_headers())
     assert response.status_code == 200
     body = response.json()
     assert body["batch_id"] == "batch-1"
@@ -493,7 +506,7 @@ def test_get_document_batch_status_endpoint():
 
 def test_list_documents_is_objectid_safe():
     client = build_test_client()
-    response = client.get("/api/v1/documents")
+    response = client.get("/api/v1/documents", headers=_auth_headers())
     assert response.status_code == 200
     body = response.json()
     assert body["documents"][0]["doc_id"] == "doc-listed-1"
@@ -509,6 +522,7 @@ def test_inject_documents_allows_mixed_valid_and_invalid_files():
             ("files", ("notes.txt", b"hello", "text/plain")),
         ],
         data={"language": "auto"},
+        headers=_auth_headers(),
     )
     assert response.status_code == 202
     body = response.json()

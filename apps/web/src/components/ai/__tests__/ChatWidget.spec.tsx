@@ -2,17 +2,19 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UserRole } from '@hena-wadeena/types';
 import { ChatWidget } from '@/components/ai/ChatWidget';
+import type { AuthContextValue } from '@/contexts/auth-context';
 
-const mockUseAuth = vi.fn();
-const mockCreateSession = vi.fn();
-const mockGetSession = vi.fn();
-const mockSendMessage = vi.fn();
-const mockCloseSession = vi.fn();
-const mockLegacyChat = vi.fn();
+const mockUseAuth = vi.hoisted(() => vi.fn<() => AuthContextValue>());
+const mockCreateSession = vi.hoisted(() => vi.fn());
+const mockGetSession = vi.hoisted(() => vi.fn());
+const mockSendMessage = vi.hoisted(() => vi.fn());
+const mockCloseSession = vi.hoisted(() => vi.fn());
+const mockLegacyChat = vi.hoisted(() => vi.fn());
 
 vi.mock('@/hooks/use-auth', () => ({
-  useAuth: () => mockUseAuth(),
+  useAuth: (): AuthContextValue => mockUseAuth(),
 }));
 
 vi.mock('@/services/api', () => {
@@ -46,22 +48,26 @@ function renderWidget() {
   );
 }
 
+function buildUnauthedContext(): AuthContextValue {
+  return {
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn().mockResolvedValue(undefined),
+    register: vi.fn().mockResolvedValue(undefined),
+    logout: vi.fn(),
+    updateUser: vi.fn(),
+  };
+}
+
 describe('ChatWidget', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
-    mockUseAuth.mockReturnValue({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      login: vi.fn(),
-      register: vi.fn(),
-      logout: vi.fn(),
-      updateUser: vi.fn(),
-    });
+    mockUseAuth.mockReturnValue(buildUnauthedContext());
   });
 
-  it('shows login CTA and does not call AI APIs when unauthenticated', async () => {
+  it('shows login CTA and does not call AI APIs when unauthenticated', () => {
     renderWidget();
     fireEvent.click(screen.getByLabelText('AI assistant'));
 
@@ -72,13 +78,17 @@ describe('ChatWidget', () => {
 
   it('bootstraps session and renders welcome message for authenticated users', async () => {
     mockUseAuth.mockReturnValue({
-      user: { id: 'user-1' },
+      ...buildUnauthedContext(),
+      user: {
+        id: 'user-1',
+        email: 'user-1@example.com',
+        phone: '+2000000000',
+        full_name: 'User One',
+        role: UserRole.TOURIST,
+        status: 'active',
+        language: 'en',
+      },
       isAuthenticated: true,
-      isLoading: false,
-      login: vi.fn(),
-      register: vi.fn(),
-      logout: vi.fn(),
-      updateUser: vi.fn(),
     });
 
     mockCreateSession.mockResolvedValue({
@@ -103,13 +113,17 @@ describe('ChatWidget', () => {
 
   it('sends messages through session endpoint and appends assistant reply', async () => {
     mockUseAuth.mockReturnValue({
-      user: { id: 'user-1' },
+      ...buildUnauthedContext(),
+      user: {
+        id: 'user-1',
+        email: 'user-1@example.com',
+        phone: '+2000000000',
+        full_name: 'User One',
+        role: UserRole.TOURIST,
+        status: 'active',
+        language: 'en',
+      },
       isAuthenticated: true,
-      isLoading: false,
-      login: vi.fn(),
-      register: vi.fn(),
-      logout: vi.fn(),
-      updateUser: vi.fn(),
     });
 
     mockCreateSession.mockResolvedValue({

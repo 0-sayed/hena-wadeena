@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@c25d10f3f498316d4b2496cc4c6dd58057a7b031 # v1
         with:
           prompt: "Review this repository and suggest improvements."
         env:

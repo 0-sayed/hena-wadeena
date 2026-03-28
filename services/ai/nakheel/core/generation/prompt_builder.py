@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class PromptBuilder:
@@ -9,7 +9,7 @@ class PromptBuilder:
     def build_system_prompt(self, language: str) -> str:
         """Return the localized system prompt matching the guide's safety rules."""
 
-        today = datetime.utcnow().date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
         if language == "ar-eg":
             return (
                 "انت نخيل، المساعد الذكي الرسمي لمنصة هنا وادينا.\n"

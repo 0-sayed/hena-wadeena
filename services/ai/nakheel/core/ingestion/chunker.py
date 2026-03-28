@@ -64,7 +64,7 @@ class SectionChunker:
                 text = f"{overlap_prev} {raw_piece}".strip() if overlap_prev else raw_piece
                 token_count = count_tokens(text)
                 if token_count < self.min_tokens and chunks:
-                    chunks[-1].text = f"{chunks[-1].text}\n\n{text}".strip()
+                    chunks[-1].text = f"{chunks[-1].text}\n\n{raw_piece}".strip()
                     chunks[-1].token_count = count_tokens(chunks[-1].text)
                     chunks[-1].char_count = len(chunks[-1].text)
                     previous_text = chunks[-1].text
@@ -99,6 +99,11 @@ class SectionChunker:
         for section in sections:
             tokens = count_tokens(section.content)
             if buffer is not None:
+                if tokens >= self.min_tokens:
+                    merged.append(buffer)
+                    buffer = None
+                    merged.append(section)
+                    continue
                 buffer.content = f"{buffer.content}\n\n# {section.title}\n{section.content}".strip()
                 if count_tokens(buffer.content) >= self.min_tokens:
                     merged.append(buffer)

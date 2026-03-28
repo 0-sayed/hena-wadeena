@@ -4,11 +4,11 @@ import asyncio
 from datetime import UTC, datetime
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from loguru import logger
 
-from nakheel.api.deps import get_indexer, get_mongo, get_qdrant
+from nakheel.api.deps import AuthenticatedUser, get_current_user, get_indexer, get_mongo, get_qdrant
 from nakheel.core.ingestion.indexer import DocumentIndexer, QueuedPdf
 from nakheel.db.mongo import MongoDatabase
 from nakheel.db.qdrant import QdrantDatabase
@@ -39,21 +39,21 @@ router = APIRouter(prefix="/documents")
                                 "type": "array",
                                 "items": {
                                     "type": "string",
-                                    "format": "binary"  # 👈 This is the key
+                                    "format": "binary",
                                 },
-                                "description": "Upload one or more PDF files"
+                                "description": "Upload one or more PDF files",
                             },
                             "title": {"type": "string"},
                             "description": {"type": "string"},
                             "tags": {"type": "string"},
-                            "language": {"type": "string", "default": "auto"}
-                        }
+                            "language": {"type": "string", "default": "auto"},
+                        },
                     }
                 }
             },
-            "required": True
+            "required": True,
         }
-    }
+    },
 )
 async def inject_documents(
     request: Request,
@@ -62,6 +62,7 @@ async def inject_documents(
     description: Optional[str] = Form(default=None),
     tags: Optional[str] = Form(default=None),
     language: str = Form(default="auto"),
+    _current_user: AuthenticatedUser = Depends(get_current_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Create an asynchronous PDF ingestion batch and return immediately."""
@@ -85,9 +86,22 @@ async def inject_documents(
         if batch_tasks is None:
             batch_tasks = set()
             request.app.state.document_batch_tasks = batch_tasks
+
         task = asyncio.create_task(indexer.process_document_batch(batch["batch_id"]))
         batch_tasks.add(task)
-        task.add_done_callback(batch_tasks.discard)
+
+        def _on_task_done(done_task: asyncio.Task) -> None:
+            batch_tasks.discard(done_task)
+            if done_task.cancelled():
+                return
+            task_exception = done_task.exception()
+            if task_exception is not None:
+                logger.opt(exception=task_exception).error(
+                    "Document batch processing failed for batch {}",
+                    batch["batch_id"],
+                )
+
+        task.add_done_callback(_on_task_done)
     return batch
 
 
@@ -96,6 +110,7 @@ async def parse_document(
     request: Request,
     file: UploadFile = File(...),
     format: str = Form(default="markdown"),
+    _current_user: AuthenticatedUser = Depends(get_current_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Parse a PDF into a temporary Markdown artifact and return a direct download link."""
@@ -111,7 +126,11 @@ async def parse_document(
 
 
 @router.get("/parsed/{parse_id}/download")
-async def download_parsed_markdown(parse_id: str, indexer: DocumentIndexer = Depends(get_indexer)):
+async def download_parsed_markdown(
+    parse_id: str,
+    _current_user: AuthenticatedUser = Depends(get_current_user),
+    indexer: DocumentIndexer = Depends(get_indexer),
+):
     """Download a staged Markdown parse result before it expires."""
 
     parsed = indexer.resolve_parsed_markdown(parse_id)
@@ -125,6 +144,7 @@ async def download_parsed_markdown(parse_id: str, indexer: DocumentIndexer = Dep
 @router.post("/inject-text")
 async def inject_raw_text(
     payload: RawTextInjectRequest,
+    _current_user: AuthenticatedUser = Depends(get_current_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Index pasted text as a copied document source."""
@@ -139,7 +159,11 @@ async def inject_raw_text(
 
 
 @router.get("/batches/{batch_id}", response_model=DocumentBatchResponse)
-async def get_document_batch_status(batch_id: str, indexer: DocumentIndexer = Depends(get_indexer)):
+async def get_document_batch_status(
+    batch_id: str,
+    _current_user: AuthenticatedUser = Depends(get_current_user),
+    indexer: DocumentIndexer = Depends(get_indexer),
+):
     """Return the latest persisted ingestion state for a submitted PDF batch."""
 
     return await indexer.get_document_batch_status(batch_id)
@@ -148,6 +172,7 @@ async def get_document_batch_status(batch_id: str, indexer: DocumentIndexer = De
 @router.delete("/{doc_id}")
 async def delete_document(
     doc_id: str,
+    _current_user: AuthenticatedUser = Depends(get_current_user),
     mongo: MongoDatabase = Depends(get_mongo),
     qdrant: QdrantDatabase = Depends(get_qdrant),
 ):
@@ -201,11 +226,12 @@ async def delete_document(
 
 @router.get("", response_model=DocumentListResponse)
 async def list_documents(
-    page: int = 1,
-    per_page: int = 20,
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=20, ge=1, le=100),
     status: str | None = None,
     language: str | None = None,
     tags: str | None = None,
+    _current_user: AuthenticatedUser = Depends(get_current_user),
     mongo: MongoDatabase = Depends(get_mongo),
 ):
     """List indexed documents with optional filtering and pagination."""
@@ -233,7 +259,11 @@ async def list_documents(
 
 
 @router.get("/{doc_id}/status")
-async def get_document_status(doc_id: str, mongo: MongoDatabase = Depends(get_mongo)):
+async def get_document_status(
+    doc_id: str,
+    _current_user: AuthenticatedUser = Depends(get_current_user),
+    mongo: MongoDatabase = Depends(get_mongo),
+):
     """Return the latest persisted ingestion state for a document."""
 
     document = await mongo.collection("documents").find_one({"doc_id": doc_id}, {"_id": 0})

@@ -25,6 +25,8 @@ class MongoDatabase:
     async def close(self) -> None:
         if self.client is not None:
             self.client.close()
+            self.client = None
+            self.db = None
 
     async def ensure_indexes(self) -> None:
         assert self.db is not None

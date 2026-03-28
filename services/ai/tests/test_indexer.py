@@ -211,22 +211,22 @@ async def test_indexer_keeps_indexed_status_when_audit_logging_fails():
         file_size_kb=1.0,
     )
 
-    with pytest.raises(RuntimeError, match="audit failed"):
-        await indexer._index_text_content(
-            doc_id="doc-1",
-            batch_id=None,
-            filename="audit.pdf",
-            source_type=DocumentSourceType.PDF,
-            raw_text="# Title\n\nNew Valley Governorate information for testing.",
-            title=None,
-            description=None,
-            tags=[],
-            language_hint="auto",
-            file_size_kb=1.0,
-            total_pages=2,
-            started=0.0,
-        )
+    result = await indexer._index_text_content(
+        doc_id="doc-1",
+        batch_id=None,
+        filename="audit.pdf",
+        source_type=DocumentSourceType.PDF,
+        raw_text="# Title\n\nNew Valley Governorate information for testing.",
+        title=None,
+        description=None,
+        tags=[],
+        language_hint="auto",
+        file_size_kb=1.0,
+        total_pages=2,
+        started=0.0,
+    )
 
+    assert result["status"] == "indexed"
     assert qdrant.deleted == []
     assert mongo.collection("documents").documents["doc-1"]["status"] == DocumentStatus.INDEXED.value
 

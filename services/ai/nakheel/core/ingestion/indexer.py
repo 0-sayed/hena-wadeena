@@ -7,6 +7,8 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from loguru import logger
+
 from qdrant_client.models import PointStruct, SparseVector
 
 from nakheel.config import Settings
@@ -391,7 +393,11 @@ class DocumentIndexer:
                 await progress_callback("parsing")
             markdown, pages = await self.parser.parse_to_markdown_async(pdf_path, parsed_path)
         except Exception as exc:
-            await self._mark_document_failed(doc_id, self._error_detail(exc))
+            detail = self._error_detail(exc)
+            try:
+                await self._mark_document_failed(doc_id, detail)
+            except Exception as mark_exc:
+                logger.opt(exception=mark_exc).error("Failed to mark document {} as failed", doc_id)
             raise IndexingError("Failed to index document", extras={"doc_id": doc_id}) from exc
         finally:
             shutil.rmtree(working_dir, ignore_errors=True)
@@ -507,16 +513,22 @@ class DocumentIndexer:
                 },
             )
             document_marked_indexed = True
-            await self.mongo.collection("audit_logs").insert_one(
-                {
-                    "event": "document_indexed",
-                    "doc_id": doc_id,
-                    "batch_id": batch_id,
-                    "source_type": source_type,
-                    "created_at": datetime.now(UTC),
-                    "chunk_count": len(chunks),
-                }
-            )
+            try:
+                await self.mongo.collection("audit_logs").insert_one(
+                    {
+                        "event": "document_indexed",
+                        "doc_id": doc_id,
+                        "batch_id": batch_id,
+                        "source_type": source_type,
+                        "created_at": datetime.now(UTC),
+                        "chunk_count": len(chunks),
+                    }
+                )
+            except Exception as audit_exc:
+                logger.opt(exception=audit_exc).warning(
+                    "Failed to persist audit log for indexed document {}",
+                    doc_id,
+                )
             return {
                 "doc_id": doc_id,
                 "status": DocumentStatus.INDEXED.value,
@@ -535,7 +547,10 @@ class DocumentIndexer:
                 except Exception:
                     pass
             if not document_marked_indexed:
-                await self._mark_document_failed(doc_id, self._error_detail(exc))
+                try:
+                    await self._mark_document_failed(doc_id, self._error_detail(exc))
+                except Exception as mark_exc:
+                    logger.opt(exception=mark_exc).error("Failed to mark document {} as failed", doc_id)
             raise
 
     async def _create_document_record(

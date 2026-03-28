@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from nakheel.api.deps import (
     AuthenticatedUser,
@@ -81,7 +81,7 @@ async def process_user_message(
 
     started = time.perf_counter()
     language = session_manager.detect_or_prefer_language(session.language or payload.language, payload.content)
-    await session_manager.save_message(
+    user_message = await session_manager.save_message(
         session_id=session_id,
         role=MessageRole.USER,
         content=payload.content,
@@ -94,10 +94,10 @@ async def process_user_message(
     domain_relevant = is_domain_relevant(reranked, get_settings().RELEVANCE_THRESHOLD)
 
     retrieved_refs = _build_retrieved_refs(reranked)
-    latency_ms = int((time.perf_counter() - started) * 1000)
 
     if not domain_relevant:
         content = localized_refusal(language)
+        latency_ms = int((time.perf_counter() - started) * 1000)
         assistant_message = await session_manager.save_message(
             session_id=session_id,
             role=MessageRole.ASSISTANT,
@@ -123,10 +123,15 @@ async def process_user_message(
     context = build_context(reranked)
     system_prompt = prompt_builder.build_system_prompt(language)
     user_prompt = prompt_builder.build_user_prompt(payload.content, context)
-    history = await session_manager.build_context_window(session_id, user_prompt)
+    history = await session_manager.build_context_window(
+        session_id,
+        user_prompt,
+        exclude_message_id=user_message.message_id,
+    )
     messages = [{"role": "system", "content": system_prompt}, *history]
     llm_response = await llm_client.complete_async(messages)
     content = post_process_response(llm_response.content, language)
+    latency_ms = int((time.perf_counter() - started) * 1000)
     assistant_message = await session_manager.save_message(
         session_id=session_id,
         role=MessageRole.ASSISTANT,
@@ -210,8 +215,8 @@ async def send_message(
 @router.get("/sessions/{session_id}")
 async def get_session(
     session_id: str,
-    page: int = 1,
-    per_page: int = 20,
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=20, ge=1, le=100),
     current_user: AuthenticatedUser = Depends(get_current_user),
     session_manager: SessionManager = Depends(get_session_manager),
 ):

@@ -1,5 +1,5 @@
-import type { KycDocType, KycStatus, NotificationType } from '../enums';
 import type { PaginatedResponse } from '../dto/pagination';
+import type { KycDocType, KycStatus, NotificationType } from '../enums';
 
 /** In-app notification record */
 export interface Notification {

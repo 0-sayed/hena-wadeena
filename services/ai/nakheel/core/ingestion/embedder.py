@@ -27,7 +27,8 @@ class DenseEmbedder:
                     input=batch,
                     dimensions=self._dimensions,
                 )
-                vectors.extend([list(item.embedding) for item in response.data])
+                sorted_data = sorted(response.data, key=lambda item: item.index)
+                vectors.extend([list(item.embedding) for item in sorted_data])
             return vectors
         return [self._fallback_dense(text, self._dimensions) for text in texts]
 

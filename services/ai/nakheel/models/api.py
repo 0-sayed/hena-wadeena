@@ -76,7 +76,7 @@ class DeleteSessionResponse(BaseModel):
     session_id: str
     closed: bool
     message_count: int
-    closed_at: datetime
+    closed_at: datetime | None = None
 
 
 class DocumentInjectResponse(BaseModel):

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { MessageCircle, X, Send, Bot, User, RotateCcw, LogIn } from 'lucide-react';
 
@@ -32,6 +32,7 @@ export function ChatWidget() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>();
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -49,52 +50,77 @@ export function ChatWidget() {
       setMessages([]);
       setSessionId(undefined);
       setInput('');
+      setBootstrapError(false);
+      setBootstrapping(false);
     }
   }, [isAuthenticated]);
 
-  const bootstrapSession = async (forceNew = false): Promise<string | undefined> => {
-    if (!isAuthenticated || !sessionStorageKey) return undefined;
+  useEffect(() => {
+    if (!open) {
+      setBootstrapError(false);
+    }
+  }, [open]);
 
-    setBootstrapping(true);
-    try {
-      const savedSessionId = !forceNew ? localStorage.getItem(sessionStorageKey) : null;
-
-      if (savedSessionId) {
-        try {
-          const session = await aiAPI.getSession(savedSessionId);
-          setSessionId(savedSessionId);
-          const restored = mapSessionMessages(session);
-          setMessages(restored);
-          return savedSessionId;
-        } catch {
-          localStorage.removeItem(sessionStorageKey);
-        }
+  const bootstrapSession = useCallback(
+    async (
+      forceNew = false,
+      options?: { preserveMessages?: boolean },
+    ): Promise<string | undefined> => {
+      if (!isAuthenticated || !sessionStorageKey) {
+        return undefined;
       }
 
-      const created = await aiAPI.createSession(undefined, forceNew);
-      localStorage.setItem(sessionStorageKey, created.session_id);
-      setSessionId(created.session_id);
-      setMessages([
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: created.welcome_message,
-        },
-      ]);
-      return created.session_id;
-    } finally {
-      setBootstrapping(false);
-    }
-  };
+      setBootstrapping(true);
+      setBootstrapError(false);
+      try {
+        const savedSessionId = !forceNew ? localStorage.getItem(sessionStorageKey) : null;
+
+        if (savedSessionId) {
+          try {
+            const session = await aiAPI.getSession(savedSessionId);
+            setSessionId(savedSessionId);
+            const restored = mapSessionMessages(session);
+            setMessages(restored);
+            return savedSessionId;
+          } catch {
+            localStorage.removeItem(sessionStorageKey);
+          }
+        }
+
+        const created = await aiAPI.createSession(undefined, forceNew);
+        localStorage.setItem(sessionStorageKey, created.session_id);
+        setSessionId(created.session_id);
+
+        if (!options?.preserveMessages) {
+          setMessages([
+            {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: created.welcome_message,
+            },
+          ]);
+        }
+
+        return created.session_id;
+      } catch {
+        setBootstrapError(true);
+        return undefined;
+      } finally {
+        setBootstrapping(false);
+      }
+    },
+    [isAuthenticated, sessionStorageKey],
+  );
 
   useEffect(() => {
-    if (!open || !isAuthenticated || sessionId || bootstrapping) return;
+    if (!open || !isAuthenticated || sessionId || bootstrapping || bootstrapError) return;
     void bootstrapSession();
-  }, [open, isAuthenticated, sessionId, bootstrapping]);
+  }, [open, isAuthenticated, sessionId, bootstrapping, bootstrapError, bootstrapSession]);
 
   const resetChat = async () => {
     if (!isAuthenticated) return;
     setInput('');
+    setBootstrapError(false);
     await bootstrapSession(true);
   };
 
@@ -109,7 +135,7 @@ export function ChatWidget() {
     try {
       let activeSessionId = sessionId;
       if (!activeSessionId) {
-        activeSessionId = await bootstrapSession();
+        activeSessionId = await bootstrapSession(false, { preserveMessages: true });
       }
       if (!activeSessionId) {
         throw new Error('Unable to create chat session');
@@ -123,7 +149,7 @@ export function ChatWidget() {
         response = await sendToSession(activeSessionId);
       } catch (error) {
         if (error instanceof ApiError && [403, 404, 410].includes(error.status)) {
-          const refreshedSessionId = await bootstrapSession(true);
+          const refreshedSessionId = await bootstrapSession(true, { preserveMessages: true });
           if (!refreshedSessionId) throw error;
           response = await sendToSession(refreshedSessionId);
           activeSessionId = refreshedSessionId;
@@ -205,6 +231,12 @@ export function ChatWidget() {
                 {bootstrapping && messages.length === 0 ? (
                   <div className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
                     Preparing your chat session...
+                  </div>
+                ) : null}
+
+                {bootstrapError && messages.length === 0 ? (
+                  <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
+                    We could not start your chat session. Try sending a message to retry.
                   </div>
                 ) : null}
 

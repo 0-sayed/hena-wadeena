@@ -159,12 +159,12 @@ async def nakheel_exception_handler(_, exc: NakheelBaseException) -> JSONRespons
     """Return domain exceptions in RFC 7807-compatible JSON form."""
 
     payload = {
+        **exc.extras,
         "type": f"https://httpstatuses.com/{exc.status_code}",
         "title": exc.title,
         "status": exc.status_code,
         "detail": exc.detail,
         "error": exc.error_code,
-        **exc.extras,
     }
     return JSONResponse(status_code=exc.status_code, content=payload)
 

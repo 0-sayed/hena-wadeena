@@ -143,11 +143,20 @@ class SessionManager:
         records = await cursor.skip((page - 1) * per_page).limit(per_page).to_list(length=per_page)
         return [Message.model_validate(item) for item in records], total
 
-    async def build_context_window(self, session_id: str, current_user_message: str) -> list[dict[str, str]]:
+    async def build_context_window(
+        self,
+        session_id: str,
+        current_user_message: str,
+        exclude_message_id: str | None = None,
+    ) -> list[dict[str, str]]:
         """Build the bounded conversation history sent to the LLM."""
 
         cursor = self.mongo.collection("messages").find({"session_id": session_id}).sort("created_at", 1)
         history_records = await cursor.to_list(length=self.settings.SESSION_MAX_MESSAGES * 4)
+        if exclude_message_id is not None:
+            history_records = [
+                item for item in history_records if item.get("message_id") != exclude_message_id
+            ]
         history = [{"role": item["role"], "content": item["content"]} for item in history_records]
         trimmed = trim_history(history, self.settings.SESSION_MAX_MESSAGES, self.settings.TOKEN_BUDGET_HISTORY)
         trimmed.append({"role": "user", "content": current_user_message})
@@ -157,7 +166,7 @@ class SessionManager:
         """Return a greeting shown when a new session is created."""
 
         if language_preference.startswith("ar"):
-            return "Ahlan! Ana Nakheel, musaedak fi asilat New Valley."
+            return "\u0623\u0647\u0644\u0627\u064b! \u0623\u0646\u0627 \u0646\u062e\u064a\u0644\u060c \u0645\u0633\u0627\u0639\u062f\u0643 \u0641\u064a \u0623\u0633\u0626\u0644\u0629 \u0627\u0644\u0648\u0627\u062f\u064a \u0627\u0644\u062c\u062f\u064a\u062f."
         return "Hello! I am Nakheel, your assistant for New Valley questions."
 
     def detect_or_prefer_language(self, preferred: str, text: str) -> str:

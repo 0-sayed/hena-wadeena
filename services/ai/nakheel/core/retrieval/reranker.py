@@ -81,6 +81,8 @@ class RerankerService:
         if self._model is not None:
             pairs = [(query, item.chunk.text) for item in candidates]
             scores = _run_quietly(self._model.compute_score, pairs, normalize=True)
+            if not isinstance(scores, list):
+                scores = [scores]
         else:
             query_terms = set(query.lower().split())
             scores = []

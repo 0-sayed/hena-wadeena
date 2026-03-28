@@ -21,7 +21,7 @@ def test_dense_embedder_uses_openai_embeddings(monkeypatch):
         def create(self, *, model, input, dimensions):
             return SimpleNamespace(
                 data=[
-                    SimpleNamespace(embedding=[float(index + 1)] * dimensions)
+                    SimpleNamespace(index=index, embedding=[float(index + 1)] * dimensions)
                     for index, _ in enumerate(input)
                 ]
             )
