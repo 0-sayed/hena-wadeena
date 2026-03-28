@@ -51,7 +51,7 @@ export class StatsService {
       this.db
         .select({
           total: count(),
-          averageRating: sql<number>`COALESCE(ROUND(AVG(${guideReviews.rating})::numeric, 1), 0)`,
+          averageRating: sql<number>`COALESCE(ROUND(AVG(${guideReviews.rating})::numeric, 1), 0)::float`,
         })
         .from(guideReviews)
         .where(eq(guideReviews.isActive, true)),
