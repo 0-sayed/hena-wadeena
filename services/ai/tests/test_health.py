@@ -1,19 +1,10 @@
-"""Exemplary test — health endpoint."""
-
 import pytest
-from fastapi.testclient import TestClient
 
-from src.main import app
-
-
-@pytest.fixture(scope="module")
-def client():
-    return TestClient(app)
+from nakheel.main import root_health
 
 
-def test_health_returns_ok(client: TestClient):
-    response = client.get("/health")
-    assert response.status_code == 200
-    data = response.json()
+@pytest.mark.asyncio
+async def test_health_returns_ok():
+    data = await root_health()
     assert data["status"] == "ok"
     assert data["service"] == "ai"

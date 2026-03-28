@@ -1,0 +1,19 @@
+name: Codex Run
+
+on:
+  workflow_dispatch:
+
+jobs:
+  codex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run Codex
+        uses: openai/codex-action@v1
+        with:
+          prompt: "Review this repository and suggest improvements."
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

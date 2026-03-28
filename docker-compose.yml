@@ -73,6 +73,19 @@ services:
     networks:
       - hena-internal
 
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD-SHELL', 'mongosh --quiet --eval "db.adminCommand({ ping: 1 }).ok" | grep 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hena-internal
+
   # ─── NestJS Services ────────────────────────────────────────────────────────
   identity:
     <<: *nestjs-service
@@ -163,6 +176,8 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     healthcheck:
       <<: *nestjs-healthcheck
       test: ['CMD-SHELL', 'curl -sf http://localhost:8005/health || exit 1']
@@ -222,6 +237,7 @@ volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  mongo-data:
   caddy-data:
   caddy-config:
 

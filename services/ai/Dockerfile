@@ -8,8 +8,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.26 /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --no-dev
 
+COPY main.py ./
+COPY nakheel/ nakheel/
 COPY src/ src/
 
 ENV PORT=8005
