@@ -40,7 +40,10 @@
     "@nestjs/testing": "^11.0.0",
     "@types/ms": "^2.1.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^7.0.0",
+    "dotenv": "^16.0.0",
     "drizzle-kit": "0.30.4",
+    "supertest": "^7.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.3",
     "vitest": "^4.1.2"

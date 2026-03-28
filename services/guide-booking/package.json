@@ -27,21 +27,24 @@
     "@nestjs/throttler": "^6.4.0",
     "drizzle-orm": "^0.38.0",
     "drizzle-zod": "^0.8.3",
-    "nestjs-zod": "^5.1.1",
     "ioredis": "^5.4.2",
+    "ms": "^2.1.3",
+    "nestjs-zod": "^5.1.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "postgres": "^3.4.5",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "ms": "^2.1.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
     "@types/ms": "^2.1.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^7.0.0",
+    "dotenv": "^16.0.0",
     "drizzle-kit": "0.30.4",
+    "supertest": "^7.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.3"
   }
