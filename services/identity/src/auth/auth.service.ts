@@ -20,6 +20,7 @@ import ms from 'ms';
 import { authTokens, auditEvents, otpCodes } from '../db/schema/index';
 import type { users } from '../db/schema/index';
 import { EmailService } from '../email/email.service';
+import { KycService } from '../kyc/kyc.service';
 import { SessionService } from '../session/session.service';
 import { UsersService } from '../users/users.service';
 
@@ -56,6 +57,7 @@ export class AuthService {
     @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     @Inject(SessionService) private readonly sessionService: SessionService,
+    @Inject(KycService) private readonly kycService: KycService,
   ) {
     const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as Parameters<
       typeof ms
@@ -91,7 +93,12 @@ export class AuthService {
       role: dto.role,
     });
 
-    const tokens = await this.generateTokenPair(user.id, user.email, user.role, user.language);
+    const tokens = await this.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      lang: user.language,
+    });
 
     // Fire-and-forget: audit + event are independent of each other and the response
     await Promise.all([
@@ -124,7 +131,14 @@ export class AuthService {
       throw new ForbiddenException('Account is suspended');
     }
 
-    const tokens = await this.generateTokenPair(user.id, user.email, user.role, user.language);
+    const kycStatus = await this.getKycStatus(user.id);
+    const tokens = await this.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      lang: user.language,
+      kycStatus,
+    });
 
     // Independent side-effects — parallelize
     await Promise.all([
@@ -167,7 +181,15 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
 
     // Issue new token pair with same family
-    return this.generateTokenPair(user.id, user.email, user.role, user.language, stored.family);
+    const kycStatus = await this.getKycStatus(user.id);
+    return this.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      lang: user.language,
+      family: stored.family,
+      kycStatus,
+    });
   }
 
   async logout(payload: JwtPayload, refreshToken?: string): Promise<void> {
@@ -202,7 +224,12 @@ export class AuthService {
     // Revoke all existing sessions
     await this.sessionService.revokeAllUserSessions(userId);
 
-    const tokens = await this.generateTokenPair(user.id, user.email, user.role, user.language);
+    const tokens = await this.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      lang: user.language,
+    });
     await this.recordAudit(userId, 'password_changed');
 
     return { ...tokens, user: this.toUserPayload(user) };
@@ -265,7 +292,12 @@ export class AuthService {
     // Revoke all sessions
     await this.sessionService.revokeAllUserSessions(user.id);
 
-    const tokens = await this.generateTokenPair(user.id, user.email, user.role, user.language);
+    const tokens = await this.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      lang: user.language,
+    });
     await this.recordAudit(user.id, 'password_reset');
 
     return { ...tokens, user: this.toUserPayload(user) };
@@ -283,28 +315,35 @@ export class AuthService {
     };
   }
 
-  private async generateTokenPair(
-    userId: string,
-    email: string,
-    role: string,
-    lang: string,
-    family?: string,
-  ) {
+  private async getKycStatus(userId: string): Promise<string | undefined> {
+    const submissions = await this.kycService.findByUser(userId);
+    return submissions.at(-1)?.status;
+  }
+
+  private async generateTokenPair(opts: {
+    userId: string;
+    email: string;
+    role: string;
+    lang: string;
+    family?: string;
+    kycStatus?: string;
+  }) {
     const jti = generateId();
     const accessToken = await this.jwtService.signAsync({
-      sub: userId,
-      email,
-      role,
-      lang,
+      sub: opts.userId,
+      email: opts.email,
+      role: opts.role,
+      lang: opts.lang,
       jti,
+      ...(opts.kycStatus != null && { kycStatus: opts.kycStatus }),
     } satisfies JwtPayload);
 
     const refreshToken = randomBytes(32).toString('hex');
     const tokenHash = this.hashToken(refreshToken);
-    const tokenFamily = family ?? generateId();
+    const tokenFamily = opts.family ?? generateId();
 
     await this.db.insert(authTokens).values({
-      userId,
+      userId: opts.userId,
       tokenHash,
       family: tokenFamily,
       expiresAt: new Date(Date.now() + this.refreshExpiresMs),

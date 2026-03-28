@@ -2,6 +2,7 @@ import { ConflictException, ForbiddenException, UnauthorizedException } from '@n
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { EmailService } from '../email/email.service';
+import { KycService } from '../kyc/kyc.service';
 import { createMockDb } from '../test-utils/create-mock-db';
 import { UsersService } from '../users/users.service';
 
@@ -86,6 +87,10 @@ describe('AuthService', () => {
       publish: vi.fn().mockResolvedValue('mock-stream-id'),
     };
 
+    const mockKycService = {
+      findByUser: vi.fn().mockResolvedValue([]),
+    } as unknown as KycService;
+
     authService = new AuthService(
       mockUsersService,
       mockHashingService,
@@ -100,6 +105,8 @@ describe('AuthService', () => {
       mockDb as any,
 
       mockSessionService as any,
+
+      mockKycService,
     );
   });
 
