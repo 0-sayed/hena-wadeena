@@ -13,6 +13,13 @@ export function formatPrice(piasters: number): string {
   });
 }
 
+/** Format a ride price in piasters with the "جنيه" label, returning "مجاني" for zero */
+export function formatRidePrice(piasters: number): string {
+  if (piasters === 0) return 'مجاني';
+  const egp = piasters / 100;
+  return `${egp.toLocaleString('ar-u-nu-latn', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} جنيه`;
+}
+
 /** Format nullable rating to 1-decimal string, or '—' if missing */
 export function formatRating(value: number | null | undefined): string {
   return value != null ? value.toFixed(1) : '—';
