@@ -453,19 +453,31 @@ function PoiDetailContent({ poi }: { poi: Poi }) {
             </a>
           </div>
         )}
-        {poi.website && (
-          <div className="flex items-center gap-2 text-sm">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <a
-              href={poi.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline truncate"
-            >
-              {poi.website}
-            </a>
-          </div>
-        )}
+        {(() => {
+          if (!poi.website) return null;
+          try {
+            const normalized = /^https?:\/\//i.test(poi.website)
+              ? poi.website
+              : `https://${poi.website}`;
+            const url = new URL(normalized);
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+            return (
+              <div className="flex items-center gap-2 text-sm">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <a
+                  href={url.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline truncate"
+                >
+                  {poi.website}
+                </a>
+              </div>
+            );
+          } catch {
+            return null;
+          }
+        })()}
       </div>
 
       {poi.ratingAvg && (

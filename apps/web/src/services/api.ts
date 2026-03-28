@@ -840,7 +840,7 @@ export const mapAPI = {
     website?: string;
     images?: string[];
   }) =>
-    apiFetch<Poi>('/map/pois', {
+    apiFetchWithRefresh<Poi>('/map/pois', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

@@ -80,6 +80,7 @@ export function useCreateRide() {
     mutationFn: mapAPI.createRide,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
   });
 }
@@ -92,6 +93,7 @@ export function useJoinRide() {
     onSuccess: (_data, { rideId }) => {
       void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
   });
 }
@@ -100,7 +102,8 @@ export function useCancelJoin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (rideId: string) => mapAPI.cancelJoin(rideId),
-    onSuccess: () => {
+    onSuccess: (_data, rideId) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
       void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
@@ -114,6 +117,7 @@ export function useCancelRide() {
     onSuccess: (_data, rideId) => {
       void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
   });
 }
@@ -123,8 +127,10 @@ export function useConfirmPassenger() {
   return useMutation({
     mutationFn: ({ rideId, passengerId }: { rideId: string; passengerId: string }) =>
       mapAPI.confirmPassenger(rideId, passengerId),
-    onSuccess: () => {
+    onSuccess: (_data, { rideId }) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
   });
 }
@@ -134,8 +140,10 @@ export function useDeclinePassenger() {
   return useMutation({
     mutationFn: ({ rideId, passengerId }: { rideId: string; passengerId: string }) =>
       mapAPI.declinePassenger(rideId, passengerId),
-    onSuccess: () => {
+    onSuccess: (_data, { rideId }) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
   });
 }

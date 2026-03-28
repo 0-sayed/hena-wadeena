@@ -37,7 +37,7 @@ const RideDetailPage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { data: ride, isLoading, isError } = useRide(id);
-  const { data: myRidesData } = useMyRides(isAuthenticated);
+  const { data: myRidesData, isSuccess: hasMyRidesState } = useMyRides(isAuthenticated);
 
   const joinRide = useJoinRide();
   const cancelJoin = useCancelJoin();
@@ -230,6 +230,7 @@ const RideDetailPage = () => {
                 )}
                 {isAuthenticated &&
                   !isDriver &&
+                  hasMyRidesState &&
                   ride.status === 'open' &&
                   !hasActiveJoin &&
                   available > 0 && (

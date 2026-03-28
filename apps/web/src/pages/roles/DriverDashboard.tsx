@@ -21,6 +21,7 @@ const rideStatusLabels: Record<
   full: { label: 'مكتمل', variant: 'secondary' },
   departed: { label: 'انطلق', variant: 'outline' },
   completed: { label: 'منتهي', variant: 'outline' },
+  cancelled: { label: 'ملغي', variant: 'outline' },
 };
 
 export default function DriverDashboard() {
