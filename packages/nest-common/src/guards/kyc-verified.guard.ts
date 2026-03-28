@@ -1,5 +1,11 @@
 import { KycStatus, UserRole } from '@hena-wadeena/types';
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import type { JwtPayload } from '../decorators/current-user.decorator';
 
@@ -17,7 +23,7 @@ const ADMIN: string = UserRole.ADMIN;
 export class KycVerifiedGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const user = context.switchToHttp().getRequest<{ user?: JwtPayload }>().user;
-    if (!user) throw new ForbiddenException('Authentication required');
+    if (!user) throw new UnauthorizedException('Authentication required');
 
     if (user.role === ADMIN) return true;
 
