@@ -176,6 +176,8 @@ services:
       SERVICE_NAME: ai
       PORT: 8005
       DB_SCHEMA: ai
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGODB_DB_NAME:-nakheel_db}?authSource=admin
     depends_on:
       postgres:
