@@ -1,18 +1,35 @@
 [project]
 name = "hena-ai"
-version = "0.1.0"
-description = "Hena Wadeena — AI Service (RAG Chatbot)"
+version = "0.2.0"
+description = "Hena Wadeena - AI Service (RAG Chatbot)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.34.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.19",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
+    "loguru>=0.7.3",
+    "motor>=3.7.1",
+    "pymongo>=4.10.1",
+    "qdrant-client>=1.16.1",
+    "llama-index-core>=0.14.13",
+    "llama-index-vector-stores-qdrant>=0.9.1",
+    "fastembed>=0.3.4",
+    "openai>=1.0.0",
+    "tiktoken>=0.7.0",
+    "pypdf>=5.1.0",
+    "docling>=2.7.0",
+    "docling-core>=2.7.0",
+    "FlagEmbedding>=1.3.3",
+    "transformers>=4.44.2",
+    "torch>=2.5.1",
+    "sentence-transformers>=2.0,<3.0",
+    "langdetect>=1.0.9",
+    "python-dotenv>=1.0.1",
+    "numpy>=1.26.4",
+    "PyJWT>=2.10.1",
     "httpx>=0.28.0",
-    "qdrant-client>=1.12.0",
-    "google-genai>=1.0.0",
-    "psycopg[binary]>=3.2.0",
-    "redis>=5.2.0",
 ]
 
 [dependency-groups]
@@ -35,7 +52,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["nakheel", "src"]
 
 [build-system]
 requires = ["hatchling"]

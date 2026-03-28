@@ -78,13 +78,21 @@ jobs:
     environment: production
     timeout-minutes: 10
     steps:
+      - name: Validate required deploy secrets
+        run: |
+          : "${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is not set}"
+          : "${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is not set}"
+        env:
+          MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA
+          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD
           script: |
             set -euo pipefail
             cd /opt/hena-wadeena
@@ -100,6 +108,31 @@ jobs:
             git fetch origin main
             git checkout "$DEPLOY_SHA"
 
+            echo "==> Syncing MongoDB credentials into .env"
+            touch .env
+            upsert_env() {
+              local key="$1"
+              local value="$2"
+              awk -v k="$key" -v v="$value" '
+                BEGIN { updated = 0 }
+                $0 ~ "^" k "=" {
+                  print k "=" v
+                  updated = 1
+                  next
+                }
+                { print }
+                END {
+                  if (!updated) {
+                    print k "=" v
+                  }
+                }
+              ' .env > .env.tmp
+              mv .env.tmp .env
+            }
+            upsert_env "MONGO_INITDB_ROOT_USERNAME" "$MONGO_INITDB_ROOT_USERNAME"
+            upsert_env "MONGO_INITDB_ROOT_PASSWORD" "$MONGO_INITDB_ROOT_PASSWORD"
+            upsert_env "MONGODB_URI" "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@mongodb:27017/nakheel_db?authSource=admin"
+
             echo "==> Pulling images by SHA and tagging as :latest"
             for svc in identity market guide-booking map ai gateway; do
               docker pull "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA"
@@ -107,7 +140,7 @@ jobs:
                 "ghcr.io/$GHCR_USER/hena-wadeena/$svc:latest"
             done
 
-            echo "==> Running migrations (sequential — shared drizzle tracking table)"
+            echo "==> Running migrations (sequential - shared drizzle tracking table)"
             docker compose run --rm -w /app/services/identity identity node dist/db/migrate.js
             docker compose run --rm -w /app/services/market market node dist/db/migrate.js
             docker compose run --rm -w /app/services/guide-booking guide-booking node dist/db/migrate.js
@@ -115,7 +148,7 @@ jobs:
 
             echo "==> Restarting services"
             docker compose up -d --wait --timeout 120 postgres redis qdrant identity market guide-booking map ai gateway
-            # Start caddy without --wait (health depends on DNS/TLS — non-blocking)
+            # Start caddy without --wait (health depends on DNS/TLS - non-blocking)
             docker compose up -d caddy
 
             echo "==> Cleaning up old images"
@@ -126,3 +159,5 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
           GHCR_USER: ${{ github.repository_owner }}
           DEPLOY_SHA: ${{ github.sha }}
+          MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
