@@ -237,7 +237,7 @@ services:
     depends_on:
       - gateway
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO /dev/null http://localhost:2019/config/ 2>/dev/null']
+      test: ['CMD-SHELL', 'wget -qO /dev/null http://127.0.0.1:2019/config/ 2>/dev/null']
       interval: 15s
       timeout: 10s
       retries: 5
