@@ -36,7 +36,7 @@ export class UnifiedSearchService {
     const { q, type, limit, offset } = params;
     const normalizedQ = normalizeArabic(q);
 
-    const cacheKey = `usearch:${normalizedQ}:${(type ?? ['all']).join(',')}:${limit}:${offset}`;
+    const cacheKey = `usearch:${normalizedQ}:${(type ? [...type].sort() : ['all']).join(',')}:${limit}:${offset}`;
     try {
       const cached = await this.redis.get(cacheKey);
       if (cached) return { ...(JSON.parse(cached) as UnifiedSearchResponse), query: q };
