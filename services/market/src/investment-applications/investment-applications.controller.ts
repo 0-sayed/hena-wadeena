@@ -50,6 +50,7 @@ export class InvestmentApplicationsController {
   // --- Document upload ---
 
   @Post('investments/:id/documents')
+  @Roles(UserRole.INVESTOR, UserRole.MERCHANT)
   @UseGuards(KycVerifiedGuard)
   uploadDocument(
     @Param('id') opportunityId: string,
