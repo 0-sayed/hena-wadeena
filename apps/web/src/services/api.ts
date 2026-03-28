@@ -869,34 +869,37 @@ export const mapAPI = {
     pricePerSeat?: number;
     notes?: string;
   }) =>
-    apiFetch<CarpoolRide>('/carpool', {
+    apiFetchWithRefresh<CarpoolRide>('/carpool', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
   joinRide: (id: string, seats?: number) =>
-    apiFetch<CarpoolPassenger>(`/carpool/${id}/join`, {
+    apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${id}/join`, {
       method: 'POST',
       body: JSON.stringify({ seats: seats ?? 1 }),
     }),
 
   cancelJoin: (id: string) =>
-    apiFetch<{ message: string }>(`/carpool/${id}/join`, { method: 'DELETE' }),
+    apiFetchWithRefresh<{ message: string }>(`/carpool/${id}/join`, { method: 'DELETE' }),
 
-  cancelRide: (id: string) => apiFetch<CarpoolRide>(`/carpool/${id}/cancel`, { method: 'PATCH' }),
+  cancelRide: (id: string) =>
+    apiFetchWithRefresh<CarpoolRide>(`/carpool/${id}/cancel`, { method: 'PATCH' }),
 
   confirmPassenger: (rideId: string, passengerId: string) =>
-    apiFetch<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/confirm`, {
+    apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/confirm`, {
       method: 'PATCH',
     }),
 
   declinePassenger: (rideId: string, passengerId: string) =>
-    apiFetch<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/decline`, {
+    apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/decline`, {
       method: 'PATCH',
     }),
 
   myRides: () =>
-    apiFetch<{ asDriver: CarpoolRide[]; asPassenger: CarpoolPassenger[] }>('/carpool/my'),
+    apiFetchWithRefresh<{ asDriver: CarpoolRide[]; asPassenger: CarpoolPassenger[] }>(
+      '/carpool/my',
+    ),
 };
 
 // ── AI Chatbot ─────────────────────────────────────────────────────────────
