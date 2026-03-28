@@ -321,7 +321,7 @@ describe('Event Payloads', () => {
     expect(payload).toHaveProperty('listingOwnerId', MERCHANT_ID);
     expect(payload).toHaveProperty('targetType', 'listing');
     expect(payload).toHaveProperty('targetId', listing.id);
-    expect(payload).toHaveProperty('rating', 5);
+    expect(payload).toHaveProperty('rating', '5');
     expect(payload).toHaveProperty('createdAt');
 
     publishSpy.mockRestore();

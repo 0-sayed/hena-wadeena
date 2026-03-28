@@ -138,6 +138,7 @@ export class ReviewsService {
         reviewId: review.id,
         targetType: 'listing',
         targetId: dto.listingId,
+        targetUserId: listingOwnerId,
         rating: String(review.rating),
         reviewerId: review.reviewerId,
         listingOwnerId,
