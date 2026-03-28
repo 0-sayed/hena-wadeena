@@ -17,7 +17,7 @@ x-nestjs-healthcheck: &nestjs-healthcheck
   retries: 5
 
 services:
-  # â”€â”€â”€ Infrastructure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # --- Infrastructure ---
   postgres:
     image: postgis/postgis:16-3.4
     restart: unless-stopped
@@ -93,6 +93,7 @@ services:
     networks:
       - hena-internal
 
+  # --- NestJS Services ---
   identity:
     <<: *nestjs-service
     image: ghcr.io/0-sayed/hena-wadeena/identity:latest
@@ -193,6 +194,7 @@ services:
       start_period: 120s
       retries: 12
 
+  # --- Gateway ---
   gateway:
     image: ghcr.io/0-sayed/hena-wadeena/gateway:latest
     build:
@@ -209,7 +211,8 @@ services:
     expose:
       - '80'
     depends_on:
-      identity:
+      # --- NestJS Services ---
+  identity:
         condition: service_started
       market:
         condition: service_started
@@ -254,4 +257,6 @@ volumes:
 networks:
   hena-internal:
     driver: bridge
+
+
 
