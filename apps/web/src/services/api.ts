@@ -854,15 +854,94 @@ export const searchAPI = {
 
 // ── AI Chatbot ─────────────────────────────────────────────────────────────
 
-export interface ChatResponse {
+export interface ChatSource {
+  chunk_id: string;
+  doc_id: string;
+  section_title: string | null;
+  relevance_score: number;
+  text_snippet: string;
+}
+
+export interface ChatSession {
+  session_id: string;
+  user_id: string;
+  created_at: string;
+  language_preference: string;
+  message_count: number;
+  is_active: boolean;
+  welcome_message: string;
+}
+
+export interface ChatMessageResponse {
+  message_id: string;
+  session_id: string;
+  role: 'assistant';
+  content: string;
+  language: string;
+  created_at: string;
+  sources: ChatSource[];
+  domain_relevant: boolean;
+  latency_ms: number | null;
+}
+
+export interface ChatSessionMessage {
+  message_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  language: string;
+  created_at: string;
+  sources: ChatSource[];
+}
+
+export interface ChatSessionView {
+  session_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  message_count: number;
+  messages: ChatSessionMessage[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total_messages: number;
+    total_pages: number;
+  };
+}
+
+export interface LegacyChatResponse {
   response: string;
   conversation_id: string;
-  sources: unknown[];
+  sources: ChatSource[];
 }
 
 export const aiAPI = {
+  createSession: (body?: { language_preference?: string; metadata?: Record<string, unknown> }, forceNew = false) =>
+    apiFetchWithRefresh<ChatSession>(`/chat/sessions${forceNew ? '?force_new=true' : ''}`, {
+      method: 'POST',
+      body: JSON.stringify(body ?? {}),
+    }),
+
+  getSession: (sessionId: string, page = 1, perPage = 20) =>
+    apiFetchWithRefresh<ChatSessionView>(
+      `/chat/sessions/${sessionId}?page=${page}&per_page=${perPage}`,
+    ),
+
+  sendMessage: (sessionId: string, body: { content: string; language?: string }) =>
+    apiFetchWithRefresh<ChatMessageResponse>(`/chat/sessions/${sessionId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  closeSession: (sessionId: string) =>
+    apiFetchWithRefresh<{ session_id: string; closed: boolean; message_count: number; closed_at: string }>(
+      `/chat/sessions/${sessionId}`,
+      { method: 'DELETE' },
+    ),
+
+  // Deprecated compatibility adapter kept during migration.
   chat: (message: string, conversationId?: string) =>
-    apiFetchWithRefresh<{ success: boolean; data: ChatResponse }>('/ai/chat', {
+    apiFetchWithRefresh<{ success: boolean; data: LegacyChatResponse }>('/ai/chat', {
       method: 'POST',
       body: JSON.stringify({ message, conversation_id: conversationId }),
     }),
