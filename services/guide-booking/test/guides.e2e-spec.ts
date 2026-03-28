@@ -175,6 +175,9 @@ describe('Guide Management (e2e)', () => {
         .set('Authorization', tokens.adminToken())
         .send({ active: false })
         .expect(200);
+
+      // Deactivated guide must not appear in the public listing
+      await request(ctx.app.getHttpServer()).get(`/api/v1/guides/${guide.id}`).expect(404);
     });
 
     it('tourist cannot access admin endpoints', async () => {

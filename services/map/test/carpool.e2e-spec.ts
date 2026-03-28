@@ -70,10 +70,11 @@ describe('Carpool Workflow (e2e)', () => {
   describe('GET /api/v1/carpool (public)', () => {
     it('lists open rides with future departure', async () => {
       await seedRide();
-      // Seed a departed ride — should not appear
+      // Seed a past open ride — should not appear (exercises time filter)
       await seedRide({
         driverId: RESIDENT_ID,
-        status: 'departed',
+        status: 'open',
+        departureTime: new Date(Date.now() - 86_400_000),
         originName: 'باريس',
         destinationName: 'الفرافرة',
       });
@@ -253,13 +254,17 @@ describe('Carpool Workflow (e2e)', () => {
         .set('Authorization', tokens.driverToken())
         .expect(200);
 
-      // Verify ride is cancelled
+      // Verify ride is cancelled and all passengers are cascaded to cancelled
       const rideRes = await request(ctx.app.getHttpServer())
         .get(`/api/v1/carpool/${ride.id}`)
         .set('Authorization', tokens.driverToken())
         .expect(200);
 
       expect(rideRes.body.status).toBe('cancelled');
+      expect(rideRes.body.passengers).toBeDefined();
+      expect(
+        rideRes.body.passengers.every((p: { status: string }) => p.status === 'cancelled'),
+      ).toBe(true);
     });
 
     it('non-driver cannot cancel ride', async () => {
