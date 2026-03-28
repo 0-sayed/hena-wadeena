@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import {
   useRide,
+  useMyRides,
   useJoinRide,
   useCancelJoin,
   useCancelRide,
@@ -35,7 +36,8 @@ const RideDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { data: ride, isLoading } = useRide(id);
+  const { data: ride, isLoading, isError } = useRide(id);
+  const { data: myRidesData } = useMyRides(isAuthenticated);
 
   const joinRide = useJoinRide();
   const cancelJoin = useCancelJoin();
@@ -56,6 +58,19 @@ const RideDetailPage = () => {
     );
   }
 
+  if (isError) {
+    return (
+      <Layout>
+        <section className="py-20 text-center">
+          <p className="text-lg text-muted-foreground">حدث خطأ أثناء تحميل الرحلة</p>
+          <Button variant="outline" className="mt-4" onClick={() => void navigate('/logistics')}>
+            العودة
+          </Button>
+        </section>
+      </Layout>
+    );
+  }
+
   if (!ride) {
     return (
       <Layout>
@@ -71,7 +86,7 @@ const RideDetailPage = () => {
 
   const isDriver = isAuthenticated && user?.id === ride.driverId;
   const available = ride.seatsTotal - ride.seatsTaken;
-  const myPassengerRecord = ride.passengers?.find((p) => p.userId === user?.id);
+  const myPassengerRecord = myRidesData?.asPassenger.find((p) => p.rideId === id);
   const hasActiveJoin =
     myPassengerRecord &&
     (myPassengerRecord.status === 'requested' || myPassengerRecord.status === 'confirmed');
