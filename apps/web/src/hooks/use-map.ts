@@ -100,8 +100,8 @@ export function useCancelJoin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (rideId: string) => mapAPI.cancelJoin(rideId),
-    onSuccess: (_data, rideId) => {
-      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
       void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },
   });
@@ -123,8 +123,8 @@ export function useConfirmPassenger() {
   return useMutation({
     mutationFn: ({ rideId, passengerId }: { rideId: string; passengerId: string }) =>
       mapAPI.confirmPassenger(rideId, passengerId),
-    onSuccess: (_data, { rideId }) => {
-      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
     },
   });
 }
@@ -134,8 +134,8 @@ export function useDeclinePassenger() {
   return useMutation({
     mutationFn: ({ rideId, passengerId }: { rideId: string; passengerId: string }) =>
       mapAPI.declinePassenger(rideId, passengerId),
-    onSuccess: (_data, { rideId }) => {
-      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
     },
   });
 }

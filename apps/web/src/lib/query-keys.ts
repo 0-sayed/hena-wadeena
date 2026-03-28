@@ -47,7 +47,7 @@ export const queryKeys = {
     poi: (id: string) => ['map', 'pois', id] as const,
     carpool: (filters?: Record<string, unknown>) => ['map', 'carpool', filters] as const,
     ride: (id: string) => ['map', 'carpool', id] as const,
-    myRides: () => ['map', 'carpool', 'my'] as const,
+    myRides: () => ['map', 'my-rides'] as const,
   },
   search: {
     results: (query: string, filters?: Record<string, unknown>) =>
