@@ -1,9 +1,11 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import { index, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { userRoleEnum, userStatusEnum } from '../enums';
 import { identitySchema } from '../schema';
+
+import { tsvector } from './types';
 
 export const users = identitySchema.table(
   'users',
@@ -23,6 +25,10 @@ export const users = identitySchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', identity.normalize_arabic(coalesce(${users.fullName}, ''))), 'A') || setweight(to_tsvector('simple', identity.normalize_arabic(coalesce(${users.displayName}, ''))), 'B')`,
+    ),
   },
   (t) => [
     uniqueIndex('users_email_unique').on(t.email),
@@ -35,5 +41,7 @@ export const users = identitySchema.table(
     index('idx_users_not_deleted')
       .on(t.id)
       .where(sql`${t.deletedAt} IS NULL`),
+    index('idx_users_search_vector').using('gin', t.searchVector),
+    index('idx_users_full_name_trgm').using('gin', sql`${t.fullName} gin_trgm_ops`),
   ],
 );
