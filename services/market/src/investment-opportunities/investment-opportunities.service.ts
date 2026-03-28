@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { SQL, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { getTableColumns } from 'drizzle-orm/utils';
 import Redis from 'ioredis';
 
 import { investmentOpportunities } from '../db/schema/investment-opportunities';
@@ -22,7 +23,13 @@ import { CreateOpportunityDto } from './dto/create-opportunity.dto';
 import { QueryOpportunitiesDto } from './dto/query-opportunities.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 
-type Opportunity = typeof investmentOpportunities.$inferSelect;
+// Exclude searchVector (tsvector generated column) from query results
+const allOpportunityColumns = getTableColumns(investmentOpportunities);
+const opportunityColumns = Object.fromEntries(
+  Object.entries(allOpportunityColumns).filter(([key]) => key !== 'searchVector'),
+) as Omit<typeof allOpportunityColumns, 'searchVector'>;
+
+type Opportunity = Omit<typeof investmentOpportunities.$inferSelect, 'searchVector'>;
 type PublicOpportunity = Omit<Opportunity, 'contact' | 'documents' | 'description'>;
 type InsertOpportunity = typeof investmentOpportunities.$inferInsert;
 
@@ -33,6 +40,7 @@ function stripSensitiveFields(
   delete (copy as Record<string, unknown>).contact;
   delete (copy as Record<string, unknown>).documents;
   delete (copy as Record<string, unknown>).description;
+  delete (copy as Record<string, unknown>).searchVector;
   return copy as Omit<Opportunity, 'contact' | 'documents' | 'description'>;
 }
 
@@ -82,7 +90,7 @@ export class InvestmentOpportunitiesService {
 
   async findRaw(id: string): Promise<Opportunity | null> {
     const [opp] = await this.db
-      .select()
+      .select(opportunityColumns)
       .from(investmentOpportunities)
       .where(eq(investmentOpportunities.id, id))
       .limit(1);
@@ -181,7 +189,7 @@ export class InvestmentOpportunitiesService {
 
     const [results, total] = await Promise.all([
       this.db
-        .select()
+        .select(opportunityColumns)
         .from(investmentOpportunities)
         .where(filters)
         .orderBy(desc(investmentOpportunities.createdAt))
@@ -211,7 +219,7 @@ export class InvestmentOpportunitiesService {
 
     const [results, total] = await Promise.all([
       this.db
-        .select()
+        .select(opportunityColumns)
         .from(investmentOpportunities)
         .where(filters)
         .orderBy(desc(investmentOpportunities.createdAt))
