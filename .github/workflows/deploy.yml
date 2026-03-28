@@ -170,6 +170,7 @@ jobs:
               docker compose logs --tail 80 postgres || true
               exit 1
             fi
+            docker compose up -d --wait --timeout 120 postgres redis qdrant identity market guide-booking map ai gateway
             # Start caddy without --wait (health depends on DNS/TLS - non-blocking)
             docker compose up -d caddy
 
