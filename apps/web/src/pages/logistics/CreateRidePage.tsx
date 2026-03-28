@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '@/components/layout/Layout';
 import { Car, ArrowRight } from 'lucide-react';
@@ -29,6 +29,10 @@ const CreateRidePage = () => {
   const [seats, setSeats] = useState('1');
   const [price, setPrice] = useState('0');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (originId && originId === destId) setDestId('');
+  }, [originId, destId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
