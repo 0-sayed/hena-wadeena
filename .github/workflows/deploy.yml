@@ -117,20 +117,8 @@ jobs:
             upsert_env() {
               local key="$1"
               local value="$2"
-              awk -v k="$key" -v v="$value" '
-                BEGIN { updated = 0 }
-                $0 ~ "^" k "=" {
-                  print k "=" v
-                  updated = 1
-                  next
-                }
-                { print }
-                END {
-                  if (!updated) {
-                    print k "=" v
-                  }
-                }
-              ' .env > .env.tmp
+              grep -v "^${key}=" .env > .env.tmp || true
+              printf '%s=%s\n' "$key" "$value" >> .env.tmp
               mv .env.tmp .env
             }
             upsert_env "MONGO_INITDB_ROOT_USERNAME" "$MONGO_INITDB_ROOT_USERNAME"
