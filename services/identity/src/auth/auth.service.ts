@@ -224,11 +224,13 @@ export class AuthService {
     // Revoke all existing sessions
     await this.sessionService.revokeAllUserSessions(userId);
 
+    const kycStatus = await this.getKycStatus(user.id);
     const tokens = await this.generateTokenPair({
       userId: user.id,
       email: user.email,
       role: user.role,
       lang: user.language,
+      kycStatus,
     });
     await this.recordAudit(userId, 'password_changed');
 
@@ -292,11 +294,13 @@ export class AuthService {
     // Revoke all sessions
     await this.sessionService.revokeAllUserSessions(user.id);
 
+    const kycStatus = await this.getKycStatus(user.id);
     const tokens = await this.generateTokenPair({
       userId: user.id,
       email: user.email,
       role: user.role,
       lang: user.language,
+      kycStatus,
     });
     await this.recordAudit(user.id, 'password_reset');
 
