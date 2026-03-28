@@ -1,4 +1,4 @@
-name: hena-wadeena
+﻿name: hena-wadeena
 
 x-nestjs-service: &nestjs-service
   restart: unless-stopped
@@ -17,7 +17,7 @@ x-nestjs-healthcheck: &nestjs-healthcheck
   retries: 5
 
 services:
-  # ─── Infrastructure ─────────────────────────────────────────────────────────
+  # â”€â”€â”€ Infrastructure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   postgres:
     image: postgis/postgis:16-3.4
     restart: unless-stopped
@@ -93,7 +93,6 @@ services:
     networks:
       - hena-internal
 
-  # ─── NestJS Services ────────────────────────────────────────────────────────
   identity:
     <<: *nestjs-service
     image: ghcr.io/0-sayed/hena-wadeena/identity:latest
@@ -191,8 +190,9 @@ services:
     healthcheck:
       <<: *nestjs-healthcheck
       test: ['CMD-SHELL', 'curl -sf http://localhost:8005/health || exit 1']
+      start_period: 120s
+      retries: 12
 
-  # ─── Gateway ────────────────────────────────────────────────────────────────
   gateway:
     image: ghcr.io/0-sayed/hena-wadeena/gateway:latest
     build:
@@ -254,3 +254,4 @@ volumes:
 networks:
   hena-internal:
     driver: bridge
+

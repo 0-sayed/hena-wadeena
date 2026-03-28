@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
@@ -25,6 +25,9 @@ from nakheel.db.mongo import MongoDatabase
 from nakheel.db.qdrant import QdrantDatabase
 from nakheel.exceptions import NakheelBaseException
 
+STARTUP_CHECK_TIMEOUT_SECONDS = 10
+CRITICAL_STARTUP_CHECKS = {"mongodb", "qdrant"}
+
 
 @dataclass(slots=True)
 class StartupCheck:
@@ -34,6 +37,17 @@ class StartupCheck:
     detail: str
 
 
+async def _bounded_check(name: str, check_coro: asyncio.Future) -> dict[str, str | bool]:
+    """Bound external startup checks so service boot does not hang indefinitely."""
+
+    try:
+        return await asyncio.wait_for(check_coro, timeout=STARTUP_CHECK_TIMEOUT_SECONDS)
+    except TimeoutError:
+        return {"ok": False, "detail": f"{name} startup check timed out"}
+    except Exception as exc:
+        return {"ok": False, "detail": f"{name} startup check failed: {exc}"}
+
+
 async def validate_startup_dependencies(
     mongo: MongoDatabase,
     qdrant: QdrantDatabase,
@@ -41,14 +55,14 @@ async def validate_startup_dependencies(
     reranker: RerankerService,
     llm_client: LLMClient,
 ) -> dict[str, dict[str, str | bool]]:
-    """Run all critical readiness checks before the app accepts traffic."""
+    """Run dependency readiness checks before the app accepts traffic."""
 
     mongo_ok = await mongo.ping()
     qdrant_ok = await asyncio.to_thread(qdrant.ping)
     embedder_check, reranker_check, llm_check = await asyncio.gather(
-        dense_embedder.startup_check_async(),
-        reranker.startup_check_async(),
-        llm_client.startup_check_async(),
+        _bounded_check("embedder", dense_embedder.startup_check_async()),
+        _bounded_check("reranker", reranker.startup_check_async()),
+        _bounded_check("llm", llm_client.startup_check_async()),
     )
     checks = {
         "mongodb": StartupCheck(ok=mongo_ok, detail="connected" if mongo_ok else "unreachable"),
@@ -100,7 +114,7 @@ async def lifespan(app: FastAPI):
     failed_checks = [
         name
         for name, status in startup_checks.items()
-        if not status["ok"] and name in {"mongodb", "qdrant", "embedder", "llm"}
+        if not status["ok"] and name in CRITICAL_STARTUP_CHECKS
     ]
     if failed_checks:
         await mongo.close()

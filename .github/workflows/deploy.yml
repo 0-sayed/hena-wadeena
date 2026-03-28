@@ -1,4 +1,4 @@
----
+﻿---
 name: Deploy
 
 'on':
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-images]
     environment: production
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Validate required deploy secrets
         run: |
@@ -119,20 +119,8 @@ jobs:
             upsert_env() {
               local key="$1"
               local value="$2"
-              awk -v k="$key" -v v="$value" '
-                BEGIN { updated = 0 }
-                $0 ~ "^" k "=" {
-                  print k "=" v
-                  updated = 1
-                  next
-                }
-                { print }
-                END {
-                  if (!updated) {
-                    print k "=" v
-                  }
-                }
-              ' .env > .env.tmp
+              grep -v "^${key}=" .env > .env.tmp || true
+              printf '%s=%s\n' "$key" "$value" >> .env.tmp
               mv .env.tmp .env
             }
             upsert_env "MONGO_INITDB_ROOT_USERNAME" "$MONGO_INITDB_ROOT_USERNAME"
@@ -156,11 +144,15 @@ jobs:
             docker compose run --rm -w /app/services/map map node dist/db/migrate.js
 
             echo "==> Restarting services"
-            if ! docker compose up -d --wait --timeout 120 postgres redis qdrant mongodb identity market guide-booking map ai gateway; then
+            if ! docker compose up -d --wait --timeout 300 postgres redis qdrant mongodb identity market guide-booking map ai gateway; then
               echo "==> Service health check failed; collecting diagnostics"
               docker compose ps || true
               echo "==> AI logs"
               docker compose logs --tail 200 ai || true
+              echo "==> Map logs"
+              docker compose logs --tail 200 map || true
+              echo "==> Gateway logs"
+              docker compose logs --tail 120 gateway || true
               echo "==> MongoDB logs"
               docker compose logs --tail 120 mongodb || true
               echo "==> Qdrant logs"
