@@ -78,13 +78,25 @@ jobs:
     environment: production
     timeout-minutes: 10
     steps:
+      - name: Validate required deploy secrets
+        run: |
+          : "${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is not set}"
+          : "${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is not set}"
+          : "${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is not set}"
+          : "${OPENAI_API_KEY:?OPENAI_API_KEY is not set}"
+        env:
+          MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA
+          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY
           script: |
             set -euo pipefail
             cd /opt/hena-wadeena
@@ -100,6 +112,33 @@ jobs:
             git fetch origin main
             git checkout "$DEPLOY_SHA"
 
+            echo "==> Syncing AI/auth secrets into .env"
+            touch .env
+            upsert_env() {
+              local key="$1"
+              local value="$2"
+              awk -v k="$key" -v v="$value" '
+                BEGIN { updated = 0 }
+                $0 ~ "^" k "=" {
+                  print k "=" v
+                  updated = 1
+                  next
+                }
+                { print }
+                END {
+                  if (!updated) {
+                    print k "=" v
+                  }
+                }
+              ' .env > .env.tmp
+              mv .env.tmp .env
+            }
+            upsert_env "MONGO_INITDB_ROOT_USERNAME" "$MONGO_INITDB_ROOT_USERNAME"
+            upsert_env "MONGO_INITDB_ROOT_PASSWORD" "$MONGO_INITDB_ROOT_PASSWORD"
+            upsert_env "MONGODB_URI" "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@mongodb:27017/nakheel_db?authSource=admin"
+            upsert_env "JWT_ACCESS_SECRET" "$JWT_ACCESS_SECRET"
+            upsert_env "OPENAI_API_KEY" "$OPENAI_API_KEY"
+
             echo "==> Pulling images by SHA and tagging as :latest"
             for svc in identity market guide-booking map ai gateway; do
               docker pull "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA"
@@ -107,15 +146,27 @@ jobs:
                 "ghcr.io/$GHCR_USER/hena-wadeena/$svc:latest"
             done
 
-            echo "==> Running migrations (sequential — shared drizzle tracking table)"
+            echo "==> Running migrations (sequential - shared drizzle tracking table)"
             docker compose run --rm -w /app/services/identity identity node dist/db/migrate.js
             docker compose run --rm -w /app/services/market market node dist/db/migrate.js
             docker compose run --rm -w /app/services/guide-booking guide-booking node dist/db/migrate.js
             docker compose run --rm -w /app/services/map map node dist/db/migrate.js
 
             echo "==> Restarting services"
-            docker compose up -d --wait --timeout 120 postgres redis qdrant identity market guide-booking map ai gateway
-            # Start caddy without --wait (health depends on DNS/TLS — non-blocking)
+            if ! docker compose up -d --wait --timeout 120 postgres redis qdrant mongodb identity market guide-booking map ai gateway; then
+              echo "==> Service health check failed; collecting diagnostics"
+              docker compose ps || true
+              echo "==> AI logs"
+              docker compose logs --tail 200 ai || true
+              echo "==> MongoDB logs"
+              docker compose logs --tail 120 mongodb || true
+              echo "==> Qdrant logs"
+              docker compose logs --tail 120 qdrant || true
+              echo "==> Postgres logs"
+              docker compose logs --tail 80 postgres || true
+              exit 1
+            fi
+            # Start caddy without --wait (health depends on DNS/TLS - non-blocking)
             docker compose up -d caddy
 
             echo "==> Cleaning up old images"
@@ -126,3 +177,7 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
           GHCR_USER: ${{ github.repository_owner }}
           DEPLOY_SHA: ${{ github.sha }}
+          MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
