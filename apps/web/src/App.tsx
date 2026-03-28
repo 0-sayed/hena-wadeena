@@ -160,7 +160,9 @@ const App = () => (
             />
             {/* Logistics */}
             <Route path="/logistics" element={<LogisticsPage />} />
-            <Route path="/logistics/create-ride" element={<CreateRidePage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/logistics/create-ride" element={<CreateRidePage />} />
+            </Route>
             <Route path="/logistics/ride/:id" element={<RideDetailPage />} />
             {/* Marketplace */}
             <Route path="/marketplace" element={<MarketplacePage />} />

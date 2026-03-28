@@ -373,7 +373,13 @@ const LogisticsPage = () => {
                       <Button
                         variant="outline"
                         className="mt-4"
-                        onClick={() => void navigate('/logistics/create-ride')}
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            void navigate('/login');
+                            return;
+                          }
+                          void navigate('/logistics/create-ride');
+                        }}
                       >
                         كن أول من يضيف رحلة
                       </Button>
