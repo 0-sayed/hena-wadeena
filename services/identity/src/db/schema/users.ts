@@ -42,6 +42,9 @@ export const users = identitySchema.table(
       .on(t.id)
       .where(sql`${t.deletedAt} IS NULL`),
     index('idx_users_search_vector').using('gin', t.searchVector),
-    index('idx_users_full_name_trgm').using('gin', sql`${t.fullName} gin_trgm_ops`),
+    index('idx_users_full_name_trgm').using(
+      'gin',
+      sql`identity.normalize_arabic(${t.fullName}) gin_trgm_ops`,
+    ),
   ],
 );

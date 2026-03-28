@@ -1,5 +1,7 @@
 -- Arabic text normalization for full-text search (mirrors market.normalize_arabic)
 -- Used by generated tsvector columns on the users table
+-- pg_trgm is required for the trigram index created in the next migration
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE OR REPLACE FUNCTION identity.normalize_arabic(input text)
 RETURNS text AS $$

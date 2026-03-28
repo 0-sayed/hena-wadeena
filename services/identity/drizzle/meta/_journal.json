@@ -64,6 +64,13 @@
       "when": 1774675474699,
       "tag": "20260328052434_kind_scourge",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1774688413755,
+      "tag": "20260328090013_fix-trgm-index-expression",
+      "breakpoints": true
     }
   ]
 }
