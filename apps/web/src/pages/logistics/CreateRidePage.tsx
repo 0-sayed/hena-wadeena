@@ -66,7 +66,7 @@ const CreateRidePage = () => {
         destinationName: dest.nameAr,
         departureTime,
         seatsTotal: Number(seats),
-        pricePerSeat: Number(price),
+        pricePerSeat: Math.round(Number(price) * 100),
         notes: notes || undefined,
       },
       {
