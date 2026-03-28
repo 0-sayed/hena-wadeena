@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 
 export { marketSchema } from '../schema';
+export { tsvector } from './types';
 
 export * from '../enums';
 export { listings } from './listings';
