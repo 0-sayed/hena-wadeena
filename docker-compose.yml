@@ -1,4 +1,4 @@
-name: hena-wadeena
+﻿name: hena-wadeena
 
 x-nestjs-service: &nestjs-service
   restart: unless-stopped
@@ -17,7 +17,7 @@ x-nestjs-healthcheck: &nestjs-healthcheck
   retries: 5
 
 services:
-  # ─── Infrastructure ─────────────────────────────────────────────────────────
+  # â”€â”€â”€ Infrastructure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   postgres:
     image: postgis/postgis:16-3.4
     restart: unless-stopped
@@ -73,7 +73,27 @@ services:
     networks:
       - hena-internal
 
-  # ─── NestJS Services ────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is not set}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is not set}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh --quiet --username ${MONGO_INITDB_ROOT_USERNAME} --password ${MONGO_INITDB_ROOT_PASSWORD} --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok" | grep 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hena-internal
+
+  # â”€â”€â”€ NestJS Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   identity:
     <<: *nestjs-service
     image: ghcr.io/0-sayed/hena-wadeena/identity:latest
@@ -156,6 +176,9 @@ services:
       SERVICE_NAME: ai
       PORT: 8005
       DB_SCHEMA: ai
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGODB_DB_NAME:-nakheel_db}?authSource=admin
     depends_on:
       postgres:
         condition: service_healthy
@@ -163,11 +186,15 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     healthcheck:
       <<: *nestjs-healthcheck
       test: ['CMD-SHELL', 'curl -sf http://localhost:8005/health || exit 1']
+      start_period: 120s
+      retries: 12
 
-  # ─── Gateway ────────────────────────────────────────────────────────────────
+  # â”€â”€â”€ Gateway â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   gateway:
     image: ghcr.io/0-sayed/hena-wadeena/gateway:latest
     build:
@@ -222,9 +249,11 @@ volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  mongo-data:
   caddy-data:
   caddy-config:
 
 networks:
   hena-internal:
     driver: bridge
+

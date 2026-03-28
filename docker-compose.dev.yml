@@ -6,6 +6,10 @@ services:
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
 
+  mongodb:
+    ports:
+      - '${MONGODB_PORT:-27017}:27017'
+
   redis:
     # No auth in dev
     command: redis-server --appendonly yes

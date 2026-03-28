@@ -143,7 +143,7 @@ server {
     }
 
     # ── AI Service (SSE support) ──────────────────────────────────────────────
-    location ~ ^/api/v1/(chat|ai)/ {
+    location ~ ^/api/v1/(chat|ai|documents)/ {
         limit_req zone=ai burst=10 nodelay;
         proxy_read_timeout 300s;
         proxy_buffering off;

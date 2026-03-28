@@ -1,0 +1,3 @@
+[submodule "services/ai-service"]
+	path = services/ai-service
+	url = https://github.com/mhmod01110/Nakheel-Chatbot.git
