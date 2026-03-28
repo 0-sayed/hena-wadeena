@@ -2,13 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-interface MapLocation {
+export interface MapLocation {
   id: number | string;
   name: string;
   lat: number;
   lng: number;
   description?: string;
   type?: string;
+  color?: string;
+}
+
+export interface MapPolyline {
+  positions: [number, number][];
+  color?: string;
+  dashArray?: string;
 }
 
 interface InteractiveMapProps {
@@ -17,6 +24,8 @@ interface InteractiveMapProps {
   zoom?: number;
   className?: string;
   onMarkerClick?: (location: MapLocation) => void;
+  fitBounds?: boolean;
+  polylines?: MapPolyline[];
 }
 
 // Fix default marker icon (bundlers often fail to resolve these assets)
@@ -28,17 +37,41 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+const coloredIconCache = new Map<string, L.DivIcon>();
+
+function createColoredIcon(color: string): L.DivIcon {
+  const cached = coloredIconCache.get(color);
+  if (cached) return cached;
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width: 24px; height: 24px; border-radius: 50%;
+      background: ${color}; border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    "></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -14],
+  });
+  coloredIconCache.set(color, icon);
+  return icon;
+}
+
 export function InteractiveMap({
   locations,
   center = [25.45, 30.55],
   zoom = 8,
   className = 'h-[400px] w-full rounded-xl',
   onMarkerClick,
+  fitBounds = false,
+  polylines,
 }: InteractiveMapProps) {
   const [isClient, setIsClient] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const polylinesLayerRef = useRef<L.LayerGroup | null>(null);
 
   const normalizedClassName = useMemo(() => className ?? '', [className]);
 
@@ -61,30 +94,34 @@ export function InteractiveMap({
     }).addTo(map);
 
     markersLayerRef.current = L.layerGroup().addTo(map);
+    polylinesLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
     return () => {
       map.remove();
       mapRef.current = null;
       markersLayerRef.current = null;
+      polylinesLayerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
-  // Update view when center/zoom changes
+  // Update view when center/zoom changes (only if not fitting bounds)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || fitBounds) return;
     mapRef.current.setView(center, zoom);
-  }, [center, zoom]);
+  }, [center, zoom, fitBounds]);
 
-  // Render markers when locations changes
+  // Render markers when locations change
   useEffect(() => {
     if (!mapRef.current || !markersLayerRef.current) return;
 
     markersLayerRef.current.clearLayers();
 
     locations.forEach((location) => {
-      const marker = L.marker([location.lat, location.lng]);
+      const icon = location.color ? createColoredIcon(location.color) : new L.Icon.Default();
+
+      const marker = L.marker([location.lat, location.lng], { icon });
 
       const popupHtml = `
         <div style="text-align:center; padding:4px;">
@@ -100,7 +137,29 @@ export function InteractiveMap({
       }
       marker.addTo(markersLayerRef.current!);
     });
-  }, [locations, onMarkerClick]);
+
+    // Auto-fit bounds if enabled and there are locations
+    if (fitBounds && locations.length > 0 && mapRef.current) {
+      const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
+      mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
+  }, [locations, onMarkerClick, fitBounds]);
+
+  // Render polylines
+  useEffect(() => {
+    if (!mapRef.current || !polylinesLayerRef.current) return;
+    polylinesLayerRef.current.clearLayers();
+
+    polylines?.forEach((pl) => {
+      const line = L.polyline(pl.positions, {
+        color: pl.color ?? '#3b82f6',
+        weight: 3,
+        dashArray: pl.dashArray ?? '8 8',
+        opacity: 0.7,
+      });
+      line.addTo(polylinesLayerRef.current!);
+    });
+  }, [polylines]);
 
   if (!isClient) {
     return (
