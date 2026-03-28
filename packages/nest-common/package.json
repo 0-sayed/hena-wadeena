@@ -23,7 +23,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.0",
     "@nestjs/terminus": "^11.0.0",
-    "drizzle-orm": "^0.38.0",
+    "drizzle-orm": "^0.45.2",
     "helmet": "^8.0.0",
     "ioredis": "^5.4.2",
     "nestjs-pino": "^4.2.0",

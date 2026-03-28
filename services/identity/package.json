@@ -26,7 +26,7 @@
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/throttler": "^6.4.0",
     "@node-rs/argon2": "^2.0.0",
-    "drizzle-orm": "^0.38.0",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "ioredis": "^5.4.2",
     "nestjs-zod": "^5.1.1",
