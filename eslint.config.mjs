@@ -92,6 +92,8 @@ export default tseslint.config(
       '*.config.mjs',
       '**/*.config.ts',
       'vitest.workspace.ts',
+      'scripts/seed/*.js',
+      'scripts/seed/*.d.ts',
     ],
   },
 );

@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "scripts/seed/**/*",
+    "services/*/src/db/seed.ts",
+    "services/*/src/db/seed-data/**/*"
+  ]
+}

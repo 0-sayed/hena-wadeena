@@ -1,0 +1,295 @@
+import { POI, USER } from '../../../../../scripts/seed/shared-ids.js';
+
+export interface SeedPoi {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  description: string;
+  category:
+    | 'historical'
+    | 'natural'
+    | 'religious'
+    | 'recreational'
+    | 'accommodation'
+    | 'restaurant'
+    | 'service'
+    | 'government';
+  address: string;
+  phone?: string;
+  lat: number;
+  lon: number;
+  submittedBy: string;
+  approvedBy: string;
+}
+
+// Inline IDs for showcase POIs 11–20
+const P11 = 'aa110000-0000-4000-8000-000000000011';
+const P12 = 'aa120000-0000-4000-8000-000000000012';
+const P13 = 'aa130000-0000-4000-8000-000000000013';
+const P14 = 'aa140000-0000-4000-8000-000000000014';
+const P15 = 'aa150000-0000-4000-8000-000000000015';
+const P16 = 'aa160000-0000-4000-8000-000000000016';
+const P17 = 'aa170000-0000-4000-8000-000000000017';
+const P18 = 'aa180000-0000-4000-8000-000000000018';
+const P19 = 'aa190000-0000-4000-8000-000000000019';
+const P20 = 'aa200000-0000-4000-8000-000000000020';
+
+/** Essential layer: 5 POIs — one key location per city */
+export const essentialPois: SeedPoi[] = [
+  {
+    id: POI.POI01,
+    nameAr: 'مستشفى الخارجة العام',
+    nameEn: 'Kharga General Hospital',
+    description: 'المستشفى الرئيسي في مدينة الخارجة عاصمة محافظة الوادي الجديد',
+    category: 'service',
+    address: 'شارع جمال عبد الناصر، الخارجة',
+    phone: '+20924921234',
+    lat: 25.44,
+    lon: 30.55,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI02,
+    nameAr: 'جامعة الوادي الجديد',
+    nameEn: 'New Valley University',
+    description: 'الجامعة الحكومية الرئيسية في محافظة الوادي الجديد',
+    category: 'service',
+    address: 'طريق الخارجة - أسيوط، الخارجة',
+    lat: 25.45,
+    lon: 30.56,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI03,
+    nameAr: 'مستشفى موط العام',
+    nameEn: 'Mut General Hospital',
+    description: 'المستشفى الرئيسي في مدينة موط بواحة الداخلة',
+    category: 'service',
+    address: 'شارع المستشفى، موط، الداخلة',
+    phone: '+20926821234',
+    lat: 25.4946,
+    lon: 28.9781,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI04,
+    nameAr: 'مجلس مدينة الفرافرة',
+    nameEn: 'Farafra City Council',
+    description: 'مقر مجلس مدينة الفرافرة والخدمات الحكومية',
+    category: 'government',
+    address: 'وسط مدينة الفرافرة',
+    phone: '+20927510123',
+    lat: 27.0567,
+    lon: 27.9703,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI05,
+    nameAr: 'مستشفى باريس المركزي',
+    nameEn: 'Baris Central Hospital',
+    description: 'المستشفى المركزي في مدينة باريس جنوب واحة الخارجة',
+    category: 'service',
+    address: 'وسط مدينة باريس',
+    phone: '+20924991234',
+    lat: 24.6544,
+    lon: 30.5956,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+];
+
+/** Showcase layer: additional POIs across all cities */
+export const showcasePois: SeedPoi[] = [
+  {
+    id: POI.POI06,
+    nameAr: 'ديوان عام محافظة الوادي الجديد',
+    nameEn: 'New Valley Governorate Headquarters',
+    description: 'المقر الرسمي لمحافظة الوادي الجديد وإدارة المحافظة',
+    category: 'government',
+    address: 'شارع الجمهورية، الخارجة',
+    phone: '+20924920000',
+    lat: 25.441,
+    lon: 30.549,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI07,
+    nameAr: 'مجلس مدينة الخارجة',
+    nameEn: 'Kharga City Council',
+    description: 'مقر المجلس المحلي لمدينة الخارجة والخدمات الإدارية',
+    category: 'government',
+    address: 'ميدان المحطة، الخارجة',
+    phone: '+20924921000',
+    lat: 25.443,
+    lon: 30.551,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI08,
+    nameAr: 'مجلس مدينة موط',
+    nameEn: 'Mut City Council',
+    description: 'مقر المجلس المحلي لمدينة موط والخدمات الإدارية في الداخلة',
+    category: 'government',
+    address: 'شارع السلام، موط، الداخلة',
+    phone: '+20926820000',
+    lat: 25.496,
+    lon: 28.975,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI09,
+    nameAr: 'مجلس مدينة باريس',
+    nameEn: 'Baris City Council',
+    description: 'مقر المجلس المحلي لمدينة باريس والخدمات الإدارية',
+    category: 'government',
+    address: 'وسط مدينة باريس',
+    lat: 24.656,
+    lon: 30.594,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: POI.POI10,
+    nameAr: 'مديرية التربية والتعليم',
+    nameEn: 'Education Directorate',
+    description: 'مقر مديرية التربية والتعليم بمحافظة الوادي الجديد',
+    category: 'government',
+    address: 'شارع المدارس، الخارجة',
+    phone: '+20924922000',
+    lat: 25.442,
+    lon: 30.552,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P11,
+    nameAr: 'مدرسة الخارجة الثانوية بنين',
+    nameEn: 'Kharga Secondary School for Boys',
+    description: 'أكبر مدرسة ثانوية للبنين في مدينة الخارجة',
+    category: 'service',
+    address: 'شارع المدارس، الخارجة',
+    lat: 25.445,
+    lon: 30.553,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P12,
+    nameAr: 'مدرسة الخارجة الثانوية بنات',
+    nameEn: 'Kharga Secondary School for Girls',
+    description: 'أكبر مدرسة ثانوية للبنات في مدينة الخارجة',
+    category: 'service',
+    address: 'شارع المدارس، الخارجة',
+    lat: 25.446,
+    lon: 30.554,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P13,
+    nameAr: 'مدرسة موط الثانوية',
+    nameEn: 'Mut Secondary School',
+    description: 'المدرسة الثانوية الرئيسية في مدينة موط بواحة الداخلة',
+    category: 'service',
+    address: 'شارع التعليم، موط، الداخلة',
+    lat: 25.493,
+    lon: 28.976,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P14,
+    nameAr: 'سوق الخارجة القديم',
+    nameEn: 'Old Kharga Market',
+    description:
+      'السوق الشعبي التقليدي في قلب مدينة الخارجة، يضم محلات الحرف اليدوية والمنتجات المحلية',
+    category: 'service',
+    address: 'وسط مدينة الخارجة',
+    lat: 25.437,
+    lon: 30.548,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P15,
+    nameAr: 'سوق موط المركزي',
+    nameEn: 'Mut Central Market',
+    description: 'السوق المركزي لمدينة موط يضم منتجات الواحة من تمور وزيت زيتون وحرف يدوية',
+    category: 'service',
+    address: 'شارع السوق، موط، الداخلة',
+    lat: 25.495,
+    lon: 28.979,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P16,
+    nameAr: 'سوق الفرافرة',
+    nameEn: 'Farafra Market',
+    description: 'السوق الأسبوعي في الفرافرة لبيع المنتجات الزراعية المحلية',
+    category: 'service',
+    address: 'وسط مدينة الفرافرة',
+    lat: 27.058,
+    lon: 27.971,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P17,
+    nameAr: 'مطار الخارجة',
+    nameEn: 'Kharga Airport',
+    description: 'مطار محافظة الوادي الجديد، يربط الخارجة بالقاهرة وعدد من المدن المصرية',
+    category: 'service',
+    address: 'طريق الخارجة - القاهرة',
+    phone: '+20924923000',
+    lat: 25.4535,
+    lon: 30.5913,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P18,
+    nameAr: 'مستشفى الفرافرة المركزي',
+    nameEn: 'Farafra Central Hospital',
+    description: 'المستشفى المركزي في مدينة الفرافرة يخدم سكان المدينة والزوار',
+    category: 'service',
+    address: 'شارع المستشفى، الفرافرة',
+    phone: '+20927510456',
+    lat: 27.055,
+    lon: 27.968,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P19,
+    nameAr: 'نافورة مبروك',
+    nameEn: 'Mabrouk Fountain',
+    description: 'الميدان الرئيسي في مركز الخارجة، مكان للترفيه والتجمعات الاجتماعية',
+    category: 'recreational',
+    address: 'ميدان مبروك، وسط الخارجة',
+    lat: 25.439,
+    lon: 30.547,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+  {
+    id: P20,
+    nameAr: 'مديرية الصحة بالوادي الجديد',
+    nameEn: 'Health Directorate',
+    description: 'مقر مديرية الصحة في محافظة الوادي الجديد، المسؤول عن الخدمات الصحية بالمحافظة',
+    category: 'government',
+    address: 'شارع الصحة، الخارجة',
+    phone: '+20924924000',
+    lat: 25.44,
+    lon: 30.55,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+  },
+];

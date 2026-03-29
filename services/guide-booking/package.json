@@ -13,7 +13,9 @@
     "test:watch": "vitest",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --env-file ../../.env src/db/migrate.ts"
+    "db:migrate": "tsx --env-file ../../.env src/db/migrate.ts",
+    "db:seed": "tsx --env-file ../../.env src/db/seed.ts",
+    "db:seed:showcase": "tsx --env-file ../../.env src/db/seed.ts --layer=showcase"
   },
   "dependencies": {
     "@hena-wadeena/nest-common": "workspace:*",
