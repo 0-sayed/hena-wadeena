@@ -7,7 +7,7 @@ if (!connectionString) throw new Error('DATABASE_URL is required');
 
 const sql = postgres(connectionString, {
   max: 1,
-  connection: { search_path: 'identity' },
+  connection: { search_path: 'identity, public' },
 });
 const db = drizzle(sql);
 

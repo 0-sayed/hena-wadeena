@@ -1,0 +1,3 @@
+ALTER TABLE "identity"."users" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', identity.normalize_arabic(coalesce("identity"."users"."full_name", ''))), 'A') || setweight(to_tsvector('simple', identity.normalize_arabic(coalesce("identity"."users"."display_name", ''))), 'B')) STORED;--> statement-breakpoint
+CREATE INDEX "idx_users_search_vector" ON "identity"."users" USING gin ("search_vector");--> statement-breakpoint
+CREATE INDEX "idx_users_full_name_trgm" ON "identity"."users" USING gin ("full_name" gin_trgm_ops);
