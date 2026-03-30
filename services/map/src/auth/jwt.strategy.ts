@@ -54,6 +54,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) implements OnModuleD
       email: payload.email,
       role: payload.role,
       lang: payload.lang,
+      kycStatus: payload.kycStatus,
       jti: payload.jti,
       exp: payload.exp,
     };

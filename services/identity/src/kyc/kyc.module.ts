@@ -11,5 +11,6 @@ import { KycService } from './kyc.service';
   imports: [NotificationsModule],
   controllers: [KycController, KycAdminController],
   providers: [KycService, RedisStreamsService],
+  exports: [KycService],
 })
 export class KycModule {}

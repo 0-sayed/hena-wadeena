@@ -6,6 +6,7 @@ export interface JwtPayload {
   role: string;
   jti?: string;
   lang?: string;
+  kycStatus?: string;
   iat?: number;
   exp?: number;
 }

@@ -1,7 +1,17 @@
-import { CurrentUser, Roles } from '@hena-wadeena/nest-common';
+import { CurrentUser, KycVerifiedGuard, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Body, Controller, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 import { InvestmentOpportunitiesService } from '../investment-opportunities/investment-opportunities.service';
 
@@ -24,6 +34,7 @@ export class InvestmentApplicationsController {
 
   @Post('investments/:id/interest')
   @Roles(UserRole.INVESTOR, UserRole.MERCHANT)
+  @UseGuards(KycVerifiedGuard)
   submitInterest(
     @Param('id') opportunityId: string,
     @Body() dto: CreateApplicationDto,
@@ -51,6 +62,8 @@ export class InvestmentApplicationsController {
   // --- Document upload ---
 
   @Post('investments/:id/documents')
+  @Roles(UserRole.INVESTOR, UserRole.MERCHANT)
+  @UseGuards(KycVerifiedGuard)
   uploadDocument(
     @Param('id') opportunityId: string,
     @Body() dto: DocumentUploadDto,

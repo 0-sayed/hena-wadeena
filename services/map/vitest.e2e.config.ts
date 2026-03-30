@@ -9,7 +9,7 @@ dotenvConfig({ path: path.resolve(__dirname, '../../.env') });
 
 // Override DB_SCHEMA to include 'public' for PostGIS type resolution (geography, geometry).
 // Must be set before AppModule is imported so the @Module decorator captures the correct search_path.
-process.env['DB_SCHEMA'] = 'guide_booking, public';
+process.env['DB_SCHEMA'] = 'map, public';
 
 export default defineConfig({
   test: {
