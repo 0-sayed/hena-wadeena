@@ -19,7 +19,7 @@ import { AuthModule } from './auth/auth.module';
 import { KycModule } from './kyc/kyc.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
-import { UnifiedSearchModule } from './unified-search/unified-search.module';
+// import { UnifiedSearchModule } from './unified-search/unified-search.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -44,7 +44,7 @@ import { UsersModule } from './users/users.module';
     NotificationsModule,
     KycModule,
     SearchModule,
-    UnifiedSearchModule,
+    // UnifiedSearchModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
