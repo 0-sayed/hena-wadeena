@@ -14,6 +14,24 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroInvestment from '@/assets/hero-investment.jpg';
 
+const sectorLabels: Record<string, string> = {
+  agriculture: 'زراعة',
+  tourism: 'سياحة',
+  industry: 'صناعة',
+  real_estate: 'عقارات',
+  services: 'خدمات',
+  technology: 'تكنولوجيا',
+  energy: 'طاقة',
+};
+
+const areaLabels: Record<string, string> = {
+  kharga: 'الخارجة',
+  dakhla: 'الداخلة',
+  farafra: 'الفرافرة',
+  baris: 'باريس',
+  balat: 'بلاط',
+};
+
 const InvestmentPage = () => {
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -24,7 +42,9 @@ const InvestmentPage = () => {
     Promise.all([
       investmentAPI.getOpportunities().then((r) => setOpportunities(r.data)),
       investmentAPI.getStartups().then((r) => setStartups(r.data)),
-    ]).catch(console.error).finally(() => setLoading(false));
+    ])
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -93,40 +113,47 @@ const InvestmentPage = () => {
                           <CardContent className="p-7">
                             <div className="flex items-start justify-between mb-5">
                               <Badge
-                                variant={opp.status === 'متاح' ? 'default' : 'secondary'}
+                                variant={opp.status === 'active' ? 'default' : 'secondary'}
                                 className={
-                                  opp.status === 'متاح' ? 'bg-primary px-3 py-1' : 'px-3 py-1'
+                                  opp.status === 'active' ? 'bg-primary px-3 py-1' : 'px-3 py-1'
                                 }
                               >
-                                {opp.status}
+                                {opp.status === 'active' ? 'متاح' : opp.status}
                               </Badge>
                               <Badge variant="outline" className="px-3 py-1">
-                                {opp.category}
+                                {sectorLabels[opp.sector] ?? opp.sector}
                               </Badge>
                             </div>
-                            <h3 className="text-xl font-bold text-foreground mb-3">{opp.title}</h3>
+                            <h3 className="text-xl font-bold text-foreground mb-3">
+                              {opp.titleAr}
+                            </h3>
                             <p className="text-muted-foreground mb-5 line-clamp-2 leading-relaxed">
-                              {opp.description}
+                              {opp.incentives?.slice(0, 2).join(' • ')}
                             </p>
                             <div className="grid grid-cols-2 gap-4 mb-5">
                               <div className="flex items-center gap-2.5 text-sm">
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                                   <MapPin className="h-5 w-5 text-primary" />
                                 </div>
-                                <span className="text-muted-foreground">{opp.location}</span>
+                                <span className="text-muted-foreground">
+                                  {areaLabels[opp.area] ?? opp.area}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2.5 text-sm">
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                                   <DollarSign className="h-5 w-5 text-primary" />
                                 </div>
-                                <span className="text-muted-foreground">{opp.investment}</span>
+                                <span className="text-muted-foreground">
+                                  {(opp.minInvestment / 1_000_000).toFixed(0)}-
+                                  {(opp.maxInvestment / 1_000_000).toFixed(0)} مليون {opp.currency}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2.5 text-sm col-span-2">
                                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                                   <TrendingUp className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  العائد المتوقع: {opp.roi}
+                                  العائد المتوقع: {opp.expectedReturnPct}%
                                 </span>
                               </div>
                             </div>
@@ -172,28 +199,35 @@ const InvestmentPage = () => {
                         >
                           <CardContent className="p-7">
                             <div className="flex items-center gap-4 mb-5">
-                              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center shadow-md">
-                                <Building2 className="h-8 w-8 text-primary" />
+                              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center shadow-md overflow-hidden">
+                                {startup.logoUrl ? (
+                                  <img
+                                    src={startup.logoUrl}
+                                    alt={startup.nameAr}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <Building2 className="h-8 w-8 text-primary" />
+                                )}
                               </div>
                               <div>
                                 <h3 className="text-lg font-bold text-foreground">
-                                  {startup.name}
+                                  {startup.nameAr}
                                 </h3>
                                 <Badge variant="secondary" className="mt-1">
-                                  {startup.stage}
+                                  {startup.category}
                                 </Badge>
                               </div>
                             </div>
                             <p className="text-muted-foreground mb-5 line-clamp-2 leading-relaxed">
-                              {startup.description}
+                              {startup.descriptionAr}
                             </p>
                             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-5">
                               <div className="flex items-center gap-1.5">
                                 <MapPin className="h-4 w-4" />
-                                {startup.location}
+                                {startup.district}
                               </div>
-                              <div>{startup.sector}</div>
-                              <div>{startup.team} أعضاء</div>
+                              <div>{startup.status === 'active' ? 'نشط' : startup.status}</div>
                             </div>
                             <Button
                               className="w-full hover:scale-[1.02] transition-transform"
