@@ -88,7 +88,7 @@ export function Header() {
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           {/* Search */}
           <Link to="/search">
             <Button
