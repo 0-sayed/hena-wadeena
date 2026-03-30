@@ -50,6 +50,13 @@
       "when": 1774592646188,
       "tag": "20260327062406_nifty_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774840590219,
+      "tag": "20260330031630_add-investment-location",
+      "breakpoints": true
     }
   ]
 }

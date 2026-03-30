@@ -1,0 +1,1 @@
+ALTER TABLE "market"."investment_opportunities" ADD COLUMN "location" geometry(point);
