@@ -1,4 +1,3 @@
-import { RedisStreamsService } from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
 
 import { InvestmentOpportunitiesController } from './investment-opportunities.controller';
@@ -6,7 +5,7 @@ import { InvestmentOpportunitiesService } from './investment-opportunities.servi
 
 @Module({
   controllers: [InvestmentOpportunitiesController],
-  providers: [InvestmentOpportunitiesService, RedisStreamsService],
+  providers: [InvestmentOpportunitiesService],
   exports: [InvestmentOpportunitiesService],
 })
 export class InvestmentOpportunitiesModule {}

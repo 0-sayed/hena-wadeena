@@ -5,6 +5,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Patch,
@@ -20,7 +21,10 @@ import { InvestmentOpportunitiesService } from './investment-opportunities.servi
 
 @Controller('investments')
 export class InvestmentOpportunitiesController {
-  constructor(private readonly opportunitiesService: InvestmentOpportunitiesService) {}
+  constructor(
+    @Inject(InvestmentOpportunitiesService)
+    private readonly opportunitiesService: InvestmentOpportunitiesService,
+  ) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {
     if ((user.role as UserRole) !== UserRole.ADMIN) {
@@ -51,11 +55,7 @@ export class InvestmentOpportunitiesController {
   @Get(':id')
   @OptionalJwt()
   async findById(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
-    const opportunity = await this.opportunitiesService.findById(
-      id,
-      user?.sub,
-      user?.role,
-    );
+    const opportunity = await this.opportunitiesService.findById(id, user?.sub, user?.role);
     if (!opportunity) throw new NotFoundException('Opportunity not found');
     return opportunity;
   }
