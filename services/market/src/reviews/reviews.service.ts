@@ -82,9 +82,9 @@ export class ReviewsService {
   }
 
   async create(dto: CreateReviewDto, reviewerId: string): Promise<Review> {
-    let review: Review;
+    let result: { review: Review; listingOwnerId: string };
     try {
-      review = await this.db.transaction(async (tx) => {
+      result = await this.db.transaction(async (tx) => {
         // 1. Verify listing exists and is active (inside tx for atomicity)
         const [listing] = await tx
           .select({ id: listings.id, ownerId: listings.ownerId })
@@ -121,7 +121,7 @@ export class ReviewsService {
         );
 
         await this.recalculateRating(tx, dto.listingId);
-        return created;
+        return { review: created, listingOwnerId: listing.ownerId };
       });
     } catch (err: unknown) {
       if (isUniqueViolation(err)) {
@@ -130,13 +130,19 @@ export class ReviewsService {
       throw err;
     }
 
+    const { review, listingOwnerId } = result;
+
     // 5. Publish event (fire-and-forget)
     this.redisStreams
       .publish(EVENTS.REVIEW_SUBMITTED, {
         reviewId: review.id,
         targetType: 'listing',
         targetId: dto.listingId,
+        targetUserId: listingOwnerId,
         rating: String(review.rating),
+        reviewerId: review.reviewerId,
+        listingOwnerId,
+        createdAt: review.createdAt.toISOString(),
       })
       .catch((err: unknown) => {
         this.logger.error('Failed to publish review.submitted event', err);

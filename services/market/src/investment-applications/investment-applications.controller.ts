@@ -1,7 +1,17 @@
-import { CurrentUser, Roles } from '@hena-wadeena/nest-common';
+import { CurrentUser, KycVerifiedGuard, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 import { InvestmentOpportunitiesService } from '../investment-opportunities/investment-opportunities.service';
 
@@ -14,7 +24,9 @@ import { InvestmentApplicationsService } from './investment-applications.service
 @Controller()
 export class InvestmentApplicationsController {
   constructor(
+    @Inject(InvestmentApplicationsService)
     private readonly applicationsService: InvestmentApplicationsService,
+    @Inject(InvestmentOpportunitiesService)
     private readonly opportunitiesService: InvestmentOpportunitiesService,
   ) {}
 
@@ -22,6 +34,7 @@ export class InvestmentApplicationsController {
 
   @Post('investments/:id/interest')
   @Roles(UserRole.INVESTOR, UserRole.MERCHANT)
+  @UseGuards(KycVerifiedGuard)
   submitInterest(
     @Param('id') opportunityId: string,
     @Body() dto: CreateApplicationDto,
@@ -37,10 +50,7 @@ export class InvestmentApplicationsController {
 
   @Get('investments/:id/interests')
   @Roles(UserRole.ADMIN)
-  findByOpportunity(
-    @Param('id') opportunityId: string,
-    @Query() query: QueryApplicationsDto,
-  ) {
+  findByOpportunity(@Param('id') opportunityId: string, @Query() query: QueryApplicationsDto) {
     return this.applicationsService.findByOpportunity(opportunityId, query);
   }
 
@@ -52,6 +62,8 @@ export class InvestmentApplicationsController {
   // --- Document upload ---
 
   @Post('investments/:id/documents')
+  @Roles(UserRole.INVESTOR, UserRole.MERCHANT)
+  @UseGuards(KycVerifiedGuard)
   uploadDocument(
     @Param('id') opportunityId: string,
     @Body() dto: DocumentUploadDto,
@@ -70,10 +82,7 @@ export class InvestmentApplicationsController {
 
   @Patch('admin/investment/interests/:id/status')
   @Roles(UserRole.ADMIN)
-  updateStatus(
-    @Param('id') id: string,
-    @Body() dto: UpdateApplicationStatusDto,
-  ) {
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateApplicationStatusDto) {
     return this.applicationsService.updateStatus(id, dto);
   }
 

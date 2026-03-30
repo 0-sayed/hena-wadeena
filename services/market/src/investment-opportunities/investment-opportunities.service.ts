@@ -334,8 +334,12 @@ export class InvestmentOpportunitiesService {
       .publish(EVENTS.OPPORTUNITY_PUBLISHED, {
         opportunityId: updated.id,
         ownerId: updated.ownerId,
+        titleAr: updated.titleAr,
+        titleEn: updated.titleEn ?? '',
         sector: updated.sector,
         area: updated.area ?? '',
+        description: updated.description ?? '',
+        createdAt: updated.createdAt.toISOString(),
       })
       .catch((err: unknown) => {
         this.logger.error(`Failed to publish ${EVENTS.OPPORTUNITY_PUBLISHED}`, err);

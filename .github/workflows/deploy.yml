@@ -96,7 +96,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS
+          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS,SEED_PASSWORD
           script: |
             set -euo pipefail
             cd /opt/hena-wadeena
@@ -128,6 +128,9 @@ jobs:
             upsert_env "OPENAI_API_KEY" "$OPENAI_API_KEY"
             if [ -n "${CORS_ORIGINS:-}" ]; then
               upsert_env "CORS_ORIGINS" "$CORS_ORIGINS"
+            fi
+            if [ -n "${SEED_PASSWORD:-}" ]; then
+              upsert_env "SEED_PASSWORD" "$SEED_PASSWORD"
             fi
 
             echo "==> Pulling images by SHA and tagging as :latest"
@@ -178,3 +181,4 @@ jobs:
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+          SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}

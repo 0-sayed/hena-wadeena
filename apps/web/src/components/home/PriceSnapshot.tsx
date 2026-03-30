@@ -9,7 +9,7 @@ import { usePriceIndex } from '@/hooks/use-price-index';
 import { formatPrice, unitLabel } from '@/lib/format';
 
 export function PriceSnapshot() {
-  const { data: entries, isLoading } = usePriceIndex({ region: 'kharga' }, 6);
+  const { data: entries, isLoading } = usePriceIndex({ region: 'kharga', price_type: 'retail' }, 6);
 
   return (
     <section className="py-24 bg-muted/30 relative overflow-hidden">

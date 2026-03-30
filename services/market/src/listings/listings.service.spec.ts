@@ -267,9 +267,12 @@ describe('ListingsService', () => {
         EVENTS.LISTING_CREATED,
         expect.objectContaining({
           listingId: mockListing.id,
-          title: mockListing.titleAr,
+          titleAr: mockListing.titleAr,
+          titleEn: mockListing.titleEn,
           category: mockListing.category,
-          area: mockListing.district,
+          district: mockListing.district,
+          ownerId: mockListing.ownerId,
+          status: mockListing.status,
         }),
       );
     });
