@@ -19,7 +19,7 @@ const navigation = [
 ];
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -31,7 +31,7 @@ function ThemeToggle() {
     );
   }
 
-  const isDark = theme === 'dark';
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <Classic
@@ -39,6 +39,9 @@ function ThemeToggle() {
       onToggle={() => setTheme(isDark ? 'light' : 'dark')}
       className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5"
       aria-label="تبديل الوضع"
+      placeholder={undefined}
+      onPointerEnterCapture={undefined}
+      onPointerLeaveCapture={undefined}
     />
   );
 }
