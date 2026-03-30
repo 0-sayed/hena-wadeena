@@ -1,13 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  Sparkles,
-  Mountain,
-  ShoppingBag,
-  Truck,
-  TrendingUp,
-  Users,
-  Compass,
-} from 'lucide-react';
+import { Sparkles, Mountain, ShoppingBag, Truck, TrendingUp, Users, Compass } from 'lucide-react';
 import { Link } from 'react-router';
 import heroImage from '@/assets/hero-desert-oasis.jpg';
 
@@ -304,7 +296,7 @@ export function HeroSection() {
 
           {/* Heading */}
           <h1 className="hero-reveal hero-d2 text-5xl md:text-6xl lg:text-7xl font-bold text-card mb-6 leading-tight">
-            هنا وادينا
+            هُنَا وَادِينَا
             <span className="block text-accent mt-3 text-3xl md:text-4xl lg:text-5xl">
               اكتشف. تواصل. استثمر.
             </span>

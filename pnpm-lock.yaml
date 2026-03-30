@@ -152,6 +152,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.83.0
         version: 5.90.21(react@18.3.1)
+      '@theme-toggles/react':
+        specifier: ^4.1.0
+        version: 4.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -3136,6 +3139,12 @@ packages:
         optional: true
       '@types/react-dom':
         optional: true
+
+  '@theme-toggles/react@4.1.0':
+    resolution: {integrity: sha512-h3SuJMsej8DfelHt5fjNIlaMfJOK52Vku4pPDVoHaTwjAcoTr4fn8hzeur2oiqWBYFYfKugvv1RdQaBFXaiPKg==}
+    peerDependencies:
+      react: ^16 || ^17 || ^18
+      react-dom: ^16 || ^17 || ^18
 
   '@tokenizer/inflate@0.4.1':
     resolution: {integrity: sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==}
@@ -8774,6 +8783,11 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.28
       '@types/react-dom': 18.3.7(@types/react@18.3.28)
+
+  '@theme-toggles/react@4.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   '@tokenizer/inflate@0.4.1':
     dependencies:
