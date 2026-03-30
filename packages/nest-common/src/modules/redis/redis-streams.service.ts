@@ -20,6 +20,7 @@ export class RedisStreamsService implements OnModuleDestroy {
   private readonly activeStreams = new Set<string>();
   private readonly handlers = new Map<string, StreamEventHandler>();
   private readonly retryCount = new Map<string, number>();
+  private readonly consumerClients = new Map<string, Redis>();
   private readonly maxRetries = 3;
 
   constructor(@Inject(REDIS_STREAMS_CLIENT) private readonly redis: Redis) {}
@@ -61,12 +62,17 @@ export class RedisStreamsService implements OnModuleDestroy {
 
   private async startConsuming(stream: string, group: string, consumer: string): Promise<void> {
     const streamKey = `${stream}:${group}:${consumer}`;
+    // Each consumer loop gets its own connection so blocking xreadgroup doesn't
+    // starve xgroup CREATE or xack commands on the shared control connection.
+    const client = this.redis.duplicate();
+    this.consumerClients.set(streamKey, client);
+
     const lastPendingId = '0';
     let readingNew = false;
 
     while (this.activeStreams.has(streamKey)) {
       try {
-        const results = await this.redis.xreadgroup(
+        const results = await client.xreadgroup(
           'GROUP',
           group,
           consumer,
@@ -159,5 +165,9 @@ export class RedisStreamsService implements OnModuleDestroy {
     this.activeStreams.clear();
     this.handlers.clear();
     this.retryCount.clear();
+    for (const client of this.consumerClients.values()) {
+      void client.quit();
+    }
+    this.consumerClients.clear();
   }
 }
