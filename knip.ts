@@ -17,32 +17,29 @@ const config: KnipConfig = {
       ignoreDependencies: ['pino-pretty'],
     },
     'services/identity': {
-      entry: ['src/main.ts', 'src/db/migrate.ts'],
-      project: ['src/**/*.ts'],
+      entry: ['src/main.ts', 'src/db/migrate.ts', 'src/db/seed.ts', 'test/e2e-helpers.ts'],
+      project: ['src/**/*.ts', 'test/**/*.ts'],
       // drizzle-zod: planned for DTO generation once schemas stabilise
       ignoreDependencies: ['drizzle-zod'],
     },
     'services/market': {
-      entry: ['src/main.ts', 'src/db/migrate.ts'],
-      project: ['src/**/*.ts'],
-      // @hena-wadeena/types and zod will be used as market features are built out
-      ignoreDependencies: ['@hena-wadeena/types', 'zod', '@nestjs/testing'],
+      entry: ['src/main.ts', 'src/db/migrate.ts', 'src/db/seed.ts', 'test/e2e-helpers.ts'],
+      project: ['src/**/*.ts', 'test/**/*.ts'],
     },
     'services/guide-booking': {
-      entry: ['src/main.ts', 'src/db/migrate.ts'],
-      project: ['src/**/*.ts'],
-      // drizzle-zod: planned for DTO generation; @hena-wadeena/types will be used as features are built out
-      ignoreDependencies: ['drizzle-zod', '@hena-wadeena/types', '@nestjs/testing'],
+      entry: ['src/main.ts', 'src/db/migrate.ts', 'src/db/seed.ts', 'test/e2e-helpers.ts'],
+      project: ['src/**/*.ts', 'test/**/*.ts'],
+      // drizzle-zod: planned for DTO generation
+      ignoreDependencies: ['drizzle-zod'],
     },
     'services/map': {
-      entry: ['src/main.ts', 'src/db/migrate.ts'],
-      project: ['src/**/*.ts'],
-      // @hena-wadeena/types will be used as map features are built out
-      ignoreDependencies: ['@hena-wadeena/types', '@nestjs/testing'],
+      entry: ['src/main.ts', 'src/db/migrate.ts', 'src/db/seed.ts', 'test/e2e-helpers.ts'],
+      project: ['src/**/*.ts', 'test/**/*.ts'],
     },
   },
   ignoreWorkspaces: ['apps/web'],
-  ignore: ['apps/web/**'],
+  // Temporarily disabled modules and web app
+  ignore: ['apps/web/**', 'services/identity/src/unified-search/**'],
   // Enum members in packages/types are forward-looking public API for services not yet implemented
   exclude: ['enumMembers'],
   // LinkedCommodity etc. are exported for TS return-type inference (knip can't detect this)
