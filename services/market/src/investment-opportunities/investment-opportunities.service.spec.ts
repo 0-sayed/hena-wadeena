@@ -292,7 +292,13 @@ describe('InvestmentOpportunitiesService', () => {
       expect(result.status).toBe('active');
       expect(mockRedisStreams.publish).toHaveBeenCalledWith(
         EVENTS.OPPORTUNITY_PUBLISHED,
-        expect.objectContaining({ opportunityId: reviewOpp.id }),
+        expect.objectContaining({
+          opportunityId: reviewOpp.id,
+          ownerId: reviewOpp.ownerId,
+          titleAr: reviewOpp.titleAr,
+          titleEn: reviewOpp.titleEn,
+          sector: reviewOpp.sector,
+        }),
       );
     });
 

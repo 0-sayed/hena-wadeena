@@ -8,6 +8,7 @@ export { otpCodes } from './otp-codes';
 export { auditEvents } from './audit-events';
 export { notifications } from './notifications';
 export { userKyc } from './user-kyc';
+export { tsvector } from './types';
 
 import { auditEvents } from './audit-events';
 import { authTokens } from './auth-tokens';

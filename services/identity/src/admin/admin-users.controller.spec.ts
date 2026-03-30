@@ -22,6 +22,7 @@ const mockUser = {
   deletedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  searchVector: null,
 };
 
 describe('AdminUsersController', () => {

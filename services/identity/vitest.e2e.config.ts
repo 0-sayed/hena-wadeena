@@ -15,6 +15,7 @@ export default defineConfig({
     include: ['test/**/*.e2e-spec.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
+    fileParallelism: false,
   },
   plugins: [
     // SWC transforms TypeScript with emitDecoratorMetadata — required for NestJS DI in E2E tests
