@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
+import { Phone, Mail, Facebook, Instagram, MapPin, Youtube } from 'lucide-react';
+import { XIcon } from '@/components/icons/XIcon';
 
 export function Footer() {
   return (
@@ -9,10 +10,8 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <MapPin className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">هنا وادينا</span>
+              <img src="/icon-source.png" alt="هُنَا وَادِينَا" className="h-9 w-9 rounded-lg" />
+              <span className="text-xl font-bold text-foreground">هُنَا وَادِينَا</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               البوابة الرقمية الرسمية للوادي الجديد - نربط المجتمع، ندعم الاقتصاد، ونحكي قصة وادينا
@@ -73,7 +72,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                info@henawadina.eg
+                info@hena-wadeena.online
               </li>
             </ul>
           </div>
@@ -83,29 +82,43 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-4">تابعنا</h4>
             <div className="flex gap-3">
               <a
-                href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
+                href="https://www.facebook.com/profile.php?id=61576495808108"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-[#1877F2] hover:text-white transition-colors"
               >
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
+                href="https://x.com/hena_wadeena"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-black hover:text-white transition-colors"
               >
-                <Twitter className="h-5 w-5" />
+                <XIcon className="h-5 w-5" />
               </a>
               <a
-                href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
+                href="https://www.instagram.com/henawadeena"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-[#E4405F] hover:text-white transition-colors"
               >
                 <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.youtube.com/@henawadeena"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted hover:bg-[#FF0000] hover:text-white transition-colors"
+              >
+                <Youtube className="h-5 w-5" />
               </a>
             </div>
           </div>
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>© 2024 هنا وادينا. جميع الحقوق محفوظة.</p>
+          <p>© 2026 هُنَا وَادِينَا. جميع الحقوق محفوظة.</p>
         </div>
       </div>
     </footer>
