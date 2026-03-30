@@ -1,8 +1,10 @@
 import { hash } from '@node-rs/argon2';
 import { sql as sqlTag } from 'drizzle-orm';
 
-/** Shared password for all seed accounts. Falls back to Test1234! for local dev only. */
-export const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'Test1234!';
+const _seedPassword = process.env.SEED_PASSWORD;
+if (!_seedPassword) throw new Error('SEED_PASSWORD env var is required');
+/** Shared password for all seed accounts. Must be set via SEED_PASSWORD env var. */
+export const SEED_PASSWORD = _seedPassword;
 
 const ARGON2_OPTIONS = {
   algorithm: 2, // Argon2id

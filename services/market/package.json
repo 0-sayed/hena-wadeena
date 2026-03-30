@@ -6,7 +6,7 @@
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "tsx watch --env-file ../../.env src/main.ts",
+    "dev": "SERVICE_NAME=market DB_SCHEMA=market tsx watch --env-file ../../.env src/main.ts",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

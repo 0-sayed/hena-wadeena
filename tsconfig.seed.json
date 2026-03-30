@@ -1,8 +1,19 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./build/seed",
+    "rootDir": "."
+  },
   "include": [
     "scripts/seed/**/*",
     "services/*/src/db/seed.ts",
     "services/*/src/db/seed-data/**/*"
+  ],
+  "exclude": [
+    "build/**",
+    "scripts/seed/**/*.js",
+    "scripts/seed/**/*.js.map",
+    "scripts/seed/**/*.d.ts",
+    "scripts/seed/**/*.d.ts.map"
   ]
 }

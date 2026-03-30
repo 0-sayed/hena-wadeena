@@ -10,7 +10,7 @@
 export const USER = {
   // Admins (team members)
   ADMIN_SAYED: 'cb420581-ce30-4ce7-946f-92ba0337ab98',
-  ADMIN_KAREEM: '0135a54b-f50b-44ed-acbf-69a54a00c240',
+  ADMIN_ADLY: '0135a54b-f50b-44ed-acbf-69a54a00c240',
   ADMIN_TAHER: 'a47960cc-8f69-4b95-adb8-00957bdf412f',
   ADMIN_SHAWQI: '929c69fa-0f5a-46e4-9f2d-ac00c0aa026b',
   // Demo role users (essential layer)
