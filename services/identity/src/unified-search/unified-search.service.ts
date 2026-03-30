@@ -22,8 +22,8 @@ export class UnifiedSearchService {
   private readonly logger = new Logger(UnifiedSearchService.name);
 
   constructor(
-    private readonly searchService: SearchService,
-    private readonly httpService: HttpService,
+    @Inject(SearchService) private readonly searchService: SearchService,
+    @Inject(HttpService) private readonly httpService: HttpService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
