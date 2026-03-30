@@ -44,7 +44,7 @@ Falls back to `Test1234!` for local dev when `SEED_PASSWORD` is not set.
 | Email | Role |
 |-------|------|
 | sayed@hena-wadeena.online | admin |
-| kareem@hena-wadeena.online | admin |
+| adly@hena-wadeena.online | admin |
 | taher@hena-wadeena.online | admin |
 | shawqi@hena-wadeena.online | admin |
 | tourist@hena-wadeena.online | tourist |

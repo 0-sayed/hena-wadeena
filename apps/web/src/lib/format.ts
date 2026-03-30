@@ -143,17 +143,14 @@ export const specialtyLabels: Record<string, string> = {
   [GuideSpecialty.FOOD]: 'طعام',
   // Extended specialties from seed data
   archaeology: 'آثار',
-  history: 'تاريخ',
   temples: 'معابد',
   desert: 'صحراء',
   camping: 'تخييم',
   safari: 'سفاري',
-  adventure: 'مغامرات',
   sandboarding: 'تزلج رملي',
   wellness: 'استشفاء',
   hot_springs: 'ينابيع حارة',
   medical_tourism: 'سياحة علاجية',
-  photography: 'تصوير',
   landscapes: 'مناظر طبيعية',
   architecture: 'عمارة',
 };

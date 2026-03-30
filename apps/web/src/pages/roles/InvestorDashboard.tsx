@@ -31,8 +31,8 @@ export default function InvestorDashboard() {
 
   const stats = {
     total: opportunities.length,
-    sectors: new Set(opportunities.map((o) => o.category)).size,
-    locations: new Set(opportunities.map((o) => o.location)).size,
+    sectors: new Set(opportunities.map((o) => o.sector)).size,
+    locations: new Set(opportunities.map((o) => o.area)).size,
   };
 
   return (
@@ -93,13 +93,13 @@ export default function InvestorDashboard() {
                   <TableRow key={opp.id}>
                     <TableCell className="font-medium">
                       <Link to={`/investment/opportunity/${opp.id}`} className="hover:underline">
-                        {opp.title}
+                        {opp.titleAr}
                       </Link>
                     </TableCell>
-                    <TableCell>{opp.category}</TableCell>
-                    <TableCell>{opp.location}</TableCell>
+                    <TableCell>{opp.sector}</TableCell>
+                    <TableCell>{opp.area}</TableCell>
                     <TableCell dir="ltr" className="text-right">
-                      {opp.roi}
+                      {opp.expectedReturnPct}%
                     </TableCell>
                     <TableCell>
                       {(() => {

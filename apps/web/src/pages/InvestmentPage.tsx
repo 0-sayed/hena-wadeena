@@ -144,8 +144,9 @@ const InvestmentPage = () => {
                                   <DollarSign className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  {(opp.minInvestment / 1_000_000).toFixed(0)}-
-                                  {(opp.maxInvestment / 1_000_000).toFixed(0)} مليون {opp.currency}
+                                  {(opp.minInvestment / 100_000_000).toFixed(0)}-
+                                  {(opp.maxInvestment / 100_000_000).toFixed(0)} مليون{' '}
+                                  {opp.currency}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2.5 text-sm col-span-2">
