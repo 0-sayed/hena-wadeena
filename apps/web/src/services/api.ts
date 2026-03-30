@@ -421,54 +421,6 @@ export const listingsAPI = {
   },
 };
 
-// ── Logistics ───────────────────────────────────────────────────────────────
-
-export interface TransportRoute {
-  id: number;
-  from: string;
-  to: string;
-  type: string;
-  duration: string;
-  price: number;
-  departures: string[];
-  operator: string;
-}
-
-export interface Station {
-  id: number;
-  name: string;
-  city: string;
-  routes: number;
-  address?: string;
-  phone?: string;
-  facilities?: string[];
-  operating_hours?: string;
-}
-
-export interface Carpool {
-  id: number;
-  from: string;
-  to: string;
-  date: string;
-  time: string;
-  seats: number;
-  price: number;
-  driver: string;
-  rating: number;
-  car_model?: string;
-}
-
-export const logisticsAPI = {
-  getRoutes: () => apiFetchWithRefresh<{ success: boolean; data: TransportRoute[] }>('/routes'),
-
-  getStations: () => apiFetchWithRefresh<{ success: boolean; data: Station[] }>('/stations'),
-
-  getStation: (id: number) =>
-    apiFetchWithRefresh<{ success: boolean; data: Station }>(`/stations/${id}`),
-
-  getCarpools: () => apiFetchWithRefresh<{ success: boolean; data: Carpool[] }>('/carpools'),
-};
-
 // ── Investment ──────────────────────────────────────────────────────────────
 
 export interface Opportunity {
@@ -506,64 +458,6 @@ export const investmentAPI = {
     apiFetchWithRefresh<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
 
   getStartups: () => apiFetchWithRefresh<{ success: boolean; data: Startup[] }>('/startups'),
-};
-
-// ── Map / POI ──────────────────────────────────────────────────────────────
-
-export interface POI {
-  id: number;
-  name_ar: string;
-  name_en?: string;
-  category: string;
-  description: string;
-  address: string;
-  lat: number;
-  lng: number;
-  phone?: string;
-  rating_avg: number;
-  rating_count: number;
-  images: string[];
-  status: string;
-}
-
-export interface CarpoolRide {
-  id: number;
-  driver_id: string;
-  driver_name: string;
-  origin_name: string;
-  destination_name: string;
-  origin: { lat: number; lng: number };
-  destination: { lat: number; lng: number };
-  departure_time: string;
-  seats_total: number;
-  seats_taken: number;
-  price_per_seat: number;
-  notes?: string;
-  status: string;
-  car_model?: string;
-  rating?: number;
-}
-
-export const mapAPI = {
-  getPOIs: (category?: string) =>
-    apiFetchWithRefresh<{ success: boolean; data: POI[] }>(
-      category ? `/pois?category=${encodeURIComponent(category)}` : '/pois',
-    ),
-  getPOI: (id: number) => apiFetchWithRefresh<{ success: boolean; data: POI }>(`/pois/${id}`),
-  getCarpoolRides: () =>
-    apiFetchWithRefresh<{ success: boolean; data: CarpoolRide[] }>('/carpool/rides'),
-  createCarpoolRide: (body: {
-    origin_name: string;
-    destination_name: string;
-    departure_time: string;
-    seats_total: number;
-    price_per_seat: number;
-    notes?: string;
-  }) =>
-    apiFetchWithRefresh<{ success: boolean; data: CarpoolRide }>('/carpool/rides', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
 };
 
 // ── Guides ──────────────────────────────────────────────────────────────────
@@ -852,17 +746,252 @@ export const searchAPI = {
     ),
 };
 
+// ── Map / POI ──────────────────────────────────────────────────────────────
+
+export type PoiCategory =
+  | 'historical'
+  | 'natural'
+  | 'religious'
+  | 'recreational'
+  | 'accommodation'
+  | 'restaurant'
+  | 'service'
+  | 'government';
+
+export type PoiStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Poi {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  description: string | null;
+  category: PoiCategory;
+  location: { x: number; y: number }; // PostGIS point: x=lng, y=lat
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  images: string[] | null;
+  ratingAvg: string | null;
+  ratingCount: number;
+  status: PoiStatus;
+  submittedBy: string | null;
+  approvedBy: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  deletedAt: string | null;
+}
+
+// ── Carpool ────────────────────────────────────────────────────────────────
+
+export type CarpoolRideStatus = 'open' | 'full' | 'departed' | 'completed' | 'cancelled';
+export type PassengerStatus = 'requested' | 'confirmed' | 'declined' | 'cancelled';
+
+export interface CarpoolRide {
+  id: string;
+  driverId: string;
+  origin: { x: number; y: number };
+  destination: { x: number; y: number };
+  originName: string;
+  destinationName: string;
+  departureTime: string;
+  seatsTotal: number;
+  seatsTaken: number;
+  pricePerSeat: number;
+  notes: string | null;
+  status: CarpoolRideStatus;
+  createdAt: string;
+}
+
+export interface CarpoolPassenger {
+  id: string;
+  rideId: string;
+  userId: string;
+  seats: number;
+  status: PassengerStatus;
+  joinedAt: string;
+}
+
+export interface RideWithPassengers extends CarpoolRide {
+  passengers?: CarpoolPassenger[];
+}
+
+export const mapAPI = {
+  // ── POIs ──
+  getPois: (params?: {
+    page?: number;
+    limit?: number;
+    category?: PoiCategory;
+    q?: string;
+    lat?: number;
+    lng?: number;
+    radius?: number;
+  }) => apiFetch<PaginatedResponse<Poi>>(`/map/pois${toQueryString(params)}`),
+
+  getPoi: (id: string) => apiFetch<Poi>(`/map/pois/${id}`),
+
+  suggestPoi: (body: {
+    nameAr: string;
+    nameEn?: string;
+    description?: string;
+    category: PoiCategory;
+    location: { lat: number; lng: number };
+    address?: string;
+    phone?: string;
+    website?: string;
+    images?: string[];
+  }) =>
+    apiFetchWithRefresh<Poi>('/map/pois', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  // ── Carpool ──
+  getRides: (params?: {
+    page?: number;
+    limit?: number;
+    originLat?: number;
+    originLng?: number;
+    destinationLat?: number;
+    destinationLng?: number;
+    radius?: number;
+    date?: string;
+  }) => apiFetch<PaginatedResponse<CarpoolRide>>(`/carpool${toQueryString(params)}`),
+
+  getRide: (id: string) => apiFetch<RideWithPassengers>(`/carpool/${id}`),
+
+  createRide: (body: {
+    origin: { lat: number; lng: number };
+    destination: { lat: number; lng: number };
+    originName: string;
+    destinationName: string;
+    departureTime: string;
+    seatsTotal: number;
+    pricePerSeat?: number;
+    notes?: string;
+  }) =>
+    apiFetchWithRefresh<CarpoolRide>('/carpool', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  joinRide: (id: string, seats?: number) =>
+    apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${id}/join`, {
+      method: 'POST',
+      body: JSON.stringify({ seats: seats ?? 1 }),
+    }),
+
+  cancelJoin: (id: string) =>
+    apiFetchWithRefresh<{ message: string }>(`/carpool/${id}/join`, { method: 'DELETE' }),
+
+  cancelRide: (id: string) =>
+    apiFetchWithRefresh<CarpoolRide>(`/carpool/${id}/cancel`, { method: 'PATCH' }),
+
+  confirmPassenger: (rideId: string, passengerId: string) =>
+    apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/confirm`, {
+      method: 'PATCH',
+    }),
+
+  declinePassenger: (rideId: string, passengerId: string) =>
+    apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/decline`, {
+      method: 'PATCH',
+    }),
+
+  myRides: () =>
+    apiFetchWithRefresh<{ asDriver: CarpoolRide[]; asPassenger: CarpoolPassenger[] }>(
+      '/carpool/my',
+    ),
+};
+
 // ── AI Chatbot ─────────────────────────────────────────────────────────────
 
-export interface ChatResponse {
+export interface ChatSource {
+  chunk_id: string;
+  doc_id: string;
+  section_title: string | null;
+  relevance_score: number;
+  text_snippet: string;
+}
+
+export interface ChatSession {
+  session_id: string;
+  user_id: string;
+  created_at: string;
+  language_preference: string;
+  message_count: number;
+  is_active: boolean;
+  welcome_message: string;
+}
+
+export interface ChatMessageResponse {
+  message_id: string;
+  session_id: string;
+  role: 'assistant';
+  content: string;
+  language: string;
+  created_at: string;
+  sources: ChatSource[];
+  domain_relevant: boolean;
+  latency_ms: number | null;
+}
+
+export interface ChatSessionMessage {
+  message_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  language: string;
+  created_at: string;
+  sources: ChatSource[];
+}
+
+export interface ChatSessionView {
+  session_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  message_count: number;
+  messages: ChatSessionMessage[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total_messages: number;
+    total_pages: number;
+  };
+}
+
+export interface LegacyChatResponse {
   response: string;
   conversation_id: string;
-  sources: unknown[];
+  sources: ChatSource[];
 }
 
 export const aiAPI = {
+  createSession: (body?: { language_preference?: string; metadata?: Record<string, unknown> }, forceNew = false) =>
+    apiFetchWithRefresh<ChatSession>(`/chat/sessions${forceNew ? '?force_new=true' : ''}`, {
+      method: 'POST',
+      body: JSON.stringify(body ?? {}),
+    }),
+
+  getSession: (sessionId: string, page = 1, perPage = 20) =>
+    apiFetchWithRefresh<ChatSessionView>(
+      `/chat/sessions/${sessionId}?page=${page}&per_page=${perPage}`,
+    ),
+
+  sendMessage: (sessionId: string, body: { content: string; language?: string }) =>
+    apiFetchWithRefresh<ChatMessageResponse>(`/chat/sessions/${sessionId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  closeSession: (sessionId: string) =>
+    apiFetchWithRefresh<{ session_id: string; closed: boolean; message_count: number; closed_at: string }>(
+      `/chat/sessions/${sessionId}`,
+      { method: 'DELETE' },
+    ),
+
+  // Deprecated compatibility adapter kept during migration.
   chat: (message: string, conversationId?: string) =>
-    apiFetchWithRefresh<{ success: boolean; data: ChatResponse }>('/ai/chat', {
+    apiFetchWithRefresh<{ success: boolean; data: LegacyChatResponse }>('/ai/chat', {
       method: 'POST',
       body: JSON.stringify({ message, conversation_id: conversationId }),
     }),

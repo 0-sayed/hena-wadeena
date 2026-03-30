@@ -8,6 +8,10 @@
 # CORS: validate Origin against allowed pattern
 map $http_origin $cors_origin {
     default "";
+    "~^https://hena-wadeena\.online$" $http_origin;
+    "~^https://www\.hena-wadeena\.online$" $http_origin;
+    "~^https?://localhost(?::\d+)?$" $http_origin;
+    "~^https?://127\.0\.0\.1(?::\d+)?$" $http_origin;
     "~^(?:${CORS_ORIGINS})$" $http_origin;
 }
 
@@ -74,6 +78,7 @@ server {
     add_header Access-Control-Allow-Headers "Authorization, Content-Type, X-Request-Id" always;
     add_header Access-Control-Allow-Credentials "true" always;
     add_header Access-Control-Max-Age "86400" always;
+    add_header Vary "Origin" always;
 
     # ── Request ID ────────────────────────────────────────────────────────────
     add_header X-Request-Id $request_id_value always;
@@ -110,19 +115,20 @@ server {
     # ── Identity Service ──────────────────────────────────────────────────────
     location ~ ^/api/v1/(auth|users|profile|kyc|notifications|saved-items)/ {
         limit_req zone=global burst=20 nodelay;
+        set $upstream_identity http://identity:8001;
 
         # Stricter rate limit on auth endpoints
         location ~ ^/api/v1/auth/(login|register|password-reset) {
             limit_req zone=auth burst=5 nodelay;
+            set $upstream_identity http://identity:8001;
             proxy_pass $upstream_identity;
         }
 
-        set $upstream_identity http://identity:8001;
         proxy_pass $upstream_identity;
     }
 
     # ── Market Service ────────────────────────────────────────────────────────
-    location ~ ^/api/v1/(listings|reviews|market|prices|business|opportunities|investments)(/|$) {
+    location ~ ^/api/v1/(listings|market|prices|price-index|business|businesses|commodities|commodity-prices|reviews|opportunities|investments)(?:/|$) {
         limit_req zone=global burst=20 nodelay;
         set $upstream_market http://market:8002;
         proxy_pass $upstream_market;
@@ -143,7 +149,7 @@ server {
     }
 
     # ── AI Service (SSE support) ──────────────────────────────────────────────
-    location ~ ^/api/v1/(chat|ai)/ {
+    location ~ ^/api/v1/(chat|ai|documents)/ {
         limit_req zone=ai burst=10 nodelay;
         proxy_read_timeout 300s;
         proxy_buffering off;
