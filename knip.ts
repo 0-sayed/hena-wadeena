@@ -3,8 +3,8 @@ import type { KnipConfig } from 'knip';
 const config: KnipConfig = {
   workspaces: {
     '.': {
-      entry: [],
-      project: [],
+      entry: ['scripts/seed/seed-utils.ts', 'scripts/seed/shared-ids.ts'],
+      project: ['scripts/**/*.ts'],
     },
     'packages/types': {
       entry: ['src/index.ts'],
