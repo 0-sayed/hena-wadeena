@@ -120,19 +120,37 @@ export const difficultyLabels: Record<Difficulty, string> = {
   hard: 'صعب',
 };
 
-export const languageLabels: Record<GuideLanguage, string> = {
+export const languageLabels: Record<string, string> = {
   [GuideLanguage.ARABIC]: 'العربية',
   [GuideLanguage.ENGLISH]: 'الإنجليزية',
   [GuideLanguage.FRENCH]: 'الفرنسية',
   [GuideLanguage.GERMAN]: 'الألمانية',
   [GuideLanguage.ITALIAN]: 'الإيطالية',
+  // Short codes from seed data
+  ar: 'العربية',
+  en: 'الإنجليزية',
+  fr: 'الفرنسية',
+  de: 'الألمانية',
+  it: 'الإيطالية',
 };
 
-export const specialtyLabels: Record<GuideSpecialty, string> = {
+export const specialtyLabels: Record<string, string> = {
   [GuideSpecialty.HISTORY]: 'تاريخ',
   [GuideSpecialty.NATURE]: 'طبيعة',
   [GuideSpecialty.ADVENTURE]: 'مغامرة',
   [GuideSpecialty.CULTURE]: 'ثقافة',
   [GuideSpecialty.PHOTOGRAPHY]: 'تصوير',
   [GuideSpecialty.FOOD]: 'طعام',
+  // Extended specialties from seed data
+  archaeology: 'آثار',
+  temples: 'معابد',
+  desert: 'صحراء',
+  camping: 'تخييم',
+  safari: 'سفاري',
+  sandboarding: 'تزلج رملي',
+  wellness: 'استشفاء',
+  hot_springs: 'ينابيع حارة',
+  medical_tourism: 'سياحة علاجية',
+  landscapes: 'مناظر طبيعية',
+  architecture: 'عمارة',
 };

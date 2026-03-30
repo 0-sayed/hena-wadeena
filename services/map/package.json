@@ -6,14 +6,16 @@
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "tsx watch --env-file ../../.env src/main.ts",
+    "dev": "SERVICE_NAME=map DB_SCHEMA=map tsx watch --env-file ../../.env src/main.ts",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --env-file ../../.env src/db/migrate.ts"
+    "db:migrate": "tsx --env-file ../../.env src/db/migrate.ts",
+    "db:seed": "tsx --env-file ../../.env src/db/seed.ts",
+    "db:seed:showcase": "tsx --env-file ../../.env src/db/seed.ts --layer=showcase"
   },
   "dependencies": {
     "@hena-wadeena/nest-common": "workspace:*",
@@ -40,7 +42,10 @@
     "@nestjs/testing": "^11.0.0",
     "@types/ms": "^2.1.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^7.0.0",
+    "dotenv": "^16.0.0",
     "drizzle-kit": "0.30.4",
+    "supertest": "^7.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.3",
     "vitest": "^4.1.2"

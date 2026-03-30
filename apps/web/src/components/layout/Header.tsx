@@ -1,18 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import {
-  Menu,
-  MapPin,
-  User,
-  Bell,
-  Wallet,
-  LogOut,
-  CalendarCheck,
-  ChevronDown,
-  Moon,
-  Sun,
-  Search,
-} from 'lucide-react';
+import { Menu, User, Bell, Wallet, LogOut, CalendarCheck, ChevronDown, Search } from 'lucide-react';
+import { Classic } from '@theme-toggles/react';
+import '@theme-toggles/react/css/Classic.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -30,25 +20,30 @@ const navigation = [
 ];
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted)
+
+  if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="text-muted-foreground">
-        <Sun className="h-5 w-5" />
-      </Button>
+      <div className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground">
+        <div className="h-5 w-5" />
+      </div>
     );
+  }
+
+  const isDark = resolvedTheme === 'dark';
+
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground hover:text-foreground"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+    <Classic
+      toggled={isDark}
+      onToggle={() => setTheme(isDark ? 'light' : 'dark')}
+      className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5"
       aria-label="تبديل الوضع"
-    >
-      {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-    </Button>
+      placeholder={undefined}
+      onPointerEnterCapture={undefined}
+      onPointerLeaveCapture={undefined}
+    />
   );
 }
 
@@ -86,10 +81,8 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <MapPin className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">هنا وادينا</span>
+          <img src="/icon-source.png" alt="هُنَا وَادِينَا" className="h-9 w-9 rounded-lg" />
+          <span className="text-xl font-bold text-foreground">هُنَا وَادِينَا</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -110,7 +103,7 @@ export function Header() {
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           {/* Search */}
           {searchOpen ? (
             <form onSubmit={handleSearch} className="flex items-center gap-1">
@@ -271,8 +264,13 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile: notification + menu */}
+        {/* Mobile: search + notification + menu */}
         <div className="flex items-center gap-1 lg:hidden">
+          <Link to="/search">
+            <Button variant="ghost" size="icon" className="text-muted-foreground">
+              <Search className="h-5 w-5" />
+            </Button>
+          </Link>
           {user && (
             <Link to="/notifications" className="relative">
               <Button variant="ghost" size="icon" className="text-muted-foreground">

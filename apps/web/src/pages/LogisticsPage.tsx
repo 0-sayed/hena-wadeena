@@ -123,6 +123,7 @@ const LogisticsPage = () => {
     lng: poi.location.x,
     type: getCategoryLabel(poi.category),
     color: getCategoryColor(poi.category),
+    image: poi.images?.[0],
   }));
 
   const handleMarkerClick = useCallback((loc: MapLocation) => {

@@ -156,9 +156,14 @@ export class ListingsService {
     this.redisStreams
       .publish(EVENTS.LISTING_CREATED, {
         listingId: listing.id,
-        title: listing.titleAr,
+        titleAr: listing.titleAr,
+        titleEn: listing.titleEn ?? '',
+        description: listing.description ?? '',
         category: listing.category,
-        area: listing.district ?? '',
+        district: listing.district ?? '',
+        ownerId: listing.ownerId,
+        status: listing.status,
+        createdAt: listing.createdAt.toISOString(),
       })
       .catch((err: unknown) => {
         this.logger.error(`Failed to publish ${EVENTS.LISTING_CREATED}`, err);

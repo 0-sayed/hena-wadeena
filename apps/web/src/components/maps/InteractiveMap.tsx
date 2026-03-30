@@ -10,6 +10,7 @@ export interface MapLocation {
   description?: string;
   type?: string;
   color?: string;
+  image?: string;
 }
 
 export interface MapPolyline {
@@ -68,6 +69,7 @@ export function InteractiveMap({
   polylines,
 }: InteractiveMapProps) {
   const [isClient, setIsClient] = useState(false);
+  const [mapReady, setMapReady] = useState(0); // Increments when map is (re)created
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -96,6 +98,7 @@ export function InteractiveMap({
     markersLayerRef.current = L.layerGroup().addTo(map);
     polylinesLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+    setMapReady((n) => n + 1); // Signal that map is ready for markers
 
     return () => {
       map.remove();
@@ -123,15 +126,20 @@ export function InteractiveMap({
 
       const marker = L.marker([location.lat, location.lng], { icon });
 
-      const popupHtml = `
-        <div style="text-align:center; padding:4px;">
+      const tooltipHtml = `
+        <div style="text-align:center; padding:4px; max-width:220px;">
+          ${location.image ? `<img src="${escapeHtml(location.image)}" alt="" style="width:100%; height:80px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />` : ''}
           <div style="font-weight:600; font-size:12px;">${escapeHtml(location.name)}</div>
           ${location.type ? `<div style="font-size:11px; opacity:0.75;">${escapeHtml(location.type)}</div>` : ''}
           ${location.description ? `<div style="font-size:11px; margin-top:4px;">${escapeHtml(location.description)}</div>` : ''}
         </div>
       `;
 
-      marker.bindPopup(popupHtml);
+      marker.bindTooltip(tooltipHtml, {
+        direction: 'top',
+        offset: [0, -10],
+        className: 'leaflet-tooltip-custom',
+      });
       if (onMarkerClick) {
         marker.on('click', () => onMarkerClick(location));
       }
@@ -143,7 +151,7 @@ export function InteractiveMap({
       const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
       mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     }
-  }, [locations, onMarkerClick, fitBounds]);
+  }, [locations, onMarkerClick, fitBounds, mapReady]);
 
   // Render polylines
   useEffect(() => {
@@ -159,7 +167,7 @@ export function InteractiveMap({
       });
       line.addTo(polylinesLayerRef.current!);
     });
-  }, [polylines]);
+  }, [polylines, mapReady]);
 
   if (!isClient) {
     return (

@@ -429,40 +429,40 @@ export const listingsAPI = {
 // ── Investment ──────────────────────────────────────────────────────────────
 
 export interface Opportunity {
-  id: number;
-  title: string;
-  category: string;
-  location: string;
-  investment: string;
-  min_investment?: number;
-  max_investment?: number;
-  roi: string;
+  id: string;
+  titleAr: string;
+  titleEn: string | null;
+  sector: string;
+  area: string;
+  minInvestment: number;
+  maxInvestment: number;
+  currency: string;
+  expectedReturnPct: number;
+  paybackPeriodYears: number;
+  incentives: string[];
   status: string;
-  description: string;
-  details?: string;
-  image?: string;
+  images: string[];
 }
 
 export interface Startup {
-  id: number;
-  name: string;
-  sector: string;
-  stage: string;
-  location: string;
-  team: number;
-  description: string;
-  funding_needed?: string;
-  image?: string;
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: string;
+  descriptionAr: string | null;
+  district: string;
+  location: { x: number; y: number } | null;
+  phone: string | null;
+  logoUrl: string | null;
+  status: string;
 }
 
 export const investmentAPI = {
-  getOpportunities: () =>
-    apiFetchWithRefresh<{ success: boolean; data: Opportunity[] }>('/opportunities'),
+  getOpportunities: () => apiFetchWithRefresh<PaginatedResponse<Opportunity>>('/investments'),
 
-  getOpportunity: (id: number) =>
-    apiFetchWithRefresh<{ success: boolean; data: Opportunity }>(`/opportunities/${id}`),
+  getOpportunity: (id: string) => apiFetchWithRefresh<Opportunity>(`/investments/${id}`),
 
-  getStartups: () => apiFetchWithRefresh<{ success: boolean; data: Startup[] }>('/startups'),
+  getStartups: () => apiFetchWithRefresh<PaginatedResponse<Startup>>('/businesses?type=startup'),
 };
 
 // ── Guides ──────────────────────────────────────────────────────────────────
@@ -962,7 +962,10 @@ export interface LegacyChatResponse {
 }
 
 export const aiAPI = {
-  createSession: (body?: { language_preference?: string; metadata?: Record<string, unknown> }, forceNew = false) =>
+  createSession: (
+    body?: { language_preference?: string; metadata?: Record<string, unknown> },
+    forceNew = false,
+  ) =>
     apiFetchWithRefresh<ChatSession>(`/chat/sessions${forceNew ? '?force_new=true' : ''}`, {
       method: 'POST',
       body: JSON.stringify(body ?? {}),
@@ -980,10 +983,12 @@ export const aiAPI = {
     }),
 
   closeSession: (sessionId: string) =>
-    apiFetchWithRefresh<{ session_id: string; closed: boolean; message_count: number; closed_at: string }>(
-      `/chat/sessions/${sessionId}`,
-      { method: 'DELETE' },
-    ),
+    apiFetchWithRefresh<{
+      session_id: string;
+      closed: boolean;
+      message_count: number;
+      closed_at: string;
+    }>(`/chat/sessions/${sessionId}`, { method: 'DELETE' }),
 
   // Deprecated compatibility adapter kept during migration.
   chat: (message: string, conversationId?: string) =>
