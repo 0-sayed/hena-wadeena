@@ -24,6 +24,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
 import { BookingsModule } from './bookings/bookings.module';
 import { GuidesModule } from './guides/guides.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { StatsModule } from './stats/stats.module';
 import { TourPackagesModule } from './tour-packages/tour-packages.module';
 
 function requireEnv(name: string): string {
@@ -81,6 +82,7 @@ function requireEnv(name: string): string {
     TourPackagesModule,
     BookingsModule,
     ReviewsModule,
+    StatsModule,
   ],
   providers: [
     JwtStrategy,
