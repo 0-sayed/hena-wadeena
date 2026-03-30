@@ -335,7 +335,10 @@ export class CommodityPricesService {
   // --- Price Index ---
 
   async getPriceIndex(query: QueryPriceIndexDto): Promise<PaginatedResponse<unknown>> {
-    const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}:${query.offset}:${query.limit}`;
+    // Ensure defaults for pagination - DTO validation may not apply defaults correctly
+    const offset = (query.offset as number | undefined) ?? 0;
+    const limit = (query.limit as number | undefined) ?? 20;
+    const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}:${offset}:${limit}`;
     try {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
@@ -412,13 +415,13 @@ export class CommodityPricesService {
         recorded_at
       FROM with_prev
       ORDER BY commodity_id, region, price_type
-      LIMIT ${query.limit}
-      OFFSET ${query.offset}
+      LIMIT ${limit}
+      OFFSET ${offset}
     `);
 
     const formatted = [...rows].map(formatPriceIndexRow);
     const total = countRows[0]?.count ?? 0;
-    const response = paginate(formatted, total, query.offset, query.limit);
+    const response = paginate(formatted, total, offset, limit);
 
     this.redis.set(cacheKey, JSON.stringify(response), 'EX', 3600).catch((err: unknown) => {
       this.logger.error('Cache set failed', err);

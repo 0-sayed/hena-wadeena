@@ -6,8 +6,14 @@ const queryPriceIndexSchema = z.object({
   category: z.enum(Object.values(CommodityCategory) as [string, ...string[]]).optional(),
   region: z.enum(Object.values(NvDistrict) as [string, ...string[]]).optional(),
   price_type: z.enum(Object.values(PriceType) as [string, ...string[]]).optional(),
-  offset: z.coerce.number().int().min(0).default(0),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z
+    .union([z.coerce.number().int().min(0), z.literal('').transform(() => 0)])
+    .optional()
+    .default(0),
+  limit: z
+    .union([z.coerce.number().int().min(1).max(100), z.literal('').transform(() => 20)])
+    .optional()
+    .default(20),
 });
 
 export class QueryPriceIndexDto extends createZodDto(queryPriceIndexSchema) {}

@@ -1,7 +1,17 @@
 import { CurrentUser, KycVerifiedGuard, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 import { InvestmentOpportunitiesService } from '../investment-opportunities/investment-opportunities.service';
 
@@ -14,7 +24,9 @@ import { InvestmentApplicationsService } from './investment-applications.service
 @Controller()
 export class InvestmentApplicationsController {
   constructor(
+    @Inject(InvestmentApplicationsService)
     private readonly applicationsService: InvestmentApplicationsService,
+    @Inject(InvestmentOpportunitiesService)
     private readonly opportunitiesService: InvestmentOpportunitiesService,
   ) {}
 

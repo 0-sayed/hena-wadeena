@@ -5,6 +5,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Patch,
@@ -21,7 +22,10 @@ import { InvestmentOpportunitiesService } from './investment-opportunities.servi
 
 @Controller('investments')
 export class InvestmentOpportunitiesController {
-  constructor(private readonly opportunitiesService: InvestmentOpportunitiesService) {}
+  constructor(
+    @Inject(InvestmentOpportunitiesService)
+    private readonly opportunitiesService: InvestmentOpportunitiesService,
+  ) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {
     if ((user.role as UserRole) !== UserRole.ADMIN) {

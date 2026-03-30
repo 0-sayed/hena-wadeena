@@ -45,6 +45,7 @@ const PricesPage = () => {
     {
       category: selectedCategory,
       region: regionFilter,
+      price_type: 'retail',
     },
     100,
   );

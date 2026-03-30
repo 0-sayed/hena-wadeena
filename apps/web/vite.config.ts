@@ -33,7 +33,7 @@ export default defineConfig({
       '/api/v1/bookings': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/attractions': { target: 'http://localhost:8003', changeOrigin: true },
       // Map service (:8004)
-      '/api/v1/pois': { target: 'http://localhost:8004', changeOrigin: true },
+      '/api/v1/map': { target: 'http://localhost:8004', changeOrigin: true },
       '/api/v1/carpool': { target: 'http://localhost:8004', changeOrigin: true },
       // AI service (:8005)
       '/api/v1/chat': { target: 'http://localhost:8005', changeOrigin: true },
