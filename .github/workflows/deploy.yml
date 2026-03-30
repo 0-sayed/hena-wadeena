@@ -129,7 +129,9 @@ jobs:
             if [ -n "${CORS_ORIGINS:-}" ]; then
               upsert_env "CORS_ORIGINS" "$CORS_ORIGINS"
             fi
-            upsert_env "SEED_PASSWORD" "$SEED_PASSWORD"
+            if [ -n "${SEED_PASSWORD:-}" ]; then
+              upsert_env "SEED_PASSWORD" "$SEED_PASSWORD"
+            fi
 
             echo "==> Pulling images by SHA and tagging as :latest"
             for svc in identity market guide-booking map ai gateway; do
