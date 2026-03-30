@@ -31,6 +31,7 @@ async function main() {
     phone: u.phone,
     fullName: u.fullName,
     displayName: u.displayName,
+    avatarUrl: u.avatarUrl,
     passwordHash,
     role: u.role,
     status: u.status,
@@ -53,6 +54,7 @@ async function main() {
       phone: u.phone,
       fullName: u.fullName,
       displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
       passwordHash,
       role: u.role,
       status: u.status,
@@ -70,7 +72,6 @@ async function main() {
   }
 
   logSummary('identity', layer, { users: essentialResult.length + showcaseCount });
-  console.warn(`  Password for all accounts: ${SEED_PASSWORD}`);
 }
 
 main()

@@ -8,6 +8,7 @@ export const commodities = [
     category: 'fruits' as const,
     unit: 'kg' as const,
     sortOrder: 1,
+    iconUrl: '/images/seed/commodity-dates.jpg',
   },
   {
     id: COMMODITY.CM02,
@@ -16,6 +17,7 @@ export const commodities = [
     category: 'fruits' as const,
     unit: 'kg' as const,
     sortOrder: 2,
+    iconUrl: '/images/seed/commodity-olives.jpg',
   },
   {
     id: COMMODITY.CM03,
@@ -24,22 +26,25 @@ export const commodities = [
     category: 'oils' as const,
     unit: 'liter' as const,
     sortOrder: 3,
+    iconUrl: '/images/seed/commodity-olive-oil.jpg',
   },
   {
     id: COMMODITY.CM04,
     nameAr: 'قمح',
     nameEn: 'Wheat',
     category: 'grains' as const,
-    unit: 'ton' as const,
+    unit: 'kg' as const,
     sortOrder: 4,
+    iconUrl: '/images/seed/commodity-wheat.jpg',
   },
   {
     id: COMMODITY.CM05,
     nameAr: 'برسيم',
     nameEn: 'Alfalfa',
     category: 'grains' as const,
-    unit: 'ton' as const,
+    unit: 'kg' as const,
     sortOrder: 5,
+    iconUrl: '/images/seed/commodity-alfalfa.jpg',
   },
   {
     id: COMMODITY.CM06,
@@ -48,6 +53,7 @@ export const commodities = [
     category: 'fruits' as const,
     unit: 'kg' as const,
     sortOrder: 6,
+    iconUrl: '/images/seed/commodity-oranges.jpg',
   },
   {
     id: COMMODITY.CM07,
@@ -56,6 +62,7 @@ export const commodities = [
     category: 'fruits' as const,
     unit: 'kg' as const,
     sortOrder: 7,
+    iconUrl: '/images/seed/commodity-mangoes.jpg',
   },
   {
     id: COMMODITY.CM08,
@@ -64,6 +71,7 @@ export const commodities = [
     category: 'grains' as const,
     unit: 'kg' as const,
     sortOrder: 8,
+    iconUrl: '/images/seed/commodity-peanuts.jpg',
   },
   {
     id: COMMODITY.CM09,
@@ -72,6 +80,7 @@ export const commodities = [
     category: 'fruits' as const,
     unit: 'kg' as const,
     sortOrder: 9,
+    iconUrl: '/images/seed/commodity-apricots.jpg',
   },
   {
     id: COMMODITY.CM10,
@@ -80,12 +89,13 @@ export const commodities = [
     category: 'other' as const,
     unit: 'kg' as const,
     sortOrder: 10,
+    iconUrl: '/images/seed/commodity-cumin.jpg',
   },
 ];
 
 /** Showcase: 5 months of price data per commodity × 3 price types × 5 regions */
 export function generatePriceSnapshots() {
-  const regions = ['الخارجة', 'الداخلة', 'الفرافرة', 'باريس', 'بلاط'];
+  const regions = ['kharga', 'dakhla', 'farafra', 'baris', 'balat'];
   const months = [
     new Date('2025-11-01'),
     new Date('2025-12-01'),
@@ -121,9 +131,9 @@ export function generatePriceSnapshots() {
     const base = basePrices[commodity.id] ?? 5000;
     for (const month of months) {
       for (const region of regions) {
-        // Retail price with ±10% regional variation
-        const variation = 0.9 + Math.random() * 0.2;
-        const retail = Math.round(base * variation);
+        // Retail price with ±10% regional variation (integer bps arithmetic)
+        const variationBps = 9000 + Math.floor(Math.random() * 2001); // 9000..11000 bps
+        const retail = Math.floor((base * variationBps + 5000) / 10000);
         records.push({
           commodityId: commodity.id,
           price: retail,
@@ -136,7 +146,7 @@ export function generatePriceSnapshots() {
         // Wholesale is ~70% of retail
         records.push({
           commodityId: commodity.id,
-          price: Math.round(retail * 0.7),
+          price: Math.floor((retail * 70 + 50) / 100),
           priceType: 'wholesale',
           region,
           source: 'بيانات السوق المحلي',
@@ -146,7 +156,7 @@ export function generatePriceSnapshots() {
         // Farm gate is ~50% of retail
         records.push({
           commodityId: commodity.id,
-          price: Math.round(retail * 0.5),
+          price: Math.floor((retail * 50 + 50) / 100),
           priceType: 'farm_gate',
           region,
           source: 'بيانات المزارعين',

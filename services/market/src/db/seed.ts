@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -17,6 +16,62 @@ import { commodities as commodityData, generatePriceSnapshots } from './seed-dat
 import { essentialInvestments, showcaseInvestments } from './seed-data/investments.js';
 import { essentialListings, showcaseListings } from './seed-data/listings.js';
 import { showcaseListingReviews } from './seed-data/reviews.js';
+
+// ── Real image URLs ──────────────────────────────────────────────────────────
+type ImgPair = [string, string];
+
+// Slug-specific overrides for key listings
+const LISTING_SLUG_IMGS: Record<string, ImgPair> = {
+  'shaqqa-mafrousha-kharga': ['/images/seed/7vYn0kIq4Kw.jpg', '/images/seed/AO6BYTEnlMo.jpg'],
+  'mazraat-tumur-dakhla': ['/images/seed/aSzaYMxRWjE.jpg', '/images/seed/sl71uVi8xxM.jpg'],
+  'mahal-tujari-souq-kharga': ['/images/seed/MB2eoqiNKiw.jpg', '/images/seed/xrnNNnq6djg.jpg'],
+  'funduq-qasr-bagawat': ['/images/seed/VmFFbYAp7oA.jpg', '/images/seed/eXVWq4_vMDA.jpg'],
+  'lodge-altarfa-sahrawi': ['/images/seed/eXVWq4_vMDA.jpg', '/images/seed/XaidrBZfEwU.jpg'],
+};
+
+// Category-based fallbacks for all other listings
+const LISTING_CATEGORY_IMGS: Record<string, ImgPair> = {
+  accommodation: ['/images/seed/VmFFbYAp7oA.jpg', '/images/seed/7vYn0kIq4Kw.jpg'],
+  place: ['/images/seed/aSzaYMxRWjE.jpg', '/images/seed/sl71uVi8xxM.jpg'],
+  service: ['/images/seed/MB2eoqiNKiw.jpg', '/images/seed/xrnNNnq6djg.jpg'],
+  restaurant: ['/images/seed/MB2eoqiNKiw.jpg', '/images/seed/AO6BYTEnlMo.jpg'],
+  activity: ['/images/seed/WGYGBTqfZSc.jpg', '/images/seed/1wZngiswH4M.jpg'],
+  transport: ['/images/seed/IJmbu7B6f8o.jpg', '/images/seed/umfgtmwR__Y.jpg'],
+  education: ['/images/seed/pvFtrzwuc6g.jpg', '/images/seed/umfgtmwR__Y.jpg'],
+  healthcare: ['/images/seed/xrnNNnq6djg.jpg', '/images/seed/7vYn0kIq4Kw.jpg'],
+  shopping: ['/images/seed/MB2eoqiNKiw.jpg', '/images/seed/xrnNNnq6djg.jpg'],
+};
+
+function getListingImages(slug: string, category: string): ImgPair {
+  return (
+    LISTING_SLUG_IMGS[slug] ??
+    LISTING_CATEGORY_IMGS[category] ?? [
+      `https://picsum.photos/seed/${slug}-1/800/600`,
+      `https://picsum.photos/seed/${slug}-2/800/600`,
+    ]
+  );
+}
+
+// Sector-based images for investment opportunities
+const INVESTMENT_SECTOR_IMGS: Record<string, ImgPair> = {
+  industry: ['/images/seed/_EFvjSgbw1c.jpg', '/images/seed/_EFvjSgbw1c.jpg'],
+  energy: ['/images/seed/E4XEBPEkgUs.jpg', '/images/seed/hp6Xj7LyZ1E.jpg'],
+  agriculture: ['/images/seed/aSzaYMxRWjE.jpg', '/images/seed/sl71uVi8xxM.jpg'],
+  tourism: ['/images/seed/VmFFbYAp7oA.jpg', '/images/seed/wiki-white-desert-1.jpg'],
+  real_estate: ['/images/seed/eXVWq4_vMDA.jpg', '/images/seed/7vYn0kIq4Kw.jpg'],
+  services: ['/images/seed/xrnNNnq6djg.jpg', '/images/seed/MB2eoqiNKiw.jpg'],
+  technology: ['/images/seed/E4XEBPEkgUs.jpg', '/images/seed/hp6Xj7LyZ1E.jpg'],
+};
+
+function getInvestmentImages(sector: string, id: string): ImgPair {
+  return (
+    INVESTMENT_SECTOR_IMGS[sector] ?? [
+      `https://picsum.photos/seed/${id.slice(-8)}-1/1200/800`,
+      `https://picsum.photos/seed/${id.slice(-8)}-2/1200/800`,
+    ]
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is required');
@@ -41,6 +96,7 @@ async function main() {
         category: c.category,
         unit: c.unit,
         sortOrder: c.sortOrder,
+        iconUrl: c.iconUrl,
       })),
     )
     .onConflictDoNothing()
@@ -69,6 +125,7 @@ async function main() {
         status: l.status,
         isVerified: l.isVerified,
         isPublished: l.isPublished,
+        images: getListingImages(l.slug, l.category),
         location: point(l.lat, l.lon),
       })),
     )
@@ -90,6 +147,7 @@ async function main() {
         description: inv.description,
         sector: inv.sector,
         area: inv.area,
+        location: point(inv.lat, inv.lon),
         minInvestment: inv.minInvestment,
         maxInvestment: inv.maxInvestment,
         expectedReturnPct: inv.expectedReturnPct,
@@ -100,6 +158,7 @@ async function main() {
         status: inv.status,
         isVerified: inv.isVerified,
         source: inv.source,
+        images: getInvestmentImages(inv.sector, inv.id),
       })),
     )
     .onConflictDoNothing()
@@ -123,6 +182,7 @@ async function main() {
           descriptionAr: biz.descriptionAr,
           district: biz.district,
           phone: biz.phone,
+          logoUrl: biz.logoUrl,
           status: biz.status,
           verificationStatus: biz.verificationStatus,
           location: point(biz.lat, biz.lon),
@@ -132,21 +192,16 @@ async function main() {
       .returning({ id: businessDirectories.id });
     businessCount = businessResult.length;
 
-    // 5. Commodity price snapshots — showcase only, skip if already seeded
-    // (no unique constraint on commodity_prices; guard against duplicates on re-runs)
-    const existingCount =
-      (await db.select({ count: sql<number>`count(*)::int` }).from(commodityPrices)).at(0)?.count ??
-      0;
-    if (existingCount === 0) {
-      const snapshots = generatePriceSnapshots();
-      const BATCH = 100;
-      for (let i = 0; i < snapshots.length; i += BATCH) {
-        await db.insert(commodityPrices).values(snapshots.slice(i, i + BATCH));
-      }
-      priceCount = snapshots.length;
-    } else {
-      priceCount = existingCount;
+    // 5. Commodity price snapshots — showcase only, idempotent via onConflictDoNothing
+    const snapshots = generatePriceSnapshots();
+    const BATCH = 100;
+    for (let i = 0; i < snapshots.length; i += BATCH) {
+      await db
+        .insert(commodityPrices)
+        .values(snapshots.slice(i, i + BATCH))
+        .onConflictDoNothing();
     }
+    priceCount = snapshots.length;
 
     // 6. Listing reviews — showcase only
     const reviewResult = await db

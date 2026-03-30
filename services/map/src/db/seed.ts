@@ -7,6 +7,20 @@ import { carpoolRides as carpoolRidesTable, pointsOfInterest } from './schema/in
 import { carpoolRides as rideData } from './seed-data/carpool.js';
 import { essentialPois, showcasePois } from './seed-data/pois.js';
 
+// ── Fallback images by category ──────────────────────────────────────────────
+// Used only when POI doesn't have explicit images
+const FALLBACK_CATEGORY_IMGS: Record<string, string> = {
+  historical: '/images/seed/pvFtrzwuc6g.jpg',
+  natural: '/images/seed/WGYGBTqfZSc.jpg',
+  religious: '/images/seed/pvFtrzwuc6g.jpg',
+  recreational: '/images/seed/MB2eoqiNKiw.jpg',
+  accommodation: '/images/seed/VmFFbYAp7oA.jpg',
+  restaurant: '/images/seed/MB2eoqiNKiw.jpg',
+  service: '/images/seed/umfgtmwR__Y.jpg',
+  government: '/images/seed/umfgtmwR__Y.jpg',
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is required');
 
@@ -36,6 +50,10 @@ async function main() {
         status: 'approved' as const,
         submittedBy: p.submittedBy,
         approvedBy: p.approvedBy,
+        images: p.images ?? [
+          FALLBACK_CATEGORY_IMGS[p.category] ??
+            `https://picsum.photos/seed/${p.id.slice(-8)}/800/600`,
+        ],
         location: point(p.lat, p.lon),
       })),
     )

@@ -20,6 +20,7 @@ export interface SeedPoi {
   lon: number;
   submittedBy: string;
   approvedBy: string;
+  images?: string[];
 }
 
 // Inline IDs for showcase POIs 11–20
@@ -48,6 +49,7 @@ export const essentialPois: SeedPoi[] = [
     lon: 30.55,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/umfgtmwR__Y.jpg'],
   },
   {
     id: POI.POI02,
@@ -60,6 +62,7 @@ export const essentialPois: SeedPoi[] = [
     lon: 30.56,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/a8ZSKCBE1xk.jpg'],
   },
   {
     id: POI.POI03,
@@ -73,6 +76,7 @@ export const essentialPois: SeedPoi[] = [
     lon: 28.9781,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/GTigSDuTiN4.jpg'],
   },
   {
     id: POI.POI04,
@@ -86,6 +90,7 @@ export const essentialPois: SeedPoi[] = [
     lon: 27.9703,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/AFuVCldRhjs.jpg'],
   },
   {
     id: POI.POI05,
@@ -99,6 +104,7 @@ export const essentialPois: SeedPoi[] = [
     lon: 30.5956,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/wiki-baris-1.jpg'],
   },
 ];
 
@@ -116,6 +122,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.549,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/Rk8yY0UfPx0.jpg'],
   },
   {
     id: POI.POI07,
@@ -129,6 +136,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.551,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/T4hZdDQElBc.jpg'],
   },
   {
     id: POI.POI08,
@@ -142,6 +150,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 28.975,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/v4tLl97tXBY.jpg'],
   },
   {
     id: POI.POI09,
@@ -154,6 +163,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.594,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/wiki-baris-2.jpg'],
   },
   {
     id: POI.POI10,
@@ -167,6 +177,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.552,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/GNdp2Q4VZjw.jpg'],
   },
   {
     id: P11,
@@ -179,6 +190,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.553,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/DZOIE5bQGBg.jpg'],
   },
   {
     id: P12,
@@ -191,6 +203,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.554,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/3FRX4F_Kjak.jpg'],
   },
   {
     id: P13,
@@ -203,6 +216,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 28.976,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/1wZngiswH4M.jpg'],
   },
   {
     id: P14,
@@ -216,6 +230,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.548,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/wiki-al-qasr-1.jpg'],
   },
   {
     id: P15,
@@ -228,6 +243,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 28.979,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/wiki-al-qasr-2.jpg'],
   },
   {
     id: P16,
@@ -240,6 +256,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 27.971,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/wiki-farafra-well.jpg'],
   },
   {
     id: P17,
@@ -253,6 +270,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.5913,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/hp6Xj7LyZ1E.jpg'],
   },
   {
     id: P18,
@@ -266,6 +284,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 27.968,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/wiki-white-desert-1.jpg'],
   },
   {
     id: P19,
@@ -278,6 +297,7 @@ export const showcasePois: SeedPoi[] = [
     lon: 30.547,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/MB2eoqiNKiw.jpg'],
   },
   {
     id: P20,
@@ -287,9 +307,10 @@ export const showcasePois: SeedPoi[] = [
     category: 'government',
     address: 'شارع الصحة، الخارجة',
     phone: '+20924924000',
-    lat: 25.44,
-    lon: 30.55,
+    lat: 25.448,
+    lon: 30.545,
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/XaidrBZfEwU.jpg'],
   },
 ];

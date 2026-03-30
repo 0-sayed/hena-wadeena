@@ -17,6 +17,10 @@ export interface SeedCarpoolRide {
   status: 'open';
 }
 
+// Keep showcase rides always in the future relative to seed run time
+// to avoid stale "open" rides after initial deployment dates pass.
+const hoursFromNow = (h: number) => new Date(Date.now() + h * 60 * 60 * 1000);
+
 /** Showcase layer only: 5 inter-city carpool rides */
 export const carpoolRides: SeedCarpoolRide[] = [
   {
@@ -28,7 +32,7 @@ export const carpoolRides: SeedCarpoolRide[] = [
     destLon: 28.9781,
     originName: 'الخارجة — موقف السيارات الرئيسي',
     destinationName: 'الداخلة — موقف موط',
-    departureTime: new Date('2026-04-01T07:00:00+02:00'),
+    departureTime: hoursFromNow(24),
     seatsTotal: 4,
     seatsTaken: 1,
     pricePerSeat: 15000,
@@ -44,7 +48,7 @@ export const carpoolRides: SeedCarpoolRide[] = [
     destLon: 27.9703,
     originName: 'الداخلة — موقف موط',
     destinationName: 'الفرافرة — وسط المدينة',
-    departureTime: new Date('2026-04-02T06:00:00+02:00'),
+    departureTime: hoursFromNow(48),
     seatsTotal: 3,
     seatsTaken: 0,
     pricePerSeat: 20000,
@@ -60,7 +64,7 @@ export const carpoolRides: SeedCarpoolRide[] = [
     destLon: 30.5956,
     originName: 'الخارجة — وسط المدينة',
     destinationName: 'باريس — الميدان الرئيسي',
-    departureTime: new Date('2026-04-01T08:30:00+02:00'),
+    departureTime: hoursFromNow(30),
     seatsTotal: 3,
     seatsTaken: 2,
     pricePerSeat: 10000,
@@ -75,7 +79,7 @@ export const carpoolRides: SeedCarpoolRide[] = [
     destLon: 28.9781,
     originName: 'بلاط — مدخل المدينة',
     destinationName: 'الداخلة — موقف موط',
-    departureTime: new Date('2026-04-03T09:00:00+02:00'),
+    departureTime: hoursFromNow(72),
     seatsTotal: 4,
     seatsTaken: 0,
     pricePerSeat: 5000,
@@ -90,7 +94,7 @@ export const carpoolRides: SeedCarpoolRide[] = [
     destLon: 30.555,
     originName: 'الفرافرة — وسط المدينة',
     destinationName: 'الخارجة — موقف السيارات الرئيسي',
-    departureTime: new Date('2026-04-05T06:00:00+02:00'),
+    departureTime: hoursFromNow(120),
     seatsTotal: 4,
     seatsTaken: 0,
     pricePerSeat: 25000,

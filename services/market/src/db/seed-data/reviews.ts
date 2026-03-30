@@ -14,18 +14,18 @@ export interface SeedListingReview {
 }
 
 // Extra review IDs (LR01–LR03 are in shared-ids; LR04–LR15 defined here)
-const LR04 = 'a91fe7b3-4c52-4d8a-b3e1-6f7209c4d851';
-const LR05 = 'c2381a04-9d7f-4b63-8a2c-0e3f1b5d7982';
-const LR06 = '8b4d2e6f-1c7a-4953-b8d0-3a5f7291e460';
-const LR07 = '3f72194b-0e8d-4a6c-9150-b2d4f6e83a71';
-const LR08 = '7a3b5c8d-2f94-4e71-a063-15b2d7f4e892';
-const LR09 = '2d1a4b7c-8e30-4f52-9163-c5d7e9f1b240';
-const LR10 = 'e8f2c4a6-3b91-4d70-8152-4a6c8e0f2b93';
-const LR11 = '4c7e9f1b-6a23-4d80-9271-5b8d0e2f4a61';
-const LR12 = 'b1d3e5f7-9c42-4a60-8391-6c0e2f4b8d70';
-const LR13 = '9e1f3b5d-7a42-4c80-b261-4d6f8a0b2e93';
-const LR14 = '5d7f9b1e-3c82-4a60-9280-7e1c3f5b9d42';
-const LR15 = '6f8a0c2e-5d73-4b91-a380-8f2d4b6c0e51';
+const LR04 = '019d393d-c25b-78c0-9b19-455d0cd1a2b6';
+const LR05 = '019d393d-c25b-7aa0-afd1-fee3c672990d';
+const LR06 = '019d393d-c25b-791f-8c85-c2b6bd990356';
+const LR07 = '019d393d-c25b-7d6f-b34b-5ce5d4ac9a12';
+const LR08 = '019d393d-c25b-734d-942b-25aa8762d730';
+const LR09 = '019d393d-c25b-7dee-94f9-45c502f19a2a';
+const LR10 = '019d393d-c25b-71ca-9c36-a4536f94c9ff';
+const LR11 = '019d393d-c25b-77aa-91bc-da790a074cfc';
+const LR12 = '019d393d-c25b-7f4d-a947-3d4135995556';
+const LR13 = '019d393d-c25b-7f33-88e8-4556c7fc1fd8';
+const LR14 = '019d393d-c25b-7385-ba56-6acce64c4a6c';
+const LR15 = '019d393d-c25b-78ff-9399-3b8dfe5d50ce';
 
 /**
  * Showcase layer: 15 listing reviews on accommodation and restaurant listings.

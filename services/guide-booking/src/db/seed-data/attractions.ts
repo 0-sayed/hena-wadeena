@@ -12,7 +12,7 @@ export interface SeedAttraction {
   historyAr?: string;
   bestSeason: 'winter' | 'summer' | 'spring' | 'all_year';
   bestTimeOfDay: 'morning' | 'evening' | 'any';
-  entryFee: { adults_egp: number; children_egp: number } | null;
+  entryFee: { adultsPiasters: number; childrenPiasters: number } | null;
   openingHours: string;
   durationHours: number;
   difficulty: 'easy' | 'moderate' | 'hard';
@@ -58,7 +58,7 @@ export const essentialAttractions: SeedAttraction[] = [
       'بُني المعبد في عهد الملك الفارسي داريوس الأول، ويقع على بعد 2 كم شمال مدينة الخارجة. يتميز بنقوشه الفريدة التي تجمع بين الفن المصري والفارسي.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 6000, children_egp: 3000 },
+    entryFee: { adultsPiasters: 6000, childrenPiasters: 3000 },
     openingHours: '8:00 - 17:00',
     durationHours: 2,
     difficulty: 'easy',
@@ -150,7 +150,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'تُعد جبانة البجوات شاهداً فريداً على الوجود المسيحي المبكر في مصر وتطور الفن المسيحي القبطي.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 6000, children_egp: 3000 },
+    entryFee: { adultsPiasters: 6000, childrenPiasters: 3000 },
     openingHours: '8:00 - 17:00',
     durationHours: 2,
     difficulty: 'easy',
@@ -174,7 +174,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'A Pharaonic temple on a hilltop from the 29th Dynasty. Dominates the surrounding area with panoramic views of the oasis.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 4000, children_egp: 2000 },
+    entryFee: { adultsPiasters: 4000, childrenPiasters: 2000 },
     openingHours: '8:00 - 17:00',
     durationHours: 1.5,
     difficulty: 'moderate',
@@ -200,7 +200,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'المعبد مكرس لآمون ومعبود في واحة الداخلة. يمثل نموذجاً فريداً لتمازج الفن المصري والروماني.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 4000, children_egp: 2000 },
+    entryFee: { adultsPiasters: 4000, childrenPiasters: 2000 },
     openingHours: '8:00 - 17:00',
     durationHours: 1.5,
     difficulty: 'easy',
@@ -306,7 +306,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'معبد دوش من أبرز المواقع الأثرية في الجنوب الغربي المصري، ويتميز بموقعه الاستراتيجي على الطريق القديم بين مصر والسودان.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 6000, children_egp: 3000 },
+    entryFee: { adultsPiasters: 6000, childrenPiasters: 3000 },
     openingHours: '8:00 - 17:00',
     durationHours: 2,
     difficulty: 'easy',
@@ -331,7 +331,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'A Greco-Roman temple on a commanding hilltop with hieroglyphic reliefs from the reign of Emperor Antoninus Pius.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 4000, children_egp: 2000 },
+    entryFee: { adultsPiasters: 4000, childrenPiasters: 2000 },
     openingHours: '8:00 - 17:00',
     durationHours: 1,
     difficulty: 'moderate',
@@ -379,7 +379,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'A small Roman temple on a hill overlooking Kharga city, dating to the reign of Emperor Hadrian. Offers a panoramic view of the oasis.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 4000, children_egp: 2000 },
+    entryFee: { adultsPiasters: 4000, childrenPiasters: 2000 },
     openingHours: '8:00 - 17:00',
     durationHours: 1,
     difficulty: 'easy',
@@ -403,7 +403,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'A modern archaeological museum displaying artifacts from across New Valley Governorate. Pharaonic, Coptic, and Islamic pieces alongside exhibits on ancient daily life.',
     bestSeason: 'all_year',
     bestTimeOfDay: 'any',
-    entryFee: { adults_egp: 8000, children_egp: 4000 },
+    entryFee: { adultsPiasters: 8000, childrenPiasters: 4000 },
     openingHours: '9:00 - 17:00',
     durationHours: 2,
     difficulty: 'easy',
@@ -432,7 +432,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'Two Roman-era painted tombs with unique murals blending Egyptian and Roman art. Remarkably preserved wall paintings depicting afterlife scenes.',
     bestSeason: 'winter',
     bestTimeOfDay: 'morning',
-    entryFee: { adults_egp: 4000, children_egp: 2000 },
+    entryFee: { adultsPiasters: 4000, childrenPiasters: 2000 },
     openingHours: '8:00 - 17:00',
     durationHours: 1.5,
     difficulty: 'easy',
@@ -638,7 +638,7 @@ export const showcaseAttractions: SeedAttraction[] = [
       'A private museum showcasing the work of local artist Badr Abd el-Moghni. Paintings and sculptures made from natural desert materials depicting daily life and Bedouin heritage.',
     bestSeason: 'all_year',
     bestTimeOfDay: 'any',
-    entryFee: { adults_egp: 5000, children_egp: 2500 },
+    entryFee: { adultsPiasters: 5000, childrenPiasters: 2500 },
     openingHours: '9:00 - 17:00',
     durationHours: 1,
     difficulty: 'easy',

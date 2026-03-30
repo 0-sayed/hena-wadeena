@@ -7,6 +7,7 @@ export interface SeedUser {
   phone: string | null;
   fullName: string;
   displayName: string | null;
+  avatarUrl: string | null;
   role: 'admin' | 'tourist' | 'resident' | 'student' | 'merchant' | 'driver' | 'guide' | 'investor';
   status: 'active';
   language: string;
@@ -14,6 +15,10 @@ export interface SeedUser {
 }
 
 const now = new Date();
+
+function avatar(email: string): string {
+  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
+}
 
 /** Essential layer: 4 admins + 7 demo role users */
 export const essentialUsers: SeedUser[] = [
@@ -24,17 +29,19 @@ export const essentialUsers: SeedUser[] = [
     phone: null,
     fullName: 'سيد',
     displayName: 'سيد',
+    avatarUrl: avatar('sayed@hena-wadeena.online'),
     role: 'admin',
     status: 'active',
     language: 'ar',
     verifiedAt: now,
   },
   {
-    id: USER.ADMIN_KAREEM,
-    email: 'kareem@hena-wadeena.online',
+    id: USER.ADMIN_ADLY,
+    email: 'adly@hena-wadeena.online',
     phone: null,
-    fullName: 'كريم',
-    displayName: 'كريم',
+    fullName: 'عادلي',
+    displayName: 'عادلي',
+    avatarUrl: avatar('adly@hena-wadeena.online'),
     role: 'admin',
     status: 'active',
     language: 'ar',
@@ -46,6 +53,7 @@ export const essentialUsers: SeedUser[] = [
     phone: null,
     fullName: 'طاهر',
     displayName: 'طاهر',
+    avatarUrl: avatar('taher@hena-wadeena.online'),
     role: 'admin',
     status: 'active',
     language: 'ar',
@@ -57,6 +65,7 @@ export const essentialUsers: SeedUser[] = [
     phone: null,
     fullName: 'شوقي',
     displayName: 'شوقي',
+    avatarUrl: avatar('shawqi@hena-wadeena.online'),
     role: 'admin',
     status: 'active',
     language: 'ar',
@@ -69,6 +78,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000001',
     fullName: 'سلمى الزائرة',
     displayName: 'سلمى',
+    avatarUrl: avatar('tourist@hena-wadeena.online'),
     role: 'tourist',
     status: 'active',
     language: 'ar',
@@ -80,6 +90,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000002',
     fullName: 'محمد الواحاتي',
     displayName: 'محمد',
+    avatarUrl: avatar('resident@hena-wadeena.online'),
     role: 'resident',
     status: 'active',
     language: 'ar',
@@ -91,6 +102,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000003',
     fullName: 'نور الطالبة',
     displayName: 'نور',
+    avatarUrl: avatar('student@hena-wadeena.online'),
     role: 'student',
     status: 'active',
     language: 'ar',
@@ -102,6 +114,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000004',
     fullName: 'خالد التاجر',
     displayName: 'خالد',
+    avatarUrl: avatar('merchant@hena-wadeena.online'),
     role: 'merchant',
     status: 'active',
     language: 'ar',
@@ -113,6 +126,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000005',
     fullName: 'عمرو السائق',
     displayName: 'عمرو',
+    avatarUrl: avatar('driver@hena-wadeena.online'),
     role: 'driver',
     status: 'active',
     language: 'ar',
@@ -124,6 +138,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000006',
     fullName: 'يوسف الدليل',
     displayName: 'يوسف',
+    avatarUrl: avatar('guide@hena-wadeena.online'),
     role: 'guide',
     status: 'active',
     language: 'ar',
@@ -135,6 +150,7 @@ export const essentialUsers: SeedUser[] = [
     phone: '+201000000007',
     fullName: 'محمود المستثمر',
     displayName: 'محمود المستثمر',
+    avatarUrl: avatar('investor@hena-wadeena.online'),
     role: 'investor',
     status: 'active',
     language: 'ar',
@@ -150,6 +166,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000008',
     fullName: 'فاطمة الصحراوية',
     displayName: 'فاطمة',
+    avatarUrl: avatar('fatma.guide@hena-wadeena.online'),
     role: 'guide',
     status: 'active',
     language: 'ar',
@@ -161,6 +178,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000009',
     fullName: 'أحمد المغامر',
     displayName: 'أحمد',
+    avatarUrl: avatar('ahmed.guide@hena-wadeena.online'),
     role: 'guide',
     status: 'active',
     language: 'ar',
@@ -172,6 +190,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000010',
     fullName: 'مريم العلاجية',
     displayName: 'مريم',
+    avatarUrl: avatar('mariam.guide@hena-wadeena.online'),
     role: 'guide',
     status: 'active',
     language: 'ar',
@@ -183,6 +202,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000011',
     fullName: 'عمر المصور',
     displayName: 'عمر',
+    avatarUrl: avatar('omar.guide@hena-wadeena.online'),
     role: 'guide',
     status: 'active',
     language: 'ar',
@@ -194,6 +214,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000012',
     fullName: 'حسن الرحالة',
     displayName: 'حسن',
+    avatarUrl: avatar('hassan@hena-wadeena.online'),
     role: 'tourist',
     status: 'active',
     language: 'ar',
@@ -205,6 +226,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000013',
     fullName: 'ليلى السائحة',
     displayName: 'ليلى',
+    avatarUrl: avatar('layla@hena-wadeena.online'),
     role: 'tourist',
     status: 'active',
     language: 'en',
@@ -216,6 +238,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000014',
     fullName: 'كريم الباحث',
     displayName: 'كريم',
+    avatarUrl: avatar('karim@hena-wadeena.online'),
     role: 'tourist',
     status: 'active',
     language: 'ar',
@@ -227,6 +250,7 @@ export const showcaseUsers: SeedUser[] = [
     phone: '+201000000015',
     fullName: 'سارة الجامعية',
     displayName: 'سارة',
+    avatarUrl: avatar('sara.student@hena-wadeena.online'),
     role: 'student',
     status: 'active',
     language: 'ar',

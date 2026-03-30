@@ -15,6 +15,8 @@ export interface SeedInvestment {
     | 'technology'
     | 'energy';
   area: string;
+  lat: number;
+  lon: number;
   minInvestment: number; // piasters
   maxInvestment: number; // piasters
   expectedReturnPct: number;
@@ -28,16 +30,16 @@ export interface SeedInvestment {
 }
 
 // Extra IDs for showcase investments (INV06–INV15) — not cross-service refs
-const INV06 = '82a4c6e8-1f30-4b92-9d71-3e5a7c9a1b30';
-const INV07 = '93b5d7f9-2a41-4c83-ae82-4f6b8d0c2a41';
-const INV08 = 'a4c6e8f0-3b52-4d94-bf93-5a7c9e1b3b52';
-const INV09 = 'b5d7f901-4c63-4ea5-ca04-6b8d0f2c4c63';
-const INV10 = 'c6e8f012-5d74-4fb6-db15-7c9e1a3d5d74';
-const INV11 = 'd7f90123-6e85-40c7-ec26-8d0f2b4e6e85';
-const INV12 = 'e8f01234-7f96-41d8-fd37-9e1a3c5f7f96';
-const INV13 = 'f9012345-8a07-42e9-0e48-0f2b4d6a8a07';
-const INV14 = '01234567-9b18-43fa-1f59-1a3c5e7b9b18';
-const INV15 = '12345678-0c29-440b-206a-2b4d6f8c0c29';
+const INV06 = '019d393d-c259-71fc-ac93-8f4f6f525651';
+const INV07 = '019d393d-c25a-70bd-a22e-99c2aff1c12e';
+const INV08 = '019d393d-c25a-72d7-8316-605c37b137a3';
+const INV09 = '019d393d-c25a-7337-8416-d18086934863';
+const INV10 = '019d393d-c25a-7533-8307-fea4eb96dd53';
+const INV11 = '019d393d-c25a-70c4-b928-33196af0f78f';
+const INV12 = '019d393d-c25a-7999-9b02-d6267b70a2e3';
+const INV13 = '019d393d-c25a-7ca6-9f39-3d8b08a1c59d';
+const INV14 = '019d393d-c25a-74f1-932d-014a747dfd35';
+const INV15 = '019d393d-c25a-7bad-b976-a812075e0a66';
 
 /** Essential layer: 2 investments (one industrial, one energy) */
 export const essentialInvestments: SeedInvestment[] = [
@@ -49,7 +51,9 @@ export const essentialInvestments: SeedInvestment[] = [
     description:
       'يقع مجمع أبو طرطور في منطقة الخارجة ويستثمر أحد أكبر احتياطيات الفوسفات في العالم. المشروع يشمل إنشاء مصنع لإنتاج حمض الفوسفوريك والأسمدة الفوسفاتية بطاقة إنتاجية تصل إلى مليون طن سنوياً، مما يجعله منافساً على المستوى العالمي في صناعة الأسمدة. تتوافر البنية التحتية الكاملة من طرق وكهرباء وخط سكك حديدية مربوط بشبكة النقل الوطنية.',
     sector: 'industry',
-    area: 'الخارجة',
+    area: 'kharga',
+    lat: 25.48,
+    lon: 30.42,
     minInvestment: 1_000_000_000, // 10M EGP
     maxInvestment: 2_000_000_000, // 20M EGP (int4 ceiling)
     expectedReturnPct: 18.0,
@@ -78,7 +82,9 @@ export const essentialInvestments: SeedInvestment[] = [
     description:
       'مشروع ضخم لتوليد الطاقة الشمسية يستفيد من إشعاع شمسي استثنائي يفوق 3400 ساعة سنوياً في الوادي الجديد. المحطة ستوفر طاقة نظيفة لملايين الأسر المصرية وتسهم في تحقيق أهداف مصر للطاقة المتجددة 2035. الموقع مسطح تماماً ومناخه مثالي للألواح الكهروضوئية.',
     sector: 'energy',
-    area: 'الخارجة',
+    area: 'kharga',
+    lat: 25.52,
+    lon: 30.48,
     minInvestment: 500_000_000, // 5M EGP
     maxInvestment: 2_000_000_000, // 20M EGP (int4 ceiling)
     expectedReturnPct: 12.0,
@@ -111,7 +117,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مشروع قومي لاستصلاح الأراضي وزراعة 2.5 مليون نخلة تمور في واحة الداخلة التي تتميز بتربتها الخصبة ومياهها الجوفية الوفيرة. يُتوقع أن يضع مصر ضمن كبار منتجي التمور عالمياً بحلول 2030. المشروع يشمل محطات تعبئة وتغليف وخطوط تصدير مباشرة.',
     sector: 'agriculture',
-    area: 'الداخلة',
+    area: 'dakhla',
+    lat: 25.51,
+    lon: 28.95,
     minInvestment: 200_000_000, // 2M EGP
     maxInvestment: 1_000_000_000, // 10M EGP
     expectedReturnPct: 22.0,
@@ -140,7 +148,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مزارع زيتون واسعة النطاق تستفيد من المناخ الجاف ونظافة بيئة الفرافرة لإنتاج زيت زيتون عضوي فاخر. المشروع يضم مصانع عصر وتعبئة متكاملة، وتُصدر منتجاته إلى الأسواق الأوروبية والخليجية. تتميز الفرافرة بأعلى إنتاجية لفدان الزيتون في مصر.',
     sector: 'agriculture',
-    area: 'الفرافرة',
+    area: 'farafra',
+    lat: 27.08,
+    lon: 27.95,
     minInvestment: 300_000_000, // 3M EGP
     maxInvestment: 1_500_000_000, // 15M EGP
     expectedReturnPct: 20.0,
@@ -168,7 +178,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'منتجع صحي فاخر يستثمر العيون الكبريتية الحارة في واحة الداخلة المشهورة بفوائدها العلاجية للروماتيزم والأمراض الجلدية. يضم المنتجع فنادق، وحمامات علاجية، وعيادات متخصصة، ويستهدف السياح الأوروبيين والخليجيين الباحثين عن علاج طبيعي.',
     sector: 'tourism',
-    area: 'الداخلة',
+    area: 'dakhla',
+    lat: 25.48,
+    lon: 29.01,
     minInvestment: 100_000_000, // 1M EGP
     maxInvestment: 500_000_000, // 5M EGP
     expectedReturnPct: 25.0,
@@ -196,7 +208,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مدينة سكنية متكاملة تستوعب عمال المشاريع الصناعية في منطقة أبو طرطور. تشمل وحدات سكنية بأسعار متنوعة، ومدارس، ومستشفى، ومراكز تجارية. المشروع ضمن خطة الدولة لتخفيف الضغط عن وادي النيل وتنمية الصحراء الغربية.',
     sector: 'real_estate',
-    area: 'الخارجة',
+    area: 'kharga',
+    lat: 25.46,
+    lon: 30.38,
     minInvestment: 2_000_000_000, // 20M EGP
     maxInvestment: 2_000_000_000, // 20M EGP (int4 ceiling)
     expectedReturnPct: 15.0,
@@ -225,7 +239,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مجمع صناعي يضم خطوط تصنيع لتعبئة التمور والزيتون والمنتجات الزراعية المحلية. يستهدف تصدير 60% من إنتاجه لأسواق الشرق الأوسط وأوروبا. يوفر المجمع نحو 500 فرصة عمل مباشرة ويساهم في تطوير سلاسل إمداد زراعية متكاملة.',
     sector: 'industry',
-    area: 'الداخلة',
+    area: 'dakhla',
+    lat: 25.52,
+    lon: 28.92,
     minInvestment: 500_000_000, // 5M EGP
     maxInvestment: 2_000_000_000, // 20M EGP (int4 ceiling)
     expectedReturnPct: 19.0,
@@ -253,7 +269,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'محطة تحلية تجمع بين تقنيتي الطاقة الشمسية وتحلية المياه لإنتاج مياه نقية بتكلفة منخفضة ودون انبعاثات كربونية. ستخدم الفرافرة وباريس وستُعزز الاستدامة الزراعية في المنطقة. المشروع نموذج لحلول المياه في المناطق الصحراوية النامية.',
     sector: 'technology',
-    area: 'الفرافرة',
+    area: 'farafra',
+    lat: 27.04,
+    lon: 27.98,
     minInvestment: 200_000_000, // 2M EGP
     maxInvestment: 1_000_000_000, // 10M EGP
     expectedReturnPct: 14.0,
@@ -281,7 +299,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'سلسلة من الإيكو لودج المتناثرة في الصحراء البيضاء، مصممة من مواد طينية محلية وتعمل بالطاقة الشمسية بالكامل. تستهدف سياح المغامرات الأوروبيين والأمريكيين ومحبي السفر المستدام. حجوزات مسبقة لمدة 18 شهراً تثبت الطلب القوي على هذا المنتج.',
     sector: 'tourism',
-    area: 'الفرافرة',
+    area: 'farafra',
+    lat: 27.22,
+    lon: 28.08,
     minInvestment: 50_000_000, // 500K EGP
     maxInvestment: 200_000_000, // 2M EGP
     expectedReturnPct: 30.0,
@@ -309,7 +329,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مزرعة متخصصة في زراعة الأعشاب الطبية والعطرية في بلاط، المشهورة بتربتها الخصبة ومياهها الجوفية النقية. تشمل مصنعاً للتقطير واستخلاص الزيوت الأساسية المصدرة للصيدليات والشركات الدوائية. الطلب العالمي على الأعشاب العضوية في ارتفاع مستمر.',
     sector: 'agriculture',
-    area: 'بلاط',
+    area: 'balat',
+    lat: 25.55,
+    lon: 29.28,
     minInvestment: 30_000_000, // 300K EGP
     maxInvestment: 150_000_000, // 1.5M EGP
     expectedReturnPct: 28.0,
@@ -337,7 +359,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مصنع متكامل لفرز وغسيل وتعبئة وتغليف التمور بمعايير التصدير إلى الاتحاد الأوروبي وأمريكا الشمالية. يخدم مزارعي الداخلة وتوشكى ويقلل الفاقد في ما بعد الحصاد. يوفر 200 وظيفة مباشرة ويرفع القيمة المضافة للمنتج المحلي.',
     sector: 'industry',
-    area: 'الداخلة',
+    area: 'dakhla',
+    lat: 25.46,
+    lon: 29.02,
     minInvestment: 100_000_000, // 1M EGP
     maxInvestment: 500_000_000, // 5M EGP
     expectedReturnPct: 21.0,
@@ -365,7 +389,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مزارع أسماك تستخدم المياه الجوفية الدافئة في باريس لاستزراع البلطي والقاروص طوال العام. يستهدف تلبية الطلب المحلي في المحافظة وتصدير الفائض لأسواق الصعيد. المياه الجوفية في باريس تتميز بحرارة مثالية لنمو الأسماك دون حاجة لتكاليف تدفئة.',
     sector: 'agriculture',
-    area: 'باريس',
+    area: 'baris',
+    lat: 24.68,
+    lon: 30.58,
     minInvestment: 50_000_000, // 500K EGP
     maxInvestment: 250_000_000, // 2.5M EGP
     expectedReturnPct: 26.0,
@@ -393,7 +419,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مجمع لوجستي متكامل يضم مستودعات مبردة، وشركات شحن وتوزيع، وخدمات جمركية لتسهيل تدفق البضائع بين الوادي الجديد ووادي النيل. يستثمر موقع الخارجة كنقطة تقاطع طرق رئيسية. المجمع يقلل تكاليف لوجستيات المنتجات الزراعية بنسبة تصل إلى 30%.',
     sector: 'services',
-    area: 'الخارجة',
+    area: 'kharga',
+    lat: 25.43,
+    lon: 30.58,
     minInvestment: 300_000_000, // 3M EGP
     maxInvestment: 1_500_000_000, // 15M EGP
     expectedReturnPct: 16.0,
@@ -421,7 +449,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'شركة متخصصة في رحلات المغامرات الصحراوية تشمل السفاري بالدراجات الرباعية، والتخييم الليلي في الصحراء البيضاء، وركوب الجمال، والتصوير الفوتوغرافي. تستهدف السياح الأجانب والمصريين الباحثين عن تجارب أصيلة. الفرافرة تحتل مرتبة بين أفضل 50 وجهة سياحية في أفريقيا.',
     sector: 'tourism',
-    area: 'الفرافرة',
+    area: 'farafra',
+    lat: 27.12,
+    lon: 27.92,
     minInvestment: 20_000_000, // 200K EGP
     maxInvestment: 100_000_000, // 1M EGP
     expectedReturnPct: 35.0,
@@ -449,7 +479,9 @@ export const showcaseInvestments: SeedInvestment[] = [
     description:
       'مزرعة شمسية صغيرة الحجم تخدم مجتمعات بلاط والقرى المحيطة بتقنية الإنتاج الموزع. يمكن للمستثمرين الأفراد امتلاك حصص من الألواح الشمسية والحصول على عوائد شهرية من بيع الكهرباء. نموذج مبتكر يجمع بين التمكين المجتمعي والعائد الاقتصادي الجيد.',
     sector: 'energy',
-    area: 'بلاط',
+    area: 'balat',
+    lat: 25.58,
+    lon: 29.24,
     minInvestment: 10_000_000, // 100K EGP
     maxInvestment: 50_000_000, // 500K EGP
     expectedReturnPct: 10.0,
