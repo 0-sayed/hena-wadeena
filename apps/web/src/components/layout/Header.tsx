@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import {
   Menu,
   MapPin,
@@ -11,8 +11,10 @@ import {
   ChevronDown,
   Moon,
   Sun,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 import { useTheme } from 'next-themes';
@@ -60,6 +62,20 @@ export function Header() {
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
 
+  const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    void navigate(`/search?q=${encodeURIComponent(q)}`);
+    setSearchQuery('');
+    setSearchOpen(false);
+    setIsOpen(false); // close mobile sheet if open
+  };
+
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
@@ -95,6 +111,37 @@ export function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-1">
+          {/* Search */}
+          {searchOpen ? (
+            <form onSubmit={handleSearch} className="flex items-center gap-1">
+              <Input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => {
+                  if (!searchQuery) setSearchOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('');
+                    setSearchOpen(false);
+                  }
+                }}
+                placeholder="بحث..."
+                className="h-9 w-48 text-sm"
+              />
+            </form>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setSearchOpen(true)}
+              aria-label="بحث"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
           {/* Dark mode toggle */}
           <ThemeToggle />
           {user ? (
@@ -258,6 +305,17 @@ export function Header() {
                     </div>
                   </div>
                 )}
+
+                {/* Search */}
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="بحث في المنصة..."
+                    className="pr-10 h-10"
+                  />
+                </form>
 
                 {/* Nav links */}
                 <nav className="flex flex-col gap-1">

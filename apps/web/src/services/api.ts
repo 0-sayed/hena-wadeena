@@ -6,7 +6,12 @@
  */
 
 import { UserRole } from '@hena-wadeena/types';
-import type { PaginatedResponse, NotificationListResponse } from '@hena-wadeena/types';
+import type {
+  PaginatedResponse,
+  NotificationListResponse,
+  UnifiedSearchResponse,
+  SearchResultType,
+} from '@hena-wadeena/types';
 import type {
   AttractionType,
   AttractionArea,
@@ -730,18 +735,9 @@ export const notificationsAPI = {
 
 // ── Search ─────────────────────────────────────────────────────────────────
 
-export interface SearchResult {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  location: string;
-  url: string;
-}
-
 export const searchAPI = {
-  search: (q: string, type?: string) =>
-    apiFetchWithRefresh<{ success: boolean; data: SearchResult[]; total: number; query: string }>(
+  search: (q: string, type?: SearchResultType) =>
+    apiFetchWithRefresh<UnifiedSearchResponse>(
       `/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`,
     ),
 };
