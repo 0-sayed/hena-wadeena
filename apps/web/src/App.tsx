@@ -115,16 +115,21 @@ const App = () => (
             <Route path="/guides/:id" element={<GuideProfilePage />} />
             {/* Admin Dashboards */}
             <Route element={<RequireAuth />}>
-              <Suspense fallback={null}>
-                <Route path="admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="overview" replace />} />
-                  <Route path="overview" element={<AdminOverview />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="moderation" element={<AdminModeration />} />
-                  <Route path="guides" element={<AdminGuides />} />
-                  <Route path="map" element={<AdminMap />} />
-                </Route>
-              </Suspense>
+              <Route
+                path="admin"
+                element={
+                  <Suspense fallback={null}>
+                    <AdminLayout />
+                  </Suspense>
+                }
+              >
+                <Route index element={<Navigate to="overview" replace />} />
+                <Route path="overview" element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="moderation" element={<AdminModeration />} />
+                <Route path="guides" element={<AdminGuides />} />
+                <Route path="map" element={<AdminMap />} />
+              </Route>
             </Route>
             {/* Role Dashboards */}
             <Route element={<RequireAuth />}>
