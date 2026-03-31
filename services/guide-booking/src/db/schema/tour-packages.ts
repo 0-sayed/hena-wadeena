@@ -1,11 +1,12 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { sql } from 'drizzle-orm';
+import { SQL, sql } from 'drizzle-orm';
 import { check, index, integer, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { packageStatusEnum } from '../enums';
 import { guideBookingSchema } from '../schema';
 
 import { guides } from './guides';
+import { tsvector } from './types';
 
 export const tourPackages = guideBookingSchema.table(
   'tour_packages',
@@ -26,11 +27,16 @@ export const tourPackages = guideBookingSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(${tourPackages.titleAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${tourPackages.titleEn}, '')), 'A') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(${tourPackages.description}, ''))), 'B')`,
+    ),
   },
   (t) => [
     index('idx_tour_packages_guide_id').on(t.guideId),
     index('idx_tour_packages_status').on(t.status),
     index('idx_tour_packages_created_at').on(t.createdAt.desc()),
+    index('idx_tour_packages_search').using('gin', t.searchVector),
     check('chk_tour_packages_price_positive', sql`${t.price} > 0`),
     check('chk_tour_packages_max_people_positive', sql`${t.maxPeople} >= 1`),
     check('chk_tour_packages_duration_positive', sql`${t.durationHours} > 0`),

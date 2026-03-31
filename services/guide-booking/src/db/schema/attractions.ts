@@ -1,5 +1,5 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { sql } from 'drizzle-orm';
+import { SQL, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
@@ -22,6 +22,8 @@ import {
   difficultyEnum,
 } from '../enums';
 import { guideBookingSchema } from '../schema';
+
+import { tsvector } from './types';
 
 export const attractions = guideBookingSchema.table(
   'attractions',
@@ -53,6 +55,10 @@ export const attractions = guideBookingSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(${attractions.nameAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${attractions.nameEn}, '')), 'A') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(${attractions.descriptionAr}, ''))), 'B') || setweight(to_tsvector('simple', coalesce(${attractions.descriptionEn}, '')), 'B') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(${attractions.historyAr}, ''))), 'B')`,
+    ),
   },
   (t) => [
     uniqueIndex('attractions_slug_unique').on(t.slug),
@@ -62,6 +68,7 @@ export const attractions = guideBookingSchema.table(
     index('idx_attractions_is_active').on(t.isActive),
     index('idx_attractions_is_featured').on(t.isFeatured),
     index('idx_attractions_created_at').on(t.createdAt.desc()),
+    index('idx_attractions_search').using('gin', t.searchVector),
     check('chk_attractions_duration_positive', sql`${t.durationHours} > 0`),
     check('chk_attractions_review_count_non_neg', sql`${t.reviewCount} >= 0`),
     check(

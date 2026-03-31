@@ -1,0 +1,589 @@
+{
+  "id": "12216f2e-8e85-46b4-827d-4bbe0207fc97",
+  "prevId": "e9553011-adcf-4d7c-9160-0d048a48471c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "map.carpool_passengers": {
+      "name": "carpool_passengers",
+      "schema": "map",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ride_id": {
+          "name": "ride_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seats": {
+          "name": "seats",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "status": {
+          "name": "status",
+          "type": "passenger_status",
+          "typeSchema": "map",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'requested'"
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "uq_carpool_passengers_ride_user": {
+          "name": "uq_carpool_passengers_ride_user",
+          "columns": [
+            {
+              "expression": "ride_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_carpool_passengers_user_id": {
+          "name": "idx_carpool_passengers_user_id",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_carpool_passengers_status": {
+          "name": "idx_carpool_passengers_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "carpool_passengers_ride_id_carpool_rides_id_fk": {
+          "name": "carpool_passengers_ride_id_carpool_rides_id_fk",
+          "tableFrom": "carpool_passengers",
+          "columnsFrom": [
+            "ride_id"
+          ],
+          "tableTo": "carpool_rides",
+          "schemaTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_carpool_passengers_seats_positive": {
+          "name": "chk_carpool_passengers_seats_positive",
+          "value": "\"map\".\"carpool_passengers\".\"seats\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "map.carpool_rides": {
+      "name": "carpool_rides",
+      "schema": "map",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "driver_id": {
+          "name": "driver_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "origin": {
+          "name": "origin",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destination": {
+          "name": "destination",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "origin_name": {
+          "name": "origin_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destination_name": {
+          "name": "destination_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "departure_time": {
+          "name": "departure_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seats_total": {
+          "name": "seats_total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seats_taken": {
+          "name": "seats_taken",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "price_per_seat": {
+          "name": "price_per_seat",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "carpool_ride_status",
+          "typeSchema": "map",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_carpool_rides_driver_id": {
+          "name": "idx_carpool_rides_driver_id",
+          "columns": [
+            {
+              "expression": "driver_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_carpool_rides_status": {
+          "name": "idx_carpool_rides_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_carpool_rides_departure_time": {
+          "name": "idx_carpool_rides_departure_time",
+          "columns": [
+            {
+              "expression": "departure_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_carpool_rides_origin": {
+          "name": "idx_carpool_rides_origin",
+          "columns": [
+            {
+              "expression": "origin",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gist",
+          "concurrently": false
+        },
+        "idx_carpool_rides_destination": {
+          "name": "idx_carpool_rides_destination",
+          "columns": [
+            {
+              "expression": "destination",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gist",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_carpool_rides_seats_total_positive": {
+          "name": "chk_carpool_rides_seats_total_positive",
+          "value": "\"map\".\"carpool_rides\".\"seats_total\" >= 1"
+        },
+        "chk_carpool_rides_seats_taken_valid": {
+          "name": "chk_carpool_rides_seats_taken_valid",
+          "value": "\"map\".\"carpool_rides\".\"seats_taken\" >= 0 AND \"map\".\"carpool_rides\".\"seats_taken\" <= \"map\".\"carpool_rides\".\"seats_total\""
+        },
+        "chk_carpool_rides_price_non_neg": {
+          "name": "chk_carpool_rides_price_non_neg",
+          "value": "\"map\".\"carpool_rides\".\"price_per_seat\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "map.points_of_interest": {
+      "name": "points_of_interest",
+      "schema": "map",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name_ar": {
+          "name": "name_ar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_en": {
+          "name": "name_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "poi_category",
+          "typeSchema": "map",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website": {
+          "name": "website",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "images": {
+          "name": "images",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_avg": {
+          "name": "rating_avg",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "rating_count": {
+          "name": "rating_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "status": {
+          "name": "status",
+          "type": "poi_status",
+          "typeSchema": "map",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_pois_location": {
+          "name": "idx_pois_location",
+          "columns": [
+            {
+              "expression": "location",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gist",
+          "concurrently": false
+        },
+        "idx_pois_category": {
+          "name": "idx_pois_category",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_pois_status": {
+          "name": "idx_pois_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_pois_submitted_by": {
+          "name": "idx_pois_submitted_by",
+          "columns": [
+            {
+              "expression": "submitted_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_pois_created_at": {
+          "name": "idx_pois_created_at",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_pois_rating_count_non_neg": {
+          "name": "chk_pois_rating_count_non_neg",
+          "value": "\"map\".\"points_of_interest\".\"rating_count\" >= 0"
+        },
+        "chk_pois_rating_range": {
+          "name": "chk_pois_rating_range",
+          "value": "\"map\".\"points_of_interest\".\"rating_avg\" IS NULL OR (\"map\".\"points_of_interest\".\"rating_avg\" >= 0 AND \"map\".\"points_of_interest\".\"rating_avg\" <= 5)"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "map.carpool_ride_status": {
+      "name": "carpool_ride_status",
+      "schema": "map",
+      "values": [
+        "open",
+        "full",
+        "departed",
+        "completed",
+        "cancelled"
+      ]
+    },
+    "map.passenger_status": {
+      "name": "passenger_status",
+      "schema": "map",
+      "values": [
+        "requested",
+        "confirmed",
+        "declined",
+        "cancelled"
+      ]
+    },
+    "map.poi_category": {
+      "name": "poi_category",
+      "schema": "map",
+      "values": [
+        "historical",
+        "natural",
+        "religious",
+        "recreational",
+        "accommodation",
+        "restaurant",
+        "service",
+        "government"
+      ]
+    },
+    "map.poi_status": {
+      "name": "poi_status",
+      "schema": "map",
+      "values": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    }
+  },
+  "schemas": {
+    "map": "map"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
