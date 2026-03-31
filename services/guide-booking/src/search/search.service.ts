@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { DRIZZLE_CLIENT, REDIS_CLIENT } from '@hena-wadeena/nest-common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
@@ -21,10 +23,15 @@ export class SearchService {
     const { q, limit, offset } = params;
 
     const key = this.cacheKey(q, limit, offset);
-    const cached = await this.redis.get(key);
-    if (cached) return JSON.parse(cached) as SearchResponse;
+    try {
+      const cached = await this.redis.get(key);
+      if (cached) return JSON.parse(cached) as SearchResponse;
+    } catch (err) {
+      this.logger.warn('Cache read failed, treating as miss', err);
+    }
 
-    const fetchLimit = limit + offset;
+    // Fetch one extra row to determine if more results exist
+    const fetchLimit = limit + offset + 1;
 
     const [guideResults, attractionResults, packageResults] = await Promise.all([
       this.searchGuides(q, fetchLimit),
@@ -49,10 +56,11 @@ export class SearchService {
       finalResults = [...allResults, ...fuzzyResults.slice(0, remaining)];
     }
 
+    const hasMore = finalResults.length > offset + limit;
     const paginated = finalResults.slice(offset, offset + limit);
     const response: SearchResponse = {
       data: paginated,
-      hasMore: finalResults.length > offset + limit,
+      hasMore,
       query: q,
     };
 
@@ -346,6 +354,7 @@ export class SearchService {
   }
 
   private cacheKey(q: string, limit: number, offset: number): string {
-    return `gb:search:${q}:${limit}:${offset}`;
+    const queryHash = createHash('sha256').update(q).digest('hex').slice(0, 16);
+    return `gb:search:${queryHash}:${limit}:${offset}`;
   }
 }

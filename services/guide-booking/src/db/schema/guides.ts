@@ -1,5 +1,5 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { sql } from 'drizzle-orm';
+import { SQL, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
@@ -13,6 +13,8 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { guideBookingSchema } from '../schema';
+
+import { tsvector } from './types';
 
 export const guides = guideBookingSchema.table(
   'guides',
@@ -44,7 +46,10 @@ export const guides = guideBookingSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
-    searchVector: text('search_vector'),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(${guides.bioAr}, ''))), 'A') || setweight(to_tsvector('simple', coalesce(${guides.bioEn}, '')), 'A')`,
+    ),
   },
   (t) => [
     uniqueIndex('uq_guides_user_id')
@@ -58,6 +63,7 @@ export const guides = guideBookingSchema.table(
     index('idx_guides_languages').using('gin', t.languages),
     index('idx_guides_specialties').using('gin', t.specialties),
     index('idx_guides_areas_of_operation').using('gin', t.areasOfOperation),
+    index('idx_guides_search').using('gin', t.searchVector),
     check('chk_guides_base_price_non_neg', sql`${t.basePrice} >= 0`),
     check('chk_guides_rating_count_non_neg', sql`${t.ratingCount} >= 0`),
     check(
