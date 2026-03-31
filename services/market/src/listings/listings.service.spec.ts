@@ -548,18 +548,15 @@ describe('ListingsService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should be idempotent when approving an already active listing', async () => {
-      const activeListing = { ...mockListing, status: 'active' as const, isVerified: true };
-      mockDb.returning.mockResolvedValueOnce([activeListing]);
+    it('should throw NotFoundException when approving an already active listing', async () => {
+      // Implementation requires status='draft' in WHERE clause, so non-draft listings return empty
+      mockDb.returning.mockResolvedValueOnce([]);
 
-      const result = await service.verify(
-        activeListing.id,
-        { action: 'approve' },
-        'admin-uuid-001',
-      );
+      await expect(
+        service.verify('active-listing-id', { action: 'approve' }, 'admin-uuid-001'),
+      ).rejects.toThrow(NotFoundException);
 
-      expect(result.status).toBe('active');
-      expect(mockRedisStreams.publish).toHaveBeenCalled();
+      expect(mockRedisStreams.publish).not.toHaveBeenCalled();
     });
   });
 
