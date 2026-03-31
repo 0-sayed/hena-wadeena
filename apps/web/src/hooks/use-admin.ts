@@ -79,6 +79,7 @@ export function useChangeUserRole() {
     onSuccess: () => {
       toast.success('تم تغيير الدور بنجاح');
       void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
     onError: () => toast.error('فشل تغيير الدور'),
   });
@@ -92,6 +93,7 @@ export function useChangeUserStatus() {
     onSuccess: () => {
       toast.success('تم تحديث حالة المستخدم');
       void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
     onError: () => toast.error('فشل تحديث الحالة'),
   });
@@ -154,6 +156,7 @@ export function useSetGuideStatus() {
     onSuccess: () => {
       toast.success('تم تحديث حالة المرشد');
       void queryClient.invalidateQueries({ queryKey: ['admin', 'guides'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
     onError: () => toast.error('فشل تحديث حالة المرشد'),
   });
