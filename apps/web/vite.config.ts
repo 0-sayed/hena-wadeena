@@ -27,6 +27,11 @@ export default defineConfig({
       '/api/v1/business': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/opportunities': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/investments': { target: 'http://localhost:8002', changeOrigin: true },
+      // Admin routes — must appear before service-specific prefixes and before /api fallback
+      '/api/v1/admin/guides': { target: 'http://localhost:8003', changeOrigin: true },
+      '/api/v1/admin/bookings': { target: 'http://localhost:8003', changeOrigin: true },
+      '/api/v1/admin/moderation': { target: 'http://localhost:8002', changeOrigin: true },
+      '/api/v1/admin/listings': { target: 'http://localhost:8002', changeOrigin: true },
       // Guide-Booking service (:8003)
       '/api/v1/guides': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/packages': { target: 'http://localhost:8003', changeOrigin: true },
