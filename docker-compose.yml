@@ -106,7 +106,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'mongosh --quiet --username ${MONGO_INITDB_ROOT_USERNAME} --password ${MONGO_INITDB_ROOT_PASSWORD} --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok" | grep 1',
+          'mongosh --quiet --username ${MONGO_INITDB_ROOT_USERNAME:-admin} --password ${MONGO_INITDB_ROOT_PASSWORD:-changeme} --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok" | grep 1',
         ]
       interval: 10s
       timeout: 5s
@@ -204,7 +204,7 @@ services:
       DB_SCHEMA: ai
       QDRANT_HOST: qdrant
       QDRANT_PORT: 6333
-      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGODB_DB_NAME:-nakheel_db}?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-changeme}@mongodb:27017/${MONGODB_DB_NAME:-nakheel_db}?authSource=admin
     depends_on:
       postgres:
         condition: service_healthy
