@@ -59,11 +59,13 @@ describe('AdminService', () => {
       ]);
       // Mock business stats
       mockDb.orderBy.mockResolvedValueOnce([
-        { isVerified: true, count: 15 },
-        { isVerified: false, count: 5 },
+        { verificationStatus: 'verified', count: 15 },
+        { verificationStatus: 'pending', count: 5 },
       ]);
-      // Mock commodity stats
-      mockDb.orderBy.mockResolvedValueOnce([{ commodities: 8, prices: 24 }]);
+      // Mock active commodities count
+      mockDb.orderBy.mockResolvedValueOnce([{ count: 8 }]);
+      // Mock commodity prices count
+      mockDb.orderBy.mockResolvedValueOnce([{ count: 24 }]);
 
       const result = await service.getStats();
 
@@ -73,6 +75,8 @@ describe('AdminService', () => {
       expect(result.reviews.total).toBe(50);
       expect(result.investments.opportunities).toBe(10);
       expect(result.businesses.total).toBe(20);
+      expect(result.businesses.verified).toBe(15);
+      expect(result.businesses.pending).toBe(5);
     });
   });
 

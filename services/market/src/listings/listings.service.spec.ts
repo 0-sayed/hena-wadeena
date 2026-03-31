@@ -441,8 +441,11 @@ describe('ListingsService', () => {
   // -------------------------------------------------------------------------
 
   describe('findAllAdmin', () => {
+    let buildAdminFiltersSpy: ReturnType<typeof vi.spyOn>;
+
     beforeEach(() => {
       vi.spyOn(service as any, 'countListings').mockResolvedValue(50);
+      buildAdminFiltersSpy = vi.spyOn(service as any, 'buildAdminFilters');
     });
 
     it('should return listings regardless of status', async () => {
@@ -454,29 +457,34 @@ describe('ListingsService', () => {
       expect(result.data).toEqual([draftListing]);
     });
 
-    it('should filter by status when provided', async () => {
+    it('should pass status to buildAdminFilters when provided', async () => {
       mockDb.offset.mockResolvedValueOnce([]);
 
       await service.findAllAdmin({ offset: 0, limit: 20, status: 'draft' });
 
-      // Verify where() was called (filter applied)
-      expect(mockDb.where).toHaveBeenCalled();
+      expect(buildAdminFiltersSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'draft' }),
+      );
     });
 
-    it('should filter by is_verified when provided', async () => {
+    it('should pass is_verified to buildAdminFilters when provided', async () => {
       mockDb.offset.mockResolvedValueOnce([]);
 
       await service.findAllAdmin({ offset: 0, limit: 20, is_verified: true });
 
-      expect(mockDb.where).toHaveBeenCalled();
+      expect(buildAdminFiltersSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ is_verified: true }),
+      );
     });
 
-    it('should filter by owner_id when provided', async () => {
+    it('should pass owner_id to buildAdminFilters when provided', async () => {
       mockDb.offset.mockResolvedValueOnce([]);
 
       await service.findAllAdmin({ offset: 0, limit: 20, owner_id: 'owner-uuid-001' });
 
-      expect(mockDb.where).toHaveBeenCalled();
+      expect(buildAdminFiltersSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ owner_id: 'owner-uuid-001' }),
+      );
     });
 
     it('should return paginated response', async () => {

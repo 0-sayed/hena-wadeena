@@ -267,10 +267,10 @@ export class ListingsService {
           approvedAt: now,
           updatedAt: now,
         })
-        .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+        .where(and(eq(listings.id, id), eq(listings.status, 'draft'), isNull(listings.deletedAt)))
         .returning();
 
-      if (!updated) throw new NotFoundException('Listing not found');
+      if (!updated) throw new NotFoundException('Listing not found or not in draft status');
 
       this.redisStreams
         .publish(EVENTS.LISTING_VERIFIED, {
@@ -297,10 +297,10 @@ export class ListingsService {
         status: 'suspended',
         updatedAt: new Date(),
       })
-      .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+      .where(and(eq(listings.id, id), eq(listings.status, 'draft'), isNull(listings.deletedAt)))
       .returning();
 
-    if (!updated) throw new NotFoundException('Listing not found');
+    if (!updated) throw new NotFoundException('Listing not found or not in draft status');
     return updated;
   }
 

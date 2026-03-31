@@ -1,7 +1,7 @@
 // services/market/src/admin/admin.service.ts
 import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { businessDirectories } from '../db/schema/business-directories';
@@ -33,7 +33,8 @@ export class AdminService {
       [opportunityCount],
       applicationStatusCounts,
       businessVerifiedCounts,
-      [commodityStats],
+      [commodityCount],
+      [priceCount],
     ] = await Promise.all([
       // Listing counts by status
       this.db
@@ -49,19 +50,19 @@ export class AdminService {
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(listings)
-        .where(eq(listings.isVerified, true))
+        .where(and(eq(listings.isVerified, true), isNull(listings.deletedAt)))
         .orderBy(sql`1`),
       // Featured listings count
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(listings)
-        .where(eq(listings.isFeatured, true))
+        .where(and(eq(listings.isFeatured, true), isNull(listings.deletedAt)))
         .orderBy(sql`1`),
       // Review stats
       this.db
         .select({
           total: sql<number>`count(*)::int`,
-          averageRating: sql<number>`coalesce(avg(${reviews.rating})::numeric(2,1), 0)`,
+          averageRating: sql<number>`round(coalesce(avg(${reviews.rating}), 0)::numeric, 1)::float`,
         })
         .from(reviews)
         .where(eq(reviews.isActive, true))
@@ -90,12 +91,15 @@ export class AdminService {
         .where(isNull(businessDirectories.deletedAt))
         .groupBy(businessDirectories.verificationStatus)
         .orderBy(businessDirectories.verificationStatus),
-      // Commodity stats
+      // Active commodities count
       this.db
-        .select({
-          commodities: sql<number>`(SELECT count(*)::int FROM ${commodities} WHERE ${commodities.isActive} = true)`,
-          prices: sql<number>`count(*)::int`,
-        })
+        .select({ count: sql<number>`count(*)::int` })
+        .from(commodities)
+        .where(eq(commodities.isActive, true))
+        .orderBy(sql`1`),
+      // Commodity prices count
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
         .from(commodityPrices)
         .orderBy(sql`1`),
     ]);
@@ -131,7 +135,7 @@ export class AdminService {
     for (const row of businessVerifiedCounts) {
       businessStats.total += row.count;
       if (row.verificationStatus === 'verified') businessStats.verified = row.count;
-      else businessStats.pending += row.count;
+      else if (row.verificationStatus === 'pending') businessStats.pending = row.count;
     }
 
     return {
@@ -146,8 +150,8 @@ export class AdminService {
       },
       businesses: businessStats,
       commodities: {
-        total: commodityStats?.commodities ?? 0,
-        activePrices: commodityStats?.prices ?? 0,
+        total: commodityCount?.count ?? 0,
+        activePrices: priceCount?.count ?? 0,
       },
     };
   }
@@ -171,14 +175,14 @@ export class AdminService {
           createdAt: listings.createdAt,
         })
         .from(listings)
-        .where(eq(listings.status, 'draft'))
+        .where(and(eq(listings.status, 'draft'), isNull(listings.deletedAt)))
         .limit(10)
         .orderBy(listings.createdAt),
       // Draft listings count
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(listings)
-        .where(eq(listings.status, 'draft'))
+        .where(and(eq(listings.status, 'draft'), isNull(listings.deletedAt)))
         .orderBy(sql`1`),
       // Unverified businesses (limit 10)
       this.db
@@ -190,14 +194,24 @@ export class AdminService {
           createdAt: businessDirectories.createdAt,
         })
         .from(businessDirectories)
-        .where(eq(businessDirectories.verificationStatus, 'pending'))
+        .where(
+          and(
+            eq(businessDirectories.verificationStatus, 'pending'),
+            isNull(businessDirectories.deletedAt),
+          ),
+        )
         .limit(10)
         .orderBy(businessDirectories.createdAt),
       // Unverified businesses count
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(businessDirectories)
-        .where(eq(businessDirectories.verificationStatus, 'pending'))
+        .where(
+          and(
+            eq(businessDirectories.verificationStatus, 'pending'),
+            isNull(businessDirectories.deletedAt),
+          ),
+        )
         .orderBy(sql`1`),
       // Review-status opportunities (limit 10)
       this.db
