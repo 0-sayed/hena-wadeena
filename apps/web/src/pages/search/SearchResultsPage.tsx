@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useSearchParams, Link } from 'react-router';
 import { Search, MapPin, Sparkles } from 'lucide-react';
@@ -27,6 +27,9 @@ const typeConfig: Record<string, { label: string; color: string }> = {
 function getResultUrl(result: SearchResult): string {
   switch (result.type) {
     case 'listing':
+      // Listings link to marketplace index until a dedicated listing detail page exists.
+      // Listing IDs are from market.listings, not market.business_directories.
+      return '/marketplace';
     case 'business':
       return `/marketplace/supplier/${result.id}`;
     case 'opportunity':
@@ -35,7 +38,8 @@ function getResultUrl(result: SearchResult): string {
     case 'guide':
       return `/guides/${result.id}`;
     case 'attraction':
-      return `/tourism/attraction/${result.id}`;
+      // AttractionDetailsPage expects slug, not id
+      return result.metadata.slug ? `/tourism/attraction/${result.metadata.slug}` : '/tourism';
     case 'package':
       return `/tourism/packages`;
     case 'poi':
@@ -48,13 +52,18 @@ function getResultUrl(result: SearchResult): string {
 const SearchResultsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [inputValue, setInputValue] = useState(searchParams.get('q') ?? '');
-  const [query, setQuery] = useState(searchParams.get('q') ?? '');
+  // Derive query directly from URL so it stays in sync when navigating from Header
+  const query = searchParams.get('q') ?? '';
   const typeFilter = (searchParams.get('type') as SearchResultType) || undefined;
+
+  // Sync inputValue when URL changes (e.g., navigating from Header search)
+  useEffect(() => {
+    setInputValue(query);
+  }, [query]);
 
   const { data, isLoading, isError } = useSearch(query, typeFilter);
 
   const applySearch = (value: string) => {
-    setQuery(value);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (value) next.set('q', value);
@@ -86,7 +95,15 @@ const SearchResultsPage = () => {
     });
   };
 
-  const availableTypes = useMemo(() => [...new Set(data?.data.map((r) => r.type))], [data]);
+  // When a filter is active, show all known types so user can switch filters.
+  // Otherwise, derive from current results (with optional chaining to avoid TypeError during loading).
+  const availableTypes = useMemo(
+    () =>
+      typeFilter
+        ? (Object.keys(typeConfig) as SearchResultType[])
+        : [...new Set(data?.data?.map((r) => r.type) ?? [])],
+    [data, typeFilter],
+  );
 
   const results = data?.data ?? [];
 

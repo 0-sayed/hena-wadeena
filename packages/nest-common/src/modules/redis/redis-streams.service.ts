@@ -65,6 +65,10 @@ export class RedisStreamsService implements OnModuleDestroy {
     // Each consumer loop gets its own connection so blocking xreadgroup doesn't
     // starve xgroup CREATE or xack commands on the shared control connection.
     const client = this.redis.duplicate();
+    // Duplicated clients don't inherit event handlers; add error handler to avoid unhandled exceptions
+    client.on('error', (err: Error) => {
+      this.logger.error(`[Consumer ${streamKey}] Connection error: ${err.message}`);
+    });
     this.consumerClients.set(streamKey, client);
 
     const lastPendingId = '0';
@@ -161,13 +165,12 @@ export class RedisStreamsService implements OnModuleDestroy {
     return data;
   }
 
-  onModuleDestroy() {
+  async onModuleDestroy() {
     this.activeStreams.clear();
     this.handlers.clear();
     this.retryCount.clear();
-    for (const client of this.consumerClients.values()) {
-      void client.quit();
-    }
+    // Await all client quits to ensure graceful shutdown of blocked xreadgroup connections
+    await Promise.allSettled([...this.consumerClients.values()].map((client) => client.quit()));
     this.consumerClients.clear();
   }
 }
