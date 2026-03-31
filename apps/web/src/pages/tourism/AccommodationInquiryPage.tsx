@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { UserRole } from '@hena-wadeena/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useListing } from '@/hooks/use-listings';
 
@@ -66,7 +67,7 @@ const AccommodationInquiryPage = () => {
       name: prev.name || user.full_name,
       phone: prev.phone || user.phone || '',
       email: prev.email || user.email,
-      isStudent: user.role === 'student',
+      isStudent: user.role === UserRole.STUDENT,
     }));
   }, [user]);
 

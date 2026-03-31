@@ -209,7 +209,9 @@ const ProfilePage = () => {
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       className="hidden"
-                      onChange={handleAvatarSelected}
+                      onChange={(event) => {
+                        void handleAvatarSelected(event);
+                      }}
                     />
                   </div>
                   <h2 className="text-2xl font-bold text-foreground">{formData.full_name}</h2>

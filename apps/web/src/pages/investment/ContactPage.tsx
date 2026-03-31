@@ -132,7 +132,12 @@ const ContactPage = () => {
               </p>
             </CardHeader>
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={(event) => {
+                  void handleSubmit(event);
+                }}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">الاسم الكامل *</Label>

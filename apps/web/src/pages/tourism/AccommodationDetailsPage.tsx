@@ -208,7 +208,7 @@ const AccommodationDetailsPage = () => {
                   {mapLocations.length > 0 ? (
                     <InteractiveMap
                       locations={mapLocations}
-                      center={[mapLocations[0]!.lat, mapLocations[0]!.lng]}
+                      center={[mapLocations[0].lat, mapLocations[0].lng]}
                       zoom={14}
                       className="h-[320px] w-full rounded-xl overflow-hidden"
                     />

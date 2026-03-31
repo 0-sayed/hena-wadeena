@@ -73,8 +73,8 @@ export default function GuideDashboard() {
   const [processingBookingId, setProcessingBookingId] = useState<string | null>(null);
 
   const guideProfile = guideProfileQuery.data;
-  const myPackages = packagesQuery.data?.data ?? [];
-  const myBookings = bookingsQuery.data?.data ?? [];
+  const myPackages = useMemo(() => packagesQuery.data?.data ?? [], [packagesQuery.data?.data]);
+  const myBookings = useMemo(() => bookingsQuery.data?.data ?? [], [bookingsQuery.data?.data]);
 
   useEffect(() => {
     if (!guideProfile) return;
