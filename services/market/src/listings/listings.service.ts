@@ -14,6 +14,9 @@ import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'd
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
 
+import type { FeatureListingDto } from '../admin/dto/feature-listing.dto';
+import type { QueryAdminListingsDto } from '../admin/dto/query-admin-listings.dto';
+import type { VerifyListingDto } from '../admin/dto/verify-listing.dto';
 import { listings } from '../db/schema/listings';
 
 // Exclude searchVector (tsvector generated column) from query results
@@ -76,6 +79,25 @@ export class ListingsService {
           query.tags.split(',').map((t) => t.trim()),
         ),
       );
+    }
+
+    return andRequired(...conditions);
+  }
+
+  private buildAdminFilters(query: QueryAdminListingsDto): SQL {
+    const conditions: SQL[] = [isNull(listings.deletedAt)];
+
+    if (query.status !== undefined) {
+      conditions.push(eq(listings.status, query.status));
+    }
+    if (query.is_verified !== undefined) {
+      conditions.push(eq(listings.isVerified, query.is_verified));
+    }
+    if (query.is_featured !== undefined) {
+      conditions.push(eq(listings.isFeatured, query.is_featured));
+    }
+    if (query.owner_id !== undefined) {
+      conditions.push(eq(listings.ownerId, query.owner_id));
     }
 
     return andRequired(...conditions);
@@ -213,6 +235,88 @@ export class ListingsService {
     ]);
 
     return paginate(results, total, query.offset, query.limit);
+  }
+
+  async findAllAdmin(query: QueryAdminListingsDto): Promise<PaginatedResponse<Listing>> {
+    const filters = this.buildAdminFilters(query);
+    const orderBy = this.buildSort(query.sort);
+
+    const [results, total] = await Promise.all([
+      this.db
+        .select(listingColumns)
+        .from(listings)
+        .where(filters)
+        .orderBy(orderBy)
+        .limit(query.limit)
+        .offset(query.offset),
+      this.countListings(filters),
+    ]);
+
+    return paginate(results, total, query.offset, query.limit);
+  }
+
+  async verify(id: string, dto: VerifyListingDto, adminId: string): Promise<Listing> {
+    if (dto.action === 'approve') {
+      const now = new Date();
+      const [updated] = await this.db
+        .update(listings)
+        .set({
+          status: 'active',
+          isVerified: true,
+          approvedBy: adminId,
+          approvedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+        .returning();
+
+      if (!updated) throw new NotFoundException('Listing not found');
+
+      this.redisStreams
+        .publish(EVENTS.LISTING_VERIFIED, {
+          listingId: updated.id,
+          titleAr: updated.titleAr,
+          titleEn: updated.titleEn ?? '',
+          category: updated.category,
+          district: updated.district ?? '',
+          ownerId: updated.ownerId,
+          verifiedBy: adminId,
+          verifiedAt: now.toISOString(),
+        })
+        .catch((err: unknown) => {
+          this.logger.error(`Failed to publish ${EVENTS.LISTING_VERIFIED}`, err);
+        });
+
+      return updated;
+    }
+
+    // Reject action
+    const [updated] = await this.db
+      .update(listings)
+      .set({
+        status: 'suspended',
+        updatedAt: new Date(),
+      })
+      .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+      .returning();
+
+    if (!updated) throw new NotFoundException('Listing not found');
+    return updated;
+  }
+
+  async setFeatured(id: string, dto: FeatureListingDto): Promise<Listing> {
+    const [updated] = await this.db
+      .update(listings)
+      .set({
+        isFeatured: dto.featured,
+        featuredUntil: dto.featuredUntil ?? null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+      .returning();
+
+    if (!updated) throw new NotFoundException('Listing not found');
+    return updated;
   }
 
   async findFeatured(query: QueryListingsDto): Promise<PaginatedResponse<Listing>> {

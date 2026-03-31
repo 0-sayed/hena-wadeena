@@ -132,7 +132,6 @@ describe('ListingsService', () => {
 
   describe('buildFilters', () => {
     const getFilters = (query: Record<string, unknown> = {}) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       (service as any).buildFilters({ offset: 0, limit: 20, ...query });
 
     // Helper: count logical conditions inside the and() result
@@ -434,6 +433,170 @@ describe('ListingsService', () => {
       const result = await service.findAll({ offset: 0, limit: 20 });
 
       expect(result.hasMore).toBe(false);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // findAllAdmin — bypasses status filter
+  // -------------------------------------------------------------------------
+
+  describe('findAllAdmin', () => {
+    beforeEach(() => {
+      vi.spyOn(service as any, 'countListings').mockResolvedValue(50);
+    });
+
+    it('should return listings regardless of status', async () => {
+      const draftListing = { ...mockListing, status: 'draft' as const };
+      mockDb.offset.mockResolvedValueOnce([draftListing]);
+
+      const result = await service.findAllAdmin({ offset: 0, limit: 20 });
+
+      expect(result.data).toEqual([draftListing]);
+    });
+
+    it('should filter by status when provided', async () => {
+      mockDb.offset.mockResolvedValueOnce([]);
+
+      await service.findAllAdmin({ offset: 0, limit: 20, status: 'draft' });
+
+      // Verify where() was called (filter applied)
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('should filter by is_verified when provided', async () => {
+      mockDb.offset.mockResolvedValueOnce([]);
+
+      await service.findAllAdmin({ offset: 0, limit: 20, is_verified: true });
+
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('should filter by owner_id when provided', async () => {
+      mockDb.offset.mockResolvedValueOnce([]);
+
+      await service.findAllAdmin({ offset: 0, limit: 20, owner_id: 'owner-uuid-001' });
+
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('should return paginated response', async () => {
+      mockDb.offset.mockResolvedValueOnce([mockListing]);
+
+      const result = await service.findAllAdmin({ offset: 0, limit: 20 });
+
+      expect(result.page).toBe(1);
+      expect(result.total).toBe(50);
+      expect(result.limit).toBe(20);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // verify — admin approve/reject
+  // -------------------------------------------------------------------------
+
+  describe('verify', () => {
+    it('should approve a draft listing and emit event', async () => {
+      const approvedListing = {
+        ...mockListing,
+        status: 'active' as const,
+        isVerified: true,
+        approvedBy: 'admin-uuid-001',
+        approvedAt: expect.any(Date),
+      };
+      mockDb.returning.mockResolvedValueOnce([approvedListing]);
+
+      const result = await service.verify(mockListing.id, { action: 'approve' }, 'admin-uuid-001');
+
+      expect(result.status).toBe('active');
+      expect(result.isVerified).toBe(true);
+      expect(mockRedisStreams.publish).toHaveBeenCalledWith(
+        EVENTS.LISTING_VERIFIED,
+        expect.objectContaining({
+          listingId: mockListing.id,
+          verifiedBy: 'admin-uuid-001',
+        }),
+      );
+    });
+
+    it('should reject a listing without emitting event', async () => {
+      const rejectedListing = { ...mockListing, status: 'suspended' as const };
+      mockDb.returning.mockResolvedValueOnce([rejectedListing]);
+
+      const result = await service.verify(
+        mockListing.id,
+        { action: 'reject', reason: 'Incomplete information' },
+        'admin-uuid-001',
+      );
+
+      expect(result.status).toBe('suspended');
+      expect(mockRedisStreams.publish).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when listing does not exist', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      await expect(
+        service.verify('nonexistent-id', { action: 'approve' }, 'admin-uuid-001'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should be idempotent when approving an already active listing', async () => {
+      const activeListing = { ...mockListing, status: 'active' as const, isVerified: true };
+      mockDb.returning.mockResolvedValueOnce([activeListing]);
+
+      const result = await service.verify(
+        activeListing.id,
+        { action: 'approve' },
+        'admin-uuid-001',
+      );
+
+      expect(result.status).toBe('active');
+      expect(mockRedisStreams.publish).toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // setFeatured — admin toggle
+  // -------------------------------------------------------------------------
+
+  describe('setFeatured', () => {
+    it('should set isFeatured to true', async () => {
+      const featuredListing = { ...mockListing, isFeatured: true };
+      mockDb.returning.mockResolvedValueOnce([featuredListing]);
+
+      const result = await service.setFeatured(mockListing.id, { featured: true });
+
+      expect(result.isFeatured).toBe(true);
+    });
+
+    it('should set isFeatured to false', async () => {
+      const unfeaturedListing = { ...mockListing, isFeatured: false };
+      mockDb.returning.mockResolvedValueOnce([unfeaturedListing]);
+
+      const result = await service.setFeatured(mockListing.id, { featured: false });
+
+      expect(result.isFeatured).toBe(false);
+    });
+
+    it('should set featuredUntil when provided', async () => {
+      const expiryDate = new Date('2026-12-31');
+      const featuredListing = { ...mockListing, isFeatured: true, featuredUntil: expiryDate };
+      mockDb.returning.mockResolvedValueOnce([featuredListing]);
+
+      const result = await service.setFeatured(mockListing.id, {
+        featured: true,
+        featuredUntil: expiryDate,
+      });
+
+      expect(result.featuredUntil).toEqual(expiryDate);
+    });
+
+    it('should throw NotFoundException when listing does not exist', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      await expect(service.setFeatured('nonexistent-id', { featured: true })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
