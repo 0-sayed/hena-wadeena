@@ -26,6 +26,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/throttler": "^6.4.0",
     "drizzle-orm": "^0.38.0",
     "drizzle-zod": "^0.8.3",
@@ -35,6 +36,7 @@
     "passport-jwt": "^4.0.1",
     "postgres": "^3.4.5",
     "reflect-metadata": "^0.2.0",
+    "axios": "^1.14.0",
     "rxjs": "^7.8.0",
     "zod": "^4.3.6"
   },

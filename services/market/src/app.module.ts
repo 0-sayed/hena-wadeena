@@ -15,6 +15,7 @@ import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ZodValidationPipe } from 'nestjs-zod';
 
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { BusinessDirectoryModule } from './business-directory/business-directory.module';
 import { CommodityPricesModule } from './commodity-prices/commodity-prices.module';
@@ -23,6 +24,7 @@ import { InvestmentOpportunitiesModule } from './investment-opportunities/invest
 import { ListingsModule } from './listings/listings.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SearchModule } from './search/search.module';
+import { StatsModule } from './stats/stats.module';
 
 /** Fail fast on missing env var in production; allow empty fallback in dev. */
 function requireEnv(key: string): string {
@@ -67,6 +69,8 @@ function requireEnv(key: string): string {
     InvestmentApplicationsModule,
     ReviewsModule,
     SearchModule,
+    StatsModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
