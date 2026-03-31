@@ -3,20 +3,28 @@ import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
 import {
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Inject,
   Param,
   ParseUUIDPipe,
   Patch,
+  Query,
 } from '@nestjs/common';
 
+import { PoiFiltersDto } from './dto';
 import { PoisService } from './pois.service';
 
 @Roles(UserRole.ADMIN)
-@Controller('map/pois')
+@Controller('map/admin/pois')
 export class AdminPoisController {
   constructor(@Inject(PoisService) private readonly poisService: PoisService) {}
+
+  @Get()
+  findAll(@Query() filters: PoiFiltersDto) {
+    return this.poisService.findAll(filters);
+  }
 
   @Patch(':id/approve')
   @HttpCode(HttpStatus.OK)

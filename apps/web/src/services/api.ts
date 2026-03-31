@@ -1029,16 +1029,15 @@ export const adminAPI = {
       method: 'PATCH',
       body: JSON.stringify({ status, reason }),
     }),
-  deleteUser: (id: string) =>
-    apiFetchWithRefresh<void>(`/admin/users/${id}`, { method: 'DELETE' }),
+  deleteUser: (id: string) => apiFetchWithRefresh<void>(`/admin/users/${id}`, { method: 'DELETE' }),
 
   // KYC
   getKycSubmissions: (params?: AdminKycFilters) =>
     apiFetchWithRefresh<PaginatedResponse<KycSubmission>>(`/admin/kyc${toQueryString(params)}`),
-  reviewKyc: (id: string, status: 'approved' | 'rejected', notes?: string) =>
-    apiFetchWithRefresh<KycSubmission>(`/admin/kyc/${id}/review`, {
+  reviewKyc: (id: string, status: 'approved' | 'rejected', rejectionReason?: string) =>
+    apiFetchWithRefresh<KycSubmission>(`/admin/kyc/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, notes }),
+      body: JSON.stringify({ status, rejectionReason }),
     }),
 
   // Listings moderation
@@ -1049,18 +1048,16 @@ export const adminAPI = {
   verifyListing: (id: string, approved: boolean, notes?: string) =>
     apiFetchWithRefresh<Listing>(`/admin/listings/${id}/verify`, {
       method: 'PATCH',
-      body: JSON.stringify({ approved, notes }),
+      body: JSON.stringify({ action: approved ? 'approve' : 'reject', reason: notes }),
     }),
 
   // Businesses moderation
   getPendingBusinesses: (params?: { page?: number; limit?: number }) =>
-    apiFetchWithRefresh<PaginatedResponse<Business>>(
-      `/businesses/pending${toQueryString(params)}`,
-    ),
+    apiFetchWithRefresh<PaginatedResponse<Business>>(`/businesses/pending${toQueryString(params)}`),
   verifyBusiness: (id: string, approved: boolean, rejectionReason?: string) =>
     apiFetchWithRefresh<Business>(`/businesses/${id}/verify`, {
       method: 'PATCH',
-      body: JSON.stringify({ approved, rejectionReason }),
+      body: JSON.stringify({ status: approved ? 'verified' : 'rejected', rejectionReason }),
     }),
 
   // Guides
@@ -1089,12 +1086,12 @@ export const adminAPI = {
   // POIs
   getPendingPois: (params?: { page?: number; limit?: number }) =>
     apiFetchWithRefresh<PaginatedResponse<Poi>>(
-      `/map/pois${toQueryString({ ...params, status: 'pending' })}`,
+      `/map/admin/pois${toQueryString({ ...params, status: 'pending' })}`,
     ),
   approvePoi: (id: string) =>
-    apiFetchWithRefresh<Poi>(`/map/pois/${id}/approve`, { method: 'PATCH' }),
+    apiFetchWithRefresh<Poi>(`/map/admin/pois/${id}/approve`, { method: 'PATCH' }),
   rejectPoi: (id: string, reason?: string) =>
-    apiFetchWithRefresh<Poi>(`/map/pois/${id}/reject`, {
+    apiFetchWithRefresh<Poi>(`/map/admin/pois/${id}/reject`, {
       method: 'PATCH',
       body: JSON.stringify({ reason }),
     }),

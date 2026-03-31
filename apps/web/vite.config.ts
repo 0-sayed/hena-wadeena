@@ -32,6 +32,7 @@ export default defineConfig({
       '/api/v1/admin/bookings': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/admin/moderation': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/admin/listings': { target: 'http://localhost:8002', changeOrigin: true },
+      '/api/v1/admin/stats': { target: 'http://localhost:8002', changeOrigin: true },
       // Guide-Booking service (:8003)
       '/api/v1/guides': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/packages': { target: 'http://localhost:8003', changeOrigin: true },
