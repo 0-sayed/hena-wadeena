@@ -1,59 +1,34 @@
-# PR #79 — feat(web): unified admin dashboard (F10)
+# PR #81 — chore(docker): add compose profiles for local dev isolation
 
-> Generated: 2026-03-31 | Branch: worktree-f10-amdin-dashboards | Last updated: 2026-03-31 15:00
+> Generated: 2026-03-31 | Branch: chore/docker-compose-profiles | Last updated: 2026-03-31 08:00
 
 ## Worth Fixing
 
-- [x] useChangeUserRole missing admin stats cache invalidation — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M5363F9 -->
-  > **apps/web/src/hooks/use-admin.ts:83**
+- [x] `:?` mandatory vars on profiled mongodb service break `docker compose up` — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M538_GF -->
+  > **docker-compose.yml:102**
   >
-  > <!-- devin-review-comment {"id": "BUG_pr-review-job-477567e56bcb4f9d8f9e7e0c23b990a3_0001", "file_path": "apps/web/src/hooks/use-admin.ts", "start_line": 79, "end_line": 83, "side": "RIGHT"} -->
+  > <!-- devin-review-comment {"id": "BUG_pr-review-job-28e3c37198aa4d3d93fd1d4a42a86b3c_0001", "file_path": "docker-compose.yml", "start_line": 99, "end_line": 102, "side": "RIGHT"} -->
   >
-  > 🟡 **useChangeUserRole missing admin stats cache invalidation**
+  > 🟡 **Required env vars (`:?`) on profiled mongodb service defeat the profile isolation strategy**
   >
-  > `useChangeUserRole` only invalidates `['admin', 'users']` but does not invalidate `['admin', 'stats']`. Every other admin mutation (`useReviewKyc`, `useVerifyListing`, `useVerifyBusiness`, `useVerifyGuideLicense`, `useAdminCancelBooking`, `useApprovePoi`, `useRejectPoi`) follows the pattern of invalidating both its domain query AND `['admin', 'stats']`. The `AdminStatsResponse` at `apps/web/src/services/api.ts:906` includes `users.byRole` which changes when a user's role is updated, causing the overview page (`AdminOverview.tsx:105`) to display stale user statistics until the 30-second `staleTime` expires.
+  > The PR adds `profiles: [ai]` to `mongodb` so it doesn't start during plain `docker compose up` for local dev. However, `mongodb` still uses `${MONGO_INITDB_ROOT_USERNAME:?…}` and `${MONGO_INITDB_ROOT_PASSWORD:?…}` (lines 101–102). Docker Compose evaluates variable substitution — including `:?` mandatory-variable checks — at file parse time for **all** services, before profile filtering. This means `docker compose up` (intended to start only postgres/redis/qdrant per the profile strategy comment on lines 26–27) will still fail with `"MONGO_INITDB_ROOT_USERNAME is not set"` if those vars are unset or empty, even though mongodb won't be started.
   >
-  > ```suggestion
-  >     onSuccess: () => {
-  >       toast.success('تم تغيير الدور بنجاح');
-  >       void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-  >       void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
-  >     },
-  > ```
+  > The `.env.example` ships these vars as empty (`MONGO_INITDB_ROOT_USERNAME=`), so a developer who copies the template, fills in only infra-required vars (POSTGRES_PASSWORD, REDIS_PASSWORD), and runs `docker compose up` will hit this error — directly contradicting the stated profile strategy.
 
-- [x] useChangeUserStatus missing admin stats cache invalidation — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M5363HM -->
-  > **apps/web/src/hooks/use-admin.ts:96**
+- [x] Bare `${VAR}` refs in healthcheck and MONGODB_URI cause credential mismatch with new defaults — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M53-CBM -->
+  > **docker-compose.yml:102**
   >
-  > <!-- devin-review-comment {"id": "BUG_pr-review-job-477567e56bcb4f9d8f9e7e0c23b990a3_0002", "file_path": "apps/web/src/hooks/use-admin.ts", "start_line": 92, "end_line": 96, "side": "RIGHT"} -->
+  > <!-- devin-review-comment {"id": "BUG_pr-review-job-9f52fcafe4e34ac9b85de8be45fa5c58_0001", "file_path": "docker-compose.yml", "start_line": 101, "end_line": 102, "side": "RIGHT"} -->
   >
-  > 🟡 **useChangeUserStatus missing admin stats cache invalidation**
+  > 🔴 **MongoDB default credentials cause mismatch with ai service and healthcheck when env vars are unset**
   >
-  > `useChangeUserStatus` only invalidates `['admin', 'users']` but does not invalidate `['admin', 'stats']`, breaking the consistent pattern used by all other admin mutations. The `AdminStatsResponse` includes `users.byStatus` which changes when a user's status is updated, causing stale statistics on the overview page until the 30-second `staleTime` expires.
+  > Changing `MONGO_INITDB_ROOT_USERNAME`/`MONGO_INITDB_ROOT_PASSWORD` from required (`:?`) to having defaults (`:-admin`/`:-changeme`) introduces a credential mismatch. Docker Compose interpolates **all** `${VAR}` references at parse time from host env / `.env` file. When these variables are unset:
   >
-  > ```suggestion
-  >     onSuccess: () => {
-  >       toast.success('تم تحديث حالة المستخدم');
-  >       void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-  >       void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
-  >     },
-  > ```
-
-- [x] useSetGuideStatus missing admin stats cache invalidation — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M5363Il -->
-  > **apps/web/src/hooks/use-admin.ts:158**
+  > - **mongodb** container gets `admin`/`changeme` (from `:-` defaults on lines 101–102)
+  > - **mongodb healthcheck** (`docker-compose.yml:109`) uses bare `${MONGO_INITDB_ROOT_USERNAME}` / `${MONGO_INITDB_ROOT_PASSWORD}` → resolves to empty → healthcheck fails → container stuck in `unhealthy` state
+  > - **ai service** (`docker-compose.yml:207`) `MONGODB_URI` uses bare `${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}` → resolves to empty → `mongodb://:@mongodb:27017/…` → authentication failure
   >
-  > <!-- devin-review-comment {"id": "BUG_pr-review-job-477567e56bcb4f9d8f9e7e0c23b990a3_0003", "file_path": "apps/web/src/hooks/use-admin.ts", "start_line": 154, "end_line": 158, "side": "RIGHT"} -->
-  >
-  > 🟡 **useSetGuideStatus missing admin stats cache invalidation**
-  >
-  > `useSetGuideStatus` only invalidates `['admin', 'guides']` but does not invalidate `['admin', 'stats']`, unlike the adjacent `useVerifyGuideLicense` mutation which does both (`apps/web/src/hooks/use-admin.ts:169-170`). The overview page directly displays `stats.guides.active` (`AdminOverview.tsx:148`), so when a guide is activated/deactivated, the "Active Guides" card shows a stale count until the 30-second `staleTime` expires.
-  >
-  > ```suggestion
-  >     onSuccess: () => {
-  >       toast.success('تم تحديث حالة المرشد');
-  >       void queryClient.invalidateQueries({ queryKey: ['admin', 'guides'] });
-  >       void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
-  >     },
-  > ```
+  > Since `ai` depends on `mongodb: condition: service_healthy`, and the healthcheck itself fails due to the same empty-credential issue, the entire `ai` profile is broken when these env vars are unset.
 
 ## Not Worth Fixing
 
