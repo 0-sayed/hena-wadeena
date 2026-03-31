@@ -49,6 +49,8 @@ export class AdminModerationService {
     return {
       data: paginated,
       total: filtered.length,
+      page: Math.floor(query.offset / query.limit) + 1,
+      limit: query.limit,
       hasMore: filtered.length > query.offset + query.limit,
     };
   }

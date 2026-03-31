@@ -1,3 +1,4 @@
+import type { PaginatedResponse } from '@hena-wadeena/types';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -32,8 +33,4 @@ export interface ModerationItem {
   };
 }
 
-export interface ModerationQueueResponse {
-  data: ModerationItem[];
-  total: number;
-  hasMore: boolean;
-}
+export type ModerationQueueResponse = PaginatedResponse<ModerationItem>;
