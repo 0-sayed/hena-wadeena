@@ -97,7 +97,7 @@
 - [x] **T30** Admin: Market · S · ← T26
 - [x] **T31** Guide + Map: Search Indexes · S · ← T27
 - [ ] **T32** AI: E2E Integration + Polish · M · ← T28
-- [ ] **F10** Admin Dashboards · M · ← T29, F02
+- [x] **F10** Admin Dashboards · M · ← T29, F02
 
 ## Layer 8 — Deploy + Ship
 
