@@ -46,9 +46,15 @@ export default function AdminMap() {
 
   const handleReject = () => {
     if (!rejectDialog) return;
-    rejectPoi.mutate({ id: rejectDialog, reason: rejectReason || undefined });
-    setRejectDialog(null);
-    setRejectReason('');
+    rejectPoi.mutate(
+      { id: rejectDialog, reason: rejectReason || undefined },
+      {
+        onSuccess: () => {
+          setRejectDialog(null);
+          setRejectReason('');
+        },
+      },
+    );
   };
 
   return (

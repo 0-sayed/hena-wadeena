@@ -78,12 +78,16 @@ export default function AdminModeration() {
   const handleReject = () => {
     if (!rejectDialog) return;
     const { type, id } = rejectDialog;
-    if (type === 'kyc') reviewKyc.mutate({ id, status: 'rejected', notes: rejectReason });
-    else if (type === 'listing') verifyListing.mutate({ id, approved: false, notes: rejectReason });
+    const onSuccess = () => {
+      setRejectDialog(null);
+      setRejectReason('');
+    };
+    if (type === 'kyc')
+      reviewKyc.mutate({ id, status: 'rejected', notes: rejectReason }, { onSuccess });
+    else if (type === 'listing')
+      verifyListing.mutate({ id, approved: false, notes: rejectReason }, { onSuccess });
     else if (type === 'business')
-      verifyBusiness.mutate({ id, approved: false, reason: rejectReason });
-    setRejectDialog(null);
-    setRejectReason('');
+      verifyBusiness.mutate({ id, approved: false, reason: rejectReason }, { onSuccess });
   };
 
   return (
