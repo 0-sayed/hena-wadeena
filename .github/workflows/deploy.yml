@@ -104,6 +104,9 @@ jobs:
             echo "==> Logging into GHCR"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
+            echo "==> Fixing file permissions (containers may run as root)"
+            sudo chown -R "$(id -u):$(id -g)" .
+
             echo "==> Resetting working tree"
             git reset --hard
             git clean -fd -e .env
