@@ -104,6 +104,9 @@ jobs:
             echo "==> Logging into GHCR"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
+            echo "==> Fixing file permissions (containers may run as root)"
+            docker run --rm -v "$(pwd):/fix-perms" alpine:3.21 chown -R "$(id -u):$(id -g)" /fix-perms
+
             echo "==> Resetting working tree"
             git reset --hard
             git clean -fd -e .env
@@ -134,8 +137,21 @@ jobs:
             fi
 
             echo "==> Pulling images by SHA and tagging as :latest"
+            pull_with_retry() {
+              local image="$1"
+              local attempt=1
+              until docker pull "$image"; do
+                if [ "$attempt" -ge 3 ]; then
+                  echo "ERROR: Failed to pull $image after 3 attempts"
+                  return 1
+                fi
+                echo "Pull failed (attempt $attempt/3), retrying in 10s..."
+                attempt=$((attempt + 1))
+                sleep 10
+              done
+            }
             for svc in identity market guide-booking map ai gateway; do
-              docker pull "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA"
+              pull_with_retry "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA"
               docker tag "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA" \
                 "ghcr.io/$GHCR_USER/hena-wadeena/$svc:latest"
             done
