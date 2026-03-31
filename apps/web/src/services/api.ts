@@ -898,6 +898,209 @@ export const mapAPI = {
     ),
 };
 
+// ── Admin ───────────────────────────────────────────────────────────────────
+
+export interface AdminStatsResponse {
+  users: {
+    total: number;
+    byRole: Record<string, number>;
+    byStatus: Record<string, number>;
+    newLast30Days: number;
+  };
+  kyc: {
+    total: number;
+    pending: number;
+    underReview: number;
+    approved: number;
+    rejected: number;
+  };
+  listings: {
+    total: number;
+    verified: number;
+    unverified: number;
+    featured: number;
+    byStatus: Record<string, number>;
+  };
+  investments: {
+    total: number;
+    verified: number;
+    byStatus: Record<string, number>;
+    totalApplications: number;
+  };
+  reviews: {
+    listings: { total: number; averageRating: number };
+    guides: { total: number; averageRating: number };
+  };
+  bookings: {
+    total: number;
+    pending: number;
+    confirmed: number;
+    inProgress: number;
+    completed: number;
+    cancelled: number;
+  };
+  guides: { total: number; verified: number; active: number };
+  packages: { total: number; active: number };
+  pois: { total: number; approved: number; pending: number; rejected: number };
+  carpoolRides: {
+    total: number;
+    open: number;
+    full: number;
+    departed: number;
+    completed: number;
+    cancelled: number;
+  };
+  meta: { sources: string[]; degraded: boolean; cachedAt: string };
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  phone: string | null;
+  fullName: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  role: UserRole;
+  status: 'active' | 'suspended' | 'banned';
+  language: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KycSubmission {
+  id: string;
+  userId: string;
+  fullName: string;
+  documentType: string;
+  documentUrl: string;
+  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  submittedAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  notes: string | null;
+}
+
+export interface AdminUserFilters {
+  role?: UserRole;
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminKycFilters {
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminGuideFilters {
+  status?: string;
+  verified?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminBookingFilters {
+  status?: string;
+  guideId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const adminAPI = {
+  // Stats
+  getStats: () => apiFetchWithRefresh<AdminStatsResponse>('/admin/stats'),
+
+  // Users
+  getUsers: (params?: AdminUserFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<AdminUser>>(`/admin/users${toQueryString(params)}`),
+  getUser: (id: string) => apiFetchWithRefresh<AdminUser>(`/admin/users/${id}`),
+  changeUserRole: (id: string, role: UserRole) =>
+    apiFetchWithRefresh<AdminUser>(`/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    }),
+  changeUserStatus: (id: string, status: string, reason?: string) =>
+    apiFetchWithRefresh<AdminUser>(`/admin/users/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, reason }),
+    }),
+  deleteUser: (id: string) => apiFetchWithRefresh<void>(`/admin/users/${id}`, { method: 'DELETE' }),
+
+  // KYC
+  getKycSubmissions: (params?: AdminKycFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<KycSubmission>>(`/admin/kyc${toQueryString(params)}`),
+  reviewKyc: (id: string, status: 'approved' | 'rejected', rejectionReason?: string) =>
+    apiFetchWithRefresh<KycSubmission>(`/admin/kyc/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, rejectionReason }),
+    }),
+
+  // Listings moderation
+  getPendingListings: (params?: { page?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Listing>>(
+      `/admin/listings${toQueryString({
+        is_verified: 'false',
+        offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
+        limit: params?.limit,
+      })}`,
+    ),
+  verifyListing: (id: string, approved: boolean, notes?: string) =>
+    apiFetchWithRefresh<Listing>(`/admin/listings/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action: approved ? 'approve' : 'reject', reason: notes }),
+    }),
+
+  // Businesses moderation
+  getPendingBusinesses: (params?: { page?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Business>>(`/businesses/pending${toQueryString(params)}`),
+  verifyBusiness: (id: string, approved: boolean, rejectionReason?: string) =>
+    apiFetchWithRefresh<Business>(`/businesses/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: approved ? 'verified' : 'rejected', rejectionReason }),
+    }),
+
+  // Guides
+  getGuides: (params?: AdminGuideFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<GuideDetail>>(`/admin/guides${toQueryString(params)}`),
+  setGuideStatus: (id: string, active: boolean) =>
+    apiFetchWithRefresh<GuideDetail>(`/admin/guides/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ active }),
+    }),
+  verifyGuideLicense: (id: string, verified: boolean) =>
+    apiFetchWithRefresh<GuideDetail>(`/admin/guides/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ verified }),
+    }),
+
+  // Bookings (admin view)
+  getBookings: (params?: AdminBookingFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<Booking>>(`/admin/bookings${toQueryString(params)}`),
+  cancelBooking: (id: string, reason: string) =>
+    apiFetchWithRefresh<Booking>(`/admin/bookings/${id}/cancel`, {
+      method: 'PATCH',
+      body: JSON.stringify({ cancelReason: reason }),
+    }),
+
+  // POIs
+  getPendingPois: (params?: { page?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Poi>>(
+      `/map/admin/pois${toQueryString({ ...params, status: 'pending' })}`,
+    ),
+  approvePoi: (id: string) =>
+    apiFetchWithRefresh<Poi>(`/map/admin/pois/${id}/approve`, { method: 'PATCH' }),
+  rejectPoi: (id: string, reason?: string) =>
+    apiFetchWithRefresh<Poi>(`/map/admin/pois/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    }),
+};
+
 // ── AI Chatbot ─────────────────────────────────────────────────────────────
 
 export interface ChatSource {

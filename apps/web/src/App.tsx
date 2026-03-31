@@ -1,7 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route } from 'react-router';
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router';
 import { UserRole } from '@hena-wadeena/types';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ChatWidget } from '@/components/ai/ChatWidget';
@@ -28,10 +29,13 @@ import NotificationsPage from './pages/profile/NotificationsPage';
 import GuidesPage from './pages/guides/GuidesPage';
 import GuideProfilePage from './pages/guides/GuideProfilePage';
 
-// Admin pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import ModeratorDashboard from './pages/admin/ModeratorDashboard';
-import ReviewerDashboard from './pages/admin/ReviewerDashboard';
+// Admin pages (lazy loaded)
+const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
+const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
+const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
+const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
+const AdminGuides = lazy(() => import('@/pages/admin/AdminGuides'));
+const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 
 // Role dashboards
 import MerchantDashboard from './pages/roles/MerchantDashboard';
@@ -111,18 +115,20 @@ const App = () => (
             <Route path="/guides/:id" element={<GuideProfilePage />} />
             {/* Admin Dashboards */}
             <Route element={<RequireAuth />}>
-              <Route element={<RequireRole roles={[UserRole.ADMIN]} />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-              </Route>
-              <Route element={<RequireRole roles={[UserRole.ADMIN, UserRole.MODERATOR]} />}>
-                <Route path="/moderator" element={<ModeratorDashboard />} />
-              </Route>
               <Route
+                path="admin"
                 element={
-                  <RequireRole roles={[UserRole.ADMIN, UserRole.MODERATOR, UserRole.REVIEWER]} />
+                  <Suspense fallback={null}>
+                    <AdminLayout />
+                  </Suspense>
                 }
               >
-                <Route path="/reviewer" element={<ReviewerDashboard />} />
+                <Route index element={<Navigate to="overview" replace />} />
+                <Route path="overview" element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="moderation" element={<AdminModeration />} />
+                <Route path="guides" element={<AdminGuides />} />
+                <Route path="map" element={<AdminMap />} />
               </Route>
             </Route>
             {/* Role Dashboards */}

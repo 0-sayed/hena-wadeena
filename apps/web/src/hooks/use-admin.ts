@@ -1,0 +1,217 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+import { queryKeys } from '@/lib/query-keys';
+import {
+  adminAPI,
+  type AdminBookingFilters,
+  type AdminGuideFilters,
+  type AdminKycFilters,
+  type AdminUserFilters,
+} from '@/services/api';
+import type { UserRole } from '@hena-wadeena/types';
+
+// ── Queries ─────────────────────────────────────────────────────────────────
+
+export function useAdminStats() {
+  return useQuery({
+    queryKey: queryKeys.admin.stats(),
+    queryFn: adminAPI.getStats,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminUsers(filters?: AdminUserFilters) {
+  return useQuery({
+    queryKey: queryKeys.admin.users(filters),
+    queryFn: () => adminAPI.getUsers(filters),
+  });
+}
+
+export function useAdminKyc(filters?: AdminKycFilters) {
+  return useQuery({
+    queryKey: queryKeys.admin.kyc(filters),
+    queryFn: () => adminAPI.getKycSubmissions(filters),
+  });
+}
+
+export function useAdminPendingListings(filters?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: queryKeys.admin.pendingListings(filters),
+    queryFn: () => adminAPI.getPendingListings(filters),
+  });
+}
+
+export function useAdminPendingBusinesses(filters?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: queryKeys.admin.pendingBusinesses(filters),
+    queryFn: () => adminAPI.getPendingBusinesses(filters),
+  });
+}
+
+export function useAdminGuides(filters?: AdminGuideFilters) {
+  return useQuery({
+    queryKey: queryKeys.admin.guides(filters),
+    queryFn: () => adminAPI.getGuides(filters),
+  });
+}
+
+export function useAdminBookings(filters?: AdminBookingFilters) {
+  return useQuery({
+    queryKey: queryKeys.admin.bookings(filters),
+    queryFn: () => adminAPI.getBookings(filters),
+  });
+}
+
+export function useAdminPendingPois(filters?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: queryKeys.admin.pendingPois(filters),
+    queryFn: () => adminAPI.getPendingPois(filters),
+  });
+}
+
+// ── Mutations ───────────────────────────────────────────────────────────────
+
+export function useChangeUserRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, role }: { id: string; role: UserRole }) => adminAPI.changeUserRole(id, role),
+    onSuccess: () => {
+      toast.success('تم تغيير الدور بنجاح');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل تغيير الدور'),
+  });
+}
+
+export function useChangeUserStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
+      adminAPI.changeUserStatus(id, status, reason),
+    onSuccess: () => {
+      toast.success('تم تحديث حالة المستخدم');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل تحديث الحالة'),
+  });
+}
+
+export function useReviewKyc() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+      notes,
+    }: {
+      id: string;
+      status: 'approved' | 'rejected';
+      notes?: string;
+    }) => adminAPI.reviewKyc(id, status, notes),
+    onSuccess: (_, { status }) => {
+      toast.success(status === 'approved' ? 'تم قبول المستند' : 'تم رفض المستند');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'kyc'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل مراجعة المستند'),
+  });
+}
+
+export function useVerifyListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, approved, notes }: { id: string; approved: boolean; notes?: string }) =>
+      adminAPI.verifyListing(id, approved, notes),
+    onSuccess: (_, { approved }) => {
+      toast.success(approved ? 'تم قبول الإعلان' : 'تم رفض الإعلان');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'moderation'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل مراجعة الإعلان'),
+  });
+}
+
+export function useVerifyBusiness() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, approved, reason }: { id: string; approved: boolean; reason?: string }) =>
+      adminAPI.verifyBusiness(id, approved, reason),
+    onSuccess: (_, { approved }) => {
+      toast.success(approved ? 'تم قبول النشاط التجاري' : 'تم رفض النشاط التجاري');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'moderation'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل مراجعة النشاط التجاري'),
+  });
+}
+
+export function useSetGuideStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      adminAPI.setGuideStatus(id, active),
+    onSuccess: () => {
+      toast.success('تم تحديث حالة المرشد');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'guides'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل تحديث حالة المرشد'),
+  });
+}
+
+export function useVerifyGuideLicense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, verified }: { id: string; verified: boolean }) =>
+      adminAPI.verifyGuideLicense(id, verified),
+    onSuccess: () => {
+      toast.success('تم تحديث حالة الترخيص');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'guides'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل تحديث حالة الترخيص'),
+  });
+}
+
+export function useAdminCancelBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      adminAPI.cancelBooking(id, reason),
+    onSuccess: () => {
+      toast.success('تم إلغاء الحجز');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل إلغاء الحجز'),
+  });
+}
+
+export function useApprovePoi() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.approvePoi(id),
+    onSuccess: () => {
+      toast.success('تم قبول نقطة الاهتمام');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'pois'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل قبول نقطة الاهتمام'),
+  });
+}
+
+export function useRejectPoi() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => adminAPI.rejectPoi(id, reason),
+    onSuccess: () => {
+      toast.success('تم رفض نقطة الاهتمام');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'pois'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+    onError: () => toast.error('فشل رفض نقطة الاهتمام'),
+  });
+}
