@@ -14,12 +14,7 @@ export class StatsService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [
-      [statusStats],
-      roleStats,
-      [newUsersStats],
-      [kycStats],
-    ] = await Promise.all([
+    const [[statusStats], roleStats, [newUsersStats], [kycStats]] = await Promise.all([
       // User counts by status
       this.db
         .select({
@@ -47,7 +42,7 @@ export class StatsService {
         .from(users)
         .where(sql`${users.deletedAt} IS NULL AND ${users.createdAt} >= ${thirtyDaysAgo}`),
 
-      // KYC stats
+      // KYC stats (exclude soft-deleted users)
       this.db
         .select({
           total: count(),
@@ -56,7 +51,9 @@ export class StatsService {
           approved: count(sql`CASE WHEN ${userKyc.status} = 'approved' THEN 1 END`),
           rejected: count(sql`CASE WHEN ${userKyc.status} = 'rejected' THEN 1 END`),
         })
-        .from(userKyc),
+        .from(userKyc)
+        .innerJoin(users, sql`${userKyc.userId} = ${users.id}`)
+        .where(sql`${users.deletedAt} IS NULL`),
     ]);
 
     const byRole: Record<string, number> = {};

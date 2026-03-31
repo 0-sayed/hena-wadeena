@@ -27,7 +27,9 @@ describe('StatsService', () => {
       where: vi.fn().mockResolvedValue([{ count: 15 }]),
     };
     const kycChain = {
-      from: vi
+      from: vi.fn().mockReturnThis(),
+      innerJoin: vi.fn().mockReturnThis(),
+      where: vi
         .fn()
         .mockResolvedValue([{ total: 25, pending: 5, underReview: 0, approved: 18, rejected: 2 }]),
     };

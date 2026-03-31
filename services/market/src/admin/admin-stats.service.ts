@@ -30,7 +30,7 @@ export class AdminStatsService {
       const cached = await this.redis.get(ADMIN_STATS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached) as AdminStatsResponse;
-        return { ...parsed, meta: { ...parsed.meta, cachedAt: new Date().toISOString() } };
+        return parsed;
       }
     } catch (err) {
       this.logger.warn('Cache read failed', err);
@@ -44,7 +44,7 @@ export class AdminStatsService {
       this.localStatsService.getStats(),
     ]);
 
-    const sources: string[] = ['market'];
+    const sources: string[] = [];
     let degraded = false;
 
     // Extract identity stats
@@ -78,7 +78,14 @@ export class AdminStatsService {
     }
 
     // Local market stats — fully typed from StatsService
-    const marketStatsData = localResult.status === 'fulfilled' ? localResult.value : null;
+    let marketStatsData = null;
+    if (localResult.status === 'fulfilled') {
+      marketStatsData = localResult.value;
+      sources.push('market');
+    } else {
+      degraded = true;
+      this.logger.warn('Market stats failed', localResult);
+    }
 
     const response: AdminStatsResponse = {
       users: (identityStats.users ?? {
@@ -148,7 +155,7 @@ export class AdminStatsService {
       meta: {
         sources,
         degraded,
-        cachedAt: null,
+        cachedAt: new Date().toISOString(),
       },
     };
 
@@ -156,7 +163,9 @@ export class AdminStatsService {
     if (!degraded) {
       this.redis
         .set(ADMIN_STATS_CACHE_KEY, JSON.stringify(response), 'EX', ADMIN_STATS_CACHE_TTL)
-        .catch((err) => { this.logger.warn('Cache write failed', err); });
+        .catch((err) => {
+          this.logger.warn('Cache write failed', err);
+        });
     }
 
     return response;

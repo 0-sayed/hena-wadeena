@@ -37,6 +37,7 @@ export class ModerationController {
         title: item.userName,
         description: `${item.docType} verification`,
         status: item.status,
+        resourceUrl: item.docUrl,
         createdAt: item.createdAt,
         createdBy: {
           id: item.userId,

@@ -85,7 +85,7 @@ export class AdminModerationService {
           service: 'market',
           actions: {
             approve: `PATCH /api/v1/admin/listings/${listing.id}/verify`,
-            reject: `PATCH /api/v1/admin/listings/${listing.id}/verify`,
+            reject: `PATCH /api/v1/admin/listings/${listing.id}/reject`,
             view: `GET /api/v1/listings/${listing.id}`,
           },
         });
@@ -118,7 +118,7 @@ export class AdminModerationService {
           createdBy: { id: inv.ownerId, name: null, email: null },
           service: 'market',
           actions: {
-            approve: `PATCH /api/v1/admin/investments/${inv.id}/verify`,
+            approve: `PATCH /api/v1/admin/investments/${inv.id}/approve`,
             reject: `PATCH /api/v1/admin/investments/${inv.id}/reject`,
             view: `GET /api/v1/investments/${inv.id}`,
           },
