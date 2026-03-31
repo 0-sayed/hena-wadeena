@@ -67,15 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (credentials: LoginRequest) => {
     const response = await authAPI.login(credentials);
     authManager.setTokens(response.access_token, response.refresh_token);
-    const currentUser = await authAPI.getMe();
-    setUser(currentUser);
+    setUser(response.user);
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
     const response = await authAPI.register(data);
     authManager.setTokens(response.access_token, response.refresh_token);
-    const currentUser = await authAPI.getMe();
-    setUser(currentUser);
+    setUser(response.user);
   }, []);
 
   const updateUser = useCallback((updatedUser: AuthUser) => {

@@ -58,9 +58,7 @@ const OpportunityDetailsPage = () => {
   }
 
   const canSeeSensitiveFields =
-    opportunity.contact != null ||
-    opportunity.documents != null ||
-    (isAuthenticated && ['investor', 'merchant', 'admin'].includes(user?.role ?? ''));
+    isAuthenticated && ['investor', 'merchant', 'admin'].includes(user?.role ?? '');
 
   return (
     <Layout>

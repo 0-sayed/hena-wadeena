@@ -329,6 +329,13 @@ export class CarpoolService {
         throw new BadRequestException('Past rides cannot be reactivated');
       }
 
+      await tx.delete(carpoolPassengers).where(
+        and(
+          eq(carpoolPassengers.rideId, rideId),
+          eq(carpoolPassengers.status, 'cancelled'),
+        ),
+      );
+
       const [reactivated] = await tx
         .update(carpoolRides)
         .set({

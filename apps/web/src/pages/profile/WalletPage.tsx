@@ -23,18 +23,22 @@ const WalletPage = () => {
   const [loading, setLoading] = useState(true);
 
   const refreshWallet = useCallback(() => {
-    if (!user) return;
+    if (!user) {
+      setWallet(null);
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
+
     const snapshot = getWalletSnapshot(user.id);
     setWallet(snapshot.wallet);
     setTransactions(snapshot.transactions);
+    setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    setLoading(true);
     refreshWallet();
-    setLoading(false);
-  }, [refreshWallet, user]);
+  }, [refreshWallet]);
 
   const handleTopup = () => {
     if (!user) return;

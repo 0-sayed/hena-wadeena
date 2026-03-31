@@ -11,22 +11,40 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCommodities, useCommodity } from '@/hooks/use-commodities';
 import { commoditiesAPI, commodityPricesAPI } from '@/services/api';
-import type { CommodityCategory, CommodityUnit, NvDistrict, PriceType } from '@hena-wadeena/types';
-import { categoryLabel, districtLabel, formatPrice, unitLabel } from '@/lib/format';
+import { CommodityCategory, CommodityUnit, NvDistrict, PriceType } from '@hena-wadeena/types';
+import { categoryLabel, districtLabel, formatPrice, priceTypeLabel, unitLabel } from '@/lib/format';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 
 const commodityCategories: CommodityCategory[] = [
-  'fruits',
-  'grains',
-  'vegetables',
-  'oils',
-  'livestock',
-  'other',
+  CommodityCategory.FRUITS,
+  CommodityCategory.GRAINS,
+  CommodityCategory.VEGETABLES,
+  CommodityCategory.OILS,
+  CommodityCategory.LIVESTOCK,
+  CommodityCategory.OTHER,
 ];
 
-const commodityUnits: CommodityUnit[] = ['kg', 'ton', 'ardeb', 'kantar', 'box', 'piece', 'liter'];
-const districts: NvDistrict[] = ['kharga', 'dakhla', 'farafra', 'baris', 'balat'];
-const priceTypes: PriceType[] = ['retail', 'wholesale', 'farm_gate'];
+const commodityUnits: CommodityUnit[] = [
+  CommodityUnit.KG,
+  CommodityUnit.TON,
+  CommodityUnit.ARDEB,
+  CommodityUnit.KANTAR,
+  CommodityUnit.BOX,
+  CommodityUnit.PIECE,
+  CommodityUnit.LITER,
+];
+const districts: NvDistrict[] = [
+  NvDistrict.KHARGA,
+  NvDistrict.DAKHLA,
+  NvDistrict.FARAFRA,
+  NvDistrict.BARIS,
+  NvDistrict.BALAT,
+];
+const priceTypes: PriceType[] = [
+  PriceType.RETAIL,
+  PriceType.WHOLESALE,
+  PriceType.FARM_GATE,
+];
 
 type CropFormState = {
   id?: string;
@@ -47,15 +65,15 @@ type PriceFormState = {
 const emptyCropForm: CropFormState = {
   nameAr: '',
   nameEn: '',
-  category: 'fruits',
-  unit: 'kg',
+  category: CommodityCategory.FRUITS,
+  unit: CommodityUnit.KG,
   sortOrder: '0',
 };
 
 const emptyPriceForm: PriceFormState = {
   priceEgp: '',
-  region: 'kharga',
-  priceType: 'retail',
+  region: NvDistrict.KHARGA,
+  priceType: PriceType.RETAIL,
 };
 
 export default function AdminCrops() {
@@ -345,7 +363,7 @@ export default function AdminCrops() {
                   <SelectContent>
                     {priceTypes.map((priceType) => (
                       <SelectItem key={priceType} value={priceType}>
-                        {priceType}
+                        {priceTypeLabel(priceType)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -484,7 +502,7 @@ export default function AdminCrops() {
                 {selectedCommodity.latestPricesByRegion.map((price) => (
                   <TableRow key={price.id}>
                     <TableCell>{districtLabel(price.region)}</TableCell>
-                    <TableCell>{price.price_type}</TableCell>
+                    <TableCell>{priceTypeLabel(price.price_type)}</TableCell>
                     <TableCell>{formatPrice(price.price)} ج.م</TableCell>
                     <TableCell>
                       {new Date(price.recorded_at).toLocaleDateString('ar-EG')}

@@ -19,6 +19,12 @@ import { QueryOpportunitiesDto } from './dto/query-opportunities.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 import { InvestmentOpportunitiesService } from './investment-opportunities.service';
 
+const userRoles = new Set<string>(Object.values(UserRole));
+
+function isUserRole(value: string): value is UserRole {
+  return userRoles.has(value);
+}
+
 @Controller('investments')
 export class InvestmentOpportunitiesController {
   constructor(
@@ -27,7 +33,7 @@ export class InvestmentOpportunitiesController {
   ) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {
-    if ((user.role as UserRole) !== UserRole.ADMIN) {
+    if (!isUserRole(user.role) || user.role !== UserRole.ADMIN) {
       await this.opportunitiesService.assertOwnership(id, user.sub);
     }
   }
@@ -59,6 +65,7 @@ export class InvestmentOpportunitiesController {
   }
 
   @Get(':id')
+  @Public()
   @OptionalJwt()
   async findById(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
     const opportunity = await this.opportunitiesService.findById(id, user?.sub, user?.role);

@@ -1,23 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
 import { useNavigate, useParams } from 'react-router';
 import {
+  AlertCircle,
   ArrowRight,
   Calendar,
   Clock,
+  Loader2,
+  Shield,
   Star,
   Users,
-  Shield,
-  AlertCircle,
-  Loader2,
   Wallet,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Layout } from '@/components/layout/Layout';
+import { Skeleton } from '@/components/motion/Skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -26,13 +25,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { usePackage } from '@/hooks/use-packages';
-import { useCreateBooking } from '@/hooks/use-bookings';
-import { formatRating, piastresToEgp } from '@/lib/format';
-import { Skeleton } from '@/components/motion/Skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
-import { deductWalletBalance, getWalletSnapshot } from '@/lib/wallet-store';
+import { useCreateBooking } from '@/hooks/use-bookings';
+import { usePackage } from '@/hooks/use-packages';
+import { formatRating, piastresToEgp } from '@/lib/format';
+import {
+  deductWalletBalance,
+  getWalletSnapshot,
+  topUpWallet,
+} from '@/lib/wallet-store';
 
 const GuideBookingPage = () => {
   const navigate = useNavigate();
@@ -81,6 +85,19 @@ const GuideBookingPage = () => {
       return;
     }
 
+    try {
+      deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
+        reference_id: pkg.id,
+        reference_type: 'package_booking',
+      });
+    } catch (walletError: unknown) {
+      toast.error(
+        walletError instanceof Error ? walletError.message : 'تعذر تحديث رصيد المحفظة',
+      );
+      setShowConfirm(false);
+      return;
+    }
+
     createBooking.mutate(
       {
         packageId: pkg.id,
@@ -91,25 +108,25 @@ const GuideBookingPage = () => {
       },
       {
         onSuccess: () => {
-          try {
-            deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
-              reference_id: pkg.id,
-              reference_type: 'package_booking',
-            });
-          } catch (walletError: unknown) {
-            toast.error(
-              walletError instanceof Error
-                ? walletError.message
-                : 'تم إنشاء الحجز لكن تعذر تحديث المحفظة',
-            );
-            return;
-          }
-
           toast.success('تم تأكيد الحجز وخصم قيمة الباقة من المحفظة بنجاح');
+          setShowConfirm(false);
           void navigate('/bookings');
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء إنشاء الحجز');
+          try {
+            topUpWallet(user.id, totalPrice, `استرداد حجز باقة سياحية: ${pkg.titleAr}`, {
+              reference_id: pkg.id,
+              reference_type: 'package_booking_refund',
+            });
+          } catch {
+            // Best-effort rollback for the local wallet cache.
+          }
+
+          toast.error(
+            err instanceof Error
+              ? `${err.message}. تم استرداد المبلغ للمحفظة.`
+              : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
+          );
           setShowConfirm(false);
         },
       },
@@ -120,7 +137,7 @@ const GuideBookingPage = () => {
     return (
       <Layout>
         <section className="py-8 md:py-12">
-          <div className="container px-4 max-w-3xl">
+          <div className="container max-w-3xl px-4">
             <Skeleton h="h-96" className="rounded-2xl" />
           </div>
         </section>
@@ -131,7 +148,7 @@ const GuideBookingPage = () => {
   if (error || !pkg) {
     return (
       <Layout>
-        <div className="container py-20 flex flex-col items-center gap-4">
+        <div className="container flex flex-col items-center gap-4 py-20">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات الباقة</p>
           <Button variant="outline" onClick={() => void navigate(-1)}>
@@ -145,15 +162,15 @@ const GuideBookingPage = () => {
   return (
     <Layout>
       <section className="py-8 md:py-12">
-        <div className="container px-4 max-w-3xl">
+        <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="ml-2 h-4 w-4" />
             رجوع
           </Button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card className="border-border/50 lg:order-2">
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="space-y-4 p-6">
                 <div className="flex items-center gap-4">
                   <img
                     src={pkg.guideProfileImage ?? '/placeholder.jpg'}
@@ -161,19 +178,19 @@ const GuideBookingPage = () => {
                     className="h-14 w-14 rounded-full object-cover"
                   />
                   <div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{pkg.guideBioAr}</p>
+                    <p className="line-clamp-1 text-sm text-muted-foreground">{pkg.guideBioAr}</p>
                     <div className="flex items-center gap-1">
                       {pkg.guideRatingAvg != null && (
                         <>
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                          <span className="font-medium text-sm">
+                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                          <span className="text-sm font-medium">
                             {formatRating(pkg.guideRatingAvg)}
                           </span>
                         </>
                       )}
                       {pkg.guideLicenseVerified && (
-                        <Badge className="h-5 text-[10px] bg-green-500/10 text-green-600 mr-2">
-                          <Shield className="h-3 w-3 ml-1" />
+                        <Badge className="mr-2 h-5 bg-green-500/10 text-[10px] text-green-600">
+                          <Shield className="ml-1 h-3 w-3" />
                           مرخّص
                         </Badge>
                       )}
@@ -181,8 +198,8 @@ const GuideBookingPage = () => {
                   </div>
                 </div>
 
-                <div className="border-t pt-4 space-y-2">
-                  <h3 className="font-bold text-lg">{pkg.titleAr}</h3>
+                <div className="space-y-2 border-t pt-4">
+                  <h3 className="text-lg font-bold">{pkg.titleAr}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
@@ -213,7 +230,7 @@ const GuideBookingPage = () => {
                     <span>عدد الأفراد</span>
                     <span>{peopleCount}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
+                  <div className="mt-2 flex justify-between border-t pt-2 text-lg font-bold">
                     <span>الإجمالي</span>
                     <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
                   </div>
@@ -236,7 +253,7 @@ const GuideBookingPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50 lg:col-span-2 lg:order-1">
+            <Card className="border-border/50 lg:order-1 lg:col-span-2">
               <CardHeader>
                 <CardTitle className="text-xl">تفاصيل الحجز</CardTitle>
               </CardHeader>
@@ -245,13 +262,13 @@ const GuideBookingPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="date">تاريخ الرحلة</Label>
                     <div className="relative">
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="date"
                         type="date"
                         value={bookingDate}
                         min={minDate}
-                        onChange={(e) => setBookingDate(e.target.value)}
+                        onChange={(event) => setBookingDate(event.target.value)}
                         className="pr-10"
                         required
                       />
@@ -261,12 +278,12 @@ const GuideBookingPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="time">وقت البدء</Label>
                     <div className="relative">
-                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="time"
                         type="time"
                         value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
+                        onChange={(event) => setStartTime(event.target.value)}
                         className="pr-10"
                         required
                       />
@@ -285,7 +302,7 @@ const GuideBookingPage = () => {
                       >
                         -
                       </Button>
-                      <span className="text-xl font-bold w-8 text-center">{peopleCount}</span>
+                      <span className="w-8 text-center text-xl font-bold">{peopleCount}</span>
                       <Button
                         type="button"
                         variant="outline"
@@ -307,13 +324,13 @@ const GuideBookingPage = () => {
                       id="notes"
                       placeholder="أخبرنا عن توقعاتك للرحلة..."
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={(event) => setNotes(event.target.value)}
                       maxLength={1000}
                       rows={3}
                     />
                   </div>
 
-                  <div className="bg-primary/5 rounded-lg p-4 flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-lg bg-primary/5 p-4">
                     <span className="text-muted-foreground">إجمالي التكلفة</span>
                     <span className="text-2xl font-bold text-primary">
                       {bookingSummary.totalPriceLabel}
@@ -363,7 +380,7 @@ const GuideBookingPage = () => {
               <span className="text-muted-foreground">الرصيد الحالي</span>
               <span>{bookingSummary.balanceLabel}</span>
             </div>
-            <div className="flex justify-between font-bold text-lg pt-3 border-t">
+            <div className="flex justify-between border-t pt-3 text-lg font-bold">
               <span>الإجمالي</span>
               <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
             </div>
@@ -382,7 +399,7 @@ const GuideBookingPage = () => {
               تعديل
             </Button>
             <Button onClick={handleConfirm} disabled={createBooking.isPending}>
-              {createBooking.isPending && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+              {createBooking.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
               تأكيد الحجز
             </Button>
           </DialogFooter>

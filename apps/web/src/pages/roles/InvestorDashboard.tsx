@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Briefcase, Inbox, Mail, MapPin, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
@@ -6,9 +6,19 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  useMyInvestmentApplications,
+  useOpportunityApplications,
+} from '@/hooks/use-investment-applications';
 import { useMyOpportunities } from '@/hooks/use-my-opportunities';
-import { useOpportunityApplications, useMyInvestmentApplications } from '@/hooks/use-investment-applications';
 import { formatPrice } from '@/lib/format';
 
 export default function InvestorDashboard() {
@@ -23,15 +33,20 @@ export default function InvestorDashboard() {
   }, [opportunities, selectedOpportunityId]);
 
   const applicationsQuery = useOpportunityApplications(selectedOpportunityId);
-  const selectedOpportunity = opportunities?.find((opportunity) => opportunity.id === selectedOpportunityId);
+  const selectedOpportunity = opportunities?.find(
+    (opportunity) => opportunity.id === selectedOpportunityId,
+  );
   const receivedApplications = applicationsQuery.data?.data ?? [];
+  const opportunityTitles = useMemo(
+    () =>
+      new Map((opportunities ?? []).map((opportunity) => [opportunity.id, opportunity.titleAr])),
+    [opportunities],
+  );
 
   const stats = {
     opportunities: opportunities?.length ?? 0,
-    receivedApplications: opportunities?.reduce(
-      (sum, opportunity) => sum + (opportunity.interestCount ?? 0),
-      0,
-    ) ?? 0,
+    receivedApplications:
+      opportunities?.reduce((sum, opportunity) => sum + (opportunity.interestCount ?? 0), 0) ?? 0,
     sentApplications: myInterests?.total ?? 0,
   };
 
@@ -42,7 +57,11 @@ export default function InvestorDashboard() {
       subtitle="متابعة الفرص التي نشرتها والاهتمامات التي استلمتها أو أرسلتها"
     >
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="فرصي المنشورة" value={loadingOpportunities ? '...' : stats.opportunities} icon={Briefcase} />
+        <StatCard
+          label="فرصي المنشورة"
+          value={loadingOpportunities ? '...' : stats.opportunities}
+          icon={Briefcase}
+        />
         <StatCard
           label="استفسارات مستلمة"
           value={loadingOpportunities ? '...' : stats.receivedApplications}
@@ -72,7 +91,9 @@ export default function InvestorDashboard() {
             ) : error ? (
               <p className="text-sm text-destructive">تعذر تحميل فرصك الاستثمارية</p>
             ) : !opportunities || opportunities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">لم تقم بإضافة فرص استثمارية بعد.</p>
+              <p className="text-sm text-muted-foreground">
+                لم تقم بإضافة فرص استثمارية بعد.
+              </p>
             ) : (
               <Table>
                 <TableHeader>
@@ -93,7 +114,8 @@ export default function InvestorDashboard() {
                       <TableCell className="font-medium">{opportunity.titleAr}</TableCell>
                       <TableCell>{opportunity.area}</TableCell>
                       <TableCell>
-                        {formatPrice(opportunity.minInvestment)} - {formatPrice(opportunity.maxInvestment)} ج.م
+                        {formatPrice(opportunity.minInvestment)} -{' '}
+                        {formatPrice(opportunity.maxInvestment)} ج.م
                       </TableCell>
                       <TableCell>{opportunity.interestCount ?? 0}</TableCell>
                     </TableRow>
@@ -135,13 +157,23 @@ export default function InvestorDashboard() {
                 {receivedApplications.map((application) => (
                   <div key={application.id} className="rounded-xl border border-border p-4 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-foreground">{application.contactEmail}</span>
+                      {application.contactEmail ? (
+                        <span className="font-semibold text-foreground">
+                          {application.contactEmail}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          لا يوجد بريد إلكتروني
+                        </span>
+                      )}
                       <span className="rounded-full bg-muted px-3 py-1 text-xs">
                         {application.status}
                       </span>
                     </div>
                     {application.contactPhone && (
-                      <p className="text-sm text-muted-foreground">الهاتف: {application.contactPhone}</p>
+                      <p className="text-sm text-muted-foreground">
+                        الهاتف: {application.contactPhone}
+                      </p>
                     )}
                     {application.amountProposed != null && (
                       <p className="text-sm text-muted-foreground">
@@ -152,9 +184,11 @@ export default function InvestorDashboard() {
                       <p className="text-sm text-muted-foreground">{application.message}</p>
                     )}
                     <div className="flex flex-wrap gap-2 pt-2">
-                      <Button asChild size="sm" variant="outline">
-                        <a href={`mailto:${application.contactEmail}`}>رد عبر البريد</a>
-                      </Button>
+                      {application.contactEmail && (
+                        <Button asChild size="sm" variant="outline">
+                          <a href={`mailto:${application.contactEmail}`}>رد عبر البريد</a>
+                        </Button>
+                      )}
                       {application.contactPhone && (
                         <Button asChild size="sm" variant="secondary">
                           <a href={`tel:${application.contactPhone}`}>اتصال مباشر</a>
@@ -181,7 +215,9 @@ export default function InvestorDashboard() {
               ))}
             </div>
           ) : (myInterests?.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">لم ترسل استفسارات استثمارية بعد.</p>
+            <p className="text-sm text-muted-foreground">
+              لم ترسل استفسارات استثمارية بعد.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -195,7 +231,9 @@ export default function InvestorDashboard() {
               <TableBody>
                 {(myInterests?.data ?? []).map((application) => (
                   <TableRow key={application.id}>
-                    <TableCell className="font-medium">{application.opportunityId}</TableCell>
+                    <TableCell className="font-medium">
+                      {opportunityTitles.get(application.opportunityId) ?? application.opportunityId}
+                    </TableCell>
                     <TableCell>{application.status}</TableCell>
                     <TableCell>
                       {application.amountProposed != null

@@ -138,7 +138,8 @@ export function useDeleteRide() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (rideId: string) => mapAPI.deleteRide(rideId),
-    onSuccess: () => {
+    onSuccess: (_data, rideId) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
       void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
       void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
     },

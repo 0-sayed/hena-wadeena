@@ -92,7 +92,7 @@ const ContactPage = () => {
         '',
         formData.message.trim(),
       ]
-        .filter(Boolean)
+        .filter((line) => line != null)
         .join('\n');
 
       await investmentApplicationsAPI.submitInterest(id, {

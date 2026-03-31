@@ -1,6 +1,7 @@
 import type { Transaction, Wallet } from '@/services/api';
 
 const STORAGE_PREFIX = 'hena-wadeena:wallet';
+const DEFAULT_TOP_UP_DESCRIPTION = '\u0634\u062d\u0646 \u0627\u0644\u0645\u062d\u0641\u0638\u0629';
 
 type StoredWalletState = {
   wallet: Wallet;
@@ -49,7 +50,7 @@ function writeState(userId: string, state: StoredWalletState): StoredWalletState
       ...state.wallet,
       recent_transactions: state.transactions.slice(0, 10),
     },
-    transactions: state.transactions,
+    transactions: state.transactions.slice(0, 100),
   };
   localStorage.setItem(storageKey(userId), JSON.stringify(nextState));
   return nextState;
@@ -96,9 +97,14 @@ export function getWalletSnapshot(userId: string): StoredWalletState {
   return readState(userId);
 }
 
-export function topUpWallet(userId: string, amountPiasters: number): StoredWalletState {
+export function topUpWallet(
+  userId: string,
+  amountPiasters: number,
+  description = DEFAULT_TOP_UP_DESCRIPTION,
+  reference?: { reference_id?: string; reference_type?: string },
+): StoredWalletState {
   const current = readState(userId);
-  const transaction = buildTransaction('credit', amountPiasters, 'شحن المحفظة');
+  const transaction = buildTransaction('credit', amountPiasters, description, reference);
   const nextBalance = current.wallet.balance + amountPiasters;
 
   transaction.balance_after = nextBalance;
@@ -118,7 +124,7 @@ export function deductWalletBalance(
   const current = readState(userId);
 
   if (current.wallet.balance < amountPiasters) {
-    throw new Error('رصيد المحفظة غير كافٍ لإتمام العملية');
+    throw new Error('\u0631\u0635\u064a\u062f \u0627\u0644\u0645\u062d\u0641\u0638\u0629 \u063a\u064a\u0631 \u0643\u0627\u0641\u064d \u0644\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0639\u0645\u0644\u064a\u0629');
   }
 
   const transaction = buildTransaction('debit', amountPiasters, description, reference);

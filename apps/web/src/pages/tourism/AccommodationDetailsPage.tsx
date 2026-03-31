@@ -250,7 +250,7 @@ const AccommodationDetailsPage = () => {
                       {formatPrice(listing.price)}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      جنيه/{listing.priceUnit || 'EGP'}
+                      جنيه/{listing.priceUnit || 'شهرياً'}
                     </p>
                   </div>
 

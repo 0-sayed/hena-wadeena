@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -44,6 +44,7 @@ const AccommodationInquiryPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { data: listing } = useListing(id);
+  const hasAutoFilled = useRef(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -58,13 +59,14 @@ const AccommodationInquiryPage = () => {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || hasAutoFilled.current) return;
+    hasAutoFilled.current = true;
     setFormData((prev) => ({
       ...prev,
       name: prev.name || user.full_name,
       phone: prev.phone || user.phone || '',
       email: prev.email || user.email,
-      isStudent: prev.isStudent || user.role === 'student',
+      isStudent: user.role === 'student',
     }));
   }, [user]);
 
