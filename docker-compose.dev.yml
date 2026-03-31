@@ -9,6 +9,15 @@ services:
   mongodb:
     ports:
       - '${MONGODB_PORT:-27017}:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-changeme}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh --quiet --username ${MONGO_INITDB_ROOT_USERNAME:-admin} --password ${MONGO_INITDB_ROOT_PASSWORD:-changeme} --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok" | grep 1',
+        ]
 
   redis:
     # No auth in dev
@@ -80,6 +89,7 @@ services:
     command: uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8005
     environment:
       ENVIRONMENT: development
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-changeme}@mongodb:27017/${MONGODB_DB_NAME:-nakheel_db}?authSource=admin
 
   gateway:
     ports:
