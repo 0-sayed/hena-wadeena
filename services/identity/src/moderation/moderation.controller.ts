@@ -1,6 +1,6 @@
 import { DRIZZLE_CLIENT, InternalGuard, Public } from '@hena-wadeena/nest-common';
 import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { userKyc } from '../db/schema/user-kyc';
@@ -26,8 +26,8 @@ export class ModerationController {
         createdAt: userKyc.createdAt,
       })
       .from(userKyc)
-      .innerJoin(users, eq(userKyc.userId, users.id))
-      .where(eq(userKyc.status, 'pending'))
+      .innerJoin(users, sql`${userKyc.userId} = ${users.id}`)
+      .where(sql`${userKyc.status} = 'pending' AND ${users.deletedAt} IS NULL`)
       .orderBy(userKyc.createdAt);
 
     return {
