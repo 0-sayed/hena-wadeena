@@ -20,8 +20,8 @@ import { KycModule } from './kyc/kyc.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
-// import { UnifiedSearchModule } from './unified-search/unified-search.module';
 import { StatsModule } from './stats/stats.module';
+import { UnifiedSearchModule } from './unified-search/unified-search.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -48,7 +48,7 @@ import { UsersModule } from './users/users.module';
     ModerationModule,
     SearchModule,
     StatsModule,
-    // UnifiedSearchModule,
+    UnifiedSearchModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
