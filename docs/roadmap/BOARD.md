@@ -94,7 +94,7 @@
 ## Layer 7 — Admin + Polish
 
 - [x] **T29** Admin: Cross-Service Endpoints · M · ← T25, T26, T27
-- [ ] **T30** Admin: Market · S · ← T26
+- [x] **T30** Admin: Market · S · ← T26
 - [ ] **T31** Guide + Map: Search Indexes · S · ← T27
 - [ ] **T32** AI: E2E Integration + Polish · M · ← T28
 - [ ] **F10** Admin Dashboards · M · ← T29, F02
