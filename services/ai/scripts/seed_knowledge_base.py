@@ -657,7 +657,7 @@ async def inject_document(
         )
         if response.status_code == 200:
             result = response.json()
-            return (title, True, f"doc_id: {result.get('doc_id')}, chunks: {result.get('chunk_count')}")
+            return (title, True, f"doc_id: {result.get('doc_id')}, chunks: {result.get('total_chunks')}")
         if response.status_code == 401:
             return (title, False, "Unauthorized - check your token")
         return (title, False, f"{response.status_code} - {response.text[:200]}")
