@@ -1,3 +1,4 @@
+import { type FormEvent, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
 import { Search, MapPin, Star, Clock, Calendar, ArrowLeft } from 'lucide-react';
@@ -24,6 +25,7 @@ import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 
 const TourismPage = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: featuredAttractions, isLoading: loadingFeatured } = useAttractions(
     { featured: true },
@@ -33,44 +35,57 @@ const TourismPage = () => {
   const { data: guides, isLoading: loadingGuides } = useGuides(undefined, 6);
   const loading = loadingFeatured || loadingAll || loadingGuides;
 
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+    void navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
   return (
     <Layout>
       <PageTransition>
-        {/* Hero Section */}
         <PageHero image={heroTourism} alt="السياحة في الوادي الجديد">
           <SR>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <MapPin className="h-5 w-5 text-accent" />
               <span className="text-sm font-semibold text-card">السياحة والمجتمع</span>
             </div>
           </SR>
           <SR delay={100}>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-card mb-5">
+            <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
               السياحة والمجتمع
             </h1>
           </SR>
           <SR delay={200}>
-            <p className="text-lg md:text-xl text-card/90 mb-10">
+            <p className="mb-10 text-lg text-card/90 md:text-xl">
               اكتشف المعالم السياحية، احجز مرشداً، أو تصفح باقات السياحة
             </p>
           </SR>
           <SR delay={300}>
-            <div className="relative max-w-xl mx-auto">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
+            <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
+              <Search className="absolute right-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="ابحث عن معالم أو مرشدين..."
-                className="pr-14 h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="h-16 rounded-2xl border-0 bg-card/90 pr-14 pl-28 text-lg shadow-lg backdrop-blur-sm"
               />
-            </div>
+              <Button
+                type="submit"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl"
+              >
+                ابحث
+              </Button>
+            </form>
           </SR>
         </PageHero>
 
-        {/* Content */}
         <section className="py-14">
           <div className="container px-4">
             <Tabs defaultValue="attractions" className="w-full">
               <SR>
-                <TabsList className="grid w-full max-w-xs mx-auto grid-cols-2 mb-10 h-12 rounded-xl">
+                <TabsList className="mx-auto mb-10 grid h-12 w-full max-w-xs grid-cols-2 rounded-xl">
                   <TabsTrigger value="attractions" className="rounded-lg text-sm font-semibold">
                     المعالم
                   </TabsTrigger>
@@ -80,50 +95,48 @@ const TourismPage = () => {
                 </TabsList>
               </SR>
 
-              {/* Attractions Tab */}
               <TabsContent value="attractions" className="space-y-8">
                 {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {[1, 2, 3, 4].map((i) => (
                       <CardSkeleton key={i} />
                     ))}
                   </div>
                 ) : (
                   <>
-                    {/* Featured */}
                     <SR>
-                      <h3 className="text-2xl font-bold text-foreground mb-6">وجهات مميزة</h3>
+                      <h3 className="mb-6 text-2xl font-bold text-foreground">وجهات مميزة</h3>
                     </SR>
                     <SR stagger>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                      <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
                         {featuredAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
-                            className="group overflow-hidden border-border/50 hover:border-primary/40 hover-lift rounded-2xl"
+                            className="group overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
                           >
-                            <div className="aspect-video overflow-hidden relative">
+                            <div className="relative aspect-video overflow-hidden">
                               <img
                                 src={attraction.thumbnail ?? '/placeholder.jpg'}
                                 alt={attraction.nameAr}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                               />
-                              <Badge className="absolute top-4 right-4 glass text-foreground font-medium">
+                              <Badge className="absolute top-4 right-4 glass font-medium text-foreground">
                                 {attractionTypeLabels[attraction.type]}
                               </Badge>
-                              <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                             </div>
                             <CardContent className="p-6">
-                              <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-250">
+                              <h3 className="mb-2 text-xl font-bold text-foreground transition-colors duration-250 group-hover:text-primary">
                                 {attraction.nameAr}
                               </h3>
-                              <p className="text-muted-foreground mb-4 line-clamp-2">
+                              <p className="mb-4 line-clamp-2 text-muted-foreground">
                                 {attraction.descriptionAr}
                               </p>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4 text-sm">
                                   <div className="flex items-center gap-1.5 text-accent">
                                     <Star className="h-5 w-5 fill-current" />
-                                    <span className="font-bold text-base">
+                                    <span className="text-base font-bold">
                                       {formatRating(attraction.ratingAvg)}
                                     </span>
                                   </div>
@@ -137,12 +150,12 @@ const TourismPage = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="hover:scale-[1.03] transition-transform"
+                                  className="transition-transform hover:scale-[1.03]"
                                   onClick={() =>
                                     void navigate(`/tourism/attraction/${attraction.slug}`)
                                   }
                                 >
-                                  المزيد <ArrowLeft className="h-4 w-4 mr-1" />
+                                  المزيد <ArrowLeft className="mr-1 h-4 w-4" />
                                 </Button>
                               </div>
                             </CardContent>
@@ -151,13 +164,12 @@ const TourismPage = () => {
                       </div>
                     </SR>
 
-                    {/* All Attractions */}
                     <SR>
-                      <div className="flex items-center justify-between mb-6">
+                      <div className="mb-6 flex items-center justify-between">
                         <h3 className="text-2xl font-bold text-foreground">كل المعالم</h3>
                         <Button
                           variant="outline"
-                          className="hover:scale-[1.03] transition-transform"
+                          className="transition-transform hover:scale-[1.03]"
                           onClick={() => void navigate('/tourism/attractions')}
                         >
                           عرض المزيد
@@ -165,22 +177,22 @@ const TourismPage = () => {
                       </div>
                     </SR>
                     <SR stagger>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
                         {allAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
-                            className="group overflow-hidden border-border/50 hover:border-primary/40 hover-lift rounded-2xl cursor-pointer"
+                            className="group cursor-pointer overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
                             onClick={() => void navigate(`/tourism/attraction/${attraction.slug}`)}
                           >
                             <div className="aspect-[4/3] overflow-hidden">
                               <img
                                 src={attraction.thumbnail ?? '/placeholder.jpg'}
                                 alt={attraction.nameAr}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                               />
                             </div>
                             <CardContent className="p-5">
-                              <h4 className="font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                              <h4 className="mb-2 font-bold text-foreground transition-colors group-hover:text-primary">
                                 {attraction.nameAr}
                               </h4>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -188,7 +200,7 @@ const TourismPage = () => {
                                   {attractionTypeLabels[attraction.type]}
                                 </Badge>
                                 <span className="flex items-center gap-1">
-                                  <Star className="h-3.5 w-3.5 text-accent fill-current" />
+                                  <Star className="h-3.5 w-3.5 fill-current text-accent" />
                                   {formatRating(attraction.ratingAvg)}
                                 </span>
                               </div>
@@ -201,24 +213,23 @@ const TourismPage = () => {
                 )}
               </TabsContent>
 
-              {/* Guides Tab */}
               <TabsContent value="guides" className="space-y-6">
                 {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {[1, 2, 3].map((i) => (
                       <CardSkeleton key={i} />
                     ))}
                   </div>
                 ) : (
                   <SR stagger>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+                    <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
                       {guides.map((guide) => (
                         <Card
                           key={guide.id}
-                          className="border-border/50 hover:border-primary/40 hover-lift rounded-2xl"
+                          className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
                         >
                           <CardContent className="p-7">
-                            <div className="flex items-center gap-4 mb-5">
+                            <div className="mb-5 flex items-center gap-4">
                               <img
                                 src={guide.profileImage ?? '/placeholder.jpg'}
                                 alt={guide.bioAr?.slice(0, 30) ?? 'مرشد'}
@@ -226,7 +237,7 @@ const TourismPage = () => {
                                 style={{ width: 72, height: 72 }}
                               />
                               <div>
-                                <h3 className="text-lg font-bold text-foreground line-clamp-1">
+                                <h3 className="line-clamp-1 text-lg font-bold text-foreground">
                                   {guide.bioAr?.slice(0, 50) ?? ''}
                                 </h3>
                                 <div className="flex items-center gap-1.5 text-accent">
@@ -238,10 +249,10 @@ const TourismPage = () => {
                                 </div>
                               </div>
                             </div>
-                            <div className="space-y-3 mb-5">
+                            <div className="mb-5 space-y-3">
                               <div>
                                 <span className="text-sm text-muted-foreground">اللغات:</span>
-                                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                <div className="mt-1.5 flex flex-wrap gap-1.5">
                                   {guide.languages.map((lang) => (
                                     <Badge key={lang} variant="secondary" className="text-xs">
                                       {languageLabels[lang as GuideLanguage] ?? lang}
@@ -251,7 +262,7 @@ const TourismPage = () => {
                               </div>
                               <div>
                                 <span className="text-sm text-muted-foreground">التخصصات:</span>
-                                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                <div className="mt-1.5 flex flex-wrap gap-1.5">
                                   {guide.specialties.map((spec) => (
                                     <Badge key={spec} variant="outline" className="text-xs">
                                       {specialtyLabels[spec as GuideSpecialty] ?? spec}
@@ -260,18 +271,18 @@ const TourismPage = () => {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center justify-between pt-5 border-t border-border">
+                            <div className="flex items-center justify-between border-t border-border pt-5">
                               <div>
                                 <span className="text-2xl font-bold text-primary">
                                   {piastresToEgp(guide.basePrice)}
                                 </span>
-                                <span className="text-sm text-muted-foreground mr-1">/يوم</span>
+                                <span className="mr-1 text-sm text-muted-foreground">/يوم</span>
                               </div>
                               <Button
-                                className="hover:scale-[1.03] transition-transform"
+                                className="transition-transform hover:scale-[1.03]"
                                 onClick={() => void navigate(`/guides/${guide.id}`)}
                               >
-                                <Calendar className="h-4 w-4 ml-2" />
+                                <Calendar className="ml-2 h-4 w-4" />
                                 عرض الملف
                               </Button>
                             </div>

@@ -207,6 +207,14 @@ export class InvestmentOpportunitiesService {
     return result;
   }
 
+  async findMine(ownerId: string): Promise<Opportunity[]> {
+    return this.db
+      .select(opportunityColumns)
+      .from(investmentOpportunities)
+      .where(eq(investmentOpportunities.ownerId, ownerId))
+      .orderBy(desc(investmentOpportunities.updatedAt));
+  }
+
   async findFeatured(query: QueryOpportunitiesDto): Promise<PaginatedResponse<PublicOpportunity>> {
     const cacheKey = this.buildCacheKey('featured', { offset: query.offset, limit: query.limit });
     const cached = await this.redis.get(cacheKey);

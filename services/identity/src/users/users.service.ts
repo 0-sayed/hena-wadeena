@@ -9,6 +9,7 @@ import {
 import { EVENTS, UserStatus } from '@hena-wadeena/types';
 import type { EventName, PaginatedResponse } from '@hena-wadeena/types';
 import {
+  ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -36,6 +37,15 @@ export class UsersService {
       .select()
       .from(users)
       .where(andRequired(eq(users.email, email), isNull(users.deletedAt)))
+      .limit(1);
+    return user ?? null;
+  }
+
+  async findByPhone(phone: string): Promise<typeof users.$inferSelect | null> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(andRequired(eq(users.phone, phone), isNull(users.deletedAt)))
       .limit(1);
     return user ?? null;
   }
@@ -101,11 +111,40 @@ export class UsersService {
 
   async updateProfile(
     id: string,
-    data: { displayName?: string; avatarUrl?: string; language?: string },
+    data: {
+      fullName?: string;
+      email?: string;
+      phone?: string;
+      displayName?: string;
+      avatarUrl?: string;
+      language?: string;
+    },
   ) {
+    if (data.email) {
+      const existingByEmail = await this.findByEmail(data.email);
+      if (existingByEmail && existingByEmail.id !== id) {
+        throw new ConflictException('Email already registered');
+      }
+    }
+
+    if (data.phone) {
+      const existingByPhone = await this.findByPhone(data.phone);
+      if (existingByPhone && existingByPhone.id !== id) {
+        throw new ConflictException('Phone already registered');
+      }
+    }
+
     const [user] = await this.db
       .update(users)
-      .set({ ...data, updatedAt: new Date() })
+      .set({
+        ...(data.fullName !== undefined && { fullName: data.fullName }),
+        ...(data.email !== undefined && { email: data.email }),
+        ...(data.phone !== undefined && { phone: data.phone }),
+        ...(data.displayName !== undefined && { displayName: data.displayName }),
+        ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+        ...(data.language !== undefined && { language: data.language }),
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, id))
       .returning();
     return user ?? null;

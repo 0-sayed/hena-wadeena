@@ -1,5 +1,5 @@
 import { UserRole } from '@hena-wadeena/types';
-import { BarChart3, MapPin, Menu, Shield, UserCheck, Users, X } from 'lucide-react';
+import { BarChart3, Leaf, MapPin, Menu, Shield, UserCheck, Users, X } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { Navigate, NavLink, Outlet } from 'react-router';
 
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/admin/moderation', label: 'المراجعة', icon: UserCheck },
   { to: '/admin/guides', label: 'المرشدون', icon: Shield },
   { to: '/admin/map', label: 'الخريطة', icon: MapPin },
+  { to: '/admin/crops', label: 'المحاصيل', icon: Leaf },
 ];
 
 export default function AdminLayout() {
@@ -33,7 +34,6 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -41,7 +41,6 @@ export default function AdminLayout() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed inset-y-0 right-0 z-50 w-64 transform bg-card shadow-lg transition-transform lg:static lg:translate-x-0',
@@ -62,7 +61,8 @@ export default function AdminLayout() {
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <nav className="p-4 space-y-1">
+
+        <nav className="space-y-1 p-4">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -84,9 +84,7 @@ export default function AdminLayout() {
         </nav>
       </aside>
 
-      {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
         <header className="flex h-16 items-center justify-between border-b bg-card px-4 lg:px-6">
           <Button
             variant="ghost"
@@ -102,7 +100,6 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-auto p-4 lg:p-6">
           <Suspense
             fallback={

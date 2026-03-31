@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -10,6 +10,7 @@ import {
   Shield,
   AlertCircle,
   Loader2,
+  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,12 +29,15 @@ import {
 import { toast } from 'sonner';
 import { usePackage } from '@/hooks/use-packages';
 import { useCreateBooking } from '@/hooks/use-bookings';
-import { piastresToEgp, formatRating } from '@/lib/format';
+import { formatRating, piastresToEgp } from '@/lib/format';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { deductWalletBalance, getWalletSnapshot } from '@/lib/wallet-store';
 
 const GuideBookingPage = () => {
   const navigate = useNavigate();
   const { packageId = '' } = useParams<{ packageId: string }>();
+  const { user } = useAuth();
 
   const { data: pkg, isLoading, error } = usePackage(packageId);
   const createBooking = useCreateBooking();
@@ -44,14 +48,23 @@ const GuideBookingPage = () => {
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Tomorrow as min date (in Cairo timezone to match the booking flow)
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
 
   const totalPrice = pkg ? pkg.price * peopleCount : 0;
-
+  const walletBalance = user ? getWalletSnapshot(user.id).wallet.balance : 0;
   const canSubmit = bookingDate && startTime && peopleCount >= 1;
+  const canAfford = walletBalance >= totalPrice;
+
+  const bookingSummary = useMemo(
+    () => ({
+      packageTitle: pkg?.titleAr ?? '',
+      totalPriceLabel: piastresToEgp(totalPrice),
+      balanceLabel: piastresToEgp(walletBalance),
+    }),
+    [pkg?.titleAr, totalPrice, walletBalance],
+  );
 
   const handleSubmit = () => {
     if (!canSubmit || !pkg) return;
@@ -59,7 +72,15 @@ const GuideBookingPage = () => {
   };
 
   const handleConfirm = () => {
-    if (!pkg) return;
+    if (!pkg || !user) return;
+
+    if (!canAfford) {
+      toast.error('رصيد المحفظة غير كافٍ. اشحن المحفظة ثم أعد المحاولة.');
+      setShowConfirm(false);
+      void navigate('/wallet');
+      return;
+    }
+
     createBooking.mutate(
       {
         packageId: pkg.id,
@@ -70,7 +91,21 @@ const GuideBookingPage = () => {
       },
       {
         onSuccess: () => {
-          toast.success('تم إرسال طلب الحجز بنجاح! سيتواصل معك المرشد قريباً');
+          try {
+            deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
+              reference_id: pkg.id,
+              reference_type: 'package_booking',
+            });
+          } catch (walletError: unknown) {
+            toast.error(
+              walletError instanceof Error
+                ? walletError.message
+                : 'تم إنشاء الحجز لكن تعذر تحديث المحفظة',
+            );
+            return;
+          }
+
+          toast.success('تم تأكيد الحجز وخصم قيمة الباقة من المحفظة بنجاح');
           void navigate('/bookings');
         },
         onError: (err) => {
@@ -117,10 +152,8 @@ const GuideBookingPage = () => {
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Sidebar: Package + Guide info */}
             <Card className="border-border/50 lg:order-2">
               <CardContent className="p-6 space-y-4">
-                {/* Guide info */}
                 <div className="flex items-center gap-4">
                   <img
                     src={pkg.guideProfileImage ?? '/placeholder.jpg'}
@@ -148,7 +181,6 @@ const GuideBookingPage = () => {
                   </div>
                 </div>
 
-                {/* Package info */}
                 <div className="border-t pt-4 space-y-2">
                   <h3 className="font-bold text-lg">{pkg.titleAr}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -172,7 +204,6 @@ const GuideBookingPage = () => {
                   )}
                 </div>
 
-                {/* Price */}
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>سعر الفرد</span>
@@ -184,20 +215,33 @@ const GuideBookingPage = () => {
                   </div>
                   <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
                     <span>الإجمالي</span>
-                    <span className="text-primary">{piastresToEgp(totalPrice)}</span>
+                    <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Wallet className="h-4 w-4 text-primary" />
+                    رصيد المحفظة الحالي
+                  </div>
+                  <p className="mt-2 text-xl font-bold text-foreground">
+                    {bookingSummary.balanceLabel}
+                  </p>
+                  {!canAfford && (
+                    <p className="mt-2 text-sm text-destructive">
+                      الرصيد الحالي غير كافٍ لتأكيد هذا الحجز.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Form */}
             <Card className="border-border/50 lg:col-span-2 lg:order-1">
               <CardHeader>
                 <CardTitle className="text-xl">تفاصيل الحجز</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {/* Date */}
                   <div className="space-y-2">
                     <Label htmlFor="date">تاريخ الرحلة</Label>
                     <div className="relative">
@@ -214,7 +258,6 @@ const GuideBookingPage = () => {
                     </div>
                   </div>
 
-                  {/* Start Time */}
                   <div className="space-y-2">
                     <Label htmlFor="time">وقت البدء</Label>
                     <div className="relative">
@@ -230,7 +273,6 @@ const GuideBookingPage = () => {
                     </div>
                   </div>
 
-                  {/* People Count */}
                   <div className="space-y-2">
                     <Label>عدد الأفراد</Label>
                     <div className="flex items-center gap-4">
@@ -238,7 +280,7 @@ const GuideBookingPage = () => {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setPeopleCount((c) => Math.max(1, c - 1))}
+                        onClick={() => setPeopleCount((count) => Math.max(1, count - 1))}
                         disabled={peopleCount <= 1}
                       >
                         -
@@ -248,7 +290,7 @@ const GuideBookingPage = () => {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setPeopleCount((c) => Math.min(pkg.maxPeople, c + 1))}
+                        onClick={() => setPeopleCount((count) => Math.min(pkg.maxPeople, count + 1))}
                         disabled={peopleCount >= pkg.maxPeople}
                       >
                         +
@@ -259,7 +301,6 @@ const GuideBookingPage = () => {
                     </div>
                   </div>
 
-                  {/* Notes */}
                   <div className="space-y-2">
                     <Label htmlFor="notes">ملاحظات إضافية</Label>
                     <Textarea
@@ -272,11 +313,10 @@ const GuideBookingPage = () => {
                     />
                   </div>
 
-                  {/* Total */}
                   <div className="bg-primary/5 rounded-lg p-4 flex items-center justify-between">
                     <span className="text-muted-foreground">إجمالي التكلفة</span>
                     <span className="text-2xl font-bold text-primary">
-                      {piastresToEgp(totalPrice)}
+                      {bookingSummary.totalPriceLabel}
                     </span>
                   </div>
 
@@ -290,7 +330,6 @@ const GuideBookingPage = () => {
         </div>
       </section>
 
-      {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
@@ -300,7 +339,7 @@ const GuideBookingPage = () => {
           <div className="space-y-3 py-4">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">الباقة</span>
-              <span className="font-medium">{pkg?.titleAr}</span>
+              <span className="font-medium">{bookingSummary.packageTitle}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">التاريخ</span>
@@ -320,10 +359,19 @@ const GuideBookingPage = () => {
                 <span className="max-w-[200px] text-left">{notes}</span>
               </div>
             )}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">الرصيد الحالي</span>
+              <span>{bookingSummary.balanceLabel}</span>
+            </div>
             <div className="flex justify-between font-bold text-lg pt-3 border-t">
               <span>الإجمالي</span>
-              <span className="text-primary">{piastresToEgp(totalPrice)}</span>
+              <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
             </div>
+            {!canAfford && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                الرصيد الحالي غير كافٍ. سيتم تحويلك إلى المحفظة لشحن الرصيد.
+              </p>
+            )}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button

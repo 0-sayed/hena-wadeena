@@ -54,6 +54,18 @@ export class MyCarpoolController {
     return this.carpoolService.cancelRide(id, user.sub);
   }
 
+  @Patch(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  activateRide(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.carpoolService.activateRide(id, user.sub);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  deleteRide(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.carpoolService.deleteRide(id, user.sub);
+  }
+
   @Patch(':id/passengers/:passengerId/confirm')
   @HttpCode(HttpStatus.OK)
   confirmPassenger(

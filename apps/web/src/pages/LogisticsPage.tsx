@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { type ReactNode, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '@/components/layout/Layout';
 import { PageHero } from '@/components/layout/PageHero';
@@ -37,7 +37,7 @@ import { formatRidePrice } from '@/lib/format';
 import { formatDateTimeShort } from '@/lib/dates';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { useAuth } from '@/hooks/use-auth';
-import { usePois, usePoi, useRides, useMyRides } from '@/hooks/use-map';
+import { usePois, usePoi, useRides, useMyRides, useActivateRide, useCancelRide, useDeleteRide } from '@/hooks/use-map';
 import type { Poi, PoiCategory, CarpoolRide, CarpoolPassenger } from '@/services/api';
 import { UserRole } from '@hena-wadeena/types';
 import { AREA_PRESETS, findArea } from '@/lib/area-presets';
@@ -114,6 +114,9 @@ const LogisticsPage = () => {
   );
   const { data: ridesData, isLoading: ridesLoading } = useRides(carpoolFilters);
   const { data: myRidesData } = useMyRides(isAuthenticated);
+  const cancelRide = useCancelRide();
+  const activateRide = useActivateRide();
+  const deleteRide = useDeleteRide();
 
   // ── POI Map locations ──
   const poiLocations: MapLocation[] = (poisData?.data ?? []).map((poi) => ({
@@ -145,6 +148,42 @@ const LogisticsPage = () => {
     isAuthenticated &&
     user &&
     [UserRole.RESIDENT, UserRole.GUIDE, UserRole.MERCHANT].includes(user.role);
+
+  const filteredMyRidesData = useMemo(() => {
+    if (!myRidesData) return undefined;
+
+    const driverRideIds = new Set(myRidesData.asDriver.map((ride) => ride.id));
+
+    return {
+      ...myRidesData,
+      asPassenger: myRidesData.asPassenger.filter((ride) => !driverRideIds.has(ride.rideId)),
+    };
+  }, [myRidesData]);
+
+  const handleCancelRide = (rideId: string) => {
+    cancelRide.mutate(rideId, {
+      onSuccess: () => toast.success('تم إلغاء الرحلة'),
+      onError: (error) => toast.error(error.message),
+    });
+  };
+
+  const handleActivateRide = (rideId: string) => {
+    activateRide.mutate(rideId, {
+      onSuccess: () => toast.success('تمت إعادة تفعيل الرحلة'),
+      onError: (error) => toast.error(error.message),
+    });
+  };
+
+  const handleDeleteRide = (rideId: string) => {
+    if (!window.confirm('هل تريد حذف هذه الرحلة نهائياً؟')) {
+      return;
+    }
+
+    deleteRide.mutate(rideId, {
+      onSuccess: () => toast.success('تم حذف الرحلة'),
+      onError: (error) => toast.error(error.message),
+    });
+  };
 
   return (
     <Layout>
@@ -392,6 +431,19 @@ const LogisticsPage = () => {
                       <RideCard
                         ride={ride}
                         onClick={() => void navigate(`/logistics/ride/${ride.id}`)}
+                        actions={
+                          user?.id === ride.driverId ? (
+                            <RideManagementActions
+                              ride={ride}
+                              onCancel={handleCancelRide}
+                              onActivate={handleActivateRide}
+                              onDelete={handleDeleteRide}
+                              disabled={
+                                cancelRide.isPending || activateRide.isPending || deleteRide.isPending
+                              }
+                            />
+                          ) : undefined
+                        }
                       />
                     </SR>
                   ))
@@ -404,7 +456,7 @@ const LogisticsPage = () => {
                       <SheetTitle>رحلاتي</SheetTitle>
                     </SheetHeader>
                     <MyRidesContent
-                      data={myRidesData}
+                      data={filteredMyRidesData}
                       onViewRide={(id) => {
                         setShowMyRides(false);
                         void navigate(`/logistics/ride/${id}`);
@@ -505,7 +557,55 @@ function PoiDetailContent({ poi }: { poi: Poi }) {
   );
 }
 
-function RideCard({ ride, onClick }: { ride: CarpoolRide; onClick: () => void }) {
+function RideManagementActions({
+  ride,
+  onCancel,
+  onActivate,
+  onDelete,
+  disabled = false,
+}: {
+  ride: CarpoolRide;
+  onCancel: (rideId: string) => void;
+  onActivate: (rideId: string) => void;
+  onDelete: (rideId: string) => void;
+  disabled?: boolean;
+}) {
+  const canDelete = ride.status === 'cancelled' || ride.status === 'completed';
+
+  if (ride.status !== 'open' && ride.status !== 'cancelled' && !canDelete) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
+      {ride.status === 'open' && (
+        <Button size="sm" variant="destructive" disabled={disabled} onClick={() => onCancel(ride.id)}>
+          إلغاء الرحلة
+        </Button>
+      )}
+      {ride.status === 'cancelled' && (
+        <Button size="sm" variant="outline" disabled={disabled} onClick={() => onActivate(ride.id)}>
+          إعادة التفعيل
+        </Button>
+      )}
+      {canDelete && (
+        <Button size="sm" variant="secondary" disabled={disabled} onClick={() => onDelete(ride.id)}>
+          حذف الرحلة
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function RideCard({
+  ride,
+  onClick,
+  actions,
+}: {
+  ride: CarpoolRide;
+  onClick: () => void;
+  actions?: ReactNode;
+}) {
   const available = ride.seatsTotal - ride.seatsTaken;
   return (
     <Card
@@ -535,6 +635,7 @@ function RideCard({ ride, onClick }: { ride: CarpoolRide; onClick: () => void })
             {formatRidePrice(ride.pricePerSeat)}
           </div>
         </div>
+        {actions && <div className="mt-4 border-t pt-4">{actions}</div>}
       </CardContent>
     </Card>
   );

@@ -313,6 +313,60 @@ export class CarpoolService {
     });
   }
 
+  async activateRide(rideId: string, driverId: string): Promise<Ride> {
+    return this.db.transaction(async (tx) => {
+      const ride = await this.findRideInternal(rideId, tx);
+
+      if (ride.driverId !== driverId) {
+        throw new ForbiddenException('Only the ride driver can perform this action');
+      }
+
+      if (ride.status !== 'cancelled') {
+        throw new ConflictException('Only cancelled rides can be reactivated');
+      }
+
+      if (ride.departureTime <= new Date()) {
+        throw new BadRequestException('Past rides cannot be reactivated');
+      }
+
+      const [reactivated] = await tx
+        .update(carpoolRides)
+        .set({
+          status: 'open',
+          seatsTaken: 0,
+        })
+        .where(eq(carpoolRides.id, rideId))
+        .returning();
+
+      if (!reactivated) throw new NotFoundException('Ride not found after update');
+      return reactivated;
+    });
+  }
+
+  async deleteRide(rideId: string, driverId: string): Promise<{ deleted: true; id: string }> {
+    return this.db.transaction(async (tx) => {
+      const ride = await this.findRideInternal(rideId, tx);
+
+      if (ride.driverId !== driverId) {
+        throw new ForbiddenException('Only the ride driver can perform this action');
+      }
+
+      if (!['cancelled', 'completed'].includes(ride.status)) {
+        throw new ConflictException('Only cancelled or completed rides can be deleted');
+      }
+
+      await tx.delete(carpoolPassengers).where(eq(carpoolPassengers.rideId, rideId));
+
+      const [deletedRide] = await tx
+        .delete(carpoolRides)
+        .where(eq(carpoolRides.id, rideId))
+        .returning({ id: carpoolRides.id });
+
+      if (!deletedRide) throw new NotFoundException('Ride not found after delete');
+      return { deleted: true, id: deletedRide.id };
+    });
+  }
+
   async myRides(userId: string): Promise<{ asDriver: Ride[]; asPassenger: Passenger[] }> {
     const [asDriver, asPassenger] = await Promise.all([
       this.db

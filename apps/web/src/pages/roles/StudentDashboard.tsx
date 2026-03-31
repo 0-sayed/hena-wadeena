@@ -44,7 +44,7 @@ export default function StudentDashboard() {
             icon={Home}
             message="ابحث عن سكن قريب من جامعتك"
             actionLabel="تصفح الإعلانات"
-            actionHref="/marketplace"
+            actionHref="/tourism/accommodation"
           />
         </CardContent>
       </Card>

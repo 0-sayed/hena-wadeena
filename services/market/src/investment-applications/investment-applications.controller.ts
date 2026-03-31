@@ -49,8 +49,15 @@ export class InvestmentApplicationsController {
   }
 
   @Get('investments/:id/interests')
-  @Roles(UserRole.ADMIN)
-  findByOpportunity(@Param('id') opportunityId: string, @Query() query: QueryApplicationsDto) {
+  @Roles(UserRole.ADMIN, UserRole.INVESTOR, UserRole.MERCHANT)
+  async findByOpportunity(
+    @Param('id') opportunityId: string,
+    @Query() query: QueryApplicationsDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (user.role !== UserRole.ADMIN) {
+      await this.opportunitiesService.assertOwnership(opportunityId, user.sub);
+    }
     return this.applicationsService.findByOpportunity(opportunityId, query);
   }
 

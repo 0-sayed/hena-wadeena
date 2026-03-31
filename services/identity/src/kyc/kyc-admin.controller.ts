@@ -7,7 +7,7 @@ import { ReviewKycDto } from './dto/review-kyc.dto';
 import { KycService } from './kyc.service';
 
 @Controller('admin/kyc')
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.REVIEWER)
 export class KycAdminController {
   constructor(@Inject(KycService) private readonly kycService: KycService) {}
 

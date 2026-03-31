@@ -35,6 +35,9 @@ export class UsersController {
   @Patch('auth/me')
   async updateMe(@CurrentUser() user: JwtPayload, @Body() dto: UpdateProfileDto) {
     const updated = await this.usersService.updateProfile(user.sub, {
+      fullName: dto.full_name,
+      email: dto.email,
+      phone: dto.phone,
       displayName: dto.display_name,
       avatarUrl: dto.avatar_url,
       language: dto.language,

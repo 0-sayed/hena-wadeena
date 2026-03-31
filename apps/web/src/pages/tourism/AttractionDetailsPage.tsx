@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
+import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { useAttraction, useNearbyAttractions } from '@/hooks/use-attractions';
 import {
   attractionTypeLabels,
@@ -205,11 +206,30 @@ const AttractionDetailsPage = () => {
             <SR>
               <div>
                 <h2 className="text-xl font-bold text-foreground mb-3">الموقع</h2>
-                <div className="flex items-center gap-2 text-muted-foreground p-4 rounded-xl bg-muted">
-                  <MapPin className="h-5 w-5 text-accent" />
-                  <span>
-                    {attraction.location.y.toFixed(4)}, {attraction.location.x.toFixed(4)}
-                  </span>
+                <div className="space-y-4">
+                  <InteractiveMap
+                    locations={[
+                      {
+                        id: attraction.id,
+                        name: attraction.nameAr,
+                        lat: attraction.location.y,
+                        lng: attraction.location.x,
+                        description: attraction.descriptionAr ?? undefined,
+                        type: attractionTypeLabels[attraction.type],
+                        image: attraction.thumbnail ?? undefined,
+                        color: '#0f766e',
+                      },
+                    ]}
+                    center={[attraction.location.y, attraction.location.x]}
+                    zoom={13}
+                    className="h-[320px] w-full rounded-xl overflow-hidden"
+                  />
+                  <div className="flex items-center gap-2 rounded-xl bg-muted p-4 text-muted-foreground">
+                    <MapPin className="h-5 w-5 text-accent" />
+                    <span>
+                      {attraction.location.y.toFixed(4)}, {attraction.location.x.toFixed(4)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </SR>
