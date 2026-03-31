@@ -105,7 +105,7 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
             echo "==> Fixing file permissions (containers may run as root)"
-            sudo chown -R "$(id -u):$(id -g)" .
+            docker run --rm -v "$(pwd):/fix-perms" alpine chown -R "$(id -u):$(id -g)" /fix-perms
 
             echo "==> Resetting working tree"
             git reset --hard
