@@ -17,9 +17,11 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { KycModule } from './kyc/kyc.module';
+import { ModerationModule } from './moderation/moderation.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 // import { UnifiedSearchModule } from './unified-search/unified-search.module';
+import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -43,7 +45,9 @@ import { UsersModule } from './users/users.module';
     AdminModule,
     NotificationsModule,
     KycModule,
+    ModerationModule,
     SearchModule,
+    StatsModule,
     // UnifiedSearchModule,
   ],
   providers: [
