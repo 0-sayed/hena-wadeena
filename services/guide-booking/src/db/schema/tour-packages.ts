@@ -26,6 +26,7 @@ export const tourPackages = guideBookingSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: text('search_vector'),
   },
   (t) => [
     index('idx_tour_packages_guide_id').on(t.guideId),

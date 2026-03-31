@@ -44,6 +44,7 @@ export const guides = guideBookingSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: text('search_vector'),
   },
   (t) => [
     uniqueIndex('uq_guides_user_id')

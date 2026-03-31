@@ -53,6 +53,7 @@ export const attractions = guideBookingSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: text('search_vector'),
   },
   (t) => [
     uniqueIndex('attractions_slug_unique').on(t.slug),
