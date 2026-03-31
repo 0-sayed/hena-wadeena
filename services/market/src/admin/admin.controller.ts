@@ -19,7 +19,7 @@ export class AdminController {
     @Inject(ListingsService) private readonly listingsService: ListingsService,
   ) {}
 
-  @Get('stats')
+  @Get('market-stats')
   getStats() {
     return this.adminService.getStats();
   }
@@ -43,7 +43,7 @@ export class AdminController {
     return this.listingsService.setFeatured(id, dto);
   }
 
-  @Get('moderation/queue')
+  @Get('market-moderation/queue')
   getModerationQueue() {
     return this.adminService.getModerationQueue();
   }

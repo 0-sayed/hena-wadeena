@@ -62,7 +62,6 @@ function requireEnv(key: string): string {
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     HealthModule,
     AuthModule,
-    AdminModule,
     ListingsModule,
     CommodityPricesModule,
     BusinessDirectoryModule,
