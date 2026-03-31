@@ -57,4 +57,22 @@ export const queryKeys = {
     sessions: () => ['ai', 'sessions'] as const,
     session: (id: string) => ['ai', 'sessions', id] as const,
   },
+  admin: {
+    stats: () => ['admin', 'stats'] as const,
+    users: (filters?: { role?: string; status?: string; search?: string; page?: number; limit?: number }) =>
+      ['admin', 'users', filters] as const,
+    user: (id: string) => ['admin', 'users', id] as const,
+    kyc: (filters?: { status?: string; page?: number; limit?: number }) =>
+      ['admin', 'kyc', filters] as const,
+    pendingListings: (filters?: { page?: number; limit?: number }) =>
+      ['admin', 'moderation', 'listings', filters] as const,
+    pendingBusinesses: (filters?: { page?: number; limit?: number }) =>
+      ['admin', 'moderation', 'businesses', filters] as const,
+    guides: (filters?: { status?: string; verified?: boolean; search?: string; page?: number; limit?: number }) =>
+      ['admin', 'guides', filters] as const,
+    bookings: (filters?: { status?: string; guideId?: string; page?: number; limit?: number }) =>
+      ['admin', 'bookings', filters] as const,
+    pendingPois: (filters?: { page?: number; limit?: number }) =>
+      ['admin', 'pois', filters] as const,
+  },
 };

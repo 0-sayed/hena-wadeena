@@ -25,6 +25,7 @@ export const pointsOfInterest = mapSchema.table(
     status: poiStatusEnum().notNull().default('pending'),
     submittedBy: uuid('submitted_by').notNull(),
     approvedBy: uuid('approved_by'),
+    rejectionReason: text('rejection_reason'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
