@@ -351,7 +351,11 @@ export default function AdminModeration() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>تأكيد الرفض</DialogTitle>
-            <DialogDescription>يرجى إدخال سبب الرفض (اختياري)</DialogDescription>
+            <DialogDescription>
+              {rejectDialog?.type === 'listing'
+                ? 'يرجى إدخال سبب الرفض (اختياري)'
+                : 'يرجى إدخال سبب الرفض (مطلوب)'}
+            </DialogDescription>
           </DialogHeader>
           <Textarea
             placeholder="سبب الرفض..."
@@ -368,7 +372,11 @@ export default function AdminModeration() {
             >
               إلغاء
             </Button>
-            <Button variant="destructive" onClick={handleReject}>
+            <Button
+              variant="destructive"
+              disabled={!rejectReason.trim() && rejectDialog?.type !== 'listing'}
+              onClick={handleReject}
+            >
               تأكيد الرفض
             </Button>
           </DialogFooter>

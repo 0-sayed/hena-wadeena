@@ -126,12 +126,12 @@ export class PoisService {
     return approved;
   }
 
-  async reject(id: string): Promise<Poi> {
+  async reject(id: string, reason?: string): Promise<Poi> {
     await this.findByIdInternal(id);
 
     const [row] = await this.db
       .update(pointsOfInterest)
-      .set({ status: 'rejected', updatedAt: new Date() })
+      .set({ status: 'rejected', rejectionReason: reason ?? null, updatedAt: new Date() })
       .where(and(eq(pointsOfInterest.id, id), eq(pointsOfInterest.status, 'pending')))
       .returning();
 

@@ -2,6 +2,7 @@ import { CurrentUser, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -13,7 +14,7 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { PoiFiltersDto } from './dto';
+import { PoiFiltersDto, RejectPoiDto } from './dto';
 import { PoisService } from './pois.service';
 
 @Roles(UserRole.ADMIN)
@@ -34,7 +35,7 @@ export class AdminPoisController {
 
   @Patch(':id/reject')
   @HttpCode(HttpStatus.OK)
-  reject(@Param('id', ParseUUIDPipe) id: string) {
-    return this.poisService.reject(id);
+  reject(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RejectPoiDto) {
+    return this.poisService.reject(id, dto.reason);
   }
 }
