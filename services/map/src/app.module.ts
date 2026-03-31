@@ -20,6 +20,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { CarpoolModule } from './carpool/carpool.module';
 import { validateMapEnv } from './config/env.config';
+import { ModerationModule } from './moderation/moderation.module';
 import { PoisModule } from './pois/pois.module';
 import { SearchModule } from './search/search.module';
 import { StatsModule } from './stats/stats.module';
@@ -57,6 +58,7 @@ import { StatsModule } from './stats/stats.module';
     CarpoolModule,
     StatsModule,
     SearchModule,
+    ModerationModule,
   ],
   providers: [
     JwtStrategy,
