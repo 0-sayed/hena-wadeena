@@ -34,7 +34,15 @@ function getResultUrl(result: SearchResult): string {
       return `/marketplace/supplier/${result.id}`;
     case 'opportunity':
       return `/investment/opportunity/${result.id}`;
-    case 'user':
+    case 'user': {
+      // Identity search returns role in metadata (guide/merchant/driver)
+      // Only guides have profile pages; others fall back to section pages
+      const role = result.metadata.role;
+      if (role === 'guide') return `/guides/${result.id}`;
+      if (role === 'merchant') return '/marketplace';
+      if (role === 'driver') return '/logistics';
+      return '/search';
+    }
     case 'guide':
       return `/guides/${result.id}`;
     case 'attraction':
