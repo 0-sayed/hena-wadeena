@@ -1043,7 +1043,11 @@ export const adminAPI = {
   // Listings moderation
   getPendingListings: (params?: { page?: number; limit?: number }) =>
     apiFetchWithRefresh<PaginatedResponse<Listing>>(
-      `/admin/moderation/queue${toQueryString(params)}`,
+      `/admin/listings${toQueryString({
+        is_verified: 'false',
+        offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
+        limit: params?.limit,
+      })}`,
     ),
   verifyListing: (id: string, approved: boolean, notes?: string) =>
     apiFetchWithRefresh<Listing>(`/admin/listings/${id}/verify`, {
