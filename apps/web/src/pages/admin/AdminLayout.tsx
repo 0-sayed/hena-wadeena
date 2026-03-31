@@ -104,7 +104,13 @@ export default function AdminLayout() {
 
         {/* Page content */}
         <main className="flex-1 overflow-auto p-4 lg:p-6">
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <div className="flex h-full items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            }
+          >
             <Outlet />
           </Suspense>
         </main>

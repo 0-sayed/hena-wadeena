@@ -200,7 +200,13 @@ export default function AdminMap() {
       </Card>
 
       {/* Reject Dialog */}
-      <Dialog open={!!rejectDialog} onOpenChange={() => setRejectDialog(null)}>
+      <Dialog
+        open={!!rejectDialog}
+        onOpenChange={() => {
+          setRejectDialog(null);
+          setRejectReason('');
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>رفض نقطة الاهتمام</DialogTitle>
@@ -212,7 +218,13 @@ export default function AdminMap() {
             onChange={(e) => setRejectReason(e.target.value)}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialog(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog(null);
+                setRejectReason('');
+              }}
+            >
               إلغاء
             </Button>
             <Button variant="destructive" onClick={handleReject}>

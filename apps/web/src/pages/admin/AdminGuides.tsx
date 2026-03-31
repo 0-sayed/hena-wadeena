@@ -71,9 +71,15 @@ export default function AdminGuides() {
 
   const handleCancelBooking = () => {
     if (!cancelDialog || !cancelReason.trim()) return;
-    cancelBooking.mutate({ id: cancelDialog, reason: cancelReason });
-    setCancelDialog(null);
-    setCancelReason('');
+    cancelBooking.mutate(
+      { id: cancelDialog, reason: cancelReason },
+      {
+        onSuccess: () => {
+          setCancelDialog(null);
+          setCancelReason('');
+        },
+      },
+    );
   };
 
   return (
@@ -147,7 +153,7 @@ export default function AdminGuides() {
                               {guide.profileImage ? (
                                 <img
                                   src={guide.profileImage}
-                                  alt=""
+                                  alt={guide.bioAr ?? 'صورة المرشد'}
                                   className="h-10 w-10 rounded-full object-cover"
                                 />
                               ) : (
@@ -327,7 +333,13 @@ export default function AdminGuides() {
       </Tabs>
 
       {/* Cancel Booking Dialog */}
-      <Dialog open={!!cancelDialog} onOpenChange={() => setCancelDialog(null)}>
+      <Dialog
+        open={!!cancelDialog}
+        onOpenChange={() => {
+          setCancelDialog(null);
+          setCancelReason('');
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>إلغاء الحجز</DialogTitle>
@@ -339,12 +351,18 @@ export default function AdminGuides() {
             onChange={(e) => setCancelReason(e.target.value)}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialog(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCancelDialog(null);
+                setCancelReason('');
+              }}
+            >
               رجوع
             </Button>
             <Button
               variant="destructive"
-              disabled={!cancelReason.trim()}
+              disabled={!cancelReason.trim() || cancelBooking.isPending}
               onClick={handleCancelBooking}
             >
               تأكيد الإلغاء

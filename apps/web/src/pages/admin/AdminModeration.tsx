@@ -337,7 +337,13 @@ export default function AdminModeration() {
       </Tabs>
 
       {/* Reject Dialog */}
-      <Dialog open={!!rejectDialog} onOpenChange={() => setRejectDialog(null)}>
+      <Dialog
+        open={!!rejectDialog}
+        onOpenChange={() => {
+          setRejectDialog(null);
+          setRejectReason('');
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>تأكيد الرفض</DialogTitle>
@@ -349,7 +355,13 @@ export default function AdminModeration() {
             onChange={(e) => setRejectReason(e.target.value)}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialog(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog(null);
+                setRejectReason('');
+              }}
+            >
               إلغاء
             </Button>
             <Button variant="destructive" onClick={handleReject}>

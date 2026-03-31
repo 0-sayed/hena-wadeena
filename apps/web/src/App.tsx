@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -115,14 +115,16 @@ const App = () => (
             <Route path="/guides/:id" element={<GuideProfilePage />} />
             {/* Admin Dashboards */}
             <Route element={<RequireAuth />}>
-              <Route path="admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="overview" replace />} />
-                <Route path="overview" element={<AdminOverview />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="moderation" element={<AdminModeration />} />
-                <Route path="guides" element={<AdminGuides />} />
-                <Route path="map" element={<AdminMap />} />
-              </Route>
+              <Suspense fallback={null}>
+                <Route path="admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="overview" replace />} />
+                  <Route path="overview" element={<AdminOverview />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="moderation" element={<AdminModeration />} />
+                  <Route path="guides" element={<AdminGuides />} />
+                  <Route path="map" element={<AdminMap />} />
+                </Route>
+              </Suspense>
             </Route>
             {/* Role Dashboards */}
             <Route element={<RequireAuth />}>

@@ -35,6 +35,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 const roleLabels: Record<string, string> = {
   admin: 'مدير',
+  moderator: 'مشرف',
+  reviewer: 'مراجع',
   tourist: 'سائح',
   resident: 'مقيم',
   student: 'طالب',
