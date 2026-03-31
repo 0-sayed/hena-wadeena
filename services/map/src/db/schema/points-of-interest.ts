@@ -26,6 +26,7 @@ export const pointsOfInterest = mapSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    searchVector: text('search_vector'),
   },
   (t) => [
     index('idx_pois_location').using('gist', t.location),

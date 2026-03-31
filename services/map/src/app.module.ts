@@ -21,6 +21,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
 import { CarpoolModule } from './carpool/carpool.module';
 import { validateMapEnv } from './config/env.config';
 import { PoisModule } from './pois/pois.module';
+import { SearchModule } from './search/search.module';
 import { StatsModule } from './stats/stats.module';
 
 @Module({
@@ -55,6 +56,7 @@ import { StatsModule } from './stats/stats.module';
     PoisModule,
     CarpoolModule,
     StatsModule,
+    SearchModule,
   ],
   providers: [
     JwtStrategy,
