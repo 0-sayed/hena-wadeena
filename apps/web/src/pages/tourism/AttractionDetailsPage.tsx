@@ -1,6 +1,8 @@
 import { Layout } from '@/components/layout/Layout';
+import { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowRight, Star, Clock, Calendar, Sun, Users, MapPin, AlertCircle } from 'lucide-react';
+import { ArrowRight, Star, Clock, Calendar, Sun, Users, AlertCircle } from 'lucide-react';
+import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +25,22 @@ const AttractionDetailsPage = () => {
 
   const { data: attraction, isLoading, error, refetch } = useAttraction(slug);
   const { data: nearby } = useNearbyAttractions(slug);
+
+  const mapProps = useMemo(() => {
+    if (!attraction?.location) return null;
+    return {
+      locations: [
+        {
+          id: attraction.id,
+          name: attraction.nameAr,
+          lat: attraction.location.y,
+          lng: attraction.location.x,
+          type: attractionTypeLabels[attraction.type],
+        },
+      ],
+      center: [attraction.location.y, attraction.location.x] as [number, number],
+    };
+  }, [attraction?.id, attraction?.nameAr, attraction?.location, attraction?.type]);
 
   if (isLoading) {
     return (
@@ -200,17 +218,16 @@ const AttractionDetailsPage = () => {
             </SR>
           )}
 
-          {/* Map placeholder */}
-          {attraction.location && (
+          {mapProps && (
             <SR>
               <div>
                 <h2 className="text-xl font-bold text-foreground mb-3">الموقع</h2>
-                <div className="flex items-center gap-2 text-muted-foreground p-4 rounded-xl bg-muted">
-                  <MapPin className="h-5 w-5 text-accent" />
-                  <span>
-                    {attraction.location.y.toFixed(4)}, {attraction.location.x.toFixed(4)}
-                  </span>
-                </div>
+                <InteractiveMap
+                  locations={mapProps.locations}
+                  center={mapProps.center}
+                  zoom={13}
+                  className="h-[300px] w-full rounded-xl"
+                />
               </div>
             </SR>
           )}
