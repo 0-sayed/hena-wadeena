@@ -2,7 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { listingsAPI } from '@/services/api';
 
-export function useListings(params?: { category?: string; district?: string; limit?: number }) {
+export function useListings(params?: {
+  category?: string;
+  district?: string;
+  limit?: number;
+  offset?: number;
+  sort?: string;
+}) {
   return useQuery({
     queryKey: queryKeys.market.listings(params),
     queryFn: () => listingsAPI.getAll(params),

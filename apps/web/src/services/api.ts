@@ -114,6 +114,14 @@ export interface AuthUser {
   language: string;
 }
 
+export interface PublicUserProfile {
+  id: string;
+  full_name: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  role: UserRole;
+}
+
 interface AuthUserResponse {
   id: string;
   email: string;
@@ -210,6 +218,13 @@ export const authAPI = {
 
   logout: (refresh_token?: string) =>
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
+};
+
+export const usersAPI = {
+  getPublicProfiles: (ids: string[]) =>
+    apiFetch<PublicUserProfile[]>(
+      `/users/public${toQueryString({ ids: ids.filter(Boolean).join(',') })}`,
+    ),
 };
 
 // ── Tourism — Attractions ───────────────────────────────────────────────────
@@ -606,12 +621,19 @@ export interface ListingUpsertRequest {
 }
 
 export const listingsAPI = {
-  getAll: (params?: { category?: string; district?: string; limit?: number; offset?: number }) => {
+  getAll: (params?: {
+    category?: string;
+    district?: string;
+    limit?: number;
+    offset?: number;
+    sort?: string;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
     if (params?.district) qs.set('area', params.district);
     if (params?.limit != null) qs.set('limit', String(params.limit));
     if (params?.offset != null) qs.set('offset', String(params.offset));
+    if (params?.sort) qs.set('sort', params.sort);
     const query = qs.toString();
     return apiFetch<{
       data: Listing[];
@@ -740,6 +762,7 @@ export const investmentApplicationsAPI = {
 
 export interface GuideListItem {
   id: string;
+  userId: string;
   bioAr: string | null;
   bioEn: string | null;
   profileImage: string | null;

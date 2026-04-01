@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
+import { ExternalLink } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+import { Button } from '@/components/ui/button';
+import { buildGoogleMapsLocationUrl } from '@/lib/maps';
 
 export interface MapLocation {
   id: number | string;
@@ -27,6 +30,7 @@ interface InteractiveMapProps {
   onMarkerClick?: (location: MapLocation) => void;
   fitBounds?: boolean;
   polylines?: MapPolyline[];
+  googleMapsUrl?: string;
 }
 
 // Fix default marker icon (bundlers often fail to resolve these assets)
@@ -67,21 +71,29 @@ export function InteractiveMap({
   onMarkerClick,
   fitBounds = false,
   polylines,
+  googleMapsUrl,
 }: InteractiveMapProps) {
   const [isClient, setIsClient] = useState(false);
-  const [mapReady, setMapReady] = useState(0); // Increments when map is (re)created
+  const [mapReady, setMapReady] = useState(0);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const polylinesLayerRef = useRef<L.LayerGroup | null>(null);
 
   const normalizedClassName = useMemo(() => className ?? '', [className]);
+  const resolvedGoogleMapsUrl = useMemo(() => {
+    if (googleMapsUrl) return googleMapsUrl;
+    const primaryLocation = locations[0];
+    if (primaryLocation) {
+      return buildGoogleMapsLocationUrl(primaryLocation.lat, primaryLocation.lng);
+    }
+    return buildGoogleMapsLocationUrl(center[0], center[1]);
+  }, [center, googleMapsUrl, locations]);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Create map instance once (client only)
   useEffect(() => {
     if (!isClient) return;
     if (!mapContainerRef.current) return;
@@ -98,7 +110,7 @@ export function InteractiveMap({
     markersLayerRef.current = L.layerGroup().addTo(map);
     polylinesLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
-    setMapReady((n) => n + 1); // Signal that map is ready for markers
+    setMapReady((value) => value + 1);
 
     return () => {
       map.remove();
@@ -109,13 +121,11 @@ export function InteractiveMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
-  // Update view when center/zoom changes (only if not fitting bounds)
   useEffect(() => {
     if (!mapRef.current || fitBounds) return;
     mapRef.current.setView(center, zoom);
   }, [center, zoom, fitBounds]);
 
-  // Render markers when locations change
   useEffect(() => {
     if (!mapRef.current || !markersLayerRef.current) return;
 
@@ -123,7 +133,6 @@ export function InteractiveMap({
 
     locations.forEach((location) => {
       const icon = location.color ? createColoredIcon(location.color) : new L.Icon.Default();
-
       const marker = L.marker([location.lat, location.lng], { icon });
 
       const tooltipHtml = `
@@ -140,44 +149,64 @@ export function InteractiveMap({
         offset: [0, -10],
         className: 'leaflet-tooltip-custom',
       });
+
       if (onMarkerClick) {
         marker.on('click', () => onMarkerClick(location));
       }
+
       marker.addTo(markersLayerRef.current!);
     });
 
-    // Auto-fit bounds if enabled and there are locations
     if (fitBounds && locations.length > 0 && mapRef.current) {
-      const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
+      const bounds = L.latLngBounds(locations.map((location) => [location.lat, location.lng]));
       mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     }
   }, [locations, onMarkerClick, fitBounds, mapReady]);
 
-  // Render polylines
   useEffect(() => {
     if (!mapRef.current || !polylinesLayerRef.current) return;
+
     polylinesLayerRef.current.clearLayers();
 
-    polylines?.forEach((pl) => {
-      const line = L.polyline(pl.positions, {
-        color: pl.color ?? '#3b82f6',
+    polylines?.forEach((polyline) => {
+      const line = L.polyline(polyline.positions, {
+        color: polyline.color ?? '#3b82f6',
         weight: 3,
-        dashArray: pl.dashArray ?? '8 8',
+        dashArray: polyline.dashArray ?? '8 8',
         opacity: 0.7,
       });
       line.addTo(polylinesLayerRef.current!);
     });
   }, [polylines, mapReady]);
 
+  const googleMapsButton = (
+    <div className="pointer-events-none absolute left-3 top-3 z-[500]">
+      <Button variant="secondary" size="sm" className="pointer-events-auto shadow-md" asChild>
+        <a href={resolvedGoogleMapsUrl} target="_blank" rel="noopener noreferrer">
+          <ExternalLink className="ml-2 h-4 w-4" />
+          Open in Google Maps
+        </a>
+      </Button>
+    </div>
+  );
+
   if (!isClient) {
     return (
-      <div className={`${normalizedClassName} bg-muted/50 flex items-center justify-center`}>
-        <span className="text-muted-foreground">جاري تحميل الخريطة...</span>
+      <div className="relative">
+        <div className={`${normalizedClassName} bg-muted/50 flex items-center justify-center`}>
+          <span className="text-muted-foreground">جارٍ تحميل الخريطة...</span>
+        </div>
+        {googleMapsButton}
       </div>
     );
   }
 
-  return <div ref={mapContainerRef} className={normalizedClassName} />;
+  return (
+    <div className="relative">
+      <div ref={mapContainerRef} className={normalizedClassName} />
+      {googleMapsButton}
+    </div>
+  );
 }
 
 function escapeHtml(input: string) {

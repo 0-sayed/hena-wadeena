@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router';
 import { Layout } from '@/components/layout/Layout';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import type { MapLocation, MapPolyline } from '@/components/maps/InteractiveMap';
+import { buildGoogleMapsDirectionsUrl } from '@/lib/maps';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -209,6 +210,10 @@ const RideDetailPage = () => {
             className="mb-6 h-[300px] w-full rounded-xl"
             fitBounds
             polylines={mapPolylines}
+            googleMapsUrl={buildGoogleMapsDirectionsUrl(
+              { lat: ride.origin.y, lng: ride.origin.x },
+              { lat: ride.destination.y, lng: ride.destination.x },
+            )}
           />
 
           <Card className="mb-6">

@@ -1,27 +1,108 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { Menu, User, Bell, Wallet, LogOut, CalendarCheck, ChevronDown, Search } from 'lucide-react';
+import {
+  Bell,
+  CalendarCheck,
+  ChevronDown,
+  LogOut,
+  Menu,
+  Search,
+  User,
+  Wallet,
+} from 'lucide-react';
 import { Classic } from '@theme-toggles/react';
 import '@theme-toggles/react/css/Classic.css';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
-import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/use-auth';
 
-const navigation = [
-  { name: 'الرئيسية', href: '/' },
-  { name: 'السياحة', href: '/tourism' },
-  { name: 'المرشدين', href: '/guides' },
-  { name: 'البورصة', href: '/marketplace' },
-  { name: 'اللوجستيات', href: '/logistics' },
-  { name: 'الاستثمار', href: '/investment' },
-];
+type NavigationItem = {
+  href: string;
+  key: string;
+  label: string;
+  matcher: (pathname: string) => boolean;
+};
+
+function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
+  const labels =
+    language === 'en'
+      ? {
+          home: 'Home',
+          tourism: 'Tourism',
+          accommodation: 'Accommodation',
+          guides: 'Guides',
+          marketplace: 'Marketplace',
+          logistics: 'Logistics',
+          investment: 'Investment',
+        }
+      : {
+          home: 'الرئيسية',
+          tourism: 'السياحة',
+          accommodation: 'الإقامة',
+          guides: 'المرشدين',
+          marketplace: 'البورصة',
+          logistics: 'اللوجستيات',
+          investment: 'الاستثمار',
+        };
+
+  const isAccommodationPath = (pathname: string) =>
+    pathname.startsWith('/tourism/accommodation') ||
+    pathname.startsWith('/tourism/accommodation-inquiry');
+
+  return [
+    {
+      key: 'home',
+      href: '/',
+      label: labels.home,
+      matcher: (pathname) => pathname === '/',
+    },
+    {
+      key: 'tourism',
+      href: '/tourism',
+      label: labels.tourism,
+      matcher: (pathname) =>
+        pathname === '/tourism' || (pathname.startsWith('/tourism/') && !isAccommodationPath(pathname)),
+    },
+    {
+      key: 'accommodation',
+      href: '/tourism/accommodation',
+      label: labels.accommodation,
+      matcher: (pathname) => isAccommodationPath(pathname),
+    },
+    {
+      key: 'guides',
+      href: '/guides',
+      label: labels.guides,
+      matcher: (pathname) => pathname.startsWith('/guides'),
+    },
+    {
+      key: 'marketplace',
+      href: '/marketplace',
+      label: labels.marketplace,
+      matcher: (pathname) => pathname.startsWith('/marketplace'),
+    },
+    {
+      key: 'logistics',
+      href: '/logistics',
+      label: labels.logistics,
+      matcher: (pathname) => pathname.startsWith('/logistics'),
+    },
+    {
+      key: 'investment',
+      href: '/investment',
+      label: labels.investment,
+      matcher: (pathname) => pathname.startsWith('/investment'),
+    },
+  ];
+}
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
@@ -50,72 +131,66 @@ function ThemeToggle() {
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const location = useLocation();
-  const authCtx = useAuth();
-  const { user, direction } = authCtx;
-
-  const { data: unreadData } = useUnreadNotificationCount();
-  const unreadCount = unreadData?.count ?? 0;
-
-  const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (!q) return;
-    void navigate(`/search?q=${encodeURIComponent(q)}`);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const authCtx = useAuth();
+  const { user, direction, language } = authCtx;
+  const { data: unreadData } = useUnreadNotificationCount();
+  const unreadCount = unreadData?.count ?? 0;
+
+  const navigation = useMemo(() => buildNavigation(language), [language]);
+
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+    void navigate(`/search?q=${encodeURIComponent(query)}`);
     setSearchQuery('');
     setSearchOpen(false);
-    setIsOpen(false); // close mobile sheet if open
+    setIsOpen(false);
   };
 
-  const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
-  };
+  const isActive = (item: NavigationItem) => item.matcher(location.pathname);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container flex h-16 items-center justify-between px-4">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/icon-source.png" alt="هُنَا وَادِينَا" className="h-9 w-9 rounded-lg" />
-          <span className="text-xl font-bold text-foreground">هُنَا وَادِينَا</span>
+          <img src="/icon-source.png" alt="هُنا وَادِينَا" className="h-9 w-9 rounded-lg" />
+          <span className="text-xl font-bold text-foreground">هُنا وَادِينَا</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden items-center gap-1 lg:flex">
           {navigation.map((item) => (
             <Link
-              key={item.name}
+              key={item.key}
               to={item.href}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive(item.href)
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isActive(item)
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              {item.name}
+              {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Desktop Actions */}
-        <div className="hidden lg:flex items-center gap-1">
-          {/* Search */}
+        <div className="hidden items-center gap-1 lg:flex">
           {searchOpen ? (
             <form onSubmit={handleSearch} className="flex items-center gap-1">
               <Input
                 autoFocus
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 onBlur={() => {
                   if (!searchQuery) setSearchOpen(false);
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
                     setSearchQuery('');
                     setSearchOpen(false);
                   }
@@ -135,11 +210,11 @@ export function Header() {
               <Search className="h-5 w-5" />
             </Button>
           )}
-          {/* Dark mode toggle */}
+
           <ThemeToggle />
+
           {user ? (
             <>
-              {/* Notifications Bell */}
               <Link to="/notifications" className="relative">
                 <Button
                   variant="ghost"
@@ -148,38 +223,32 @@ export function Header() {
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card animate-pulse">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card animate-pulse">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </Button>
               </Link>
 
-              {/* Wallet */}
               <Link to="/wallet">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground gap-1.5"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
                 >
                   <Wallet className="h-4 w-4" />
                   <span className="text-xs font-semibold">المحفظة</span>
                 </Button>
               </Link>
 
-              {/* Profile Dropdown */}
               <div className="relative mr-1">
                 <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-full hover:bg-muted transition-colors"
+                  onClick={() => setProfileOpen((open) => !open)}
+                  className="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-muted"
                 >
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10">
                     {user.avatar_url ? (
-                      <img
-                        src={user.avatar_url}
-                        alt=""
-                        className="h-8 w-8 rounded-full object-cover"
-                      />
+                      <img src={user.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
                     ) : (
                       <User className="h-4 w-4 text-primary" />
                     )}
@@ -187,47 +256,45 @@ export function Header() {
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </button>
 
-                {/* Dropdown Menu */}
                 {profileOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {/* User Info */}
-                      <div className="px-4 py-3 border-b border-border">
-                        <p className="font-semibold text-sm truncate">{user.full_name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200 fade-in">
+                      <div className="border-b border-border px-4 py-3">
+                        <p className="truncate text-sm font-semibold">{user.full_name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                       </div>
                       <div className="py-1">
                         <Link
                           to="/profile"
                           onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <User className="h-4 w-4 text-muted-foreground" /> الملف الشخصي
                         </Link>
                         <Link
                           to="/bookings"
                           onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <CalendarCheck className="h-4 w-4 text-muted-foreground" /> حجوزاتي
                         </Link>
                         <Link
                           to="/wallet"
                           onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Wallet className="h-4 w-4 text-muted-foreground" /> المحفظة
                         </Link>
                         <Link
                           to="/notifications"
                           onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Bell className="h-4 w-4 text-muted-foreground" />
                           الإشعارات
                           {unreadCount > 0 && (
-                            <span className="mr-auto bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            <span className="mr-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
                             </span>
                           )}
@@ -239,7 +306,7 @@ export function Header() {
                             void authCtx.logout();
                             setProfileOpen(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
                           <LogOut className="h-4 w-4" /> تسجيل الخروج
                         </button>
@@ -250,10 +317,10 @@ export function Header() {
               </div>
             </>
           ) : (
-            <div className="flex items-center gap-2 mr-2">
+            <div className="mr-2 flex items-center gap-2">
               <Link to="/login">
                 <Button variant="outline" size="sm">
-                  <User className="h-4 w-4 ml-2" />
+                  <User className="ml-2 h-4 w-4" />
                   تسجيل الدخول
                 </Button>
               </Link>
@@ -264,25 +331,26 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile: search + notification + menu */}
         <div className="flex items-center gap-1 lg:hidden">
           <Link to="/search">
             <Button variant="ghost" size="icon" className="text-muted-foreground">
               <Search className="h-5 w-5" />
             </Button>
           </Link>
+
           {user && (
             <Link to="/notifications" className="relative">
               <Button variant="ghost" size="icon" className="text-muted-foreground">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card animate-pulse">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card animate-pulse">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Button>
             </Link>
           )}
+
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -290,82 +358,82 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side={direction === 'rtl' ? 'right' : 'left'} className="w-80">
-              <div className="flex flex-col gap-6 mt-8">
-                {/* Mobile user info */}
+              <div className="mt-8 flex flex-col gap-6">
                 {user && (
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/10">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-6 w-6 text-primary" />
+                  <div className="flex items-center gap-3 rounded-xl border border-primary/10 bg-primary/5 p-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                      ) : (
+                        <User className="h-6 w-6 text-primary" />
+                      )}
                     </div>
                     <div>
-                      <p className="font-bold text-sm">{user.full_name}</p>
+                      <p className="text-sm font-bold">{user.full_name}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Search */}
                 <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="بحث في المنصة..."
-                    className="pr-10 h-10"
+                    className="h-10 pr-10"
                   />
                 </form>
 
-                {/* Nav links */}
                 <nav className="flex flex-col gap-1">
                   {navigation.map((item) => (
                     <Link
-                      key={item.name}
+                      key={item.key}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                        isActive(item.href)
+                      className={`rounded-lg px-4 py-3 text-base font-medium transition-colors ${
+                        isActive(item)
                           ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
-                      {item.name}
+                      {item.label}
                     </Link>
                   ))}
                 </nav>
 
-                {/* Mobile user actions */}
                 {user ? (
-                  <div className="border-t border-border pt-4 flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 border-t border-border pt-4">
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <User className="h-5 w-5 text-muted-foreground" /> الملف الشخصي
                     </Link>
                     <Link
                       to="/bookings"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <CalendarCheck className="h-5 w-5 text-muted-foreground" /> حجوزاتي
                     </Link>
                     <Link
                       to="/wallet"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Wallet className="h-5 w-5 text-muted-foreground" /> المحفظة
                     </Link>
                     <Link
                       to="/notifications"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Bell className="h-5 w-5 text-muted-foreground" />
                       الإشعارات
                       {unreadCount > 0 && (
-                        <span className="mr-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        <span className="mr-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
                         </span>
                       )}
@@ -375,16 +443,16 @@ export function Header() {
                         void authCtx.logout();
                         setIsOpen(false);
                       }}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-5 w-5" /> تسجيل الخروج
                     </button>
                   </div>
                 ) : (
-                  <div className="border-t border-border pt-4 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 border-t border-border pt-4">
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
-                        <User className="h-4 w-4 ml-2" />
+                        <User className="ml-2 h-4 w-4" />
                         تسجيل الدخول
                       </Button>
                     </Link>

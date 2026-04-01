@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -46,6 +47,25 @@ export class UsersController {
     });
     if (!updated) throw new NotFoundException('User not found');
     return toPublicUser(updated);
+  }
+
+  @Public()
+  @Get('users/public')
+  async getPublicUsers(@Query('ids') ids?: string) {
+    const parsedIds = ids
+      ?.split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const publicUsers = await this.usersService.findPublicProfiles(parsedIds ?? []);
+
+    return publicUsers.map((user) => ({
+      id: user.id,
+      full_name: user.fullName,
+      display_name: user.displayName,
+      avatar_url: user.avatarUrl,
+      role: user.role,
+    }));
   }
 
   @Get('wallet')

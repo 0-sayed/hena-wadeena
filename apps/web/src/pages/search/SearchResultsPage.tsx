@@ -27,9 +27,7 @@ const typeConfig: Record<string, { label: string; color: string }> = {
 function getResultUrl(result: SearchResult): string {
   switch (result.type) {
     case 'listing':
-      // Listings link to marketplace index until a dedicated listing detail page exists.
-      // Listing IDs are from market.listings, not market.business_directories.
-      return '/marketplace';
+      return `/marketplace/ads/${result.id}`;
     case 'business':
       return `/marketplace/supplier/${result.id}`;
     case 'opportunity':

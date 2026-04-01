@@ -40,6 +40,7 @@ import CreateRidePage from './pages/logistics/CreateRidePage';
 import RideDetailPage from './pages/logistics/RideDetailPage';
 
 import PricesPage from './pages/marketplace/PricesPage';
+import ListingDetailsPage from './pages/marketplace/ListingDetailsPage';
 import SupplierDetailsPage from './pages/marketplace/SupplierDetailsPage';
 
 import OpportunityDetailsPage from './pages/investment/OpportunityDetailsPage';
@@ -172,6 +173,7 @@ const App = () => (
             <Route path="/logistics/ride/:id" element={<RideDetailPage />} />
 
             <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/marketplace/ads/:id" element={<ListingDetailsPage />} />
             <Route path="/marketplace/prices" element={<PricesPage />} />
             <Route path="/marketplace/supplier/:id" element={<SupplierDetailsPage />} />
 

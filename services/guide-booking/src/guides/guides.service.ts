@@ -144,6 +144,7 @@ export class GuidesService {
       this.db
         .select({
           id: guides.id,
+          userId: guides.userId,
           bioAr: guides.bioAr,
           bioEn: guides.bioEn,
           profileImage: guides.profileImage,

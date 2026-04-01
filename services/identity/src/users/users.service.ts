@@ -16,7 +16,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, desc, eq, gte, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -74,6 +74,25 @@ export class UsersService {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async findPublicProfiles(ids: string[]) {
+    const normalizedIds = [...new Set(ids.filter(Boolean))];
+
+    if (normalizedIds.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+        role: users.role,
+      })
+      .from(users)
+      .where(andRequired(inArray(users.id, normalizedIds), isNull(users.deletedAt)));
   }
 
   async findAll(query: {
