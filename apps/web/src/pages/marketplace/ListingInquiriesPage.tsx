@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { UserRole } from '@hena-wadeena/types';
 import { Link, useSearchParams } from 'react-router';
 import {
   Bell,
@@ -24,10 +25,17 @@ import {
   useMarkListingInquiryRead,
   useMarkListingInquiryReplied,
 } from '@/hooks/use-listing-inquiries';
+import { useAuth } from '@/hooks/use-auth';
 import { usePublicUsers } from '@/hooks/use-users';
 import { formatRelativeTime } from '@/lib/dates';
 
 type InquiryTab = 'received' | 'sent';
+const INQUIRY_RECEIVER_ROLES = new Set<UserRole>([
+  UserRole.MERCHANT,
+  UserRole.INVESTOR,
+  UserRole.RESIDENT,
+  UserRole.ADMIN,
+]);
 
 const statusConfig: Record<
   'pending' | 'read' | 'replied',
@@ -49,21 +57,27 @@ function InquiryListSkeleton() {
 }
 
 export default function ListingInquiriesPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get('focus');
   const tabFromUrl = searchParams.get('tab') === 'sent' ? 'sent' : 'received';
-  const [activeTab, setActiveTab] = useState<InquiryTab>(tabFromUrl);
+  const canReceiveInquiries = user !== null && INQUIRY_RECEIVER_ROLES.has(user.role);
+  const resolvedTabFromUrl: InquiryTab = canReceiveInquiries ? tabFromUrl : 'sent';
+  const [activeTab, setActiveTab] = useState<InquiryTab>(resolvedTabFromUrl);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const markedReadRef = useRef<string | null>(null);
   const inquiryLimit = focusId ? 100 : 20;
 
-  const receivedQuery = useListingInquiriesReceived({ limit: inquiryLimit });
+  const receivedQuery = useListingInquiriesReceived(
+    { limit: inquiryLimit },
+    { enabled: canReceiveInquiries },
+  );
   const sentQuery = useListingInquiriesSent({ limit: inquiryLimit });
   const markReadMutation = useMarkListingInquiryRead();
   const markRead = markReadMutation.mutate;
   const replyMutation = useMarkListingInquiryReplied();
 
-  const receivedData = receivedQuery.data?.data;
+  const receivedData = canReceiveInquiries ? receivedQuery.data?.data : undefined;
   const sentData = sentQuery.data?.data;
   const received = useMemo(() => receivedData ?? [], [receivedData]);
   const sent = useMemo(() => sentData ?? [], [sentData]);
@@ -79,10 +93,10 @@ export default function ListingInquiriesPage() {
   const publicUsers = publicUsersQuery.data ?? {};
 
   useEffect(() => {
-    if (tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
+    if (resolvedTabFromUrl !== activeTab) {
+      setActiveTab(resolvedTabFromUrl);
     }
-  }, [activeTab, tabFromUrl]);
+  }, [activeTab, resolvedTabFromUrl]);
 
   useEffect(() => {
     if (markedReadRef.current !== focusId) {
@@ -104,7 +118,8 @@ export default function ListingInquiriesPage() {
   }, [activeTab, focusId, markRead, received]);
 
   const handleTabChange = (value: string) => {
-    const nextTab: InquiryTab = value === 'sent' ? 'sent' : 'received';
+    const nextTab: InquiryTab =
+      value === 'sent' || !canReceiveInquiries ? 'sent' : 'received';
     setActiveTab(nextTab);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -154,7 +169,7 @@ export default function ListingInquiriesPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 md:w-[320px]">
+            <TabsList className={`grid w-full ${canReceiveInquiries ? 'grid-cols-2 md:w-[320px]' : 'grid-cols-1 md:w-[160px]'}`}>
               <TabsTrigger value="received">الوارد</TabsTrigger>
               <TabsTrigger value="sent">المرسل</TabsTrigger>
             </TabsList>

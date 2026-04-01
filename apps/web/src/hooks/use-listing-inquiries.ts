@@ -8,10 +8,11 @@ export function useListingInquiriesReceived(filters?: {
   status?: string;
   offset?: number;
   limit?: number;
-}) {
+}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.market.listingInquiriesReceived(filters),
     queryFn: () => listingInquiriesAPI.getReceived(filters),
+    enabled: options?.enabled ?? true,
   });
 }
 

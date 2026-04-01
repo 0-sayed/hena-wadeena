@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
+import { UserRole } from '@hena-wadeena/types';
 import type { ListingInquiry } from '@/services/api';
 
 import ListingInquiriesPage from '../ListingInquiriesPage';
@@ -9,6 +10,10 @@ type ListingInquiriesQueryResult = {
   data: { data: ListingInquiry[]; total: number } | undefined;
   isLoading: boolean;
   isError: boolean;
+};
+
+type ListingInquiriesQueryOptions = {
+  enabled?: boolean;
 };
 
 type MarkReadMutation = {
@@ -27,11 +32,13 @@ type PublicUsersResult = {
 
 const mockSearchParamsState = { value: new URLSearchParams() };
 const mockSetSearchParams = vi.fn();
-const mockUseListingInquiriesReceived = vi.fn<(filters: unknown) => ListingInquiriesQueryResult>();
+const mockUseListingInquiriesReceived =
+  vi.fn<(filters: unknown, options?: ListingInquiriesQueryOptions) => ListingInquiriesQueryResult>();
 const mockUseListingInquiriesSent = vi.fn<(filters: unknown) => ListingInquiriesQueryResult>();
 const mockUseMarkListingInquiryRead = vi.fn<() => MarkReadMutation>();
 const mockUseMarkListingInquiryReplied = vi.fn<() => ReplyMutation>();
 const mockUsePublicUsers = vi.fn<(ids: string[]) => PublicUsersResult>();
+const mockUseAuth = vi.fn<() => { user: { role: UserRole } | null }>();
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
@@ -116,7 +123,8 @@ vi.mock('@/components/ui/textarea', () => ({
 }));
 
 vi.mock('@/hooks/use-listing-inquiries', () => ({
-  useListingInquiriesReceived: (filters: unknown) => mockUseListingInquiriesReceived(filters),
+  useListingInquiriesReceived: (filters: unknown, options?: ListingInquiriesQueryOptions) =>
+    mockUseListingInquiriesReceived(filters, options),
   useListingInquiriesSent: (filters: unknown) => mockUseListingInquiriesSent(filters),
   useMarkListingInquiryRead: () => mockUseMarkListingInquiryRead(),
   useMarkListingInquiryReplied: () => mockUseMarkListingInquiryReplied(),
@@ -124,6 +132,10 @@ vi.mock('@/hooks/use-listing-inquiries', () => ({
 
 vi.mock('@/hooks/use-users', () => ({
   usePublicUsers: (ids: string[]) => mockUsePublicUsers(ids),
+}));
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('@/lib/dates', () => ({
@@ -158,6 +170,7 @@ describe('ListingInquiriesPage', () => {
     mockUseMarkListingInquiryRead.mockReset();
     mockUseMarkListingInquiryReplied.mockReset();
     mockUsePublicUsers.mockReset();
+    mockUseAuth.mockReset();
 
     mockUseListingInquiriesReceived.mockReturnValue({
       data: { data: [inquiry], total: 1 },
@@ -182,12 +195,18 @@ describe('ListingInquiriesPage', () => {
         'sender-1': { full_name: 'Interested Buyer' },
       },
     });
+    mockUseAuth.mockReturnValue({
+      user: { role: UserRole.MERCHANT },
+    });
   });
 
   it('requests a larger page size when opening a focused inquiry from notifications', () => {
     render(<ListingInquiriesPage />);
 
-    expect(mockUseListingInquiriesReceived).toHaveBeenCalledWith({ limit: 100 });
+    expect(mockUseListingInquiriesReceived).toHaveBeenCalledWith(
+      { limit: 100 },
+      { enabled: true },
+    );
     expect(mockUseListingInquiriesSent).toHaveBeenCalledWith({ limit: 100 });
   });
 
@@ -216,5 +235,19 @@ describe('ListingInquiriesPage', () => {
     await waitFor(() => {
       expect(mutate).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('skips the received query for users who cannot receive marketplace inquiries', () => {
+    mockUseAuth.mockReturnValue({
+      user: { role: UserRole.TOURIST },
+    });
+
+    render(<ListingInquiriesPage />);
+
+    expect(mockUseListingInquiriesReceived).toHaveBeenCalledWith(
+      { limit: 100 },
+      { enabled: false },
+    );
+    expect(mockUseListingInquiriesSent).toHaveBeenCalledWith({ limit: 100 });
   });
 });

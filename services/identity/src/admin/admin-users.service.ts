@@ -13,13 +13,25 @@ import { UsersService } from '../users/users.service';
 
 const PASSWORD_ALPHABET =
   'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+const MAX_UNBIASED_PASSWORD_BYTE = 256 - (256 % PASSWORD_ALPHABET.length);
 
 function generateRandomPassword(length = 12): string {
-  const bytes = randomBytes(length);
   let password = '';
 
-  for (const byte of bytes) {
-    password += PASSWORD_ALPHABET.charAt(byte % PASSWORD_ALPHABET.length);
+  while (password.length < length) {
+    const bytes = randomBytes(length - password.length);
+
+    for (const byte of bytes) {
+      if (byte >= MAX_UNBIASED_PASSWORD_BYTE) {
+        continue;
+      }
+
+      password += PASSWORD_ALPHABET.charAt(byte % PASSWORD_ALPHABET.length);
+
+      if (password.length === length) {
+        break;
+      }
+    }
   }
 
   return password;
