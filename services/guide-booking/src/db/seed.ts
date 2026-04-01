@@ -3,10 +3,21 @@ import postgres from 'postgres';
 
 import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils.js';
 
-import { attractions, bookings, guideReviews, guides, tourPackages } from './schema/index.js';
+import {
+  attractions,
+  bookings,
+  guideReviews,
+  guides,
+  tourPackageAttractions,
+  tourPackages,
+} from './schema/index.js';
 import { essentialAttractions, showcaseAttractions } from './seed-data/attractions.js';
 import { showcaseBookings } from './seed-data/bookings.js';
 import { essentialGuides, showcaseGuides } from './seed-data/guides.js';
+import {
+  essentialPackageAttractions,
+  showcasePackageAttractions,
+} from './seed-data/package-attractions.js';
 import { essentialPackages, showcasePackages } from './seed-data/packages.js';
 import { showcaseGuideReviews } from './seed-data/reviews.js';
 
@@ -224,11 +235,28 @@ async function main() {
     .onConflictDoNothing()
     .returning({ id: tourPackages.id });
 
+  // 4. Package-attraction links — essential always, showcase adds more
+  const allPackageAttractions =
+    layer === 'showcase'
+      ? [...essentialPackageAttractions, ...showcasePackageAttractions]
+      : essentialPackageAttractions;
+
+  await db
+    .insert(tourPackageAttractions)
+    .values(
+      allPackageAttractions.map((pa) => ({
+        packageId: pa.packageId,
+        attractionId: pa.attractionId,
+        sortOrder: pa.sortOrder,
+      })),
+    )
+    .onConflictDoNothing();
+
   let bookingCount = 0;
   let reviewCount = 0;
 
   if (layer === 'showcase') {
-    // 4. Bookings — showcase only
+    // 6. Bookings — showcase only
     const bookingResult = await db
       .insert(bookings)
       .values(
@@ -249,7 +277,7 @@ async function main() {
       .returning({ id: bookings.id });
     bookingCount = bookingResult.length;
 
-    // 5. Guide reviews — showcase only
+    // 7. Guide reviews — showcase only
     const reviewResult = await db
       .insert(guideReviews)
       .values(
@@ -274,6 +302,7 @@ async function main() {
     attractions: attractionResult.length,
     guides: guideResult.length,
     packages: packageResult.length,
+    packageAttractions: allPackageAttractions.length,
     ...(layer === 'showcase' && {
       bookings: bookingCount,
       reviews: reviewCount,
