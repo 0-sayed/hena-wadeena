@@ -33,7 +33,7 @@ export function useMarkListingInquiryRead() {
     mutationFn: (id: string) => listingInquiriesAPI.markRead(id),
     onSuccess: () => {
       toast.success('تم تحديث حالة الاستفسار');
-      void queryClient.invalidateQueries({ queryKey: ['market', 'listing-inquiries'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.market.listingInquiries() });
     },
     onError: () => toast.error('تعذر تحديث حالة الاستفسار'),
   });
@@ -47,7 +47,7 @@ export function useMarkListingInquiryReplied() {
       listingInquiriesAPI.reply(id, { message }),
     onSuccess: () => {
       toast.success('تم إرسال الرد وتحديث حالة الاستفسار');
-      void queryClient.invalidateQueries({ queryKey: ['market', 'listing-inquiries'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.market.listingInquiries() });
     },
     onError: () => toast.error('تعذر تحديث حالة الاستفسار'),
   });

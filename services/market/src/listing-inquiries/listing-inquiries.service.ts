@@ -183,7 +183,7 @@ export class ListingInquiriesService {
     return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
   }
 
-  async markRead(id: string, ownerId: string): Promise<ListingInquiry> {
+  async markRead(id: string, ownerId: string): Promise<ListingInquiryRecord> {
     const inquiry = await this.findInquiryForReceiver(id, ownerId);
     const now = inquiry.readAt ?? new Date();
 
@@ -195,13 +195,17 @@ export class ListingInquiriesService {
         updatedAt: new Date(),
       })
       .where(eq(listingInquiries.id, id))
-      .returning();
+      .returning({ id: listingInquiries.id });
 
     if (!updated) throw new NotFoundException('Listing inquiry not found');
-    return updated;
+    return this.findInquiryForReceiver(id, ownerId);
   }
 
-  async reply(id: string, ownerId: string, dto: ReplyListingInquiryDto): Promise<ListingInquiry> {
+  async reply(
+    id: string,
+    ownerId: string,
+    dto: ReplyListingInquiryDto,
+  ): Promise<ListingInquiryRecord> {
     const inquiry = await this.findInquiryForReceiver(id, ownerId);
     const now = new Date();
     const [updated] = await this.db
@@ -214,14 +218,14 @@ export class ListingInquiriesService {
         updatedAt: now,
       })
       .where(eq(listingInquiries.id, id))
-      .returning();
+      .returning({ id: listingInquiries.id });
 
     if (!updated) throw new NotFoundException('Listing inquiry not found');
 
     this.redisStreams
       .publish(EVENTS.LISTING_INQUIRY_REPLIED, {
         inquiryId: updated.id,
-        listingId: updated.listingId,
+        listingId: inquiry.listingId,
         senderId: inquiry.senderId,
         receiverId: ownerId,
         listingTitle: inquiry.listingTitle,
@@ -230,7 +234,7 @@ export class ListingInquiriesService {
         this.logger.error(`Failed to publish ${EVENTS.LISTING_INQUIRY_REPLIED}`, error);
       });
 
-    return updated;
+    return this.findInquiryForReceiver(id, ownerId);
   }
 
   private async findInquiryForReceiver(id: string, receiverId: string): Promise<ListingInquiryRecord> {

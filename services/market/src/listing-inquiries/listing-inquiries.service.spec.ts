@@ -133,13 +133,14 @@ describe('ListingInquiriesService', () => {
     };
 
     mockDb.limit.mockResolvedValueOnce([inquiryRecord]);
-    mockDb.returning.mockResolvedValueOnce([repliedInquiry]);
+    mockDb.returning.mockResolvedValueOnce([{ id: inquiryRecord.id }]);
+    mockDb.limit.mockResolvedValueOnce([repliedInquiry]);
 
     const result = await service.reply(inquiryRecord.id, mockListing.ownerId, {
       message: repliedInquiry.replyMessage,
     });
 
-    expect(result.replyMessage).toBe(repliedInquiry.replyMessage);
+    expect(result).toEqual(repliedInquiry);
     expect(mockRedisStreams.publish).toHaveBeenCalledWith(EVENTS.LISTING_INQUIRY_REPLIED, {
       inquiryId: inquiryRecord.id,
       listingId: mockListing.id,
@@ -147,6 +148,43 @@ describe('ListingInquiriesService', () => {
       receiverId: mockListing.ownerId,
       listingTitle: mockListing.titleAr,
     });
+  });
+
+  it('returns the full inquiry record when marking an inquiry as read', async () => {
+    const pendingInquiry = {
+      id: 'inquiry-uuid-001',
+      listingId: mockListing.id,
+      listingTitle: mockListing.titleAr,
+      listingOwnerId: mockListing.ownerId,
+      senderId: 'sender-uuid-001',
+      receiverId: mockListing.ownerId,
+      contactName: 'Test User',
+      contactEmail: 'user@example.com',
+      contactPhone: '01000000000',
+      message: 'Interested',
+      replyMessage: null,
+      status: 'pending',
+      readAt: null,
+      respondedAt: null,
+      createdAt: new Date('2026-04-01T09:00:00.000Z'),
+      updatedAt: new Date('2026-04-01T09:00:00.000Z'),
+    };
+    const readInquiry = {
+      ...pendingInquiry,
+      status: 'read',
+      readAt: new Date('2026-04-01T10:00:00.000Z'),
+      updatedAt: new Date('2026-04-01T10:00:00.000Z'),
+    };
+
+    mockDb.limit.mockResolvedValueOnce([pendingInquiry]);
+    mockDb.returning.mockResolvedValueOnce([{ id: pendingInquiry.id }]);
+    mockDb.limit.mockResolvedValueOnce([readInquiry]);
+
+    const result = await service.markRead(pendingInquiry.id, mockListing.ownerId);
+
+    expect(result).toEqual(readInquiry);
+    expect(result.listingTitle).toBe(mockListing.titleAr);
+    expect(result.listingOwnerId).toBe(mockListing.ownerId);
   });
 
   it('throws when trying to mark a missing inquiry as read', async () => {

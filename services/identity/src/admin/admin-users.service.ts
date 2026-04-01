@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
 import { Inject, Injectable } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { HashingService } from '../auth/hashing.service';
@@ -46,7 +46,12 @@ export class AdminUsersService {
           createdAt: auditEvents.createdAt,
         })
         .from(auditEvents)
-        .where(eq(auditEvents.userId, id))
+        .where(
+          or(
+            eq(auditEvents.userId, id),
+            sql`${auditEvents.metadata}->>'targetUserId' = ${id}`,
+          ),
+        )
         .orderBy(desc(auditEvents.createdAt))
         .limit(8),
     ]);

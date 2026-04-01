@@ -3,7 +3,7 @@
  * =============================================
  * Single source of truth for token state.
  * - Access token: localStorage
- * - Refresh token: localStorage + in-memory cache (persists session across browser restarts)
+ * - Refresh token: sessionStorage + in-memory cache
  */
 
 import { apiFetch, ApiError } from './api';
@@ -20,8 +20,8 @@ const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export function setTokens(accessToken: string, rt: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, rt);
-  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, rt);
   refreshToken = rt;
 }
 
@@ -32,11 +32,10 @@ export function getAccessToken(): string | null {
 export function getRefreshToken(): string | null {
   if (refreshToken) return refreshToken;
 
-  refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY) ?? sessionStorage.getItem(REFRESH_TOKEN_KEY);
+  refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
 
-  if (refreshToken) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+  if (!refreshToken && localStorage.getItem(REFRESH_TOKEN_KEY)) {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 
   return refreshToken;

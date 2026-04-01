@@ -155,6 +155,19 @@ describe('UsersService', () => {
     });
   });
 
+  describe('adminResetPassword', () => {
+    it('should not revoke sessions or write audit logs when no user is updated', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      await expect(
+        service.adminResetPassword('missing-user', 'admin-uuid', 'next-password-hash'),
+      ).rejects.toThrow();
+
+      expect(mockSessionService.revokeAllUserSessions).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+  });
+
   describe('softDelete', () => {
     it('should set deletedAt on user', async () => {
       mockDb.limit.mockResolvedValueOnce([mockUser]); // findByIdOrThrow

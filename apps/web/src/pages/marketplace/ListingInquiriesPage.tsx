@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
   Bell,
@@ -54,10 +54,13 @@ export default function ListingInquiriesPage() {
   const tabFromUrl = searchParams.get('tab') === 'sent' ? 'sent' : 'received';
   const [activeTab, setActiveTab] = useState<InquiryTab>(tabFromUrl);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const markedReadRef = useRef<string | null>(null);
+  const inquiryLimit = focusId ? 100 : 20;
 
-  const receivedQuery = useListingInquiriesReceived({ limit: 20 });
-  const sentQuery = useListingInquiriesSent({ limit: 20 });
+  const receivedQuery = useListingInquiriesReceived({ limit: inquiryLimit });
+  const sentQuery = useListingInquiriesSent({ limit: inquiryLimit });
   const markReadMutation = useMarkListingInquiryRead();
+  const markRead = markReadMutation.mutate;
   const replyMutation = useMarkListingInquiryReplied();
 
   const receivedData = receivedQuery.data?.data;
@@ -82,11 +85,23 @@ export default function ListingInquiriesPage() {
   }, [activeTab, tabFromUrl]);
 
   useEffect(() => {
-    if (activeTab !== 'received' || !focusId) return;
+    if (markedReadRef.current !== focusId) {
+      markedReadRef.current = null;
+    }
+  }, [focusId]);
+
+  useEffect(() => {
+    if (activeTab !== 'received') {
+      markedReadRef.current = null;
+      return;
+    }
+
+    if (!focusId || markedReadRef.current === focusId) return;
     const focusedInquiry = received.find((inquiry) => inquiry.id === focusId);
-    if (!focusedInquiry || focusedInquiry.status !== 'pending' || markReadMutation.isPending) return;
-    markReadMutation.mutate(focusId);
-  }, [activeTab, focusId, markReadMutation, received]);
+    if (!focusedInquiry || focusedInquiry.status !== 'pending') return;
+    markedReadRef.current = focusId;
+    markRead(focusId);
+  }, [activeTab, focusId, markRead, received]);
 
   const handleTabChange = (value: string) => {
     const nextTab: InquiryTab = value === 'sent' ? 'sent' : 'received';

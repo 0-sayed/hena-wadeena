@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { authAPI } from '@/services/api';
@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [languagePreference, setLanguagePreference] = useState<'ar' | 'en'>(getStoredLanguage);
+  const languageRequestIdRef = useRef(0);
   const navigate = useNavigate();
 
   // Hydrate from localStorage on mount, then validate with server
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    languageRequestIdRef.current += 1;
     const rt = authManager.getRefreshToken();
     void authAPI.logout(rt ?? undefined).catch(() => undefined);
     authManager.clearTokens();
@@ -105,12 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setLanguage = useCallback(
     async (nextLanguage: 'ar' | 'en') => {
       const normalizedLanguage = normalizeLanguage(nextLanguage);
+      const previousLanguage = normalizeLanguage(user?.language ?? languagePreference);
 
       if (user?.language === normalizedLanguage) {
         setLanguagePreference(normalizedLanguage);
         return;
       }
 
+      const requestId = languageRequestIdRef.current + 1;
+      languageRequestIdRef.current = requestId;
       setLanguagePreference(normalizedLanguage);
 
       if (!user) {
@@ -122,13 +127,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const updatedUser = await authAPI.updateMe({ language: normalizedLanguage });
+        if (languageRequestIdRef.current !== requestId) {
+          return;
+        }
         setUser(updatedUser);
+        setLanguagePreference(normalizeLanguage(updatedUser.language));
       } catch (error) {
+        if (languageRequestIdRef.current !== requestId) {
+          return;
+        }
         setUser(previousUser);
+        setLanguagePreference(previousLanguage);
         throw error;
       }
     },
-    [user],
+    [languagePreference, user],
   );
 
   const language = normalizeLanguage(user?.language ?? languagePreference);
