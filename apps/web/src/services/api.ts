@@ -5,7 +5,13 @@
  * Currently points to mock-server; switch BASE_URL for production.
  */
 
-import { UserRole } from '@hena-wadeena/types';
+import {
+  CommodityCategory,
+  CommodityUnit,
+  NvDistrict,
+  PriceType,
+  UserRole,
+} from '@hena-wadeena/types';
 import type {
   PaginatedResponse,
   NotificationListResponse,
@@ -99,13 +105,50 @@ export interface RegisterRequest {
 export interface AuthUser {
   id: string;
   email: string;
-  phone: string;
+  phone: string | null;
   full_name: string;
-  display_name?: string;
-  avatar_url?: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
   role: UserRole;
   status: string;
   language: string;
+}
+
+interface AuthUserResponse {
+  id: string;
+  email: string;
+  phone?: string | null;
+  full_name?: string;
+  fullName?: string;
+  display_name?: string | null;
+  displayName?: string | null;
+  avatar_url?: string | null;
+  avatarUrl?: string | null;
+  role: UserRole | string;
+  status?: string;
+  language?: string;
+}
+
+function normalizeAuthUser(user: AuthUserResponse): AuthUser {
+  return {
+    id: user.id,
+    email: user.email,
+    phone: user.phone ?? null,
+    full_name: user.full_name ?? user.fullName ?? '',
+    display_name: user.display_name ?? user.displayName ?? null,
+    avatar_url: user.avatar_url ?? user.avatarUrl ?? null,
+    role: user.role as UserRole,
+    status: user.status ?? 'active',
+    language: user.language ?? 'ar',
+  };
+}
+
+interface AuthTokensResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: AuthUserResponse;
 }
 
 export interface AuthTokens {
@@ -123,18 +166,31 @@ export interface AuthRefreshTokens {
   expires_in: number;
 }
 
-export const authAPI = {
-  login: (body: LoginRequest) =>
-    apiFetch<AuthTokens>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+export interface UpdateProfileRequest {
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  display_name?: string;
+  avatar_url?: string;
+  language?: 'ar' | 'en';
+}
 
-  register: (body: RegisterRequest) =>
-    apiFetch<AuthTokens>('/auth/register', {
+export const authAPI = {
+  login: async (body: LoginRequest) => {
+    const response = await apiFetch<AuthTokensResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(body),
-    }),
+    });
+    return { ...response, user: normalizeAuthUser(response.user) } satisfies AuthTokens;
+  },
+
+  register: async (body: RegisterRequest) => {
+    const response = await apiFetch<AuthTokensResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return { ...response, user: normalizeAuthUser(response.user) } satisfies AuthTokens;
+  },
 
   refresh: (body: { refresh_token: string }) =>
     apiFetch<AuthRefreshTokens>('/auth/refresh', {
@@ -142,7 +198,15 @@ export const authAPI = {
       body: JSON.stringify(body),
     }),
 
-  getMe: () => apiFetch<AuthUser>('/auth/me'),
+  getMe: async () => normalizeAuthUser(await apiFetch<AuthUserResponse>('/auth/me')),
+
+  updateMe: async (body: UpdateProfileRequest) =>
+    normalizeAuthUser(
+      await apiFetchWithRefresh<AuthUserResponse>('/auth/me', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    ),
 
   logout: (refresh_token?: string) =>
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
@@ -285,6 +349,50 @@ export interface PriceSummaryResponse {
   }>;
 }
 
+export interface Commodity {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: CommodityCategory;
+  unit: CommodityUnit;
+  iconUrl: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommodityLatestPrice {
+  id: string;
+  price: number;
+  price_type: PriceType;
+  region: NvDistrict;
+  recorded_at: string;
+}
+
+export interface CommodityDetail extends Commodity {
+  latestPricesByRegion: CommodityLatestPrice[];
+}
+
+export interface CommodityUpsertRequest {
+  nameAr: string;
+  nameEn?: string;
+  category: CommodityCategory;
+  unit: CommodityUnit;
+  iconUrl?: string;
+  sortOrder?: number;
+}
+
+export interface CommodityPriceUpsertRequest {
+  commodityId: string;
+  price: number;
+  priceType: PriceType;
+  region: NvDistrict;
+  source?: string;
+  notes?: string;
+  recordedAt: string;
+}
+
 // ── Market: Business Directory ───────────────────────────────────────────
 
 export interface LinkedCommodity {
@@ -329,6 +437,43 @@ export const priceIndexAPI = {
   }) => apiFetch<PaginatedResponse<PriceIndexEntry>>(`/price-index${toQueryString(params)}`),
 
   getSummary: () => apiFetch<PriceSummaryResponse>('/price-index/summary'),
+};
+
+export const commoditiesAPI = {
+  getAll: (params?: { category?: CommodityCategory }) =>
+    apiFetch<Commodity[]>(`/commodities${toQueryString(params)}`),
+  getById: (id: string) => apiFetch<CommodityDetail>(`/commodities/${id}`),
+  create: (body: CommodityUpsertRequest) =>
+    apiFetchWithRefresh<Commodity>('/commodities', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<CommodityUpsertRequest>) =>
+    apiFetchWithRefresh<Commodity>(`/commodities/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  deactivate: (id: string) =>
+    apiFetchWithRefresh<Commodity>(`/commodities/${id}/deactivate`, {
+      method: 'PATCH',
+    }),
+};
+
+export const commodityPricesAPI = {
+  create: (body: CommodityPriceUpsertRequest) =>
+    apiFetchWithRefresh<Record<string, unknown>>('/commodity-prices', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<Omit<CommodityPriceUpsertRequest, 'commodityId'>>) =>
+    apiFetchWithRefresh<Record<string, unknown>>(`/commodity-prices/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    apiFetchWithRefresh<void>(`/commodity-prices/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // ── Businesses ────────────────────────────────────────────────────────────
@@ -396,16 +541,54 @@ export interface Listing {
   subCategory: string | null;
   price: number;
   priceUnit: string;
+  priceRange: string | null;
+  areaSqm: number | null;
+  location: { x: number; y: number } | null;
   district: string | null;
   address: string | null;
+  images: string[] | null;
+  features: Record<string, unknown> | null;
+  amenities: string[] | null;
+  tags: string[] | null;
+  contact: Record<string, unknown> | null;
+  openingHours: string | null;
   slug: string;
   status: string;
   isVerified: boolean;
   isFeatured: boolean;
+  isPublished: boolean;
+  featuredUntil: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
   ratingAvg: number | null;
+  reviewCount: number;
   viewsCount: number;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface ListingUpsertRequest {
+  listingType: 'business' | 'real_estate' | 'land';
+  transaction: 'sale' | 'rent';
+  titleAr: string;
+  titleEn?: string;
+  description?: string;
+  category: string;
+  subCategory?: string;
+  price: number;
+  priceUnit?: string;
+  priceRange?: string;
+  areaSqm?: number;
+  location?: { lat: number; lng: number };
+  address?: string;
+  district?: string;
+  images?: string[];
+  features?: Record<string, unknown>;
+  amenities?: string[];
+  tags?: string[];
+  contact?: Record<string, unknown>;
+  openingHours?: string;
 }
 
 export const listingsAPI = {
@@ -424,24 +607,57 @@ export const listingsAPI = {
       hasMore: boolean;
     }>(`/listings${query ? `?${query}` : ''}`);
   },
+  getById: (id: string) => apiFetch<Listing>(`/listings/${id}`),
+  getMine: () => apiFetchWithRefresh<Listing[]>('/listings/mine'),
+  create: (body: ListingUpsertRequest) =>
+    apiFetchWithRefresh<Listing>('/listings', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<ListingUpsertRequest>) =>
+    apiFetchWithRefresh<Listing>(`/listings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    apiFetchWithRefresh<void>(`/listings/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // ── Investment ──────────────────────────────────────────────────────────────
 
 export interface Opportunity {
   id: string;
+  ownerId?: string;
   titleAr: string;
   titleEn: string | null;
+  description?: string | null;
   sector: string;
   area: string;
+  location?: { x: number; y: number } | null;
+  landAreaSqm?: number | null;
   minInvestment: number;
   maxInvestment: number;
   currency: string;
   expectedReturnPct: number;
   paybackPeriodYears: number;
   incentives: string[];
+  contact?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+  } | null;
+  documents?: string[] | null;
   status: string;
   images: string[];
+  interestCount?: number;
+  isVerified?: boolean;
+  isFeatured?: boolean;
+  expiresAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Startup {
@@ -462,7 +678,48 @@ export const investmentAPI = {
 
   getOpportunity: (id: string) => apiFetchWithRefresh<Opportunity>(`/investments/${id}`),
 
+  getMine: () => apiFetchWithRefresh<Opportunity[]>('/investments/mine'),
+
   getStartups: () => apiFetchWithRefresh<PaginatedResponse<Startup>>('/businesses?type=startup'),
+};
+
+export interface InvestmentApplication {
+  id: string;
+  opportunityId: string;
+  investorId: string;
+  amountProposed: number | null;
+  message: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  documents: string[] | null;
+  status: 'pending' | 'reviewed' | 'accepted' | 'rejected' | 'withdrawn';
+  createdAt: string;
+}
+
+export interface SubmitInvestmentInterestRequest {
+  message?: string;
+  contactEmail: string;
+  contactPhone?: string;
+  amountProposed?: number;
+}
+
+export const investmentApplicationsAPI = {
+  submitInterest: (opportunityId: string, body: SubmitInvestmentInterestRequest) =>
+    apiFetchWithRefresh<InvestmentApplication>(`/investments/${opportunityId}/interest`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  getMine: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<InvestmentApplication>>(
+      `/investments/mine/interests${toQueryString(params)}`,
+    ),
+  getByOpportunity: (
+    opportunityId: string,
+    params?: { status?: string; offset?: number; limit?: number },
+  ) =>
+    apiFetchWithRefresh<PaginatedResponse<InvestmentApplication>>(
+      `/investments/${opportunityId}/interests${toQueryString(params)}`,
+    ),
 };
 
 // ── Guides ──────────────────────────────────────────────────────────────────
@@ -504,6 +761,18 @@ export interface GuideDetail {
   reviewCount: number;
 }
 
+export interface MyGuideProfileRequest {
+  licenseNumber: string;
+  basePrice: number;
+  bioAr?: string;
+  bioEn?: string;
+  languages?: string[];
+  specialties?: string[];
+  profileImage?: string;
+  coverImage?: string;
+  areasOfOperation?: string[];
+}
+
 export interface GuideFilters {
   language?: string;
   specialty?: string;
@@ -525,6 +794,20 @@ export const guidesAPI = {
     apiFetch<PaginatedResponse<GuidePackageListItem>>(
       `/guides/${guideId}/packages${toQueryString(params)}`,
     ),
+};
+
+export const myGuideAPI = {
+  get: () => apiFetchWithRefresh<GuideDetail>('/my/guide-profile'),
+  create: (body: MyGuideProfileRequest) =>
+    apiFetchWithRefresh<GuideDetail>('/my/guide-profile', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (body: Partial<MyGuideProfileRequest>) =>
+    apiFetchWithRefresh<GuideDetail>('/my/guide-profile', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
 };
 
 // ── Tour Packages ───────────────────────────────────────────────────────────
@@ -597,6 +880,39 @@ export const packagesAPI = {
   getAll: (filters?: PackageFilters) =>
     apiFetch<PaginatedResponse<TourPackageListItem>>(`/packages${toQueryString(filters)}`),
   getById: (id: string) => apiFetch<TourPackageDetail>(`/packages/${id}`),
+};
+
+export interface MyPackageUpsertRequest {
+  titleAr: string;
+  titleEn?: string;
+  description?: string;
+  durationHours: number;
+  maxPeople: number;
+  price: number;
+  includes?: string[];
+  images?: string[];
+  attractionIds?: string[];
+}
+
+export const myPackagesAPI = {
+  getAll: (params?: { status?: 'active' | 'inactive'; page?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<GuidePackageListItem>>(
+      `/my/packages${toQueryString(params)}`,
+    ),
+  create: (body: MyPackageUpsertRequest) =>
+    apiFetchWithRefresh<GuidePackageListItem>('/my/packages', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<MyPackageUpsertRequest>) =>
+    apiFetchWithRefresh<GuidePackageListItem>(`/my/packages/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    apiFetchWithRefresh<void>(`/my/packages/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // ── Bookings ───────────────────────────────────────────────────────────────
@@ -701,12 +1017,22 @@ export interface Transaction {
 }
 
 export const paymentsAPI = {
-  getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/payments/wallet'),
-  topup: (body: { amount: number; method?: string }) =>
-    apiFetchWithRefresh<{ success: boolean; message: string; data: { new_balance: number } }>(
-      '/payments/wallet/topup',
-      { method: 'POST', body: JSON.stringify(body) },
-    ),
+  getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/wallet'),
+  topUp: (amount: number) =>
+    apiFetchWithRefresh<{ success: boolean; data: { balance: number } }>('/wallet/topup', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    }),
+  deduct: (data: {
+    amount: number;
+    description?: string;
+    reference_id?: string;
+    reference_type?: string;
+  }) =>
+    apiFetchWithRefresh<{ success: boolean; data: { balance: number } }>('/wallet/deduct', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   getTransactions: () =>
     apiFetchWithRefresh<{ success: boolean; data: Transaction[] }>('/payments/transactions'),
 };
@@ -738,7 +1064,7 @@ export const notificationsAPI = {
 export const searchAPI = {
   search: (q: string, type?: SearchResultType) =>
     apiFetchWithRefresh<UnifiedSearchResponse>(
-      `/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`,
+      `/search?q=${encodeURIComponent(q.trim())}${type ? `&type=${type}` : ''}`,
     ),
 };
 
@@ -881,6 +1207,12 @@ export const mapAPI = {
 
   cancelRide: (id: string) =>
     apiFetchWithRefresh<CarpoolRide>(`/carpool/${id}/cancel`, { method: 'PATCH' }),
+
+  activateRide: (id: string) =>
+    apiFetchWithRefresh<CarpoolRide>(`/carpool/${id}/activate`, { method: 'PATCH' }),
+
+  deleteRide: (id: string) =>
+    apiFetchWithRefresh<{ deleted: true; id: string }>(`/carpool/${id}`, { method: 'DELETE' }),
 
   confirmPassenger: (rideId: string, passengerId: string) =>
     apiFetchWithRefresh<CarpoolPassenger>(`/carpool/${rideId}/passengers/${passengerId}/confirm`, {

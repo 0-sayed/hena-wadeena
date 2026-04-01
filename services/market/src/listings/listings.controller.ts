@@ -50,6 +50,12 @@ export class ListingsController {
     return this.listingsService.findFeatured(query);
   }
 
+  @Get('mine')
+  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
+  findMine(@CurrentUser() user: JwtPayload) {
+    return this.listingsService.findMine(user.sub);
+  }
+
   @Get('nearby')
   @Public()
   findNearby(@Query() query: NearbyQueryDto) {

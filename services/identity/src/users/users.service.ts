@@ -9,12 +9,14 @@ import {
 import { EVENTS, UserStatus } from '@hena-wadeena/types';
 import type { EventName, PaginatedResponse } from '@hena-wadeena/types';
 import {
+  BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { asc, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, isNull, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -22,6 +24,16 @@ import { auditEvents, users } from '../db/schema/index';
 import { SessionService } from '../session/session.service';
 
 type AuditEventType = typeof auditEvents.$inferInsert.eventType;
+const PG_UNIQUE_VIOLATION = '23505';
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === PG_UNIQUE_VIOLATION
+  );
+}
 
 @Injectable()
 export class UsersService {
@@ -36,6 +48,15 @@ export class UsersService {
       .select()
       .from(users)
       .where(andRequired(eq(users.email, email), isNull(users.deletedAt)))
+      .limit(1);
+    return user ?? null;
+  }
+
+  async findByPhone(phone: string): Promise<typeof users.$inferSelect | null> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(andRequired(eq(users.phone, phone), isNull(users.deletedAt)))
       .limit(1);
     return user ?? null;
   }
@@ -101,14 +122,50 @@ export class UsersService {
 
   async updateProfile(
     id: string,
-    data: { displayName?: string; avatarUrl?: string; language?: string },
+    data: {
+      fullName?: string;
+      email?: string;
+      phone?: string;
+      displayName?: string;
+      avatarUrl?: string;
+      language?: string;
+    },
   ) {
-    const [user] = await this.db
-      .update(users)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user ?? null;
+    if (data.email !== undefined) {
+      const existingByEmail = await this.findByEmail(data.email);
+      if (existingByEmail && existingByEmail.id !== id) {
+        throw new ConflictException('Email already registered');
+      }
+    }
+
+    if (data.phone !== undefined) {
+      const existingByPhone = await this.findByPhone(data.phone);
+      if (existingByPhone && existingByPhone.id !== id) {
+        throw new ConflictException('Phone already registered');
+      }
+    }
+
+    try {
+      const [user] = await this.db
+        .update(users)
+        .set({
+          ...(data.fullName !== undefined && { fullName: data.fullName }),
+          ...(data.email !== undefined && { email: data.email }),
+          ...(data.phone !== undefined && { phone: data.phone }),
+          ...(data.displayName !== undefined && { displayName: data.displayName }),
+          ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+          ...(data.language !== undefined && { language: data.language }),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+      return user ?? null;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Email or phone already registered');
+      }
+      throw error;
+    }
   }
 
   async updateLastLogin(id: string) {
@@ -257,6 +314,43 @@ export class UsersService {
       default:
         return desc(users.createdAt);
     }
+  }
+
+  async getBalance(userId: string): Promise<number> {
+    const user = await this.findByIdOrThrow(userId);
+    return user.balancePiasters;
+  }
+
+  async topUp(userId: string, amount: number): Promise<number> {
+    const [updated] = await this.db
+      .update(users)
+      .set({
+        balancePiasters: sql`${users.balancePiasters} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .returning({ balancePiasters: users.balancePiasters });
+
+    if (!updated) {
+      throw new NotFoundException('User not found');
+    }
+    return updated.balancePiasters;
+  }
+
+  async deduct(userId: string, amount: number): Promise<number> {
+    const [updated] = await this.db
+      .update(users)
+      .set({
+        balancePiasters: sql`${users.balancePiasters} - ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt), gte(users.balancePiasters, amount)))
+      .returning({ balancePiasters: users.balancePiasters });
+
+    if (!updated) {
+      throw new BadRequestException('رصيد المحفظة غير كافٍ أو المستخدم غير موجود');
+    }
+    return updated.balancePiasters;
   }
 
   private async recordAudit(

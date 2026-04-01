@@ -4,6 +4,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -19,8 +20,8 @@ import { BookingFiltersDto, CancelBookingDto } from './dto';
 @Controller('bookings')
 export class MyBookingsController {
   constructor(
-    private readonly bookingsService: BookingsService,
-    private readonly guidesService: GuidesService,
+    @Inject(BookingsService) private readonly bookingsService: BookingsService,
+    @Inject(GuidesService) private readonly guidesService: GuidesService,
   ) {}
 
   private async resolveCaller(user: JwtPayload) {

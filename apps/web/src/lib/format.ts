@@ -1,4 +1,4 @@
-import type { NvDistrict, CommodityCategory, CommodityUnit } from '@hena-wadeena/types';
+import type { CommodityCategory, CommodityUnit, NvDistrict, PriceType } from '@hena-wadeena/types';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 export { piastresToEgp } from '@hena-wadeena/types';
 
@@ -77,6 +77,16 @@ export const unitLabels: Record<CommodityUnit, string> = {
 
 export function unitLabel(unit: string): string {
   return unitLabels[unit as CommodityUnit] ?? unit;
+}
+
+export const priceTypeLabels: Record<PriceType, string> = {
+  retail: 'تجزئة',
+  wholesale: 'جملة',
+  farm_gate: 'بوابة المزرعة',
+};
+
+export function priceTypeLabel(type: string): string {
+  return priceTypeLabels[type as PriceType] ?? type;
 }
 
 export type AttractionType = 'attraction' | 'historical' | 'natural' | 'festival' | 'adventure';

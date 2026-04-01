@@ -46,7 +46,7 @@ export class ReviewsService {
 
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
-    private readonly redisStreams: RedisStreamsService,
+    @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
   ) {}
 
   /**

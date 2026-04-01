@@ -21,6 +21,12 @@ import { QueryApplicationsDto } from './dto/query-applications.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { InvestmentApplicationsService } from './investment-applications.service';
 
+const userRoles = new Set<string>(Object.values(UserRole));
+
+function isUserRole(value: string): value is UserRole {
+  return userRoles.has(value);
+}
+
 @Controller()
 export class InvestmentApplicationsController {
   constructor(
@@ -49,8 +55,15 @@ export class InvestmentApplicationsController {
   }
 
   @Get('investments/:id/interests')
-  @Roles(UserRole.ADMIN)
-  findByOpportunity(@Param('id') opportunityId: string, @Query() query: QueryApplicationsDto) {
+  @Roles(UserRole.ADMIN, UserRole.INVESTOR, UserRole.MERCHANT)
+  async findByOpportunity(
+    @Param('id') opportunityId: string,
+    @Query() query: QueryApplicationsDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (!isUserRole(user.role) || user.role !== UserRole.ADMIN) {
+      await this.opportunitiesService.assertOwnership(opportunityId, user.sub);
+    }
     return this.applicationsService.findByOpportunity(opportunityId, query);
   }
 

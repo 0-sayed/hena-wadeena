@@ -1,6 +1,6 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { type SQL, sql } from 'drizzle-orm';
-import { index, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { userRoleEnum, userStatusEnum } from '../enums';
 import { identitySchema } from '../schema';
@@ -20,6 +20,7 @@ export const users = identitySchema.table(
     role: userRoleEnum().default('tourist').notNull(),
     status: userStatusEnum().default('active').notNull(),
     language: text().default('ar').notNull(),
+    balancePiasters: integer('balance_piasters').default(0).notNull(),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

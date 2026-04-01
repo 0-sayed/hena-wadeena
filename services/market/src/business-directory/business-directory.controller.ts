@@ -33,7 +33,7 @@ export class BusinessDirectoryController {
   }
 
   @Get('pending')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.REVIEWER)
   findPending(@Query() query: QueryBusinessesDto) {
     return this.service.findPending(query);
   }
@@ -57,7 +57,7 @@ export class BusinessDirectoryController {
   }
 
   @Patch(':id/verify')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.REVIEWER)
   verify(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: VerifyBusinessDto,

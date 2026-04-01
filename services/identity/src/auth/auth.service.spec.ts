@@ -26,6 +26,7 @@ const mockUser = {
   updatedAt: new Date(),
   deletedAt: null,
   searchVector: null,
+  balancePiasters: 0,
 };
 
 describe('AuthService', () => {
