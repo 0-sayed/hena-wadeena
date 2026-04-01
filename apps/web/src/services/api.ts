@@ -5,7 +5,13 @@
  * Currently points to mock-server; switch BASE_URL for production.
  */
 
-import { CommodityCategory, CommodityUnit, NvDistrict, PriceType, UserRole } from '@hena-wadeena/types';
+import {
+  CommodityCategory,
+  CommodityUnit,
+  NvDistrict,
+  PriceType,
+  UserRole,
+} from '@hena-wadeena/types';
 import type {
   PaginatedResponse,
   NotificationListResponse,
@@ -707,7 +713,10 @@ export const investmentApplicationsAPI = {
     apiFetchWithRefresh<PaginatedResponse<InvestmentApplication>>(
       `/investments/mine/interests${toQueryString(params)}`,
     ),
-  getByOpportunity: (opportunityId: string, params?: { status?: string; offset?: number; limit?: number }) =>
+  getByOpportunity: (
+    opportunityId: string,
+    params?: { status?: string; offset?: number; limit?: number },
+  ) =>
     apiFetchWithRefresh<PaginatedResponse<InvestmentApplication>>(
       `/investments/${opportunityId}/interests${toQueryString(params)}`,
     ),
@@ -1008,12 +1017,22 @@ export interface Transaction {
 }
 
 export const paymentsAPI = {
-  getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/payments/wallet'),
-  topup: (body: { amount: number; method?: string }) =>
-    apiFetchWithRefresh<{ success: boolean; message: string; data: { new_balance: number } }>(
-      '/payments/wallet/topup',
-      { method: 'POST', body: JSON.stringify(body) },
-    ),
+  getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/wallet'),
+  topUp: (amount: number) =>
+    apiFetchWithRefresh<{ success: boolean; data: { balance: number } }>('/wallet/topup', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    }),
+  deduct: (data: {
+    amount: number;
+    description?: string;
+    reference_id?: string;
+    reference_type?: string;
+  }) =>
+    apiFetchWithRefresh<{ success: boolean; data: { balance: number } }>('/wallet/deduct', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   getTransactions: () =>
     apiFetchWithRefresh<{ success: boolean; data: Transaction[] }>('/payments/transactions'),
 };

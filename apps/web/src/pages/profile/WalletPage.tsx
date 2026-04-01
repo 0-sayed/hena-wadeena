@@ -22,7 +22,7 @@ const WalletPage = () => {
   const [showTopup, setShowTopup] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const refreshWallet = useCallback(() => {
+  const refreshWallet = useCallback(async () => {
     if (!user) {
       setWallet(null);
       setTransactions([]);
@@ -30,17 +30,22 @@ const WalletPage = () => {
       return;
     }
 
-    const snapshot = getWalletSnapshot(user.id);
-    setWallet(snapshot.wallet);
-    setTransactions(snapshot.transactions);
-    setLoading(false);
+    try {
+      const snapshot = await getWalletSnapshot(user.id);
+      setWallet(snapshot.wallet);
+      setTransactions(snapshot.transactions);
+    } catch {
+      // Keep current state on error
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
-    refreshWallet();
+    void refreshWallet();
   }, [refreshWallet]);
 
-  const handleTopup = () => {
+  const handleTopup = async () => {
     if (!user) return;
 
     const amountPiasters = parseEgpInputToPiasters(topupAmount);
@@ -49,8 +54,9 @@ const WalletPage = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const snapshot = topUpWallet(user.id, amountPiasters);
+      const snapshot = await topUpWallet(user.id, amountPiasters);
       setWallet(snapshot.wallet);
       setTransactions(snapshot.transactions);
       setShowTopup(false);
@@ -58,6 +64,8 @@ const WalletPage = () => {
       toast.success('تم شحن المحفظة بنجاح');
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'تعذر شحن المحفظة');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,7 +146,7 @@ const WalletPage = () => {
                     />
                     <div className="flex gap-3">
                       <Button
-                        onClick={handleTopup}
+                        onClick={() => void handleTopup()}
                         className="flex-1 h-12 rounded-xl hover:scale-[1.02] transition-transform"
                       >
                         <CreditCard className="h-5 w-5 ml-2" />

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
   AlertCircle,
@@ -47,14 +47,27 @@ const GuideBookingPage = () => {
   const [peopleCount, setPeopleCount] = useState(1);
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const isProcessingRef = useRef(false);
+
+  useEffect(() => {
+    if (!user) return;
+    void (async () => {
+      try {
+        const snapshot = await getWalletSnapshot(user.id);
+        setWalletBalance(snapshot.wallet.balance);
+      } catch {
+        setWalletBalance(0);
+      }
+    })();
+  }, [user]);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
 
   const totalPrice = pkg ? pkg.price * peopleCount : 0;
-  const walletBalance = user ? getWalletSnapshot(user.id).wallet.balance : 0;
   const canSubmit = bookingDate && startTime && peopleCount >= 1;
   const canAfford = walletBalance >= totalPrice;
 
@@ -72,7 +85,7 @@ const GuideBookingPage = () => {
     setShowConfirm(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (isProcessingRef.current) return;
     if (!pkg || !user) return;
 
@@ -84,14 +97,16 @@ const GuideBookingPage = () => {
     }
 
     isProcessingRef.current = true;
+    setWalletLoading(true);
 
     try {
-      deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
+      await deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
         reference_id: pkg.id,
         reference_type: 'package_booking',
       });
     } catch (walletError: unknown) {
       isProcessingRef.current = false;
+      setWalletLoading(false);
       toast.error(walletError instanceof Error ? walletError.message : 'تعذر تحديث رصيد المحفظة');
       setShowConfirm(false);
       return;
@@ -108,36 +123,33 @@ const GuideBookingPage = () => {
       {
         onSuccess: () => {
           isProcessingRef.current = false;
+          setWalletLoading(false);
           toast.success('تم تأكيد الحجز وخصم قيمة الباقة من المحفظة بنجاح');
           setShowConfirm(false);
           void navigate('/bookings');
         },
         onError: (err) => {
           isProcessingRef.current = false;
-          let refundSucceeded = false;
-          try {
-            topUpWallet(user.id, totalPrice, `استرداد حجز باقة سياحية: ${pkg.titleAr}`, {
-              reference_id: pkg.id,
-              reference_type: 'package_booking_refund',
+          void topUpWallet(user.id, totalPrice, `استرداد حجز باقة سياحية: ${pkg.titleAr}`, {
+            reference_id: pkg.id,
+            reference_type: 'package_booking_refund',
+          })
+            .then(() => {
+              setWalletLoading(false);
+              toast.error(
+                err instanceof Error
+                  ? `${err.message}. تم استرداد المبلغ للمحفظة.`
+                  : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
+              );
+            })
+            .catch(() => {
+              setWalletLoading(false);
+              toast.error(
+                err instanceof Error
+                  ? `${err.message}. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.`
+                  : 'فشل إنشاء الحجز. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.',
+              );
             });
-            refundSucceeded = true;
-          } catch {
-            // Refund failed - will show appropriate message below.
-          }
-
-          if (refundSucceeded) {
-            toast.error(
-              err instanceof Error
-                ? `${err.message}. تم استرداد المبلغ للمحفظة.`
-                : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
-            );
-          } else {
-            toast.error(
-              err instanceof Error
-                ? `${err.message}. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.`
-                : 'فشل إنشاء الحجز. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.',
-            );
-          }
           setShowConfirm(false);
         },
       },
@@ -411,8 +423,13 @@ const GuideBookingPage = () => {
             >
               تعديل
             </Button>
-            <Button onClick={handleConfirm} disabled={createBooking.isPending}>
-              {createBooking.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+            <Button
+              onClick={() => void handleConfirm()}
+              disabled={createBooking.isPending || walletLoading}
+            >
+              {(createBooking.isPending || walletLoading) && (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              )}
               تأكيد الحجز
             </Button>
           </DialogFooter>

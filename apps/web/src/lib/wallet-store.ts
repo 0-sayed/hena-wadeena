@@ -1,64 +1,58 @@
+import { paymentsAPI } from '@/services/api';
 import type { Transaction, Wallet } from '@/services/api';
 
 const STORAGE_PREFIX = 'hena-wadeena:wallet';
-const DEFAULT_TOP_UP_DESCRIPTION = '\u0634\u062d\u0646 \u0627\u0644\u0645\u062d\u0641\u0638\u0629';
+const DEFAULT_TOP_UP_DESCRIPTION = 'شحن المحفظة';
+const DEFAULT_CURRENCY = 'EGP';
 
 type StoredWalletState = {
   wallet: Wallet;
   transactions: Transaction[];
 };
 
-function storageKey(userId: string) {
-  return `${STORAGE_PREFIX}:${userId}`;
-}
-
-function createInitialState(userId: string): StoredWalletState {
+function buildWalletState(
+  userId: string,
+  balance: number,
+  transactions: Transaction[],
+): StoredWalletState {
   return {
     wallet: {
       id: `wallet-${userId}`,
       user_id: userId,
-      balance: 0,
-      currency: 'EGP',
-      recent_transactions: [],
+      balance,
+      currency: DEFAULT_CURRENCY,
+      recent_transactions: transactions.slice(0, 10),
     },
-    transactions: [],
+    transactions,
   };
 }
 
-function readState(userId: string): StoredWalletState {
-  const stored = localStorage.getItem(storageKey(userId));
-  if (!stored) return createInitialState(userId);
+function storageKey(userId: string) {
+  return `${STORAGE_PREFIX}:${userId}`;
+}
 
+function readLocalTransactions(userId: string): Transaction[] {
+  const stored = localStorage.getItem(storageKey(userId));
+  if (!stored) return [];
   try {
-    const parsed = JSON.parse(stored) as StoredWalletState;
-    return {
-      wallet: {
-        ...parsed.wallet,
-        user_id: userId,
-        recent_transactions: parsed.transactions ?? parsed.wallet.recent_transactions ?? [],
-      },
-      transactions: parsed.transactions ?? [],
-    };
+    const parsed = JSON.parse(stored) as { transactions?: Transaction[] };
+    return parsed.transactions ?? [];
   } catch {
-    return createInitialState(userId);
+    return [];
   }
 }
 
-function writeState(userId: string, state: StoredWalletState): StoredWalletState {
-  const nextState = {
-    wallet: {
-      ...state.wallet,
-      recent_transactions: state.transactions.slice(0, 10),
-    },
-    transactions: state.transactions.slice(0, 100),
-  };
-  localStorage.setItem(storageKey(userId), JSON.stringify(nextState));
-  return nextState;
+function writeLocalTransactions(userId: string, transactions: Transaction[]): void {
+  localStorage.setItem(
+    storageKey(userId),
+    JSON.stringify({ transactions: transactions.slice(0, 100) }),
+  );
 }
 
 function buildTransaction(
   direction: 'credit' | 'debit',
   amount: number,
+  balanceAfter: number,
   description: string,
   reference?: { reference_id?: string; reference_type?: string },
 ): Transaction {
@@ -67,7 +61,7 @@ function buildTransaction(
     type: direction === 'credit' ? 'topup' : 'payment',
     amount,
     direction,
-    balance_after: 0,
+    balance_after: balanceAfter,
     description,
     status: 'completed',
     created_at: new Date().toISOString(),
@@ -93,56 +87,79 @@ export function parseEgpInputToPiasters(value: string): number | null {
   return whole * 100 + fraction;
 }
 
-export function getWalletSnapshot(userId: string): StoredWalletState {
-  return readState(userId);
+export async function getWalletSnapshot(userId: string): Promise<StoredWalletState> {
+  const transactions = readLocalTransactions(userId);
+
+  try {
+    const response = await paymentsAPI.getWallet();
+    if (response.success) {
+      return buildWalletState(userId, response.data.balance, transactions);
+    }
+  } catch {
+    // Fall through to default
+  }
+
+  return buildWalletState(userId, 0, transactions);
 }
 
-export function topUpWallet(
+export async function topUpWallet(
   userId: string,
   amountPiasters: number,
   description = DEFAULT_TOP_UP_DESCRIPTION,
   reference?: { reference_id?: string; reference_type?: string },
-): StoredWalletState {
+): Promise<StoredWalletState> {
   if (!Number.isSafeInteger(amountPiasters) || amountPiasters <= 0) {
     throw new Error('amountPiasters must be a positive integer');
   }
 
-  const current = readState(userId);
-  const transaction = buildTransaction('credit', amountPiasters, description, reference);
-  const nextBalance = current.wallet.balance + amountPiasters;
+  const response = await paymentsAPI.topUp(amountPiasters);
+  if (!response.success) {
+    throw new Error('فشل شحن المحفظة');
+  }
 
-  transaction.balance_after = nextBalance;
+  const newBalance = response.data.balance;
+  const transactions = readLocalTransactions(userId);
+  const transaction = buildTransaction(
+    'credit',
+    amountPiasters,
+    newBalance,
+    description,
+    reference,
+  );
+  const updatedTransactions = [transaction, ...transactions];
 
-  return writeState(userId, {
-    wallet: { ...current.wallet, balance: nextBalance },
-    transactions: [transaction, ...current.transactions],
-  });
+  writeLocalTransactions(userId, updatedTransactions);
+
+  return buildWalletState(userId, newBalance, updatedTransactions);
 }
 
-export function deductWalletBalance(
+export async function deductWalletBalance(
   userId: string,
   amountPiasters: number,
   description: string,
   reference?: { reference_id?: string; reference_type?: string },
-): StoredWalletState {
+): Promise<StoredWalletState> {
   if (!Number.isSafeInteger(amountPiasters) || amountPiasters <= 0) {
     throw new Error('amountPiasters must be a positive integer');
   }
 
-  const current = readState(userId);
+  const response = await paymentsAPI.deduct({
+    amount: amountPiasters,
+    description,
+    reference_id: reference?.reference_id,
+    reference_type: reference?.reference_type,
+  });
 
-  if (current.wallet.balance < amountPiasters) {
-    throw new Error(
-      '\u0631\u0635\u064a\u062f \u0627\u0644\u0645\u062d\u0641\u0638\u0629 \u063a\u064a\u0631 \u0643\u0627\u0641\u064d \u0644\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0639\u0645\u0644\u064a\u0629',
-    );
+  if (!response.success) {
+    throw new Error('رصيد المحفظة غير كافٍ لإتمام العملية');
   }
 
-  const transaction = buildTransaction('debit', amountPiasters, description, reference);
-  const nextBalance = current.wallet.balance - amountPiasters;
-  transaction.balance_after = nextBalance;
+  const newBalance = response.data.balance;
+  const transactions = readLocalTransactions(userId);
+  const transaction = buildTransaction('debit', amountPiasters, newBalance, description, reference);
+  const updatedTransactions = [transaction, ...transactions];
 
-  return writeState(userId, {
-    wallet: { ...current.wallet, balance: nextBalance },
-    transactions: [transaction, ...current.transactions],
-  });
+  writeLocalTransactions(userId, updatedTransactions);
+
+  return buildWalletState(userId, newBalance, updatedTransactions);
 }
