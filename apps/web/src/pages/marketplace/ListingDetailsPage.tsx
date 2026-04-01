@@ -15,9 +15,12 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { useAuth } from '@/hooks/use-auth';
 import { useListing } from '@/hooks/use-listings';
+import { usePublicUsers } from '@/hooks/use-users';
 import {
   districtLabel,
   formatPrice,
@@ -37,11 +40,24 @@ function getContactField(
 export default function ListingDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user, isAuthenticated } = useAuth();
   const { data: listing, isLoading, isError, refetch } = useListing(id);
+  const ownerProfiles = usePublicUsers(listing ? [listing.ownerId] : []);
 
   const contactName = getContactField(listing?.contact ?? null, 'name');
   const contactPhone = getContactField(listing?.contact ?? null, 'phone');
   const contactWebsite = getContactField(listing?.contact ?? null, 'website');
+  const owner = listing ? ownerProfiles.data?.[listing.ownerId] : undefined;
+  const ownerInitials = owner?.full_name
+    ? owner.full_name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase()
+    : 'HW';
+  const isOwner = user?.id === listing?.ownerId;
 
   const mapLocations = useMemo(() => {
     if (!listing?.location) return [];
@@ -261,6 +277,55 @@ export default function ListingDetailsPage() {
                       عرض صفحة السكن
                     </Button>
                   )}
+
+                  {isOwner ? (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => void navigate('/marketplace/inquiries?tab=received')}
+                    >
+                      <MessageSquare className="ml-2 h-5 w-5" />
+                      متابعة الاستفسارات الواردة
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={() =>
+                        void navigate(
+                          isAuthenticated ? `/marketplace/inquiry/${listing.id}` : '/login',
+                        )
+                      }
+                    >
+                      <MessageSquare className="ml-2 h-5 w-5" />
+                      إرسال استفسار إلى المالك
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle className="text-lg">مالك الإعلان</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={owner?.avatar_url ?? undefined} alt={owner?.full_name} />
+                      <AvatarFallback>{ownerInitials}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {owner?.full_name ?? contactName ?? 'صاحب الإعلان'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {owner?.role ?? 'مالك الإعلان'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    هذا الإعلان مرتبط بصاحبه مباشرة عبر النظام، ويمكنك إرسال استفسارك من الزر
+                    المخصص ليصل إلى صندوق الوارد الخاص به.
+                  </p>
                 </CardContent>
               </Card>
 

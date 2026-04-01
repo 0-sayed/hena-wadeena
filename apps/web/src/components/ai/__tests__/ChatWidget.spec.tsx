@@ -59,6 +59,7 @@ function buildUnauthedContext(): AuthContextValue {
     register: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn(),
     updateUser: vi.fn(),
+    setLanguage: vi.fn().mockResolvedValue(undefined),
   };
 }
 

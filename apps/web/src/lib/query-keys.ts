@@ -29,6 +29,10 @@ export const queryKeys = {
   market: {
     listings: (filters?: Record<string, unknown>) => ['market', 'listings', filters] as const,
     listing: (id: string) => ['market', 'listings', id] as const,
+    listingInquiriesReceived: (filters?: Record<string, unknown>) =>
+      ['market', 'listing-inquiries', 'received', filters] as const,
+    listingInquiriesSent: (filters?: Record<string, unknown>) =>
+      ['market', 'listing-inquiries', 'sent', filters] as const,
     priceIndex: (filters?: Record<string, unknown>) => ['market', 'price-index', filters] as const,
     priceSummary: () => ['market', 'price-summary'] as const,
     businesses: (filters?: Record<string, unknown>) => ['market', 'businesses', filters] as const,

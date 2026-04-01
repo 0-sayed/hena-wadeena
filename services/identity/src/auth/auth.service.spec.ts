@@ -79,7 +79,7 @@ describe('AuthService', () => {
     const mockConfigService = {
       get: vi.fn((key: string, defaultVal?: string) => {
         const config: Record<string, string> = {
-          JWT_REFRESH_EXPIRES_IN: '7d',
+          JWT_REFRESH_EXPIRES_IN: '15d',
         };
         return config[key] ?? defaultVal;
       }),

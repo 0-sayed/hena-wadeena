@@ -22,6 +22,7 @@ vi.mock('@/services/api', () => ({
     login: vi.fn(),
     register: vi.fn(),
     getMe: vi.fn(),
+    updateMe: vi.fn(),
     logout: vi.fn(),
   },
 }));
@@ -217,5 +218,38 @@ describe('useAuth', () => {
 
     expect(result.current.user?.full_name).toBe('New Name');
     expect(result.current.user?.email).toBe('new@test.com');
+  });
+
+  it('setLanguage persists the authenticated user preference', async () => {
+    const storedUser = {
+      id: '1',
+      email: 'lang@test.com',
+      full_name: 'Language User',
+      role: UserRole.TOURIST,
+      phone: '',
+      status: 'active',
+      language: 'ar',
+    };
+    vi.mocked(authManager.getAccessToken).mockReturnValue('token');
+    vi.mocked(authAPI.getMe).mockResolvedValue(storedUser);
+    vi.mocked(authAPI.updateMe).mockResolvedValue({
+      ...storedUser,
+      language: 'en',
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true);
+    });
+
+    await act(async () => {
+      await result.current.setLanguage('en');
+    });
+
+    expect(vi.mocked(authAPI.updateMe)).toHaveBeenCalledWith({ language: 'en' });
+    expect(result.current.language).toBe('en');
+    expect(document.documentElement.lang).toBe('en');
+    expect(document.documentElement.dir).toBe('ltr');
   });
 });

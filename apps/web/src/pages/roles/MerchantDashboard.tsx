@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { Building2, CheckCircle, Clock, Package2, Store } from 'lucide-react';
+import { Building2, CheckCircle, Clock, Inbox, Package2, Store } from 'lucide-react';
 import { toast } from 'sonner';
+
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { useListingInquiriesReceived } from '@/hooks/use-listing-inquiries';
 import { useMyBusinesses } from '@/hooks/use-my-businesses';
 import { useMyListings } from '@/hooks/use-my-listings';
-import { listingsAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,15 +32,19 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { DISTRICTS, formatPrice } from '@/lib/format';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
+import { listingsAPI } from '@/services/api';
 
-const verificationLabels: Record<
-  string,
-  { label: string; variant: 'default' | 'secondary' | 'outline' }
-> = {
-  verified: { label: 'موثق', variant: 'default' },
-  pending: { label: 'قيد المراجعة', variant: 'secondary' },
-  rejected: { label: 'مرفوض', variant: 'outline' },
-  suspended: { label: 'موقوف', variant: 'outline' },
+const verificationLabels: Record<string, { label: string }> = {
+  verified: { label: 'موثق' },
+  pending: { label: 'قيد المراجعة' },
+  rejected: { label: 'مرفوض' },
+  suspended: { label: 'موقوف' },
+};
+
+const inquiryStatusLabels: Record<'pending' | 'read' | 'replied', string> = {
+  pending: 'غير مقروء',
+  read: 'تمت القراءة',
+  replied: 'تم الرد',
 };
 
 const listingCategories = [
@@ -75,12 +81,18 @@ export default function MerchantDashboard() {
     error: businessesError,
   } = useMyBusinesses();
   const { data: listingsData, isLoading: loadingListings } = useMyListings();
+  const {
+    data: inquiriesData,
+    isLoading: loadingInquiries,
+    isError: inquiriesError,
+  } = useListingInquiriesReceived({ limit: 5 });
   const [listingForm, setListingForm] = useState<ListingFormState>(emptyListingForm);
   const [saving, setSaving] = useState(false);
   const isSavingRef = useRef(false);
 
   const businesses = businessesData ?? [];
   const listings = listingsData ?? [];
+  const inquiries = inquiriesData?.data ?? [];
 
   const stats = {
     totalBusinesses: businesses.length,
@@ -89,6 +101,7 @@ export default function MerchantDashboard() {
     pendingBusinesses: businesses.filter((business) => business.verificationStatus === 'pending')
       .length,
     listings: listings.length,
+    receivedInquiries: inquiriesData?.total ?? 0,
   };
 
   const refreshMerchantData = async () => {
@@ -96,6 +109,7 @@ export default function MerchantDashboard() {
       queryClient.invalidateQueries({ queryKey: ['market', 'businesses', 'mine'] }),
       queryClient.invalidateQueries({ queryKey: ['market', 'listings', 'mine'] }),
       queryClient.invalidateQueries({ queryKey: ['market', 'listings'] }),
+      queryClient.invalidateQueries({ queryKey: ['market', 'listing-inquiries'] }),
     ]);
   };
 
@@ -163,9 +177,9 @@ export default function MerchantDashboard() {
     <DashboardShell
       icon={Store}
       title="لوحة التاجر"
-      subtitle="إدارة نشاطك التجاري وإعلانات المنتجات والخدمات"
+      subtitle="إدارة نشاطك التجاري، إعلاناتك، والاستفسارات الواردة من المهتمين"
     >
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard
           label="الأنشطة التجارية"
           value={loadingBusinesses ? '...' : stats.totalBusinesses}
@@ -187,6 +201,12 @@ export default function MerchantDashboard() {
           label="إعلاناتي"
           value={loadingListings ? '...' : stats.listings}
           icon={Package2}
+        />
+        <StatCard
+          label="استفسارات واردة"
+          value={loadingInquiries ? '...' : stats.receivedInquiries}
+          icon={Inbox}
+          variant="warning"
         />
       </div>
 
@@ -220,6 +240,7 @@ export default function MerchantDashboard() {
                   {businesses.map((business) => {
                     const status =
                       verificationLabels[business.verificationStatus] ?? verificationLabels.pending;
+
                     return (
                       <TableRow key={business.id}>
                         <TableCell className="font-medium">{business.nameAr}</TableCell>
@@ -242,7 +263,7 @@ export default function MerchantDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>{listingForm.id ? 'تعديل إعلان' : 'إضافة إعلان جديد'}</CardTitle>
-            <CardDescription>أضف منتجاً أو خدمة مع السعر وقم بتحديثها لاحقاً</CardDescription>
+            <CardDescription>أضف منتجاً أو خدمة مع السعر ويمكنك تعديلها لاحقاً</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -346,6 +367,93 @@ export default function MerchantDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>صندوق وارد الاستفسارات</CardTitle>
+            <CardDescription>آخر الرسائل التي وصلت على إعلاناتك مع الوصول السريع لصفحة المتابعة.</CardDescription>
+          </div>
+          <Button asChild variant="outline">
+            <Link to="/marketplace/inquiries?tab=received">إدارة كل الاستفسارات</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loadingInquiries ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-28 w-full rounded-2xl" />
+              ))}
+            </div>
+          ) : inquiriesError ? (
+            <p className="text-sm text-destructive">تعذر تحميل الاستفسارات الواردة حالياً.</p>
+          ) : inquiries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              لا توجد استفسارات واردة على إعلاناتك حتى الآن.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {inquiries.map((inquiry) => (
+                <div
+                  key={inquiry.id}
+                  className="rounded-2xl border border-border/60 p-4 transition-colors hover:bg-muted/20"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-muted px-3 py-1 text-xs">
+                          {inquiryStatusLabels[inquiry.status]}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(inquiry.createdAt).toLocaleDateString('ar-EG')}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-foreground">{inquiry.listingTitle}</p>
+                      <p className="text-sm text-muted-foreground">
+                        من: {inquiry.contactName}
+                        {inquiry.contactEmail ? ` • ${inquiry.contactEmail}` : ''}
+                      </p>
+                    </div>
+
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={`/marketplace/inquiries?tab=received&focus=${inquiry.id}`}>
+                        فتح المحادثة
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
+                    {inquiry.message}
+                  </p>
+
+                  {inquiry.replyMessage && (
+                    <div className="mt-3 rounded-xl bg-primary/5 p-3 text-sm text-muted-foreground">
+                      <p className="mb-1 font-medium text-foreground">آخر رد محفوظ</p>
+                      <p className="whitespace-pre-line">{inquiry.replyMessage}</p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {inquiry.contactEmail && (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`mailto:${inquiry.contactEmail}`}>مراسلة بالبريد</a>
+                      </Button>
+                    )}
+                    {inquiry.contactPhone && (
+                      <Button asChild size="sm" variant="secondary">
+                        <a href={`tel:${inquiry.contactPhone}`}>اتصال مباشر</a>
+                      </Button>
+                    )}
+                    <Button asChild size="sm" variant="ghost">
+                      <Link to={`/marketplace/ads/${inquiry.listingId}`}>عرض الإعلان</Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

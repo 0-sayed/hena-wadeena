@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UserRole } from '@hena-wadeena/types';
 import { toast } from 'sonner';
 
 import { queryKeys } from '@/lib/query-keys';
@@ -9,9 +10,6 @@ import {
   type AdminKycFilters,
   type AdminUserFilters,
 } from '@/services/api';
-import type { UserRole } from '@hena-wadeena/types';
-
-// ── Queries ─────────────────────────────────────────────────────────────────
 
 export function useAdminStats() {
   return useQuery({
@@ -25,6 +23,14 @@ export function useAdminUsers(filters?: AdminUserFilters) {
   return useQuery({
     queryKey: queryKeys.admin.users(filters),
     queryFn: () => adminAPI.getUsers(filters),
+  });
+}
+
+export function useAdminUser(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.admin.user(id ?? ''),
+    queryFn: () => adminAPI.getUser(id!),
+    enabled: !!id,
   });
 }
 
@@ -70,8 +76,6 @@ export function useAdminPendingPois(filters?: { page?: number; limit?: number })
   });
 }
 
-// ── Mutations ───────────────────────────────────────────────────────────────
-
 export function useChangeUserRole() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -96,6 +100,18 @@ export function useChangeUserStatus() {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
     onError: () => toast.error('فشل تحديث الحالة'),
+  });
+}
+
+export function useResetUserPassword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.resetUserPassword(id),
+    onSuccess: (_, id) => {
+      toast.success('تمت إعادة تعيين كلمة المرور بنجاح');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.user(id) });
+    },
+    onError: () => toast.error('فشل في إعادة تعيين كلمة المرور'),
   });
 }
 

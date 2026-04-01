@@ -1,6 +1,7 @@
 import { UserRole } from '@hena-wadeena/types';
-import { AlertCircle, MoreHorizontal, Search, UserX } from 'lucide-react';
+import { AlertCircle, Eye, MoreHorizontal, Search, UserX } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useAdminUsers, useChangeUserRole, useChangeUserStatus } from '@/hooks/use-admin';
+import { useChangeUserRole, useChangeUserStatus, useAdminUsers } from '@/hooks/use-admin';
 import { useDebounce } from '@/hooks/use-debounce';
 
 const roleLabels: Record<string, string> = {
@@ -59,6 +60,7 @@ const statusVariants: Record<string, 'default' | 'secondary' | 'destructive'> = 
 };
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -91,24 +93,23 @@ export default function AdminUsers() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">إدارة المستخدمين</h1>
-        <p className="text-muted-foreground">عرض وتعديل بيانات المستخدمين</p>
+        <p className="text-muted-foreground">عرض الحسابات، فتح الملف الإداري، وإدارة الدور والحالة.</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>المستخدمون</CardTitle>
-          <CardDescription>{data ? `${data.total} مستخدم` : 'جاري التحميل...'}</CardDescription>
+          <CardDescription>{data ? `${data.total} مستخدم` : 'جارٍ التحميل...'}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filters */}
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="بحث بالاسم أو البريد..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
+                onChange={(event) => {
+                  setSearch(event.target.value);
                   setPage(1);
                 }}
                 className="pr-9"
@@ -116,8 +117,8 @@ export default function AdminUsers() {
             </div>
             <Select
               value={roleFilter}
-              onValueChange={(v) => {
-                setRoleFilter(v);
+              onValueChange={(value) => {
+                setRoleFilter(value);
                 setPage(1);
               }}
             >
@@ -135,8 +136,8 @@ export default function AdminUsers() {
             </Select>
             <Select
               value={statusFilter}
-              onValueChange={(v) => {
-                setStatusFilter(v);
+              onValueChange={(value) => {
+                setStatusFilter(value);
                 setPage(1);
               }}
             >
@@ -154,7 +155,6 @@ export default function AdminUsers() {
             </Select>
           </div>
 
-          {/* Table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -164,13 +164,14 @@ export default function AdminUsers() {
                   <TableHead>الدور</TableHead>
                   <TableHead>الحالة</TableHead>
                   <TableHead>تاريخ التسجيل</TableHead>
+                  <TableHead className="w-24">الملف</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
                       <TableCell>
                         <Skeleton className="h-4 w-32" />
                       </TableCell>
@@ -187,13 +188,16 @@ export default function AdminUsers() {
                         <Skeleton className="h-4 w-24" />
                       </TableCell>
                       <TableCell>
+                        <Skeleton className="h-8 w-20" />
+                      </TableCell>
+                      <TableCell>
                         <Skeleton className="h-8 w-8" />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : data?.data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <UserX className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">لا يوجد مستخدمون</p>
@@ -203,7 +207,17 @@ export default function AdminUsers() {
                 ) : (
                   data?.data.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.fullName}</TableCell>
+                      <TableCell className="font-medium">
+                        <button
+                          type="button"
+                          className="text-right text-primary transition-colors hover:text-primary/80 hover:underline"
+                          onClick={() => {
+                            void navigate(`/admin/users/${user.id}`);
+                          }}
+                        >
+                          {user.fullName}
+                        </button>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{user.email}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{roleLabels[user.role] || user.role}</Badge>
@@ -217,6 +231,18 @@ export default function AdminUsers() {
                         {new Date(user.createdAt).toLocaleDateString('ar-EG')}
                       </TableCell>
                       <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            void navigate(`/admin/users/${user.id}`);
+                          }}
+                        >
+                          <Eye className="ml-2 h-4 w-4" />
+                          عرض
+                        </Button>
+                      </TableCell>
+                      <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -224,6 +250,15 @@ export default function AdminUsers() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                void navigate(`/admin/users/${user.id}`);
+                              }}
+                            >
+                              <Eye className="ml-2 h-4 w-4" />
+                              عرض الملف
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuLabel>تغيير الدور</DropdownMenuLabel>
                             {Object.entries(roleLabels).map(([role, label]) => (
                               <DropdownMenuItem
@@ -279,7 +314,6 @@ export default function AdminUsers() {
             </Table>
           </div>
 
-          {/* Pagination */}
           {data && data.total > limit && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
@@ -290,7 +324,7 @@ export default function AdminUsers() {
                   variant="outline"
                   size="sm"
                   disabled={page === 1}
-                  onClick={() => setPage((p) => p - 1)}
+                  onClick={() => setPage((current) => current - 1)}
                 >
                   السابق
                 </Button>
@@ -298,7 +332,7 @@ export default function AdminUsers() {
                   variant="outline"
                   size="sm"
                   disabled={!data.hasMore}
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => setPage((current) => current + 1)}
                 >
                   التالي
                 </Button>

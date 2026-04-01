@@ -118,9 +118,9 @@ const Index = () => {
       {visibleAdminLinks.length > 0 && (
         <div className="container px-4 py-10">
           <h2 className="mb-4 text-center text-2xl font-bold">لوحات التحكم الإدارية</h2>
-          <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
+          <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-4">
             {visibleAdminLinks.map(({ to, icon: Icon, label, desc }) => (
-              <Link key={to} to={to}>
+              <Link key={to} to={to} className="w-full sm:w-[280px]">
                 <Button variant="outline" className="flex h-24 w-full flex-col gap-2">
                   <Icon className="h-7 w-7 text-primary" />
                   <span className="font-semibold">{label}</span>
@@ -135,9 +135,9 @@ const Index = () => {
       {visibleRoleLinks.length > 0 && (
         <div className="container px-4 pb-12">
           <h2 className="mb-4 text-center text-2xl font-bold">لوحات الأدوار</h2>
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-4">
             {visibleRoleLinks.map(({ to, icon: Icon, label, desc }) => (
-              <Link key={to} to={to}>
+              <Link key={to} to={to} className="w-full sm:w-[260px]">
                 <Button variant="outline" className="flex h-24 w-full flex-col gap-1">
                   <Icon className="h-6 w-6 text-primary" />
                   <span className="text-sm font-semibold">{label}</span>

@@ -51,6 +51,41 @@ describe('KycService', () => {
     });
   });
 
+  describe('findAll', () => {
+    it('should return all KYC submissions when no status filter is provided', async () => {
+      const data = [{ ...mockKyc, fullName: 'User Name', reviewedByName: null }];
+
+      mockDb.innerJoin.mockReturnValueOnce(mockDb as any);
+      mockDb.offset.mockResolvedValueOnce(data);
+      mockDb.innerJoin.mockResolvedValueOnce([{ count: 1 }]);
+
+      const result = await service.findAll({ page: 1, limit: 20 });
+
+      expect(result.data).toEqual(data);
+      expect(result.total).toBe(1);
+      expect(mockDb.where).not.toHaveBeenCalled();
+    });
+
+    it('should apply the requested status filter', async () => {
+      const approvedRecord = {
+        ...mockKyc,
+        status: 'approved' as const,
+        fullName: 'User Name',
+        reviewedByName: 'Admin Name',
+      };
+
+      mockDb.where.mockReturnValueOnce(mockDb as any);
+      mockDb.offset.mockResolvedValueOnce([approvedRecord]);
+      mockDb.where.mockResolvedValueOnce([{ count: 1 }]);
+
+      const result = await service.findAll({ page: 1, limit: 20, status: 'approved' });
+
+      expect(result.data).toEqual([approvedRecord]);
+      expect(result.total).toBe(1);
+      expect(mockDb.where).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('review — approve', () => {
     it('should approve KYC and create notification', async () => {
       // Inside transaction: update kyc → update users → insert audit

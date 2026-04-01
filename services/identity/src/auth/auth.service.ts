@@ -59,7 +59,7 @@ export class AuthService {
     @Inject(SessionService) private readonly sessionService: SessionService,
     @Inject(KycService) private readonly kycService: KycService,
   ) {
-    const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as Parameters<
+    const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '15d') as Parameters<
       typeof ms
     >[0];
     const refreshMs = ms(refreshExp);

@@ -620,6 +620,36 @@ export interface ListingUpsertRequest {
   openingHours?: string;
 }
 
+export interface ListingInquiry {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  listingOwnerId: string;
+  senderId: string;
+  receiverId: string;
+  contactName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  message: string;
+  replyMessage: string | null;
+  status: 'pending' | 'read' | 'replied';
+  readAt: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateListingInquiryRequest {
+  contactName: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  message: string;
+}
+
+export interface ReplyListingInquiryRequest {
+  message: string;
+}
+
 export const listingsAPI = {
   getAll: (params?: {
     category?: string;
@@ -658,6 +688,31 @@ export const listingsAPI = {
   remove: (id: string) =>
     apiFetchWithRefresh<void>(`/listings/${id}`, {
       method: 'DELETE',
+    }),
+};
+
+export const listingInquiriesAPI = {
+  submit: (listingId: string, body: CreateListingInquiryRequest) =>
+    apiFetchWithRefresh<ListingInquiry>(`/listings/${listingId}/inquiries`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  getReceived: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<ListingInquiry>>(
+      `/listing-inquiries/mine/received${toQueryString(params)}`,
+    ),
+  getSent: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<ListingInquiry>>(
+      `/listing-inquiries/mine/sent${toQueryString(params)}`,
+    ),
+  markRead: (id: string) =>
+    apiFetchWithRefresh<ListingInquiry>(`/listing-inquiries/${id}/read`, {
+      method: 'PATCH',
+    }),
+  reply: (id: string, body: ReplyListingInquiryRequest) =>
+    apiFetchWithRefresh<ListingInquiry>(`/listing-inquiries/${id}/reply`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
     }),
 };
 
@@ -1336,6 +1391,27 @@ export interface AdminUser {
   updatedAt: string;
 }
 
+export interface AdminAuditEvent {
+  id: string;
+  eventType: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AdminUserDetail extends AdminUser {
+  verifiedAt: string | null;
+  lastLoginAt: string | null;
+  kycStatus: 'pending' | 'under_review' | 'approved' | 'rejected' | null;
+  latestKycDocumentType: string | null;
+  kycSubmittedAt: string | null;
+  kycReviewedAt: string | null;
+  recentAuditEvents: AdminAuditEvent[];
+}
+
+export interface AdminResetPasswordResponse {
+  password: string;
+}
+
 export interface KycSubmission {
   id: string;
   userId: string;
@@ -1346,6 +1422,7 @@ export interface KycSubmission {
   submittedAt: string;
   reviewedAt: string | null;
   reviewedBy: string | null;
+  reviewedByName: string | null;
   notes: string | null;
 }
 
@@ -1387,7 +1464,7 @@ export const adminAPI = {
   // Users
   getUsers: (params?: AdminUserFilters) =>
     apiFetchWithRefresh<PaginatedResponse<AdminUser>>(`/admin/users${toQueryString(params)}`),
-  getUser: (id: string) => apiFetchWithRefresh<AdminUser>(`/admin/users/${id}`),
+  getUser: (id: string) => apiFetchWithRefresh<AdminUserDetail>(`/admin/users/${id}`),
   changeUserRole: (id: string, role: UserRole) =>
     apiFetchWithRefresh<AdminUser>(`/admin/users/${id}/role`, {
       method: 'PATCH',
@@ -1399,6 +1476,10 @@ export const adminAPI = {
       body: JSON.stringify({ status, reason }),
     }),
   deleteUser: (id: string) => apiFetchWithRefresh<void>(`/admin/users/${id}`, { method: 'DELETE' }),
+  resetUserPassword: (id: string) =>
+    apiFetchWithRefresh<AdminResetPasswordResponse>(`/admin/users/${id}/reset-password`, {
+      method: 'POST',
+    }),
 
   // KYC
   getKycSubmissions: (params?: AdminKycFilters) =>

@@ -4,8 +4,10 @@ import {
   Bell,
   CalendarCheck,
   ChevronDown,
+  Languages,
   LogOut,
   Menu,
+  MessageSquare,
   Search,
   User,
   Wallet,
@@ -13,11 +15,13 @@ import {
 import { Classic } from '@theme-toggles/react';
 import '@theme-toggles/react/css/Classic.css';
 import { useTheme } from 'next-themes';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 import { useAuth } from '@/hooks/use-auth';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 
 type NavigationItem = {
   href: string;
@@ -25,6 +29,9 @@ type NavigationItem = {
   label: string;
   matcher: (pathname: string) => boolean;
 };
+
+const CONTROL_BUTTON_CLASS =
+  'flex h-9 min-w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50';
 
 function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
   const labels =
@@ -63,7 +70,8 @@ function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
       href: '/tourism',
       label: labels.tourism,
       matcher: (pathname) =>
-        pathname === '/tourism' || (pathname.startsWith('/tourism/') && !isAccommodationPath(pathname)),
+        pathname === '/tourism' ||
+        (pathname.startsWith('/tourism/') && !isAccommodationPath(pathname)),
     },
     {
       key: 'accommodation',
@@ -118,12 +126,62 @@ function ThemeToggle() {
     <Classic
       toggled={isDark}
       onToggle={() => setTheme(isDark ? 'light' : 'dark')}
-      className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5"
+      className={`${CONTROL_BUTTON_CLASS} hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
       aria-label="تبديل الوضع"
+      title="تبديل الوضع"
       placeholder={undefined}
       onPointerEnterCapture={undefined}
       onPointerLeaveCapture={undefined}
     />
+  );
+}
+
+function LanguageToggle({
+  language,
+  disabled = false,
+  onToggle,
+}: {
+  language: 'ar' | 'en';
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  const nextLanguage = language === 'ar' ? 'en' : 'ar';
+  const title = language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية';
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      className={`${CONTROL_BUTTON_CLASS} w-12 gap-1 px-2 text-[11px] font-bold uppercase tracking-[0.18em]`}
+      aria-label={title}
+      title={title}
+      dir="ltr"
+    >
+      <Languages className="h-3.5 w-3.5" />
+      <span>{nextLanguage.toUpperCase()}</span>
+    </button>
+  );
+}
+
+function HeaderActionCluster({
+  language,
+  disabled,
+  onToggleLanguage,
+}: {
+  language: 'ar' | 'en';
+  disabled?: boolean;
+  onToggleLanguage: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm">
+      <LanguageToggle
+        language={language}
+        disabled={disabled}
+        onToggle={onToggleLanguage}
+      />
+      <ThemeToggle />
+    </div>
   );
 }
 
@@ -132,11 +190,12 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSwitchingLanguage, setIsSwitchingLanguage] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
   const authCtx = useAuth();
-  const { user, direction, language } = authCtx;
+  const { user, direction, language, setLanguage } = authCtx;
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
 
@@ -145,11 +204,32 @@ export function Header() {
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const query = searchQuery.trim();
-    if (!query) return;
+
+    if (!query) {
+      return;
+    }
+
     void navigate(`/search?q=${encodeURIComponent(query)}`);
     setSearchQuery('');
     setSearchOpen(false);
     setIsOpen(false);
+  };
+
+  const handleLanguageToggle = () => {
+    const nextLanguage = language === 'ar' ? 'en' : 'ar';
+
+    setIsSwitchingLanguage(true);
+    void setLanguage(nextLanguage)
+      .catch(() => {
+        toast.error(
+          nextLanguage === 'en'
+            ? 'تعذر التبديل إلى الإنجليزية'
+            : 'تعذر التبديل إلى العربية',
+        );
+      })
+      .finally(() => {
+        setIsSwitchingLanguage(false);
+      });
   };
 
   const isActive = (item: NavigationItem) => item.matcher(location.pathname);
@@ -178,7 +258,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-1 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           {searchOpen ? (
             <form onSubmit={handleSearch} className="flex items-center gap-1">
               <Input
@@ -186,7 +266,9 @@ export function Header() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onBlur={() => {
-                  if (!searchQuery) setSearchOpen(false);
+                  if (!searchQuery) {
+                    setSearchOpen(false);
+                  }
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Escape') {
@@ -210,7 +292,11 @@ export function Header() {
             </Button>
           )}
 
-          <ThemeToggle />
+          <HeaderActionCluster
+            language={language}
+            disabled={isSwitchingLanguage}
+            onToggleLanguage={handleLanguageToggle}
+          />
 
           {user ? (
             <>
@@ -222,7 +308,7 @@ export function Header() {
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card animate-pulse">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -242,12 +328,17 @@ export function Header() {
 
               <div className="relative mr-1">
                 <button
+                  type="button"
                   onClick={() => setProfileOpen((open) => !open)}
                   className="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-muted"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10">
                     {user.avatar_url ? (
-                      <img src={user.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                      <img
+                        src={user.avatar_url}
+                        alt=""
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
                     ) : (
                       <User className="h-4 w-4 text-primary" />
                     )}
@@ -257,7 +348,10 @@ export function Header() {
 
                 {profileOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setProfileOpen(false)}
+                    />
                     <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200 fade-in">
                       <div className="border-b border-border px-4 py-3">
                         <p className="truncate text-sm font-semibold">{user.full_name}</p>
@@ -269,21 +363,32 @@ export function Header() {
                           onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
-                          <User className="h-4 w-4 text-muted-foreground" /> الملف الشخصي
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          الملف الشخصي
                         </Link>
                         <Link
                           to="/bookings"
                           onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
-                          <CalendarCheck className="h-4 w-4 text-muted-foreground" /> حجوزاتي
+                          <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+                          حجوزاتي
+                        </Link>
+                        <Link
+                          to="/marketplace/inquiries"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                        >
+                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                          استفسارات الإعلانات
                         </Link>
                         <Link
                           to="/wallet"
                           onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
-                          <Wallet className="h-4 w-4 text-muted-foreground" /> المحفظة
+                          <Wallet className="h-4 w-4 text-muted-foreground" />
+                          المحفظة
                         </Link>
                         <Link
                           to="/notifications"
@@ -301,13 +406,15 @@ export function Header() {
                       </div>
                       <div className="border-t border-border pt-1">
                         <button
+                          type="button"
                           onClick={() => {
-                            void authCtx.logout();
+                            authCtx.logout();
                             setProfileOpen(false);
                           }}
                           className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
-                          <LogOut className="h-4 w-4" /> تسجيل الخروج
+                          <LogOut className="h-4 w-4" />
+                          تسجيل الخروج
                         </button>
                       </div>
                     </div>
@@ -337,12 +444,18 @@ export function Header() {
             </Button>
           </Link>
 
+          <HeaderActionCluster
+            language={language}
+            disabled={isSwitchingLanguage}
+            onToggleLanguage={handleLanguageToggle}
+          />
+
           {user && (
             <Link to="/notifications" className="relative">
               <Button variant="ghost" size="icon" className="text-muted-foreground">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card animate-pulse">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -362,7 +475,11 @@ export function Header() {
                   <div className="flex items-center gap-3 rounded-xl border border-primary/10 bg-primary/5 p-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                       {user.avatar_url ? (
-                        <img src={user.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                        <img
+                          src={user.avatar_url}
+                          alt=""
+                          className="h-12 w-12 rounded-full object-cover"
+                        />
                       ) : (
                         <User className="h-6 w-6 text-primary" />
                       )}
@@ -408,21 +525,32 @@ export function Header() {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
-                      <User className="h-5 w-5 text-muted-foreground" /> الملف الشخصي
+                      <User className="h-5 w-5 text-muted-foreground" />
+                      الملف الشخصي
                     </Link>
                     <Link
                       to="/bookings"
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
-                      <CalendarCheck className="h-5 w-5 text-muted-foreground" /> حجوزاتي
+                      <CalendarCheck className="h-5 w-5 text-muted-foreground" />
+                      حجوزاتي
+                    </Link>
+                    <Link
+                      to="/marketplace/inquiries"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                    >
+                      <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                      استفسارات الإعلانات
                     </Link>
                     <Link
                       to="/wallet"
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
-                      <Wallet className="h-5 w-5 text-muted-foreground" /> المحفظة
+                      <Wallet className="h-5 w-5 text-muted-foreground" />
+                      المحفظة
                     </Link>
                     <Link
                       to="/notifications"
@@ -438,13 +566,15 @@ export function Header() {
                       )}
                     </Link>
                     <button
+                      type="button"
                       onClick={() => {
-                        void authCtx.logout();
+                        authCtx.logout();
                         setIsOpen(false);
                       }}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
-                      <LogOut className="h-5 w-5" /> تسجيل الخروج
+                      <LogOut className="h-5 w-5" />
+                      تسجيل الخروج
                     </button>
                   </div>
                 ) : (

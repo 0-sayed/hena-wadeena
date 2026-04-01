@@ -22,6 +22,7 @@ import { CommodityPricesModule } from './commodity-prices/commodity-prices.modul
 import { InvestmentApplicationsModule } from './investment-applications/investment-applications.module';
 import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
 import { ListingsModule } from './listings/listings.module';
+import { ListingInquiriesModule } from './listing-inquiries/listing-inquiries.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SearchModule } from './search/search.module';
 import { StatsModule } from './stats/stats.module';
@@ -63,6 +64,7 @@ function requireEnv(key: string): string {
     HealthModule,
     AuthModule,
     ListingsModule,
+    ListingInquiriesModule,
     CommodityPricesModule,
     BusinessDirectoryModule,
     InvestmentOpportunitiesModule,

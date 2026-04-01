@@ -18,6 +18,54 @@ export class NotificationsEventsConsumer implements OnModuleInit {
 
   async onModuleInit() {
     await this.streams.subscribe(
+      EVENTS.LISTING_INQUIRY_RECEIVED,
+      CONSUMER_GROUP,
+      CONSUMER_NAME,
+      async (msg) => {
+        const d = msg.data as Record<string, string>;
+        const { inquiryId, listingId, receiverId, listingTitle, senderName } = d;
+        if (!receiverId) return;
+        await this.notificationsService.create({
+          userId: receiverId,
+          type: NotificationType.SYSTEM,
+          titleAr: 'استفسار جديد على إعلانك',
+          titleEn: 'New Listing Inquiry',
+          bodyAr: `${senderName ?? 'مستخدم'} أرسل استفساراً بخصوص "${listingTitle ?? 'إعلانك'}"`,
+          bodyEn: `${senderName ?? 'A user'} sent an inquiry about "${listingTitle ?? 'your listing'}"`,
+          data: {
+            inquiryId,
+            listingId,
+            path: `/marketplace/inquiries?tab=received&focus=${inquiryId ?? ''}`,
+          },
+        });
+      },
+    );
+
+    await this.streams.subscribe(
+      EVENTS.LISTING_INQUIRY_REPLIED,
+      CONSUMER_GROUP,
+      CONSUMER_NAME,
+      async (msg) => {
+        const d = msg.data as Record<string, string>;
+        const { inquiryId, listingId, senderId, listingTitle } = d;
+        if (!senderId) return;
+        await this.notificationsService.create({
+          userId: senderId,
+          type: NotificationType.SYSTEM,
+          titleAr: 'تم الرد على استفسارك',
+          titleEn: 'Your Inquiry Was Replied To',
+          bodyAr: `تم الرد على استفسارك بخصوص "${listingTitle ?? 'الإعلان'}"`,
+          bodyEn: `A reply was sent to your inquiry about "${listingTitle ?? 'the listing'}"`,
+          data: {
+            inquiryId,
+            listingId,
+            path: `/marketplace/inquiries?tab=sent&focus=${inquiryId ?? ''}`,
+          },
+        });
+      },
+    );
+
+    await this.streams.subscribe(
       EVENTS.BOOKING_REQUESTED,
       CONSUMER_GROUP,
       CONSUMER_NAME,

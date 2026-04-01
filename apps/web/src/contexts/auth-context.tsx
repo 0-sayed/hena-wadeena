@@ -18,6 +18,7 @@ export interface AuthContextValue extends AuthState {
   register(this: void, data: RegisterRequest): Promise<void>;
   logout(this: void): void;
   updateUser(this: void, user: AuthUser): void;
+  setLanguage(this: void, language: 'ar' | 'en'): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -101,6 +102,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLanguagePreference(normalizeLanguage(updatedUser.language));
   }, []);
 
+  const setLanguage = useCallback(
+    async (nextLanguage: 'ar' | 'en') => {
+      const normalizedLanguage = normalizeLanguage(nextLanguage);
+
+      if (user?.language === normalizedLanguage) {
+        setLanguagePreference(normalizedLanguage);
+        return;
+      }
+
+      setLanguagePreference(normalizedLanguage);
+
+      if (!user) {
+        return;
+      }
+
+      const previousUser = user;
+      setUser({ ...user, language: normalizedLanguage });
+
+      try {
+        const updatedUser = await authAPI.updateMe({ language: normalizedLanguage });
+        setUser(updatedUser);
+      } catch (error) {
+        setUser(previousUser);
+        throw error;
+      }
+    },
+    [user],
+  );
+
   const language = normalizeLanguage(user?.language ?? languagePreference);
   const direction = language === 'ar' ? 'rtl' : 'ltr';
 
@@ -126,8 +156,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       updateUser,
+      setLanguage,
     }),
-    [user, isLoading, language, direction, login, register, logout, updateUser],
+    [user, isLoading, language, direction, login, register, logout, updateUser, setLanguage],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
