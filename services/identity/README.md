@@ -441,7 +441,7 @@ pnpm db:migrate
 
 - NEVER manually edit generated migrations
 - NEVER delete migration files or snapshots
-- NEVER use `drizzle-kit drop` in production
+- NEVER use `drizzle-kit drop`
 - For local dev iteration: `pnpm exec drizzle-kit push` (schema-only, no migrations)
 - For production: Always use `drizzle-kit generate` + committed migrations
 
