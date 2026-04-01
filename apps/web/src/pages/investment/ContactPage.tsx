@@ -103,7 +103,7 @@ const ContactPage = () => {
       });
 
       toast.success('تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة');
-      void navigate('/dashboard/investor');
+      void navigate(user?.role === 'merchant' ? '/dashboard/merchant' : '/dashboard/investor');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
       toast.error(message);
