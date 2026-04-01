@@ -136,7 +136,7 @@ describe('ListingInquiriesService', () => {
     mockDb.returning.mockResolvedValueOnce([repliedInquiry]);
 
     const result = await service.reply(inquiryRecord.id, mockListing.ownerId, {
-      message: repliedInquiry.replyMessage!,
+      message: repliedInquiry.replyMessage,
     });
 
     expect(result.replyMessage).toBe(repliedInquiry.replyMessage);

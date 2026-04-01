@@ -5,9 +5,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
+import { HashingService } from '../auth/hashing.service';
 import * as schema from '../db/schema';
 import { auditEvents } from '../db/schema/index';
-import { HashingService } from '../auth/hashing.service';
 import { KycService } from '../kyc/kyc.service';
 import { UsersService } from '../users/users.service';
 
@@ -18,8 +18,8 @@ function generateRandomPassword(length = 12): string {
   const bytes = randomBytes(length);
   let password = '';
 
-  for (let index = 0; index < length; index += 1) {
-    password += PASSWORD_ALPHABET[bytes[index]! % PASSWORD_ALPHABET.length];
+  for (const byte of bytes) {
+    password += PASSWORD_ALPHABET.charAt(byte % PASSWORD_ALPHABET.length);
   }
 
   return password;

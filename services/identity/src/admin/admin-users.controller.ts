@@ -1,6 +1,7 @@
 import { CurrentUser, type JwtPayload, Roles } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
 import {
+  Body,
   Controller,
   Delete,
   ForbiddenException,
@@ -10,14 +11,13 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
-  Query,
-  Body,
   Post,
+  Query,
 } from '@nestjs/common';
 
-import { AdminUsersService } from './admin-users.service';
 import { UsersService } from '../users/users.service';
 
+import { AdminUsersService } from './admin-users.service';
 import { ChangeRoleDto, ChangeStatusDto, QueryUsersDto } from './dto';
 
 @Controller('admin/users')

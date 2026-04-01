@@ -1,4 +1,3 @@
-import { KycStatus, UserRole } from '@hena-wadeena/types';
 import {
   CanActivate,
   ExecutionContext,
@@ -10,14 +9,14 @@ import {
 import type { JwtPayload } from '../decorators/current-user.decorator';
 
 const KYC_REQUIRED_ROLES: ReadonlySet<string> = new Set([
-  UserRole.INVESTOR,
-  UserRole.GUIDE,
-  UserRole.MERCHANT,
-  UserRole.STUDENT,
+  'investor',
+  'guide',
+  'merchant',
+  'student',
 ]);
 
-const KYC_APPROVED: string = KycStatus.APPROVED;
-const ADMIN: string = UserRole.ADMIN;
+const KYC_APPROVED = 'approved';
+const ADMIN = 'admin';
 
 @Injectable()
 export class KycVerifiedGuard implements CanActivate {

@@ -4,8 +4,8 @@ export { marketSchema } from '../schema';
 export { tsvector } from './types';
 
 export * from '../enums';
-export { listings } from './listings';
 export { listingInquiries } from './listing-inquiries';
+export { listings } from './listings';
 export { priceSnapshots } from './price-snapshots';
 export { businessDirectories } from './business-directories';
 export { reviews } from './reviews';
@@ -23,8 +23,8 @@ import { commodities } from './commodities';
 import { commodityPrices } from './commodity-prices';
 import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
-import { listings } from './listings';
 import { listingInquiries } from './listing-inquiries';
+import { listings } from './listings';
 import { reviewHelpfulVotes } from './review-helpful-votes';
 import { reviews } from './reviews';
 

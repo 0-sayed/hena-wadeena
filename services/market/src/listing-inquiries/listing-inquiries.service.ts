@@ -1,5 +1,6 @@
-import type { PaginatedResponse } from '@hena-wadeena/types';
+import { DRIZZLE_CLIENT, RedisStreamsService } from '@hena-wadeena/nest-common';
 import { EVENTS } from '@hena-wadeena/types';
+import type { PaginatedResponse } from '@hena-wadeena/types';
 import {
   ForbiddenException,
   Inject,
@@ -9,8 +10,6 @@ import {
 } from '@nestjs/common';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-
-import { DRIZZLE_CLIENT, RedisStreamsService } from '@hena-wadeena/nest-common';
 
 import * as schema from '../db/schema';
 import { listingInquiries } from '../db/schema/listing-inquiries';
@@ -53,7 +52,7 @@ export class ListingInquiriesService {
       .where(and(eq(listings.id, listingId), isNull(listings.deletedAt)))
       .limit(1);
 
-    if (!listing || listing.status !== 'active') {
+    if (listing?.status !== 'active') {
       throw new NotFoundException('Listing not found');
     }
 
@@ -98,7 +97,7 @@ export class ListingInquiriesService {
   ): Promise<PaginatedResponse<ListingInquiryRecord>> {
     const conditions = [eq(listingInquiries.receiverId, ownerId), isNull(listings.deletedAt)];
     if (query.status !== undefined) {
-      conditions.push(eq(listingInquiries.status, query.status as ListingInquiry['status']));
+      conditions.push(eq(listingInquiries.status, query.status));
     }
 
     const where = andRequired(...conditions);
@@ -144,7 +143,7 @@ export class ListingInquiriesService {
   ): Promise<PaginatedResponse<ListingInquiryRecord>> {
     const conditions = [eq(listingInquiries.senderId, senderId), isNull(listings.deletedAt)];
     if (query.status !== undefined) {
-      conditions.push(eq(listingInquiries.status, query.status as ListingInquiry['status']));
+      conditions.push(eq(listingInquiries.status, query.status));
     }
 
     const where = andRequired(...conditions);

@@ -1,5 +1,4 @@
 import { DRIZZLE_CLIENT, REDIS_CLIENT } from '@hena-wadeena/nest-common';
-import { Test } from '@nestjs/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { createMockDb } from '../test-utils/create-mock-db';
@@ -14,20 +13,15 @@ describe('SessionService', () => {
     del: ReturnType<typeof vi.fn>;
   };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockDb = createMockDb();
     mockRedis = {
       set: vi.fn().mockResolvedValue('OK'),
       del: vi.fn().mockResolvedValue(1),
     };
-    const module = await Test.createTestingModule({
-      providers: [
-        SessionService,
-        { provide: DRIZZLE_CLIENT, useValue: mockDb },
-        { provide: REDIS_CLIENT, useValue: mockRedis },
-      ],
-    }).compile();
-    service = module.get(SessionService);
+    void DRIZZLE_CLIENT;
+    void REDIS_CLIENT;
+    service = new SessionService(mockDb as never, mockRedis as never);
   });
 
   describe('revokeAllUserSessions', () => {
