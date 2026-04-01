@@ -237,6 +237,14 @@ export class ListingsService {
     return paginate(results, total, query.offset, query.limit);
   }
 
+  async findMine(ownerId: string): Promise<Listing[]> {
+    return this.db
+      .select(listingColumns)
+      .from(listings)
+      .where(and(eq(listings.ownerId, ownerId), isNull(listings.deletedAt)))
+      .orderBy(desc(listings.updatedAt));
+  }
+
   async findAllAdmin(query: QueryAdminListingsDto): Promise<PaginatedResponse<Listing>> {
     const filters = this.buildAdminFilters(query);
     const orderBy = this.buildSort(query.sort);

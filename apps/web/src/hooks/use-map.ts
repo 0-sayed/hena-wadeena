@@ -122,6 +122,30 @@ export function useCancelRide() {
   });
 }
 
+export function useActivateRide() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (rideId: string) => mapAPI.activateRide(rideId),
+    onSuccess: (_data, rideId) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
+      void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
+    },
+  });
+}
+
+export function useDeleteRide() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (rideId: string) => mapAPI.deleteRide(rideId),
+    onSuccess: (_data, rideId) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.map.ride(rideId) });
+      void qc.invalidateQueries({ queryKey: ['map', 'carpool'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.map.myRides() });
+    },
+  });
+}
+
 export function useConfirmPassenger() {
   const qc = useQueryClient();
   return useMutation({

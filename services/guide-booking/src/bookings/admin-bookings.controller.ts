@@ -1,7 +1,7 @@
 import { CurrentUser, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 
 import { BookingsService } from './bookings.service';
 import { BookingFiltersDto, CancelBookingDto } from './dto';
@@ -9,7 +9,7 @@ import { BookingFiltersDto, CancelBookingDto } from './dto';
 @Roles(UserRole.ADMIN)
 @Controller('admin/bookings')
 export class AdminBookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(@Inject(BookingsService) private readonly bookingsService: BookingsService) {}
 
   @Get()
   findAll(@Query() filters: BookingFiltersDto) {

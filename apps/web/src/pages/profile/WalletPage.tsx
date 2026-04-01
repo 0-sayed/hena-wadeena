@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,40 +6,66 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { paymentsAPI, type Wallet as WalletType, type Transaction } from '@/services/api';
+import type { Wallet as WalletType, Transaction } from '@/services/api';
 import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { formatPrice } from '@/lib/format';
+import { getWalletSnapshot, parseEgpInputToPiasters, topUpWallet } from '@/lib/wallet-store';
 
 const WalletPage = () => {
+  const { user } = useAuth();
   const [wallet, setWallet] = useState<WalletType | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [topupAmount, setTopupAmount] = useState('');
   const [showTopup, setShowTopup] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    void Promise.all([
-      paymentsAPI.getWallet().then((r) => setWallet(r.data)),
-      paymentsAPI.getTransactions().then((r) => setTransactions(r.data)),
-    ]).finally(() => setLoading(false));
-  }, []);
-
-  const handleTopup = async () => {
-    const amount = parseFloat(topupAmount);
-    if (!amount || amount <= 0) {
-      toast.error('أدخل مبلغ صحيح');
+  const refreshWallet = useCallback(async () => {
+    if (!user) {
+      setWallet(null);
+      setTransactions([]);
+      setLoading(false);
       return;
     }
+
     try {
-      const res = await paymentsAPI.topup({ amount });
-      toast.success(res.message);
-      setWallet((w) => (w ? { ...w, balance: res.data.new_balance } : w));
+      const snapshot = await getWalletSnapshot(user.id);
+      setWallet(snapshot.wallet);
+      setTransactions(snapshot.transactions);
+    } catch {
+      // Keep current state on error
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void refreshWallet();
+  }, [refreshWallet]);
+
+  const handleTopup = async () => {
+    if (!user) return;
+
+    const amountPiasters = parseEgpInputToPiasters(topupAmount);
+    if (!amountPiasters || amountPiasters <= 0) {
+      toast.error('أدخل مبلغًا صحيحًا');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const snapshot = await topUpWallet(user.id, amountPiasters);
+      setWallet(snapshot.wallet);
+      setTransactions(snapshot.transactions);
       setShowTopup(false);
       setTopupAmount('');
-      void paymentsAPI.getTransactions().then((r) => setTransactions(r.data));
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Unknown error');
+      toast.success('تم شحن المحفظة بنجاح');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'تعذر شحن المحفظة');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,7 +82,6 @@ const WalletPage = () => {
         <section className="relative py-14 md:py-20 overflow-hidden">
           <GradientMesh />
           <div className="container relative px-4 max-w-2xl space-y-7">
-            {/* Balance Card */}
             <SR>
               <Card className="bg-gradient-to-br from-primary/15 to-accent/10 border-primary/20 rounded-2xl shadow-xl overflow-hidden">
                 <CardContent className="p-10 text-center">
@@ -73,12 +98,12 @@ const WalletPage = () => {
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">الرصيد الحالي</p>
                       <p className="text-6xl font-bold text-foreground">
-                        {wallet?.balance?.toLocaleString() ?? '0'}
+                        {wallet ? formatPrice(wallet.balance) : '0'}
                       </p>
                       <p className="text-lg text-muted-foreground mt-2">جنيه مصري</p>
                       <div className="flex gap-3 justify-center mt-8">
                         <Button
-                          onClick={() => setShowTopup(!showTopup)}
+                          onClick={() => setShowTopup((current) => !current)}
                           size="lg"
                           className="h-14 px-8 rounded-xl hover:scale-[1.03] transition-transform"
                         >
@@ -92,7 +117,6 @@ const WalletPage = () => {
               </Card>
             </SR>
 
-            {/* Topup Form */}
             {showTopup && (
               <SR>
                 <Card className="border-primary/30 rounded-2xl">
@@ -113,6 +137,8 @@ const WalletPage = () => {
                     </div>
                     <Input
                       type="number"
+                      min="1"
+                      step="0.01"
                       placeholder="مبلغ آخر..."
                       value={topupAmount}
                       onChange={(e) => setTopupAmount(e.target.value)}
@@ -139,7 +165,6 @@ const WalletPage = () => {
               </SR>
             )}
 
-            {/* Transactions */}
             <SR delay={200}>
               <Card className="rounded-2xl">
                 <CardHeader>
@@ -170,7 +195,7 @@ const WalletPage = () => {
                             className={`font-bold text-lg ${tx.direction === 'credit' ? 'text-green-600' : 'text-red-500'}`}
                           >
                             {tx.direction === 'credit' ? '+' : '-'}
-                            {tx.amount.toLocaleString()} جنيه
+                            {formatPrice(tx.amount)} جنيه
                           </p>
                           <Badge variant="outline" className="text-xs">
                             {tx.status === 'completed' ? 'مكتمل' : 'معلق'}

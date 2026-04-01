@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowRight, User, Phone, Mail, Building2, MessageSquare, Send } from 'lucide-react';
+import { ArrowRight, Building2, Mail, MessageSquare, Phone, Send, User } from 'lucide-react';
+import { toast } from 'sonner';
+import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -14,7 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import { UserRole } from '@hena-wadeena/types';
+import { useAuth } from '@/hooks/use-auth';
+import { investmentApplicationsAPI } from '@/services/api';
+import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 
 const investorTypes = ['مستثمر فردي', 'شركة', 'صندوق استثماري', 'مؤسسة حكومية', 'أخرى'];
 
@@ -28,7 +32,9 @@ const investmentRanges = [
 
 const ContactPage = () => {
   const navigate = useNavigate();
-  useParams();
+  const { id } = useParams<{ id: string }>();
+  const { user, isAuthenticated } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,13 +42,77 @@ const ContactPage = () => {
     company: '',
     investorType: '',
     investmentRange: '',
+    amount: '',
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success('تم إرسال طلبك بنجاح! سيتواصل معك فريق الاستثمار قريباً');
-    void navigate('/investment');
+  useEffect(() => {
+    if (!user) return;
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || user.full_name,
+      email: prev.email || user.email,
+      phone: prev.phone || user.phone || '',
+    }));
+  }, [user]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!id) {
+      toast.error('الفرصة غير متاحة حالياً');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error('سجل الدخول أولاً لإرسال الاستفسار');
+      void navigate('/login');
+      return;
+    }
+
+    if (!['investor', 'merchant'].includes(user?.role ?? '')) {
+      toast.error('هذه الميزة متاحة للمستثمرين والتجار فقط');
+      return;
+    }
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      toast.error('يرجى استكمال الاسم والبريد الإلكتروني والرسالة');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const amountProposed = formData.amount.trim()
+        ? parseEgpInputToPiasters(formData.amount)
+        : null;
+      const enrichedMessage = [
+        `الاسم: ${formData.name.trim()}`,
+        formData.company.trim() ? `الشركة: ${formData.company.trim()}` : null,
+        formData.investorType ? `نوع المستثمر: ${formData.investorType}` : null,
+        formData.investmentRange ? `النطاق الاستثماري: ${formData.investmentRange}` : null,
+        '',
+        formData.message.trim(),
+      ]
+        .filter((line) => line != null)
+        .join('\n');
+
+      await investmentApplicationsAPI.submitInterest(id, {
+        contactEmail: formData.email.trim(),
+        contactPhone: formData.phone.trim() || undefined,
+        amountProposed: amountProposed ?? undefined,
+        message: enrichedMessage,
+      });
+
+      toast.success('تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة');
+      void navigate(
+        user?.role === UserRole.MERCHANT ? '/dashboard/merchant' : '/dashboard/investor',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -56,83 +126,95 @@ const ContactPage = () => {
 
           <Card className="border-border/50">
             <CardHeader className="text-center pb-2">
-              <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <MessageSquare className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">تواصل للاستثمار</CardTitle>
-              <p className="text-muted-foreground">أرسل استفسارك وسيتواصل معك فريق الاستثمار</p>
+              <p className="text-muted-foreground">
+                سيتم حفظ طلبك وإرساله مباشرة إلى مالك الفرصة الاستثمارية.
+              </p>
             </CardHeader>
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form
+                onSubmit={(event) => {
+                  void handleSubmit(event);
+                }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">الاسم الكامل *</Label>
                     <div className="relative">
-                      <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="name"
-                        placeholder="أدخل اسمك"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(event) =>
+                          setFormData((prev) => ({ ...prev, name: event.target.value }))
+                        }
                         className="pr-10"
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">رقم الهاتف *</Label>
+                    <Label htmlFor="phone">رقم الهاتف</Label>
                     <div className="relative">
-                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="01xxxxxxxxx"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(event) =>
+                          setFormData((prev) => ({ ...prev, phone: event.target.value }))
+                        }
                         className="pr-10"
-                        required
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="email">البريد الإلكتروني *</Label>
                     <div className="relative">
-                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="example@email.com"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(event) =>
+                          setFormData((prev) => ({ ...prev, email: event.target.value }))
+                        }
                         className="pr-10"
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="company">اسم الشركة (اختياري)</Label>
+                    <Label htmlFor="company">اسم الشركة</Label>
                     <div className="relative">
-                      <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Building2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="company"
-                        placeholder="اسم الشركة"
                         value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        onChange={(event) =>
+                          setFormData((prev) => ({ ...prev, company: event.target.value }))
+                        }
                         className="pr-10"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>نوع المستثمر *</Label>
+                    <Label>نوع المستثمر</Label>
                     <Select
                       value={formData.investorType}
-                      onValueChange={(value) => setFormData({ ...formData, investorType: value })}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, investorType: value }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع المستثمر" />
@@ -147,11 +229,11 @@ const ContactPage = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>حجم الاستثمار المتوقع *</Label>
+                    <Label>النطاق الاستثماري المتوقع</Label>
                     <Select
                       value={formData.investmentRange}
                       onValueChange={(value) =>
-                        setFormData({ ...formData, investmentRange: value })
+                        setFormData((prev) => ({ ...prev, investmentRange: value }))
                       }
                     >
                       <SelectTrigger>
@@ -169,20 +251,36 @@ const ContactPage = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="amount">القيمة المقترحة (جنيه)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, amount: event.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="message">رسالتك *</Label>
                   <Textarea
                     id="message"
-                    placeholder="اكتب استفسارك أو اهتماماتك بخصوص الفرصة الاستثمارية..."
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     rows={5}
+                    value={formData.message}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, message: event.target.value }))
+                    }
+                    placeholder="اشرح اهتمامك بالفرصة أو طبيعة الشراكة التي تبحث عنها..."
                     required
                   />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
+                <Button type="submit" className="w-full" size="lg" disabled={submitting}>
                   <Send className="h-5 w-5 ml-2" />
-                  إرسال الطلب
+                  {submitting ? 'جارٍ الإرسال...' : 'إرسال الطلب'}
                 </Button>
               </form>
             </CardContent>

@@ -1,22 +1,22 @@
-import { useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
+  AlertCircle,
   ArrowRight,
   Calendar,
   Clock,
+  Loader2,
+  Shield,
   Star,
   Users,
-  Shield,
-  AlertCircle,
-  Loader2,
+  Wallet,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Layout } from '@/components/layout/Layout';
+import { Skeleton } from '@/components/motion/Skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -25,15 +25,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { usePackage } from '@/hooks/use-packages';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/use-auth';
 import { useCreateBooking } from '@/hooks/use-bookings';
-import { piastresToEgp, formatRating } from '@/lib/format';
-import { Skeleton } from '@/components/motion/Skeleton';
+import { usePackage } from '@/hooks/use-packages';
+import { formatRating, piastresToEgp } from '@/lib/format';
+import { deductWalletBalance, getWalletSnapshot, topUpWallet } from '@/lib/wallet-store';
 
 const GuideBookingPage = () => {
   const navigate = useNavigate();
   const { packageId = '' } = useParams<{ packageId: string }>();
+  const { user } = useAuth();
 
   const { data: pkg, isLoading, error } = usePackage(packageId);
   const createBooking = useCreateBooking();
@@ -43,23 +47,71 @@ const GuideBookingPage = () => {
   const [peopleCount, setPeopleCount] = useState(1);
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const isProcessingRef = useRef(false);
 
-  // Tomorrow as min date (in Cairo timezone to match the booking flow)
+  useEffect(() => {
+    if (!user) return;
+    void (async () => {
+      try {
+        const snapshot = await getWalletSnapshot(user.id);
+        setWalletBalance(snapshot.wallet.balance);
+      } catch {
+        setWalletBalance(0);
+      }
+    })();
+  }, [user]);
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
 
   const totalPrice = pkg ? pkg.price * peopleCount : 0;
-
   const canSubmit = bookingDate && startTime && peopleCount >= 1;
+  const canAfford = walletBalance >= totalPrice;
+
+  const bookingSummary = useMemo(
+    () => ({
+      packageTitle: pkg?.titleAr ?? '',
+      totalPriceLabel: piastresToEgp(totalPrice),
+      balanceLabel: piastresToEgp(walletBalance),
+    }),
+    [pkg?.titleAr, totalPrice, walletBalance],
+  );
 
   const handleSubmit = () => {
     if (!canSubmit || !pkg) return;
     setShowConfirm(true);
   };
 
-  const handleConfirm = () => {
-    if (!pkg) return;
+  const handleConfirm = async () => {
+    if (isProcessingRef.current) return;
+    if (!pkg || !user) return;
+
+    if (!canAfford) {
+      toast.error('رصيد المحفظة غير كافٍ. اشحن المحفظة ثم أعد المحاولة.');
+      setShowConfirm(false);
+      void navigate('/wallet');
+      return;
+    }
+
+    isProcessingRef.current = true;
+    setWalletLoading(true);
+
+    try {
+      await deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
+        reference_id: pkg.id,
+        reference_type: 'package_booking',
+      });
+    } catch (walletError: unknown) {
+      isProcessingRef.current = false;
+      setWalletLoading(false);
+      toast.error(walletError instanceof Error ? walletError.message : 'تعذر تحديث رصيد المحفظة');
+      setShowConfirm(false);
+      return;
+    }
+
     createBooking.mutate(
       {
         packageId: pkg.id,
@@ -70,11 +122,34 @@ const GuideBookingPage = () => {
       },
       {
         onSuccess: () => {
-          toast.success('تم إرسال طلب الحجز بنجاح! سيتواصل معك المرشد قريباً');
+          isProcessingRef.current = false;
+          setWalletLoading(false);
+          toast.success('تم تأكيد الحجز وخصم قيمة الباقة من المحفظة بنجاح');
+          setShowConfirm(false);
           void navigate('/bookings');
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء إنشاء الحجز');
+          isProcessingRef.current = false;
+          void topUpWallet(user.id, totalPrice, `استرداد حجز باقة سياحية: ${pkg.titleAr}`, {
+            reference_id: pkg.id,
+            reference_type: 'package_booking_refund',
+          })
+            .then(() => {
+              setWalletLoading(false);
+              toast.error(
+                err instanceof Error
+                  ? `${err.message}. تم استرداد المبلغ للمحفظة.`
+                  : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
+              );
+            })
+            .catch(() => {
+              setWalletLoading(false);
+              toast.error(
+                err instanceof Error
+                  ? `${err.message}. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.`
+                  : 'فشل إنشاء الحجز. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.',
+              );
+            });
           setShowConfirm(false);
         },
       },
@@ -85,7 +160,7 @@ const GuideBookingPage = () => {
     return (
       <Layout>
         <section className="py-8 md:py-12">
-          <div className="container px-4 max-w-3xl">
+          <div className="container max-w-3xl px-4">
             <Skeleton h="h-96" className="rounded-2xl" />
           </div>
         </section>
@@ -96,7 +171,7 @@ const GuideBookingPage = () => {
   if (error || !pkg) {
     return (
       <Layout>
-        <div className="container py-20 flex flex-col items-center gap-4">
+        <div className="container flex flex-col items-center gap-4 py-20">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات الباقة</p>
           <Button variant="outline" onClick={() => void navigate(-1)}>
@@ -110,17 +185,15 @@ const GuideBookingPage = () => {
   return (
     <Layout>
       <section className="py-8 md:py-12">
-        <div className="container px-4 max-w-3xl">
+        <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="ml-2 h-4 w-4" />
             رجوع
           </Button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Sidebar: Package + Guide info */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card className="border-border/50 lg:order-2">
-              <CardContent className="p-6 space-y-4">
-                {/* Guide info */}
+              <CardContent className="space-y-4 p-6">
                 <div className="flex items-center gap-4">
                   <img
                     src={pkg.guideProfileImage ?? '/placeholder.jpg'}
@@ -128,19 +201,19 @@ const GuideBookingPage = () => {
                     className="h-14 w-14 rounded-full object-cover"
                   />
                   <div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{pkg.guideBioAr}</p>
+                    <p className="line-clamp-1 text-sm text-muted-foreground">{pkg.guideBioAr}</p>
                     <div className="flex items-center gap-1">
                       {pkg.guideRatingAvg != null && (
                         <>
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                          <span className="font-medium text-sm">
+                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                          <span className="text-sm font-medium">
                             {formatRating(pkg.guideRatingAvg)}
                           </span>
                         </>
                       )}
                       {pkg.guideLicenseVerified && (
-                        <Badge className="h-5 text-[10px] bg-green-500/10 text-green-600 mr-2">
-                          <Shield className="h-3 w-3 ml-1" />
+                        <Badge className="mr-2 h-5 bg-green-500/10 text-[10px] text-green-600">
+                          <Shield className="ml-1 h-3 w-3" />
                           مرخّص
                         </Badge>
                       )}
@@ -148,9 +221,8 @@ const GuideBookingPage = () => {
                   </div>
                 </div>
 
-                {/* Package info */}
-                <div className="border-t pt-4 space-y-2">
-                  <h3 className="font-bold text-lg">{pkg.titleAr}</h3>
+                <div className="space-y-2 border-t pt-4">
+                  <h3 className="text-lg font-bold">{pkg.titleAr}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
@@ -172,7 +244,6 @@ const GuideBookingPage = () => {
                   )}
                 </div>
 
-                {/* Price */}
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>سعر الفرد</span>
@@ -182,55 +253,66 @@ const GuideBookingPage = () => {
                     <span>عدد الأفراد</span>
                     <span>{peopleCount}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
+                  <div className="mt-2 flex justify-between border-t pt-2 text-lg font-bold">
                     <span>الإجمالي</span>
-                    <span className="text-primary">{piastresToEgp(totalPrice)}</span>
+                    <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Wallet className="h-4 w-4 text-primary" />
+                    رصيد المحفظة الحالي
+                  </div>
+                  <p className="mt-2 text-xl font-bold text-foreground">
+                    {bookingSummary.balanceLabel}
+                  </p>
+                  {!canAfford && (
+                    <p className="mt-2 text-sm text-destructive">
+                      الرصيد الحالي غير كافٍ لتأكيد هذا الحجز.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Form */}
-            <Card className="border-border/50 lg:col-span-2 lg:order-1">
+            <Card className="border-border/50 lg:order-1 lg:col-span-2">
               <CardHeader>
                 <CardTitle className="text-xl">تفاصيل الحجز</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {/* Date */}
                   <div className="space-y-2">
                     <Label htmlFor="date">تاريخ الرحلة</Label>
                     <div className="relative">
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="date"
                         type="date"
                         value={bookingDate}
                         min={minDate}
-                        onChange={(e) => setBookingDate(e.target.value)}
+                        onChange={(event) => setBookingDate(event.target.value)}
                         className="pr-10"
                         required
                       />
                     </div>
                   </div>
 
-                  {/* Start Time */}
                   <div className="space-y-2">
                     <Label htmlFor="time">وقت البدء</Label>
                     <div className="relative">
-                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="time"
                         type="time"
                         value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
+                        onChange={(event) => setStartTime(event.target.value)}
                         className="pr-10"
                         required
                       />
                     </div>
                   </div>
 
-                  {/* People Count */}
                   <div className="space-y-2">
                     <Label>عدد الأفراد</Label>
                     <div className="flex items-center gap-4">
@@ -238,17 +320,19 @@ const GuideBookingPage = () => {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setPeopleCount((c) => Math.max(1, c - 1))}
+                        onClick={() => setPeopleCount((count) => Math.max(1, count - 1))}
                         disabled={peopleCount <= 1}
                       >
                         -
                       </Button>
-                      <span className="text-xl font-bold w-8 text-center">{peopleCount}</span>
+                      <span className="w-8 text-center text-xl font-bold">{peopleCount}</span>
                       <Button
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setPeopleCount((c) => Math.min(pkg.maxPeople, c + 1))}
+                        onClick={() =>
+                          setPeopleCount((count) => Math.min(pkg.maxPeople, count + 1))
+                        }
                         disabled={peopleCount >= pkg.maxPeople}
                       >
                         +
@@ -259,24 +343,22 @@ const GuideBookingPage = () => {
                     </div>
                   </div>
 
-                  {/* Notes */}
                   <div className="space-y-2">
                     <Label htmlFor="notes">ملاحظات إضافية</Label>
                     <Textarea
                       id="notes"
                       placeholder="أخبرنا عن توقعاتك للرحلة..."
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={(event) => setNotes(event.target.value)}
                       maxLength={1000}
                       rows={3}
                     />
                   </div>
 
-                  {/* Total */}
-                  <div className="bg-primary/5 rounded-lg p-4 flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-lg bg-primary/5 p-4">
                     <span className="text-muted-foreground">إجمالي التكلفة</span>
                     <span className="text-2xl font-bold text-primary">
-                      {piastresToEgp(totalPrice)}
+                      {bookingSummary.totalPriceLabel}
                     </span>
                   </div>
 
@@ -290,7 +372,6 @@ const GuideBookingPage = () => {
         </div>
       </section>
 
-      {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
@@ -300,7 +381,7 @@ const GuideBookingPage = () => {
           <div className="space-y-3 py-4">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">الباقة</span>
-              <span className="font-medium">{pkg?.titleAr}</span>
+              <span className="font-medium">{bookingSummary.packageTitle}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">التاريخ</span>
@@ -320,10 +401,19 @@ const GuideBookingPage = () => {
                 <span className="max-w-[200px] text-left">{notes}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-lg pt-3 border-t">
-              <span>الإجمالي</span>
-              <span className="text-primary">{piastresToEgp(totalPrice)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">الرصيد الحالي</span>
+              <span>{bookingSummary.balanceLabel}</span>
             </div>
+            <div className="flex justify-between border-t pt-3 text-lg font-bold">
+              <span>الإجمالي</span>
+              <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
+            </div>
+            {!canAfford && (
+              <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                الرصيد الحالي غير كافٍ. سيتم تحويلك إلى المحفظة لشحن الرصيد.
+              </p>
+            )}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
@@ -333,8 +423,13 @@ const GuideBookingPage = () => {
             >
               تعديل
             </Button>
-            <Button onClick={handleConfirm} disabled={createBooking.isPending}>
-              {createBooking.isPending && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+            <Button
+              onClick={() => void handleConfirm()}
+              disabled={createBooking.isPending || walletLoading}
+            >
+              {(createBooking.isPending || walletLoading) && (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              )}
               تأكيد الحجز
             </Button>
           </DialogFooter>

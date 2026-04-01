@@ -12,7 +12,6 @@ import { QueryAdminListingsDto } from './dto/query-admin-listings.dto';
 import { VerifyListingDto } from './dto/verify-listing.dto';
 
 @Controller('admin')
-@Roles(UserRole.ADMIN)
 export class AdminController {
   constructor(
     @Inject(AdminService) private readonly adminService: AdminService,
@@ -20,16 +19,19 @@ export class AdminController {
   ) {}
 
   @Get('market-stats')
+  @Roles(UserRole.ADMIN)
   getStats() {
     return this.adminService.getStats();
   }
 
   @Get('listings')
+  @Roles(UserRole.ADMIN, UserRole.REVIEWER)
   getListings(@Query() query: QueryAdminListingsDto) {
     return this.listingsService.findAllAdmin(query);
   }
 
   @Patch('listings/:id/verify')
+  @Roles(UserRole.ADMIN, UserRole.REVIEWER)
   verifyListing(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: VerifyListingDto,
@@ -39,11 +41,13 @@ export class AdminController {
   }
 
   @Patch('listings/:id/feature')
+  @Roles(UserRole.ADMIN)
   featureListing(@Param('id', ParseUUIDPipe) id: string, @Body() dto: FeatureListingDto) {
     return this.listingsService.setFeatured(id, dto);
   }
 
   @Get('market-moderation/queue')
+  @Roles(UserRole.ADMIN, UserRole.REVIEWER)
   getModerationQueue() {
     return this.adminService.getModerationQueue();
   }

@@ -49,7 +49,7 @@ interface BookingFilters {
 export class BookingsService {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
-    private readonly redisStreams: RedisStreamsService,
+    @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
   ) {}
 
   async create(dto: CreateBookingDto, touristId: string): Promise<Booking> {

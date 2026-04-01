@@ -1,4 +1,3 @@
-import { RedisStreamsService } from '@hena-wadeena/nest-common';
 import { Module } from '@nestjs/common';
 
 import { GuidesModule } from '../guides/guides.module';
@@ -11,7 +10,7 @@ import { MyBookingsController } from './my-bookings.controller';
 @Module({
   imports: [GuidesModule],
   controllers: [MyBookingsController, BookingsController, AdminBookingsController],
-  providers: [BookingsService, RedisStreamsService],
+  providers: [BookingsService],
   exports: [BookingsService],
 })
 export class BookingsModule {}

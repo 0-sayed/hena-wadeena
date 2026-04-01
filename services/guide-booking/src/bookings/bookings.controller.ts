@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -21,8 +22,8 @@ import { CreateBookingDto } from './dto';
 @Controller('bookings')
 export class BookingsController {
   constructor(
-    private readonly bookingsService: BookingsService,
-    private readonly guidesService: GuidesService,
+    @Inject(BookingsService) private readonly bookingsService: BookingsService,
+    @Inject(GuidesService) private readonly guidesService: GuidesService,
   ) {}
 
   @Post()

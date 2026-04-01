@@ -1,4 +1,4 @@
-import { CurrentUser, KycVerifiedGuard, Public, Roles } from '@hena-wadeena/nest-common';
+import { CurrentUser, OptionalJwt, Public, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
 import {
@@ -12,13 +12,18 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 
 import { CreateOpportunityDto } from './dto/create-opportunity.dto';
 import { QueryOpportunitiesDto } from './dto/query-opportunities.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 import { InvestmentOpportunitiesService } from './investment-opportunities.service';
+
+const userRoles = new Set<string>(Object.values(UserRole));
+
+function isUserRole(value: string): value is UserRole {
+  return userRoles.has(value);
+}
 
 @Controller('investments')
 export class InvestmentOpportunitiesController {
@@ -28,7 +33,7 @@ export class InvestmentOpportunitiesController {
   ) {}
 
   private async assertOwnerUnlessAdmin(id: string, user: JwtPayload): Promise<void> {
-    if ((user.role as UserRole) !== UserRole.ADMIN) {
+    if (!isUserRole(user.role) || user.role !== UserRole.ADMIN) {
       await this.opportunitiesService.assertOwnership(id, user.sub);
     }
   }
@@ -53,11 +58,17 @@ export class InvestmentOpportunitiesController {
     return this.opportunitiesService.findFeatured(query);
   }
 
-  @Get(':id')
+  @Get('mine')
   @Roles(UserRole.INVESTOR, UserRole.MERCHANT, UserRole.ADMIN)
-  @UseGuards(KycVerifiedGuard)
-  async findById(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    const opportunity = await this.opportunitiesService.findById(id, user.sub, user.role);
+  findMine(@CurrentUser() user: JwtPayload) {
+    return this.opportunitiesService.findMine(user.sub);
+  }
+
+  @Get(':id')
+  @Public()
+  @OptionalJwt()
+  async findById(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
+    const opportunity = await this.opportunitiesService.findById(id, user?.sub, user?.role);
     if (!opportunity) throw new NotFoundException('Opportunity not found');
     return opportunity;
   }

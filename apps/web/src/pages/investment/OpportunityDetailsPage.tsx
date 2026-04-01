@@ -1,81 +1,64 @@
-import { Layout } from '@/components/layout/Layout';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router';
 import {
   ArrowRight,
-  MapPin,
-  TrendingUp,
   Building2,
   FileText,
-  Phone,
-  Mail,
   Globe,
+  Mail,
+  MapPin,
+  Phone,
+  TrendingUp,
 } from 'lucide-react';
+import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
-
-// Mock data
-const opportunityData = {
-  id: 1,
-  title: 'مشروع زراعي متكامل - 100 فدان',
-  category: 'زراعة',
-  location: 'الداخلة',
-  lat: 25.4867,
-  lng: 29.0,
-  investment: '5-10 مليون جنيه',
-  roi: '18-22%',
-  status: 'متاح',
-  description: 'فرصة استثمارية في مشروع زراعي متكامل يشمل زراعة التمور والزيتون مع نظام ري حديث.',
-  fullDescription: `
-    يقع المشروع في قلب واحة الداخلة على مساحة 100 فدان من الأراضي الزراعية الخصبة. 
-    يتميز المشروع بموقع استراتيجي قريب من الطرق الرئيسية مما يسهل عمليات النقل والتوزيع.
-    
-    يشمل المشروع:
-    - زراعة 5000 نخلة من أجود أنواع التمور
-    - 3000 شجرة زيتون
-    - نظام ري بالتنقيط حديث وموفر للمياه
-    - مبنى إداري ومخازن مبردة
-    - خطوط تعبئة وتغليف
-  `,
-  highlights: [
-    'موقع استراتيجي على الطريق الرئيسي',
-    'تربة خصبة ومياه وفيرة',
-    'إعفاءات ضريبية لمدة 10 سنوات',
-    'دعم حكومي للمشاريع الزراعية',
-    'سوق تصديري واعد',
-  ],
-  timeline: '3-5 سنوات للعائد الكامل',
-  minInvestment: '5,000,000 جنيه',
-  maxInvestment: '10,000,000 جنيه',
-  paybackPeriod: '4 سنوات',
-  documents: [
-    { name: 'دراسة الجدوى', type: 'PDF' },
-    { name: 'خريطة الموقع', type: 'PDF' },
-    { name: 'التراخيص والموافقات', type: 'PDF' },
-  ],
-  contact: {
-    name: 'مكتب الاستثمار - الوادي الجديد',
-    phone: '0927123456',
-    email: 'invest@newvalley.gov.eg',
-    website: 'www.newvalley-invest.gov.eg',
-  },
-};
+import { investmentAPI } from '@/services/api';
+import { formatPrice } from '@/lib/format';
+import { useAuth } from '@/hooks/use-auth';
 
 const OpportunityDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const { isAuthenticated, user } = useAuth();
+  const { data: opportunity, isLoading, isError, refetch } = useQuery({
+    queryKey: ['investment', 'opportunities', id],
+    queryFn: () => investmentAPI.getOpportunity(id!),
+    enabled: !!id,
+  });
 
-  const mapLocations = [
-    {
-      id: 1,
-      name: opportunityData.title,
-      lat: opportunityData.lat,
-      lng: opportunityData.lng,
-      description: opportunityData.location,
-      type: 'فرصة استثمارية',
-    },
-  ];
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container py-16 space-y-6">
+          <div className="h-10 w-40 animate-pulse rounded-xl bg-muted" />
+          <div className="h-80 animate-pulse rounded-2xl bg-muted" />
+          <div className="h-64 animate-pulse rounded-2xl bg-muted" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isError || !opportunity) {
+    return (
+      <Layout>
+        <div className="container py-20 text-center space-y-4">
+          <p className="text-lg text-muted-foreground">تعذر تحميل بيانات الفرصة الاستثمارية.</p>
+          <div className="flex justify-center gap-3">
+            <Button variant="outline" onClick={() => void navigate('/investment')}>
+              العودة للاستثمار
+            </Button>
+            <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const canSeeSensitiveFields =
+    isAuthenticated && ['investor', 'merchant', 'admin'].includes(user?.role ?? '');
 
   return (
     <Layout>
@@ -86,166 +69,205 @@ const OpportunityDetailsPage = () => {
             العودة للاستثمار
           </Button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Header */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
               <Card className="border-border/50">
                 <CardContent className="p-6">
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <Badge className="bg-primary">{opportunityData.status}</Badge>
-                    <Badge variant="outline">{opportunityData.category}</Badge>
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <Badge className="bg-primary">{opportunity.status}</Badge>
+                    <Badge variant="outline">{opportunity.sector}</Badge>
                   </div>
-
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                    {opportunityData.title}
+                  <h1 className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
+                    {opportunity.titleAr}
                   </h1>
-
                   <div className="flex flex-wrap gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-primary" />
-                      <span>{opportunityData.location}</span>
+                      <span>{opportunity.area}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-primary" />
-                      <span>العائد المتوقع: {opportunityData.roi}</span>
-                    </div>
+                    {opportunity.expectedReturnPct != null && (
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <span>العائد المتوقع: {opportunity.expectedReturnPct}%</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Description */}
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">وصف المشروع</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
-                    {opportunityData.fullDescription}
-                  </p>
-                </CardContent>
-              </Card>
+              {opportunity.description && (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg">وصف المشروع</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                      {opportunity.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Highlights */}
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">مميزات المشروع</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {opportunityData.highlights.map((highlight, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-xs font-bold text-primary">{index + 1}</span>
-                        </div>
-                        <span className="text-muted-foreground">{highlight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              {opportunity.incentives && opportunity.incentives.length > 0 && (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg">الحوافز والمزايا</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="grid gap-3 md:grid-cols-2">
+                      {opportunity.incentives.map((incentive) => (
+                        <li key={incentive} className="rounded-xl bg-muted/40 px-4 py-3 text-sm">
+                          {incentive}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Map */}
               <Card className="border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">موقع المشروع</CardTitle>
                 </CardHeader>
-                <CardContent className="p-0 pb-4 px-4">
-                  <InteractiveMap
-                    locations={mapLocations}
-                    center={[opportunityData.lat, opportunityData.lng]}
-                    zoom={10}
-                    className="h-[300px] w-full rounded-xl overflow-hidden"
-                  />
+                <CardContent className="space-y-4">
+                  {opportunity.location ? (
+                    <InteractiveMap
+                      locations={[
+                        {
+                          id: opportunity.id,
+                          name: opportunity.titleAr,
+                          lat: opportunity.location.y,
+                          lng: opportunity.location.x,
+                          description: opportunity.area,
+                          type: 'فرصة استثمارية',
+                          image: opportunity.images?.[0],
+                          color: '#f59e0b',
+                        },
+                      ]}
+                      center={[opportunity.location.y, opportunity.location.x]}
+                      zoom={11}
+                      className="h-[320px] w-full rounded-xl overflow-hidden"
+                    />
+                  ) : (
+                    <div className="rounded-xl bg-muted/40 p-6 text-center text-muted-foreground">
+                      لا توجد إحداثيات متاحة لهذه الفرصة حالياً.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Documents */}
               <Card className="border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">المستندات</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {opportunityData.documents.map((doc, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
+                <CardContent className="space-y-2">
+                  {opportunity.documents && opportunity.documents.length > 0 ? (
+                    opportunity.documents.map((documentUrl) => (
+                      <a
+                        key={documentUrl}
+                        href={documentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-muted/50"
                       >
                         <div className="flex items-center gap-3">
                           <FileText className="h-5 w-5 text-primary" />
-                          <span className="font-medium">{doc.name}</span>
+                          <span className="font-medium">مستند مرفق</span>
                         </div>
-                        <Badge variant="secondary">{doc.type}</Badge>
-                      </div>
-                    ))}
-                  </div>
+                        <Badge variant="secondary">فتح</Badge>
+                      </a>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {canSeeSensitiveFields
+                        ? 'لا توجد مستندات مرفقة حالياً.'
+                        : 'سجل الدخول كمستثمر أو تاجر لعرض المستندات التفصيلية.'}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Sidebar */}
             <div className="space-y-6">
-              {/* Investment Details */}
-              <Card className="border-border/50 sticky top-4">
+              <Card className="sticky top-4 border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">تفاصيل الاستثمار</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-primary/5 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground mb-1">حجم الاستثمار المطلوب</p>
-                    <p className="text-xl font-bold text-primary">{opportunityData.investment}</p>
+                  <div className="rounded-lg bg-primary/5 p-4">
+                    <p className="mb-1 text-sm text-muted-foreground">حجم الاستثمار المطلوب</p>
+                    <p className="text-xl font-bold text-primary">
+                      {formatPrice(opportunity.minInvestment)} - {formatPrice(opportunity.maxInvestment)} ج.م
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-xs text-muted-foreground mb-1">العائد المتوقع</p>
-                      <p className="font-semibold text-primary">{opportunityData.roi}</p>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="mb-1 text-xs text-muted-foreground">العائد المتوقع</p>
+                      <p className="font-semibold text-primary">
+                        {opportunity.expectedReturnPct != null
+                          ? `${opportunity.expectedReturnPct}%`
+                          : '-'}
+                      </p>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-xs text-muted-foreground mb-1">فترة الاسترداد</p>
-                      <p className="font-semibold">{opportunityData.paybackPeriod}</p>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="mb-1 text-xs text-muted-foreground">فترة الاسترداد</p>
+                      <p className="font-semibold">
+                        {opportunity.paybackPeriodYears != null
+                          ? `${opportunity.paybackPeriodYears} سنة`
+                          : '-'}
+                      </p>
                     </div>
-                  </div>
-
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">الجدول الزمني</p>
-                    <p className="font-semibold">{opportunityData.timeline}</p>
                   </div>
 
                   <Button
                     className="w-full"
                     size="lg"
-                    onClick={() => void navigate(`/investment/contact/${id}`)}
+                    onClick={() => void navigate(`/investment/contact/${opportunity.id}`)}
                   >
                     <Mail className="h-5 w-5 ml-2" />
-                    تواصل للاستثمار
+                    إرسال استفسار استثماري
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Contact Info */}
               <Card className="border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">معلومات التواصل</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    <span className="text-sm">{opportunityData.contact.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-primary" />
-                    <span className="text-sm">{opportunityData.contact.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <span className="text-sm">{opportunityData.contact.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-primary" />
-                    <span className="text-sm">{opportunityData.contact.website}</span>
-                  </div>
+                <CardContent className="space-y-3 text-sm">
+                  {opportunity.contact ? (
+                    <>
+                      {opportunity.contact.name && (
+                        <div className="flex items-center gap-3">
+                          <Building2 className="h-4 w-4 text-primary" />
+                          <span>{opportunity.contact.name}</span>
+                        </div>
+                      )}
+                      {opportunity.contact.phone && (
+                        <div className="flex items-center gap-3">
+                          <Phone className="h-4 w-4 text-primary" />
+                          <span>{opportunity.contact.phone}</span>
+                        </div>
+                      )}
+                      {opportunity.contact.email && (
+                        <div className="flex items-center gap-3">
+                          <Mail className="h-4 w-4 text-primary" />
+                          <span>{opportunity.contact.email}</span>
+                        </div>
+                      )}
+                      {opportunity.contact.website && (
+                        <div className="flex items-center gap-3">
+                          <Globe className="h-4 w-4 text-primary" />
+                          <span>{opportunity.contact.website}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      سجل الدخول كمستثمر أو تاجر لعرض بيانات التواصل الكاملة.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

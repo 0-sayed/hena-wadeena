@@ -15,6 +15,8 @@ import {
   useJoinRide,
   useCancelJoin,
   useCancelRide,
+  useActivateRide,
+  useDeleteRide,
   useConfirmPassenger,
   useDeclinePassenger,
 } from '@/hooks/use-map';
@@ -42,6 +44,8 @@ const RideDetailPage = () => {
   const joinRide = useJoinRide();
   const cancelJoin = useCancelJoin();
   const cancelRide = useCancelRide();
+  const activateRide = useActivateRide();
+  const deleteRide = useDeleteRide();
   const confirmPassenger = useConfirmPassenger();
   const declinePassenger = useDeclinePassenger();
 
@@ -49,8 +53,8 @@ const RideDetailPage = () => {
     return (
       <Layout>
         <section className="py-8">
-          <div className="container px-4 max-w-3xl">
-            <Skeleton h="h-[300px]" className="rounded-xl mb-6" />
+          <div className="container max-w-3xl px-4">
+            <Skeleton h="h-[300px]" className="mb-6 rounded-xl" />
             <Skeleton h="h-48" className="rounded-xl" />
           </div>
         </section>
@@ -90,6 +94,7 @@ const RideDetailPage = () => {
   const hasActiveJoin =
     myPassengerRecord &&
     (myPassengerRecord.status === 'requested' || myPassengerRecord.status === 'confirmed');
+  const canDeleteRide = ride.status === 'cancelled' || ride.status === 'completed';
 
   const mapLocations: MapLocation[] = [
     {
@@ -141,8 +146,26 @@ const RideDetailPage = () => {
 
   const handleCancelRide = () => {
     cancelRide.mutate(ride.id, {
+      onSuccess: () => toast.success('تم إلغاء الرحلة'),
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
+  const handleActivateRide = () => {
+    activateRide.mutate(ride.id, {
+      onSuccess: () => toast.success('تمت إعادة تفعيل الرحلة'),
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
+  const handleDeleteRide = () => {
+    if (!window.confirm('هل تريد حذف هذه الرحلة نهائياً؟')) {
+      return;
+    }
+
+    deleteRide.mutate(ride.id, {
       onSuccess: () => {
-        toast.success('تم إلغاء الرحلة');
+        toast.success('تم حذف الرحلة');
         void navigate('/logistics');
       },
       onError: (err) => toast.error(err.message),
@@ -169,24 +192,25 @@ const RideDetailPage = () => {
     );
   };
 
+  const driverActionPending =
+    cancelRide.isPending || activateRide.isPending || deleteRide.isPending;
+
   return (
     <Layout>
       <section className="py-8">
-        <div className="container px-4 max-w-3xl">
+        <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate('/logistics')} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="ml-2 h-4 w-4" />
             العودة
           </Button>
 
-          {/* Map */}
           <InteractiveMap
             locations={mapLocations}
-            className="h-[300px] w-full rounded-xl mb-6"
+            className="mb-6 h-[300px] w-full rounded-xl"
             fitBounds
             polylines={mapPolylines}
           />
 
-          {/* Ride Info */}
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -203,7 +227,7 @@ const RideDetailPage = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{formatDateTimeFull(ride.departureTime)}</span>
@@ -214,17 +238,16 @@ const RideDetailPage = () => {
                     {available} من {ride.seatsTotal} مقاعد متاحة
                   </span>
                 </div>
-                <div className="text-2xl font-bold text-primary col-span-2 md:col-span-1 md:text-left">
+                <div className="col-span-2 text-2xl font-bold text-primary md:col-span-1 md:text-left">
                   {formatRidePrice(ride.pricePerSeat)}
                 </div>
               </div>
 
               {ride.notes && (
-                <p className="text-sm text-muted-foreground border-t pt-4">{ride.notes}</p>
+                <p className="border-t pt-4 text-sm text-muted-foreground">{ride.notes}</p>
               )}
 
-              {/* Actions */}
-              <div className="border-t pt-4 flex gap-3">
+              <div className="flex flex-wrap gap-3 border-t pt-4">
                 {!isAuthenticated && (
                   <Button onClick={() => void navigate('/login')}>سجل دخول للانضمام</Button>
                 )}
@@ -251,16 +274,33 @@ const RideDetailPage = () => {
                   <Button
                     variant="destructive"
                     onClick={handleCancelRide}
-                    disabled={cancelRide.isPending}
+                    disabled={driverActionPending}
                   >
                     إلغاء الرحلة
+                  </Button>
+                )}
+                {isDriver && ride.status === 'cancelled' && (
+                  <Button
+                    variant="outline"
+                    onClick={handleActivateRide}
+                    disabled={driverActionPending}
+                  >
+                    إعادة التفعيل
+                  </Button>
+                )}
+                {isDriver && canDeleteRide && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleDeleteRide}
+                    disabled={driverActionPending}
+                  >
+                    حذف الرحلة
                   </Button>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Passenger list (driver only) */}
           {isDriver && ride.passengers && ride.passengers.length > 0 && (
             <Card>
               <CardHeader>
@@ -271,7 +311,7 @@ const RideDetailPage = () => {
                   {ride.passengers.map((p: CarpoolPassenger) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
+                      className="flex items-center justify-between rounded-lg border p-3"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium">{p.seats} مقعد</span>
@@ -286,7 +326,7 @@ const RideDetailPage = () => {
                             onClick={() => handleConfirm(p.id)}
                             disabled={confirmPassenger.isPending}
                           >
-                            <Check className="h-4 w-4 ml-1" />
+                            <Check className="ml-1 h-4 w-4" />
                             تأكيد
                           </Button>
                           <Button
@@ -295,7 +335,7 @@ const RideDetailPage = () => {
                             onClick={() => handleDecline(p.id)}
                             disabled={declinePassenger.isPending}
                           >
-                            <X className="h-4 w-4 ml-1" />
+                            <X className="ml-1 h-4 w-4" />
                             رفض
                           </Button>
                         </div>

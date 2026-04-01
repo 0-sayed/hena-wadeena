@@ -136,6 +136,8 @@ scripts/seed/*.d.ts.map
 *.tmp
 *.swp
 .cache/
+.eslintcache
+*.eslintcache
 
 # Binary documents
 docs/**/*.pdf
