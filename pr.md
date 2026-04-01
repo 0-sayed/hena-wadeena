@@ -4,7 +4,7 @@
 
 ## Worth Fixing
 
-- [ ] Add sandbox attribute to iframe for security — @codoki-pr-intelligence, @gemini-code-assist, @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54JM68 --> <!-- thread:PRRT_kwDORjaF4M54JNGN --> <!-- thread:PRRT_kwDORjaF4M54JUs8 -->
+- [x] Add sandbox attribute to iframe for security — @codoki-pr-intelligence, @gemini-code-assist, @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54JM68 --> <!-- thread:PRRT_kwDORjaF4M54JNGN --> <!-- thread:PRRT_kwDORjaF4M54JUs8 -->
   > **apps/web/src/components/admin/DocumentViewerDialog.tsx:77**
   >
   > <!-- CODOKI_INLINE -->
@@ -34,7 +34,7 @@
   > <!-- metadata:{"confidence":8} -->
   > P1: Add `sandbox` attribute to the iframe to prevent script execution in user-uploaded content. Since this renders KYC documents submitted by users in an admin moderation view, a crafted document URL could execute scripts. Use `sandbox="allow-same-origin"` to allow PDF rendering while blocking script execution.
 
-- [ ] Strip query string before checking file extension — @codoki-pr-intelligence, @gemini-code-assist, @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54JM68 --> <!-- thread:PRRT_kwDORjaF4M54JNGU --> <!-- thread:PRRT_kwDORjaF4M54JUtA -->
+- [x] Strip query string before checking file extension — @codoki-pr-intelligence, @gemini-code-assist, @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54JM68 --> <!-- thread:PRRT_kwDORjaF4M54JNGU --> <!-- thread:PRRT_kwDORjaF4M54JUtA -->
   > **apps/web/src/components/admin/DocumentViewerDialog.tsx:34**
   >
   > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
@@ -52,7 +52,7 @@
   > <!-- metadata:{"confidence":9} -->
   > P2: File extension detection will fail when `documentUrl` contains query parameters (e.g., S3 signed URLs or CDN cache-busting tokens). Strip the query string before checking the extension.
 
-- [ ] Count query should mirror innerJoin from data query — @gemini-code-assist, @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M54JNGk --> <!-- thread:PRRT_kwDORjaF4M54JPDE -->
+- [x] Count query should mirror innerJoin from data query — @gemini-code-assist, @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M54JNGk --> <!-- thread:PRRT_kwDORjaF4M54JPDE -->
   > **services/identity/src/kyc/kyc.service.ts:82**
   >
   > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
@@ -75,7 +75,7 @@
   >       this.db.select({ count: count() }).from(userKyc).innerJoin(users, eq(userKyc.userId, users.id)).where(whereClause),
   > ```
 
-- [ ] Reset zoom state when documentUrl changes — @devin-ai-integration, @coderabbitai <!-- thread:PRRT_kwDORjaF4M54JPCG --> <!-- thread:PRRT_kwDORjaF4M54JVdL -->
+- [x] Reset zoom state when documentUrl changes — @devin-ai-integration, @coderabbitai <!-- thread:PRRT_kwDORjaF4M54JPCG --> <!-- thread:PRRT_kwDORjaF4M54JVdL -->
   > **apps/web/src/components/admin/DocumentViewerDialog.tsx:29**
   >
   > <!-- devin-review-comment {"id": "BUG_pr-review-job-fb23fef56fac42888fedc8e4c04b37eb_0001", "file_path": "apps/web/src/components/admin/DocumentViewerDialog.tsx", "start_line": 29, "end_line": 29, "side": "RIGHT"} -->
@@ -130,7 +130,7 @@
   > ```
   > </details>
 
-- [ ] Early return bypasses Dialog onOpenChange binding — @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54JUs- -->
+- [x] Early return bypasses Dialog onOpenChange binding — @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54JUs- -->
   > **apps/web/src/components/admin/DocumentViewerDialog.tsx:31**
   >
   > <!-- metadata:{"confidence":7} -->
@@ -138,7 +138,7 @@
 
 ## Not Worth Fixing
 
-- [ ] ~~Use DROP INDEX CONCURRENTLY for migration — @codoki-pr-intelligence~~ <!-- thread:PRRT_kwDORjaF4M54JOHu -->
+- [x] ~~Use DROP INDEX CONCURRENTLY for migration — @codoki-pr-intelligence~~ <!-- thread:PRRT_kwDORjaF4M54JOHu -->
   - _Reason: This is a generated Drizzle migration file. Project rules (CLAUDE.md) explicitly forbid manually editing generated migrations — fix forward with new migrations instead. For local dev, non-concurrent drops are fine._
   > **services/identity/drizzle/20260401040844_late_phalanx.sql:1**
   >
