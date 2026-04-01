@@ -8,12 +8,14 @@ import {
   NotFoundException,
   Param,
   Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 
 import type { users } from '../db/schema/index';
 
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { DeductDto, TopupDto } from './dto/wallet.dto';
 import { UsersService } from './users.service';
 
 function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
@@ -44,6 +46,33 @@ export class UsersController {
     });
     if (!updated) throw new NotFoundException('User not found');
     return toPublicUser(updated);
+  }
+
+  @Get('wallet')
+  async getWallet(@CurrentUser() user: JwtPayload) {
+    const balance = await this.usersService.getBalance(user.sub);
+    return {
+      success: true,
+      data: {
+        id: `wallet-${user.sub}`,
+        user_id: user.sub,
+        balance,
+        currency: 'EGP',
+        recent_transactions: [],
+      },
+    };
+  }
+
+  @Post('wallet/topup')
+  async topUp(@CurrentUser() user: JwtPayload, @Body() dto: TopupDto) {
+    const balance = await this.usersService.topUp(user.sub, dto.amount);
+    return { success: true, data: { balance } };
+  }
+
+  @Post('wallet/deduct')
+  async deduct(@CurrentUser() user: JwtPayload, @Body() dto: DeductDto) {
+    const balance = await this.usersService.deduct(user.sub, dto.amount);
+    return { success: true, data: { balance } };
   }
 
   @Public()

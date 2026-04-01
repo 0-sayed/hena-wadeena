@@ -23,6 +23,7 @@ const mockUser = {
   updatedAt: new Date(),
   deletedAt: null,
   searchVector: null,
+  balancePiasters: 0,
 };
 
 describe('UsersService', () => {
@@ -160,6 +161,47 @@ describe('UsersService', () => {
       mockDb.returning.mockResolvedValueOnce([{ ...mockUser, deletedAt: new Date() }]);
       await service.softDelete('test-uuid', 'admin-uuid');
       expect(mockDb.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('getBalance', () => {
+    it('should return user balance', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ ...mockUser, balancePiasters: 5000 }]);
+      const result = await service.getBalance('test-uuid');
+      expect(result).toBe(5000);
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      mockDb.limit.mockResolvedValueOnce([]);
+      await expect(service.getBalance('nonexistent')).rejects.toThrow('User not found');
+    });
+  });
+
+  describe('topUp', () => {
+    it('should add amount to balance and return new balance', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ balancePiasters: 3000 }]);
+      const result = await service.topUp('test-uuid', 2000);
+      expect(result).toBe(3000);
+      expect(mockDb.update).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+      await expect(service.topUp('nonexistent', 1000)).rejects.toThrow('User not found');
+    });
+  });
+
+  describe('deduct', () => {
+    it('should subtract amount from balance and return new balance', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ balancePiasters: 3000 }]);
+      const result = await service.deduct('test-uuid', 2000);
+      expect(result).toBe(3000);
+    });
+
+    it('should throw BadRequestException when insufficient balance or user not found', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+      const { BadRequestException } = await import('@nestjs/common');
+      await expect(service.deduct('test-uuid', 5000)).rejects.toThrow(BadRequestException);
     });
   });
 });

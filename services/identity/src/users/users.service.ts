@@ -9,13 +9,14 @@ import {
 import { EVENTS, UserStatus } from '@hena-wadeena/types';
 import type { EventName, PaginatedResponse } from '@hena-wadeena/types';
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { asc, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, isNull, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -313,6 +314,43 @@ export class UsersService {
       default:
         return desc(users.createdAt);
     }
+  }
+
+  async getBalance(userId: string): Promise<number> {
+    const user = await this.findByIdOrThrow(userId);
+    return user.balancePiasters;
+  }
+
+  async topUp(userId: string, amount: number): Promise<number> {
+    const [updated] = await this.db
+      .update(users)
+      .set({
+        balancePiasters: sql`${users.balancePiasters} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .returning({ balancePiasters: users.balancePiasters });
+
+    if (!updated) {
+      throw new NotFoundException('User not found');
+    }
+    return updated.balancePiasters;
+  }
+
+  async deduct(userId: string, amount: number): Promise<number> {
+    const [updated] = await this.db
+      .update(users)
+      .set({
+        balancePiasters: sql`${users.balancePiasters} - ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt), gte(users.balancePiasters, amount)))
+      .returning({ balancePiasters: users.balancePiasters });
+
+    if (!updated) {
+      throw new BadRequestException('رصيد المحفظة غير كافٍ أو المستخدم غير موجود');
+    }
+    return updated.balancePiasters;
   }
 
   private async recordAudit(
