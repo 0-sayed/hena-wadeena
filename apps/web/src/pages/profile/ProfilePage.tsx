@@ -33,7 +33,7 @@ type ProfileFormState = {
 type ProfileErrors = Partial<Record<keyof ProfileFormState, string>>;
 
 const PHONE_REGEX = /^\+?[0-9\s-]{7,20}$/;
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 const roleLabels: Record<string, string> = {
   admin: 'مدير',
@@ -149,7 +149,7 @@ const ProfilePage = () => {
     }
 
     if (file.size > MAX_AVATAR_BYTES) {
-      toast.error('حجم الصورة يجب ألا يتجاوز 2 ميجابايت');
+      toast.error('حجم الصورة يجب ألا يتجاوز 5 ميجابايت');
       event.target.value = '';
       return;
     }
