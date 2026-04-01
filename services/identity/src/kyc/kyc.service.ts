@@ -79,7 +79,11 @@ export class KycService {
         .orderBy(asc(userKyc.createdAt))
         .limit(query.limit)
         .offset(offset),
-      this.db.select({ count: count() }).from(userKyc).where(whereClause),
+      this.db
+        .select({ count: count() })
+        .from(userKyc)
+        .innerJoin(users, eq(userKyc.userId, users.id))
+        .where(whereClause),
     ]);
 
     return paginate(rawData, totalRow?.count ?? 0, offset, query.limit);

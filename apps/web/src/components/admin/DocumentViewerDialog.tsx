@@ -1,5 +1,5 @@
 // apps/web/src/components/admin/DocumentViewerDialog.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExternalLink, Download, ZoomIn, ZoomOut } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -28,13 +28,32 @@ export function DocumentViewerDialog({
 }: DocumentViewerDialogProps) {
   const [zoom, setZoom] = useState(1);
 
-  if (!documentUrl) return null;
+  // Reset zoom when document changes
+  useEffect(() => {
+    setZoom(1);
+  }, [documentUrl]);
 
-  const isPdf = documentUrl.toLowerCase().endsWith('.pdf');
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(documentUrl);
+  // Strip query string for file type detection (handles S3 signed URLs, CDN tokens)
+  const urlPath = documentUrl?.split('?')[0] ?? '';
+  const isPdf = urlPath.toLowerCase().endsWith('.pdf');
+  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(urlPath);
 
   const handleZoomIn = () => setZoom((z) => Math.min(z + 0.25, 3));
   const handleZoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.5));
+
+  // Keep Dialog mounted to maintain onOpenChange binding even when documentUrl is null
+  if (!documentUrl) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>عرض المستند</DialogTitle>
+            <DialogDescription>لا يوجد مستند للعرض</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,9 +93,11 @@ export function DocumentViewerDialog({
         <div className="flex-1 overflow-auto min-h-0 bg-muted/30 rounded-lg p-4">
           {isPdf ? (
             <iframe
-              src={documentUrl}
+              src={documentUrl ?? undefined}
               className="w-full h-full min-h-[500px] rounded border"
               title="Document preview"
+              sandbox="allow-scripts allow-same-origin"
+              referrerPolicy="no-referrer"
             />
           ) : isImage ? (
             <div className="flex items-center justify-center h-full">
