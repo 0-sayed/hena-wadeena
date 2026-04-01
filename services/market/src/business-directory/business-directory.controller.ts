@@ -22,7 +22,9 @@ import { VerifyBusinessDto } from './dto/verify-business.dto';
 
 @Controller('businesses')
 export class BusinessDirectoryController {
-  constructor(@Inject(BusinessDirectoryService) private readonly service: BusinessDirectoryService) {}
+  constructor(
+    @Inject(BusinessDirectoryService) private readonly service: BusinessDirectoryService,
+  ) {}
 
   // Static paths MUST come before /:id
 
@@ -45,9 +47,9 @@ export class BusinessDirectoryController {
   }
 
   @Post()
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR)
+  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.ADMIN)
   create(@Body() dto: CreateBusinessDto, @CurrentUser() user: JwtPayload) {
-    return this.service.create(dto, user.sub);
+    return this.service.create(dto, user.sub, user.role);
   }
 
   @Get(':id')

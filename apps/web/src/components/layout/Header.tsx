@@ -52,7 +52,7 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
   const authCtx = useAuth();
-  const { user } = authCtx;
+  const { user, direction } = authCtx;
 
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
@@ -289,7 +289,7 @@ export function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
+            <SheetContent side={direction === 'rtl' ? 'right' : 'left'} className="w-80">
               <div className="flex flex-col gap-6 mt-8">
                 {/* Mobile user info */}
                 {user && (

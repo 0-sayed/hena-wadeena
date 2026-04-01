@@ -5,6 +5,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { LocalTransportTab } from '@/components/logistics/LocalTransportTab';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import type { MapLocation } from '@/components/maps/InteractiveMap';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,15 @@ import { formatRidePrice } from '@/lib/format';
 import { formatDateTimeShort } from '@/lib/dates';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { useAuth } from '@/hooks/use-auth';
-import { usePois, usePoi, useRides, useMyRides, useActivateRide, useCancelRide, useDeleteRide } from '@/hooks/use-map';
+import {
+  usePois,
+  usePoi,
+  useRides,
+  useMyRides,
+  useActivateRide,
+  useCancelRide,
+  useDeleteRide,
+} from '@/hooks/use-map';
 import type { Poi, PoiCategory, CarpoolRide, CarpoolPassenger } from '@/services/api';
 import { UserRole } from '@hena-wadeena/types';
 import { AREA_PRESETS, findArea } from '@/lib/area-presets';
@@ -69,7 +78,8 @@ function getCategoryLabel(category: PoiCategory): string {
 
 const LogisticsPage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, direction } = useAuth();
+  const sheetSide = direction === 'rtl' ? 'right' : 'left';
 
   // ── POI state ──
   const [selectedCategory, setSelectedCategory] = useState<PoiCategory | undefined>();
@@ -213,7 +223,7 @@ const LogisticsPage = () => {
           <div className="container px-4">
             <Tabs defaultValue="explore-map" className="w-full">
               <SR>
-                <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-10 h-12 rounded-xl">
+                <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-3 mb-10 h-12 rounded-xl">
                   <TabsTrigger value="explore-map" className="rounded-lg text-sm font-semibold">
                     <MapIcon className="h-4 w-4 ml-2" />
                     استكشف الخريطة
@@ -221,6 +231,10 @@ const LogisticsPage = () => {
                   <TabsTrigger value="carpool" className="rounded-lg text-sm font-semibold">
                     <Car className="h-4 w-4 ml-2" />
                     مشاركة الرحلات
+                  </TabsTrigger>
+                  <TabsTrigger value="local-transport" className="rounded-lg text-sm font-semibold">
+                    <Car className="h-4 w-4 ml-2" />
+                    النقل المحلي
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -316,7 +330,7 @@ const LogisticsPage = () => {
                   open={!!selectedPoiId}
                   onOpenChange={(open) => !open && setSelectedPoiId(undefined)}
                 >
-                  <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+                  <SheetContent side={sheetSide} className="w-full sm:max-w-lg overflow-y-auto">
                     {selectedPoi && <PoiDetailContent poi={selectedPoi} />}
                   </SheetContent>
                 </Sheet>
@@ -439,7 +453,9 @@ const LogisticsPage = () => {
                               onActivate={handleActivateRide}
                               onDelete={handleDeleteRide}
                               disabled={
-                                cancelRide.isPending || activateRide.isPending || deleteRide.isPending
+                                cancelRide.isPending ||
+                                activateRide.isPending ||
+                                deleteRide.isPending
                               }
                             />
                           ) : undefined
@@ -451,7 +467,7 @@ const LogisticsPage = () => {
 
                 {/* My Rides Sheet */}
                 <Sheet open={showMyRides} onOpenChange={setShowMyRides}>
-                  <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+                  <SheetContent side={sheetSide} className="w-full sm:max-w-lg overflow-y-auto">
                     <SheetHeader>
                       <SheetTitle>رحلاتي</SheetTitle>
                     </SheetHeader>
@@ -464,6 +480,12 @@ const LogisticsPage = () => {
                     />
                   </SheetContent>
                 </Sheet>
+              </TabsContent>
+
+              <TabsContent value="local-transport">
+                <SR>
+                  <LocalTransportTab />
+                </SR>
               </TabsContent>
             </Tabs>
           </div>
@@ -579,7 +601,12 @@ function RideManagementActions({
   return (
     <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
       {ride.status === 'open' && (
-        <Button size="sm" variant="destructive" disabled={disabled} onClick={() => onCancel(ride.id)}>
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={disabled}
+          onClick={() => onCancel(ride.id)}
+        >
           إلغاء الرحلة
         </Button>
       )}

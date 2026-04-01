@@ -198,7 +198,7 @@ export const authAPI = {
       body: JSON.stringify(body),
     }),
 
-  getMe: async () => normalizeAuthUser(await apiFetch<AuthUserResponse>('/auth/me')),
+  getMe: async () => normalizeAuthUser(await apiFetchWithRefresh<AuthUserResponse>('/auth/me')),
 
   updateMe: async (body: UpdateProfileRequest) =>
     normalizeAuthUser(
@@ -500,6 +500,20 @@ export interface Business {
   updatedAt: string;
 }
 
+export interface BusinessUpsertRequest {
+  nameAr: string;
+  nameEn?: string;
+  category: string;
+  description?: string;
+  descriptionAr?: string;
+  district: string;
+  location?: { lat: number; lng: number };
+  phone?: string;
+  website?: string;
+  logoUrl?: string;
+  commodityIds?: string[];
+}
+
 // NOTE: GET /businesses/mine returns BusinessDirectory[] (plain array, no wrapper).
 export const businessesAPI = {
   getAll: (params?: {
@@ -511,18 +525,18 @@ export const businessesAPI = {
     offset?: number;
   }) => apiFetch<PaginatedResponse<BusinessEntry>>(`/businesses${toQueryString(params)}`),
   getById: (id: string) => apiFetch<BusinessEntry>(`/businesses/${id}`),
-  getMine: () => apiFetch<Business[]>('/businesses/mine'),
-  create: (body: { nameAr: string; description?: string; category: string; district: string }) =>
-    apiFetch<Business>('/businesses', {
+  getMine: () => apiFetchWithRefresh<Business[]>('/businesses/mine'),
+  create: (body: BusinessUpsertRequest) =>
+    apiFetchWithRefresh<Business>('/businesses', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  update: (id: string, body: Partial<{ nameAr: string; description: string }>) =>
-    apiFetch<Business>(`/businesses/${id}`, {
+  update: (id: string, body: Partial<BusinessUpsertRequest>) =>
+    apiFetchWithRefresh<Business>(`/businesses/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
-  remove: (id: string) => apiFetch<void>(`/businesses/${id}`, { method: 'DELETE' }),
+  remove: (id: string) => apiFetchWithRefresh<void>(`/businesses/${id}`, { method: 'DELETE' }),
 };
 
 // ── Listings ──────────────────────────────────────────────────────────────

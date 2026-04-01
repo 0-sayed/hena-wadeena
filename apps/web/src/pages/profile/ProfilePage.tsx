@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { authAPI } from '@/services/api';
 import type { AuthUser } from '@/services/api';
@@ -20,6 +27,7 @@ type ProfileFormState = {
   phone: string;
   email: string;
   avatar_url: string;
+  language: 'ar' | 'en';
 };
 
 type ProfileErrors = Partial<Record<keyof ProfileFormState, string>>;
@@ -46,6 +54,7 @@ function buildFormState(user: AuthUser): ProfileFormState {
     phone: user.phone ?? '',
     email: user.email,
     avatar_url: user.avatar_url ?? '',
+    language: user.language === 'en' ? 'en' : 'ar',
   };
 }
 
@@ -94,6 +103,7 @@ const ProfilePage = () => {
     phone: '',
     email: '',
     avatar_url: '',
+    language: 'ar',
   });
   const [errors, setErrors] = useState<ProfileErrors>({});
 
@@ -115,6 +125,7 @@ const ProfilePage = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim() || undefined,
         avatar_url: formData.avatar_url || undefined,
+        language: formData.language,
       });
       updateUser(updatedUser);
       setEditing(false);
@@ -160,7 +171,7 @@ const ProfilePage = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-20 max-w-2xl space-y-6">
+        <div className="container max-w-2xl space-y-6 py-20">
           <Skeleton h="h-64" className="rounded-2xl" />
           <Skeleton h="h-48" className="rounded-2xl" />
         </div>
@@ -171,7 +182,7 @@ const ProfilePage = () => {
   if (!user) {
     return (
       <Layout>
-        <div className="container py-20 max-w-2xl text-center text-muted-foreground">
+        <div className="container max-w-2xl py-20 text-center text-muted-foreground">
           لا يمكن تحميل الملف الشخصي حالياً.
         </div>
       </Layout>
@@ -181,13 +192,13 @@ const ProfilePage = () => {
   return (
     <Layout>
       <PageTransition>
-        <section className="relative py-14 md:py-20 overflow-hidden">
+        <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
-          <div className="container relative px-4 max-w-2xl">
+          <div className="container relative max-w-2xl px-4">
             <SR>
-              <Card className="border-border/50 overflow-hidden rounded-2xl shadow-lg">
-                <div className="bg-gradient-to-br from-primary/15 via-accent/10 to-background p-10 text-center relative">
-                  <div className="mx-auto h-28 w-28 rounded-2xl bg-primary/20 flex items-center justify-center mb-5 relative shadow-xl">
+              <Card className="overflow-hidden rounded-2xl border-border/50 shadow-lg">
+                <div className="relative bg-gradient-to-br from-primary/15 via-accent/10 to-background p-10 text-center">
+                  <div className="relative mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-2xl bg-primary/20 shadow-xl">
                     {formData.avatar_url ? (
                       <img
                         src={formData.avatar_url}
@@ -200,7 +211,7 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-2 -left-2 h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
+                      className="absolute -bottom-2 -left-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg transition-transform hover:scale-110"
                     >
                       <Camera className="h-5 w-5" />
                     </button>
@@ -215,21 +226,21 @@ const ProfilePage = () => {
                     />
                   </div>
                   <h2 className="text-2xl font-bold text-foreground">{formData.full_name}</h2>
-                  <div className="flex items-center justify-center gap-2 mt-3">
-                    <Badge variant="secondary" className="text-sm px-3 py-1">
-                      <Shield className="h-3.5 w-3.5 ml-1" />
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <Badge variant="secondary" className="px-3 py-1 text-sm">
+                      <Shield className="ml-1 h-3.5 w-3.5" />
                       {roleLabels[user.role] ?? user.role}
                     </Badge>
                     <Badge
                       variant={user.status === 'active' ? 'default' : 'destructive'}
-                      className="text-sm px-3 py-1"
+                      className="px-3 py-1 text-sm"
                     >
                       {user.status === 'active' ? 'نشط' : 'معلّق'}
                     </Badge>
                   </div>
                 </div>
 
-                <CardContent className="p-7 space-y-5">
+                <CardContent className="space-y-5 p-7">
                   {editing ? (
                     <div className="space-y-4">
                       <div className="space-y-2">
@@ -280,11 +291,31 @@ const ProfilePage = () => {
                         />
                         {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
                       </div>
+                      <div className="space-y-2">
+                        <Label>اللغة</Label>
+                        <Select
+                          value={formData.language}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              language: value === 'en' ? 'en' : 'ar',
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="h-12 rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ar">العربية</SelectItem>
+                            <SelectItem value="en">English</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex gap-3">
                         <Button
                           onClick={() => void handleSave()}
                           disabled={saving}
-                          className="hover:scale-[1.02] transition-transform"
+                          className="transition-transform hover:scale-[1.02]"
                         >
                           {saving ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
                         </Button>
@@ -314,9 +345,9 @@ const ProfilePage = () => {
                       ].map(({ icon: Icon, label, value }) => (
                         <div
                           key={label}
-                          className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors duration-200"
+                          className="flex items-center gap-4 rounded-xl bg-muted/30 p-4 transition-colors duration-200 hover:bg-muted/50"
                         >
-                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                             <Icon className="h-5 w-5 text-primary" />
                           </div>
                           <div>
@@ -327,10 +358,10 @@ const ProfilePage = () => {
                       ))}
                       <Button
                         onClick={() => setEditing(true)}
-                        className="w-full mt-4 h-12 hover:scale-[1.01] transition-transform"
+                        className="mt-4 h-12 w-full transition-transform hover:scale-[1.01]"
                         variant="outline"
                       >
-                        <Edit2 className="h-4 w-4 ml-2" />
+                        <Edit2 className="ml-2 h-4 w-4" />
                         تعديل الملف الشخصي
                       </Button>
                     </div>

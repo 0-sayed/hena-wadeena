@@ -1,17 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Leaf, PlusCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowDown, ArrowUp, Leaf, PlusCircle, Tag } from 'lucide-react';
+import { CommodityCategory, CommodityUnit, NvDistrict, PriceType } from '@hena-wadeena/types';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useCommodities, useCommodity } from '@/hooks/use-commodities';
 import { commoditiesAPI, commodityPricesAPI } from '@/services/api';
-import { CommodityCategory, CommodityUnit, NvDistrict, PriceType } from '@hena-wadeena/types';
 import { categoryLabel, districtLabel, formatPrice, priceTypeLabel, unitLabel } from '@/lib/format';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 
@@ -33,6 +54,7 @@ const commodityUnits: CommodityUnit[] = [
   CommodityUnit.PIECE,
   CommodityUnit.LITER,
 ];
+
 const districts: NvDistrict[] = [
   NvDistrict.KHARGA,
   NvDistrict.DAKHLA,
@@ -40,11 +62,8 @@ const districts: NvDistrict[] = [
   NvDistrict.BARIS,
   NvDistrict.BALAT,
 ];
-const priceTypes: PriceType[] = [
-  PriceType.RETAIL,
-  PriceType.WHOLESALE,
-  PriceType.FARM_GATE,
-];
+
+const priceTypes: PriceType[] = [PriceType.RETAIL, PriceType.WHOLESALE, PriceType.FARM_GATE];
 
 type CropFormState = {
   id?: string;
@@ -60,6 +79,7 @@ type PriceFormState = {
   priceEgp: string;
   region: NvDistrict;
   priceType: PriceType;
+  baselinePrice: number | null;
 };
 
 const emptyCropForm: CropFormState = {
@@ -74,7 +94,24 @@ const emptyPriceForm: PriceFormState = {
   priceEgp: '',
   region: NvDistrict.KHARGA,
   priceType: PriceType.RETAIL,
+  baselinePrice: null,
 };
+
+function getPriceChange(previousPrice: number | null, currentPrice: number | null) {
+  if (previousPrice == null || previousPrice <= 0 || currentPrice == null) {
+    return null;
+  }
+
+  const changePercent = ((currentPrice - previousPrice) / previousPrice) * 100;
+  if (!Number.isFinite(changePercent)) {
+    return null;
+  }
+
+  return {
+    changePercent,
+    direction: changePercent > 0 ? 'up' : changePercent < 0 ? 'down' : 'same',
+  } as const;
+}
 
 export default function AdminCrops() {
   const queryClient = useQueryClient();
@@ -83,6 +120,8 @@ export default function AdminCrops() {
   const selectedCommodityQuery = useCommodity(selectedCommodityId);
   const [cropForm, setCropForm] = useState<CropFormState>(emptyCropForm);
   const [priceForm, setPriceForm] = useState<PriceFormState>(emptyPriceForm);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [savingCrop, setSavingCrop] = useState(false);
   const [savingPrice, setSavingPrice] = useState(false);
 
@@ -92,15 +131,75 @@ export default function AdminCrops() {
     }
   }, [commodities, selectedCommodityId]);
 
+  const selectedCommodity = selectedCommodityQuery.data;
+
+  const comparisonPrice = useMemo(() => {
+    if (priceForm.priceId) {
+      return priceForm.baselinePrice;
+    }
+
+    const matchingPrice = selectedCommodity?.latestPricesByRegion.find(
+      (price) => price.region === priceForm.region && price.price_type === priceForm.priceType,
+    );
+
+    return matchingPrice?.price ?? null;
+  }, [
+    priceForm.baselinePrice,
+    priceForm.priceId,
+    priceForm.priceType,
+    priceForm.region,
+    selectedCommodity,
+  ]);
+
+  const parsedPrice = parseEgpInputToPiasters(priceForm.priceEgp);
+  const priceChange = getPriceChange(comparisonPrice, parsedPrice);
+
   const refreshCommodities = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['market', 'commodities'] }),
       queryClient.invalidateQueries({ queryKey: ['market', 'price-index'] }),
       queryClient.invalidateQueries({ queryKey: ['market', 'price-summary'] }),
       selectedCommodityId
-        ? queryClient.invalidateQueries({ queryKey: ['market', 'commodities', selectedCommodityId] })
+        ? queryClient.invalidateQueries({
+            queryKey: ['market', 'commodities', selectedCommodityId],
+          })
         : Promise.resolve(),
     ]);
+  };
+
+  const openCreateCropDialog = () => {
+    setCropForm(emptyCropForm);
+    setCropDialogOpen(true);
+  };
+
+  const openEditCropDialog = (commodity: NonNullable<typeof commodities>[number]) => {
+    setCropForm({
+      id: commodity.id,
+      nameAr: commodity.nameAr,
+      nameEn: commodity.nameEn ?? '',
+      category: commodity.category,
+      unit: commodity.unit,
+      sortOrder: String(commodity.sortOrder),
+    });
+    setCropDialogOpen(true);
+  };
+
+  const openCreatePriceDialog = () => {
+    setPriceForm(emptyPriceForm);
+    setPriceDialogOpen(true);
+  };
+
+  const openEditPriceDialog = (
+    price: NonNullable<typeof selectedCommodity>['latestPricesByRegion'][number],
+  ) => {
+    setPriceForm({
+      priceId: price.id,
+      priceEgp: String(price.price / 100),
+      region: price.region,
+      priceType: price.price_type,
+      baselinePrice: price.price,
+    });
+    setPriceDialogOpen(true);
   };
 
   const handleSaveCrop = async () => {
@@ -127,6 +226,7 @@ export default function AdminCrops() {
       }
 
       setCropForm(emptyCropForm);
+      setCropDialogOpen(false);
       await refreshCommodities();
       toast.success(cropForm.id ? 'تم تحديث المحصول' : 'تمت إضافة المحصول');
     } catch (error) {
@@ -157,8 +257,7 @@ export default function AdminCrops() {
       return;
     }
 
-    const price = parseEgpInputToPiasters(priceForm.priceEgp);
-    if (price == null) {
+    if (parsedPrice == null) {
       toast.error('أدخل سعراً صحيحاً');
       return;
     }
@@ -166,7 +265,7 @@ export default function AdminCrops() {
     setSavingPrice(true);
     try {
       const payload = {
-        price,
+        price: parsedPrice,
         priceType: priceForm.priceType,
         region: priceForm.region,
         recordedAt: new Date().toISOString(),
@@ -182,6 +281,7 @@ export default function AdminCrops() {
       }
 
       setPriceForm(emptyPriceForm);
+      setPriceDialogOpen(false);
       await refreshCommodities();
       toast.success(priceForm.priceId ? 'تم تحديث السعر' : 'تمت إضافة السعر');
     } catch (error) {
@@ -206,23 +306,174 @@ export default function AdminCrops() {
     }
   };
 
-  const selectedCommodity = selectedCommodityQuery.data;
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">إدارة المحاصيل والأسعار</h1>
-        <p className="text-muted-foreground">
-          إضافة المحاصيل وتحديث بياناتها وإدارة آخر أسعارها بحسب المنطقة.
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">إدارة المحاصيل والأسعار</h1>
+          <p className="text-muted-foreground">
+            استخدم نفس قائمة المحاصيل المستخدمة في البورصة، وأدر الأسعار من خلال نوافذ منبثقة بدلاً
+            من النماذج الثابتة.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={openCreateCropDialog}>
+            <PlusCircle className="ml-2 h-4 w-4" />
+            إضافة محصول
+          </Button>
+          <Button variant="outline" onClick={openCreatePriceDialog} disabled={!selectedCommodity}>
+            <Tag className="ml-2 h-4 w-4" />
+            إضافة سعر
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{cropForm.id ? 'تعديل محصول' : 'إضافة محصول جديد'}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>المحاصيل النشطة</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : !commodities || commodities.length === 0 ? (
+            <p className="text-sm text-muted-foreground">لا توجد محاصيل نشطة حالياً.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المحصول</TableHead>
+                  <TableHead>الفئة</TableHead>
+                  <TableHead>الوحدة</TableHead>
+                  <TableHead>الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {commodities.map((commodity) => (
+                  <TableRow
+                    key={commodity.id}
+                    className={selectedCommodityId === commodity.id ? 'bg-muted/40' : ''}
+                    onClick={() => setSelectedCommodityId(commodity.id)}
+                  >
+                    <TableCell className="font-medium">{commodity.nameAr}</TableCell>
+                    <TableCell>{categoryLabel(commodity.category)}</TableCell>
+                    <TableCell>{unitLabel(commodity.unit)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEditCropDialog(commodity);
+                          }}
+                        >
+                          تعديل
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDeactivateCrop(commodity.id);
+                          }}
+                        >
+                          حذف
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Leaf className="h-5 w-5 text-primary" />
+            أحدث الأسعار للمحصول المختار
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {selectedCommodity ? (
+            <div className="rounded-xl bg-muted/40 p-4 text-sm">
+              <p className="font-semibold text-foreground">{selectedCommodity.nameAr}</p>
+              <p className="text-muted-foreground">
+                {categoryLabel(selectedCommodity.category)} · {unitLabel(selectedCommodity.unit)}
+              </p>
+            </div>
+          ) : null}
+
+          {selectedCommodityQuery.isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : !selectedCommodity ? (
+            <p className="text-sm text-muted-foreground">اختر محصولاً لعرض أسعاره.</p>
+          ) : selectedCommodity.latestPricesByRegion.length === 0 ? (
+            <p className="text-sm text-muted-foreground">لا توجد أسعار مسجلة لهذا المحصول بعد.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المنطقة</TableHead>
+                  <TableHead>نوع السعر</TableHead>
+                  <TableHead>السعر</TableHead>
+                  <TableHead>التاريخ</TableHead>
+                  <TableHead>الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedCommodity.latestPricesByRegion.map((price) => (
+                  <TableRow key={price.id}>
+                    <TableCell>{districtLabel(price.region)}</TableCell>
+                    <TableCell>{priceTypeLabel(price.price_type)}</TableCell>
+                    <TableCell>{formatPrice(price.price)} ج.م</TableCell>
+                    <TableCell>{new Date(price.recorded_at).toLocaleDateString('ar-EG')}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEditPriceDialog(price)}
+                        >
+                          تعديل
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => void handleDeletePrice(price.id)}
+                        >
+                          حذف
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{cropForm.id ? 'تعديل محصول' : 'إضافة محصول جديد'}</DialogTitle>
+            <DialogDescription>
+              أي تحديث هنا سينعكس مباشرة على صفحة البورصة ودليل الموردين.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="cropNameAr">الاسم بالعربية</Label>
               <Input
@@ -297,37 +548,49 @@ export default function AdminCrops() {
                 />
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button onClick={() => void handleSaveCrop()} disabled={savingCrop}>
-                <PlusCircle className="ml-2 h-4 w-4" />
-                {savingCrop ? 'جارٍ الحفظ...' : cropForm.id ? 'تحديث المحصول' : 'إضافة المحصول'}
-              </Button>
-              {cropForm.id && (
-                <Button variant="outline" onClick={() => setCropForm(emptyCropForm)}>
-                  إلغاء
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{priceForm.priceId ? 'تعديل سعر' : 'إضافة سعر جديد'}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCropDialogOpen(false)}
+              disabled={savingCrop}
+            >
+              إلغاء
+            </Button>
+            <Button onClick={() => void handleSaveCrop()} disabled={savingCrop}>
+              {savingCrop ? 'جارٍ الحفظ...' : cropForm.id ? 'تحديث المحصول' : 'إضافة المحصول'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={priceDialogOpen} onOpenChange={setPriceDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{priceForm.priceId ? 'تعديل سعر' : 'إضافة سعر جديد'}</DialogTitle>
+            <DialogDescription>
+              {selectedCommodity
+                ? `يتم تحديث سعر ${selectedCommodity.nameAr} مع احتساب نسبة التغير تلقائياً.`
+                : 'اختر محصولاً أولاً قبل إضافة السعر.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
             <div className="rounded-xl bg-muted/40 p-4 text-sm">
               {selectedCommodity ? (
                 <>
                   <p className="font-semibold text-foreground">{selectedCommodity.nameAr}</p>
                   <p className="text-muted-foreground">
-                    {categoryLabel(selectedCommodity.category)} • {unitLabel(selectedCommodity.unit)}
+                    {categoryLabel(selectedCommodity.category)} ·{' '}
+                    {unitLabel(selectedCommodity.unit)}
                   </p>
                 </>
               ) : (
                 <p className="text-muted-foreground">اختر محصولاً من الجدول لإدارة أسعاره.</p>
               )}
             </div>
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>المنطقة</Label>
@@ -383,162 +646,59 @@ export default function AdminCrops() {
                 />
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button onClick={() => void handleSavePrice()} disabled={savingPrice || !selectedCommodity}>
-                {savingPrice ? 'جارٍ الحفظ...' : priceForm.priceId ? 'تحديث السعر' : 'إضافة السعر'}
-              </Button>
-              {priceForm.priceId && (
-                <Button variant="outline" onClick={() => setPriceForm(emptyPriceForm)}>
-                  إلغاء
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>المحاصيل النشطة</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : !commodities || commodities.length === 0 ? (
-            <p className="text-sm text-muted-foreground">لا توجد محاصيل نشطة حالياً.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>المحصول</TableHead>
-                  <TableHead>الفئة</TableHead>
-                  <TableHead>الوحدة</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {commodities.map((commodity) => (
-                  <TableRow
-                    key={commodity.id}
-                    className={selectedCommodityId === commodity.id ? 'bg-muted/40' : ''}
-                    onClick={() => setSelectedCommodityId(commodity.id)}
-                  >
-                    <TableCell className="font-medium">{commodity.nameAr}</TableCell>
-                    <TableCell>{categoryLabel(commodity.category)}</TableCell>
-                    <TableCell>{unitLabel(commodity.unit)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setCropForm({
-                              id: commodity.id,
-                              nameAr: commodity.nameAr,
-                              nameEn: commodity.nameEn ?? '',
-                              category: commodity.category,
-                              unit: commodity.unit,
-                              sortOrder: String(commodity.sortOrder),
-                            });
-                          }}
-                        >
-                          تعديل
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleDeactivateCrop(commodity.id);
-                          }}
-                        >
-                          حذف
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+            {comparisonPrice != null && (
+              <div className="rounded-xl border border-border/60 bg-background p-4">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">السعر السابق</p>
+                    <p className="text-lg font-semibold">{formatPrice(comparisonPrice)} ج.م</p>
+                  </div>
+                  {priceChange ? (
+                    <div
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold ${
+                        priceChange.direction === 'up'
+                          ? 'bg-emerald-500/10 text-emerald-600'
+                          : priceChange.direction === 'down'
+                            ? 'bg-red-500/10 text-red-600'
+                            : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {priceChange.direction === 'up' && <ArrowUp className="h-4 w-4" />}
+                      {priceChange.direction === 'down' && <ArrowDown className="h-4 w-4" />}
+                      {priceChange.direction === 'same'
+                        ? 'لا يوجد تغير'
+                        : `${priceChange.direction === 'up' ? 'زيادة' : 'انخفاض'} ${Math.abs(
+                            priceChange.changePercent,
+                          ).toFixed(2)}%`}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      أدخل السعر الجديد لاحتساب نسبة التغير.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Leaf className="h-5 w-5 text-primary" />
-            أحدث الأسعار للمحصول المختار
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {selectedCommodityQuery.isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : !selectedCommodity ? (
-            <p className="text-sm text-muted-foreground">اختر محصولاً لعرض أسعاره.</p>
-          ) : selectedCommodity.latestPricesByRegion.length === 0 ? (
-            <p className="text-sm text-muted-foreground">لا توجد أسعار مسجلة لهذا المحصول بعد.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>المنطقة</TableHead>
-                  <TableHead>نوع السعر</TableHead>
-                  <TableHead>السعر</TableHead>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selectedCommodity.latestPricesByRegion.map((price) => (
-                  <TableRow key={price.id}>
-                    <TableCell>{districtLabel(price.region)}</TableCell>
-                    <TableCell>{priceTypeLabel(price.price_type)}</TableCell>
-                    <TableCell>{formatPrice(price.price)} ج.م</TableCell>
-                    <TableCell>
-                      {new Date(price.recorded_at).toLocaleDateString('ar-EG')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            setPriceForm({
-                              priceId: price.id,
-                              priceEgp: String(price.price / 100),
-                              region: price.region,
-                              priceType: price.price_type,
-                            })
-                          }
-                        >
-                          تعديل
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => void handleDeletePrice(price.id)}
-                        >
-                          حذف
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPriceDialogOpen(false)}
+              disabled={savingPrice}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => void handleSavePrice()}
+              disabled={savingPrice || !selectedCommodity}
+            >
+              {savingPrice ? 'جارٍ الحفظ...' : priceForm.priceId ? 'تحديث السعر' : 'إضافة السعر'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

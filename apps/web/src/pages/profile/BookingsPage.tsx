@@ -56,7 +56,7 @@ function todayCairo(): string {
 }
 
 const BookingsPage = () => {
-  const { user } = useAuth();
+  const { user, direction } = useAuth();
   const isGuide = user?.role === UserRole.GUIDE;
 
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
@@ -332,7 +332,7 @@ const BookingsPage = () => {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogContent className="sm:max-w-md" dir={direction}>
           <DialogHeader>
             <DialogTitle>إلغاء الحجز</DialogTitle>
             <DialogDescription>يرجى ذكر سبب الإلغاء</DialogDescription>
@@ -379,7 +379,7 @@ const BookingsPage = () => {
           if (!open) setActionTarget(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm" dir="rtl">
+        <DialogContent className="sm:max-w-sm" dir={direction}>
           <DialogHeader>
             <DialogTitle>
               {actionTarget?.action === 'confirm' && 'تأكيد الحجز'}

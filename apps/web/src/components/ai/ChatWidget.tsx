@@ -25,7 +25,7 @@ function mapSessionMessages(session: ChatSessionView): Message[] {
 
 export function ChatWidget() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, direction } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -36,10 +36,7 @@ export function ChatWidget() {
   const [sessionId, setSessionId] = useState<string | undefined>();
   const endRef = useRef<HTMLDivElement>(null);
 
-  const sessionStorageKey = useMemo(
-    () => (user ? `ai_chat_session:${user.id}` : null),
-    [user],
-  );
+  const sessionStorageKey = useMemo(() => (user ? `ai_chat_session:${user.id}` : null), [user]);
 
   useEffect(() => {
     const endElement = endRef.current;
@@ -233,7 +230,7 @@ export function ChatWidget() {
             </div>
           ) : (
             <>
-              <div className="max-h-[350px] flex-1 space-y-3 overflow-y-auto p-4" dir="rtl">
+              <div className="max-h-[350px] flex-1 space-y-3 overflow-y-auto p-4" dir={direction}>
                 {bootstrapping && messages.length === 0 ? (
                   <div className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
                     Preparing your chat session...
@@ -307,7 +304,7 @@ export function ChatWidget() {
                     void sendMessage();
                   }}
                   className="flex gap-2"
-                  dir="rtl"
+                  dir={direction}
                 >
                   <Input
                     value={input}

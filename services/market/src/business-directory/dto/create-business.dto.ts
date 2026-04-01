@@ -22,6 +22,12 @@ export const createBusinessSchema = z.object({
       message: 'website must use http or https',
     })
     .optional(),
+  logoUrl: z
+    .string()
+    .refine((value) => /^https?:\/\//i.test(value) || value.startsWith('data:image/'), {
+      message: 'logoUrl must be an absolute URL or data URL',
+    })
+    .optional(),
   commodityIds: z.array(z.uuid()).max(50).optional(),
 });
 
