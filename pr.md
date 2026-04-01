@@ -4,7 +4,7 @@
 
 ## Worth Fixing
 
-- [ ] LLM/Embeddings tech stack mismatch between root and AI service docs — @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M54Lko1 -->
+- [x] LLM/Embeddings tech stack mismatch between root and AI service docs — @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M54Lko1 -->
   > **README.md:24**
   >
   > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
@@ -15,7 +15,7 @@
   > | LLM / Embeddings     | OpenAI gpt-4o-mini / text-embedding-3-small |
   > ```
 
-- [ ] API Gateway docs inconsistency: Nginx + Caddy vs Nginx only — @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M54LkpD --> <!-- thread:PRRT_kwDORjaF4M54LkpL -->
+- [x] API Gateway docs inconsistency: Nginx + Caddy vs Nginx only — @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M54LkpD --> <!-- thread:PRRT_kwDORjaF4M54LkpL -->
   > **README.md:30**
   >
   > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
@@ -36,7 +36,7 @@
   > ├── gateway/               # Nginx config                                 :8000
   > ```
 
-- [ ] AI service entry point should use nakheel.main:app not src.main:app — @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M54LkpG -->
+- [x] AI service entry point should use nakheel.main:app not src.main:app — @gemini-code-assist <!-- thread:PRRT_kwDORjaF4M54LkpG -->
   > **README.md:92**
   >
   > ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
@@ -47,7 +47,7 @@
   > cd services/ai && uv sync && uv run uvicorn nakheel.main:app --reload --port 8005
   > ```
 
-- [ ] pnpm version requirement mismatch: should be 9+ not 10+ — @devin-ai-integration, @coderabbitai <!-- thread:PRRT_kwDORjaF4M54Ll8O --> <!-- thread:PRRT_kwDORjaF4M54LnuZ -->
+- [x] pnpm version requirement mismatch: should be 9+ not 10+ — @devin-ai-integration, @coderabbitai <!-- thread:PRRT_kwDORjaF4M54Ll8O --> <!-- thread:PRRT_kwDORjaF4M54LnuZ -->
   > **services/market/README.md:85**
   >
   > <!-- devin-review-comment {"id": "BUG_pr-review-job-44052c8c4d5e4032b3804dbc1b849a32_0001", "file_path": "services/market/README.md", "start_line": 85, "end_line": 85, "side": "RIGHT"} -->
@@ -101,7 +101,7 @@
   >
   > <!-- This is an auto-generated comment by CodeRabbit -->
 
-- [ ] Identity README missing 4 user roles from enum — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M54Ll9q -->
+- [x] Identity README missing 4 user roles from enum — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M54Ll9q -->
   > **services/identity/README.md:320**
   >
   > <!-- devin-review-comment {"id": "BUG_pr-review-job-44052c8c4d5e4032b3804dbc1b849a32_0002", "file_path": "services/identity/README.md", "start_line": 320, "end_line": 320, "side": "RIGHT"} -->
@@ -126,7 +126,7 @@
   > ---
   > *Was this helpful? React with 👍 or 👎 to provide feedback.*
 
-- [ ] PaginatedResponse examples use nested meta object instead of flat structure — @coderabbitai <!-- thread:PRRT_kwDORjaF4M54LnuH -->
+- [x] PaginatedResponse examples use nested meta object instead of flat structure — @coderabbitai <!-- thread:PRRT_kwDORjaF4M54LnuH -->
   > **packages/types/README.md:65**
   >
   > _⚠️ Potential issue_ | _🟠 Major_
@@ -165,7 +165,7 @@
   >
   > <!-- This is an auto-generated comment by CodeRabbit -->
 
-- [ ] Guide-booking setup docs mention Qdrant but command doesn't include it — @coderabbitai, @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54LnuU --> <!-- thread:PRRT_kwDORjaF4M54L2wK -->
+- [x] Guide-booking setup docs mention Qdrant but command doesn't include it — @coderabbitai, @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54LnuU --> <!-- thread:PRRT_kwDORjaF4M54L2wK -->
   > **services/guide-booking/README.md:91**
   >
   > _⚠️ Potential issue_ | _🟡 Minor_
@@ -222,7 +222,7 @@
   >
   > </details>
 
-- [ ] Bug in PaginatedResponse hasMore calculation example — @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54L2wH -->
+- [x] Bug in PaginatedResponse hasMore calculation example — @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54L2wH -->
   > **packages/types/README.md:213**
   >
   > <!-- metadata:{"confidence":9} -->
@@ -249,7 +249,7 @@
   >
   > </details>
 
-- [ ] Duplicate "guides" in identity README search description — @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54L2wN -->
+- [x] Duplicate "guides" in identity README search description — @cubic-dev-ai <!-- thread:PRRT_kwDORjaF4M54L2wN -->
   > **services/identity/README.md:55**
   >
   > <!-- metadata:{"confidence":9} -->
