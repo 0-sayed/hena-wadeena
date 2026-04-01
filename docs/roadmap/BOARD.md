@@ -72,23 +72,23 @@
 
 ## Layer 4 — Secondary Services + Reviews
 
-- [ ] **T18** Guide-Booking: Reviews · M · ← T15
+- [x] **T18** Guide-Booking: Reviews · M · ← T15
 - [ ] **T19** Knowledge Base Seeding · M · ← T16
-- [ ] **T22** Market: Search Indexes · S · ← T17
+- [x] **T22** Market: Search Indexes · S · ← T17
 
 ## Layer 5 — Map, Search, Cross-Service
 
-- [ ] **T21** Map: POIs + Carpool · M · ← T18
+- [x] **T21** Map: POIs + Carpool · M · ← T18
 - [ ] **T23** Arabic Quality Tuning · M · ← T19
-- [ ] **T24** Unified Search · M · ← T20, T22
-- [ ] **F05** Logistics + Map · M · ← T21, F01
-- [ ] **F09** Unified Search · S · ← T24, F01
+- [x] **T24** Unified Search · M · ← T20, T22
+- [x] **F05** Logistics + Map · M · ← T21, F01
+- [x] **F09** Unified Search · S · ← T24, F01
 
 ## Layer 6 — Integration + Seed Data
 
-- [ ] **T25** Seed Data Scripts · M · ← T24, T21
-- [ ] **T26** Integration: Market · M · ← T14, T20, T22
-- [ ] **T27** Integration: Guide + Map · M · ← T21, T20
+- [x] **T25** Seed Data Scripts · M · ← T24, T21
+- [x] **T26** Integration: Market · M · ← T14, T20, T22
+- [x] **T27** Integration: Guide + Map · M · ← T21, T20
 - [ ] **T28** AI: Semantic Search + Cross-Service · M · ← T23, T20
 
 ## Layer 7 — Admin + Polish
@@ -101,5 +101,5 @@
 
 ## Layer 8 — Deploy + Ship
 
-- [ ] **T33** Deploy to AWS · M · ← T29, T30, T31, T32
-- [ ] **T34** Demo Prep + Ship · S · ← T33
+- [x] **T33** Deploy to AWS · M · ← T29, T30, T31, T32
+- [x] **T34** Demo Prep + Ship · S · ← T33
