@@ -96,7 +96,7 @@ export function DocumentViewerDialog({
               src={documentUrl ?? undefined}
               className="w-full h-full min-h-[500px] rounded border"
               title="Document preview"
-              sandbox="allow-scripts allow-same-origin"
+              sandbox="allow-scripts"
               referrerPolicy="no-referrer"
             />
           ) : isImage ? (

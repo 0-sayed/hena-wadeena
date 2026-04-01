@@ -1,3 +1,3 @@
-DROP INDEX "identity"."idx_users_full_name_trgm";--> statement-breakpoint
-ALTER TABLE "identity"."users" ADD COLUMN "balance_piasters" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_users_full_name_trgm" ON "identity"."users" USING gin (identity.normalize_arabic("full_name") public.gin_trgm_ops);
+-- No-op: duplicate of 20260401035048_free_magus.sql (merged from main)
+-- The balance_piasters column and index were already handled by that migration.
+SELECT 1;
