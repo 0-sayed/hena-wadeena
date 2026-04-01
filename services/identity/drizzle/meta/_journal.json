@@ -71,6 +71,20 @@
       "when": 1774688413755,
       "tag": "20260328090013_fix-trgm-index-expression",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775015448324,
+      "tag": "20260401035048_free_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1775015452645,
+      "tag": "20260401035052_wallet-balance-check",
+      "breakpoints": true
     }
   ]
 }
