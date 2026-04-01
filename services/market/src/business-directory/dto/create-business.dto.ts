@@ -3,7 +3,7 @@ import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 function isValidHttpUrl(value: string) {
-  return z.string().url().safeParse(value).success && /^https?:\/\//i.test(value);
+  return z.url().safeParse(value).success && /^https?:\/\//i.test(value);
 }
 
 function isValidLogoUrl(value: string) {
