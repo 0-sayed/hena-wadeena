@@ -52,7 +52,7 @@ The Identity service is the authentication and user management backbone of the H
 - Review KYC submissions
 
 ### Search (`/search`)
-- Unified cross-service search (markets, guides, attractions, guides)
+- Unified cross-service search (markets, guides, attractions, listings)
 - Arabic text normalization
 - Fuzzy matching with pg_trgm
 
@@ -317,7 +317,7 @@ Schema name: `identity`
 
 ### Enums
 
-- **`user_role`**: `admin`, `tourist`, `investor`, `merchant`, `guide`, `student`
+- **`user_role`**: `admin`, `tourist`, `resident`, `investor`, `merchant`, `guide`, `student`, `driver`, `moderator`, `reviewer`
 - **`user_status`**: `active`, `suspended`, `banned`
 - **`kyc_status`**: `pending`, `approved`, `rejected`
 - **`notification_type`**: `info`, `warning`, `success`, `error`

@@ -21,13 +21,13 @@ Unified digital platform for New Valley Governorate, Egypt — connecting touris
 | Document Store       | MongoDB 7 (AI service only)                  |
 | Cache / Events       | Redis 7 (Streams)                            |
 | Vector DB            | Qdrant                                       |
-| LLM / Embeddings     | Gemini Flash Lite 3.1 / Gemini Embedding 001 |
+| LLM / Embeddings     | OpenAI gpt-4o-mini / text-embedding-3-small |
 | Frontend             | React 18, Vite, React Router v7              |
 | UI Components        | Radix UI, Tailwind CSS, shadcn/ui            |
 | State Management     | TanStack Query v5                            |
 | Maps                 | Leaflet, React Leaflet                       |
 | ORM                  | Drizzle ORM                                  |
-| API Gateway          | Nginx + Caddy                                |
+| API Gateway          | Nginx                                        |
 | Monorepo             | pnpm workspaces (NestJS) + uv (Python)       |
 | Infrastructure       | Docker Compose, AWS Amplify (frontend)       |
 
@@ -89,7 +89,7 @@ pnpm --filter @hena-wadeena/map dev
 pnpm --filter @hena-wadeena/web dev
 
 # AI service
-cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
+cd services/ai && uv sync && uv run uvicorn nakheel.main:app --reload --port 8005
 ```
 
 ### Makefile Commands Reference
@@ -156,7 +156,7 @@ hena-wadeena/
 │   ├── guide-booking/     # Attractions, guides, tours, bookings         :8003
 │   ├── map/               # POIs, carpool, moderation                    :8004
 │   └── ai/                # RAG chatbot, Egyptian Arabic (Python)        :8005
-├── gateway/               # Nginx + Caddy config                         :8000
+├── gateway/               # Nginx config                                 :8000
 ├── scripts/seed/          # Database seed scripts (essential + showcase)
 └── docs/                  # Architecture, specs, proposals
 ```

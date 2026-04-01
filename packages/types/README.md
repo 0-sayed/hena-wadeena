@@ -56,12 +56,10 @@ import { PaginatedResponse } from '@hena-wadeena/types';
 
 const response: PaginatedResponse<User> = {
   data: users,
-  meta: {
-    total: 100,
-    offset: 0,
-    limit: 20,
-    hasMore: true,
-  },
+  total: 100,
+  page: 1,
+  limit: 20,
+  hasMore: true,
 };
 ```
 
@@ -70,17 +68,17 @@ const response: PaginatedResponse<User> = {
 Type-safe event contracts for Redis Streams inter-service communication:
 
 ```typescript
-import { UserKycApprovedEvent } from '@hena-wadeena/types';
+import { EVENTS, EventName } from '@hena-wadeena/types';
 
-const event: UserKycApprovedEvent = {
-  type: 'user.kyc.approved',
+// Use event constants to ensure type safety
+const eventName: EventName = EVENTS.USER_VERIFIED;
+
+// Event payload is defined by the emitting service
+const event = {
+  type: eventName,
   payload: {
     userId: '01H8X...',
-    kycStatus: 'approved',
-  },
-  metadata: {
-    timestamp: new Date().toISOString(),
-    source: 'identity-service',
+    verifiedAt: new Date().toISOString(),
   },
 };
 ```
@@ -90,12 +88,22 @@ const event: UserKycApprovedEvent = {
 User-related types and notification interfaces:
 
 ```typescript
-import { JwtPayload, NotificationPayload } from '@hena-wadeena/types';
+import { PublicUser, Notification } from '@hena-wadeena/types';
 
-const payload: JwtPayload = {
-  sub: userId,
-  email: user.email,
+const user: PublicUser = {
+  id: '01H8X...',
+  email: 'user@example.com',
+  phone: null,
+  fullName: 'Ahmed Hassan',
+  displayName: null,
+  avatarUrl: null,
   role: UserRole.TOURIST,
+  status: UserStatus.ACTIVE,
+  language: 'ar',
+  verifiedAt: new Date(),
+  lastLoginAt: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 ```
 
@@ -119,16 +127,13 @@ const slug = slugify('مطعم الواحة الخضراء'); // "mtrm-alwah-alk
 Unified search types for federated search API:
 
 ```typescript
-import { 
-  UnifiedSearchRequest, 
-  UnifiedSearchResponse, 
-  SearchScope 
-} from '@hena-wadeena/types';
+import { UnifiedSearchResponse } from '@hena-wadeena/types';
 
-const request: UnifiedSearchRequest = {
+const response: UnifiedSearchResponse = {
+  data: [],
+  hasMore: false,
   query: 'واحة سيوة',
-  scopes: [SearchScope.LISTINGS, SearchScope.GUIDES],
-  limit: 10,
+  sources: ['market', 'guide-booking'],
 };
 ```
 
@@ -212,7 +217,10 @@ export class UsersService {
     
     return {
       data: users,
-      meta: { total: total[0].count, offset, limit, hasMore: offset + limit < total },
+      total: total[0].count,
+      page: Math.floor(offset / limit) + 1,
+      limit,
+      hasMore: offset + limit < total[0].count,
     };
   }
 }
@@ -221,11 +229,11 @@ export class UsersService {
 ### Event Publishing
 
 ```typescript
-import { UserKycApprovedEvent } from '@hena-wadeena/types';
+import { EVENTS } from '@hena-wadeena/types';
 
-await this.redisStreams.publish<UserKycApprovedEvent>('user.kyc.approved', {
+await this.redisStreams.publish(EVENTS.USER_VERIFIED, {
   userId: user.id,
-  kycStatus: 'approved',
+  verifiedAt: new Date().toISOString(),
 });
 ```
 

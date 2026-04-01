@@ -87,7 +87,7 @@ pnpm --filter @hena-wadeena/nest-common build
 ### 2. Start Infrastructure
 
 ```bash
-# Start PostgreSQL, Redis, and Qdrant
+# Start PostgreSQL and Redis
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis
 ```
 

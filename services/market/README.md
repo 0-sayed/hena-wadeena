@@ -82,7 +82,7 @@ This service handles all market-related functionality including:
 ## Prerequisites
 
 - Node.js 22+
-- pnpm 10+
+- pnpm 9+
 - PostgreSQL 16 with PostGIS extension
 - Redis 7+
 - AWS S3 bucket (or S3-compatible storage)
