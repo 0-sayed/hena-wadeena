@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Building2, CheckCircle, Clock, Package2, Store } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,7 +19,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { DISTRICTS, formatPrice } from '@/lib/format';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
@@ -62,11 +69,15 @@ const emptyListingForm: ListingFormState = {
 
 export default function MerchantDashboard() {
   const queryClient = useQueryClient();
-  const { data: businessesData, isLoading: loadingBusinesses, error: businessesError } =
-    useMyBusinesses();
+  const {
+    data: businessesData,
+    isLoading: loadingBusinesses,
+    error: businessesError,
+  } = useMyBusinesses();
   const { data: listingsData, isLoading: loadingListings } = useMyListings();
   const [listingForm, setListingForm] = useState<ListingFormState>(emptyListingForm);
   const [saving, setSaving] = useState(false);
+  const isSavingRef = useRef(false);
 
   const businesses = businessesData ?? [];
   const listings = listingsData ?? [];
@@ -89,6 +100,8 @@ export default function MerchantDashboard() {
   };
 
   const handleSaveListing = async () => {
+    if (isSavingRef.current) return;
+
     const price = parseEgpInputToPiasters(listingForm.priceEgp);
     if (!listingForm.titleAr.trim()) {
       toast.error('اسم المنتج أو الخدمة مطلوب');
@@ -99,6 +112,7 @@ export default function MerchantDashboard() {
       return;
     }
 
+    isSavingRef.current = true;
     setSaving(true);
     try {
       const payload = {
@@ -126,6 +140,7 @@ export default function MerchantDashboard() {
       const message = error instanceof Error ? error.message : 'تعذر حفظ الإعلان';
       toast.error(message);
     } finally {
+      isSavingRef.current = false;
       setSaving(false);
     }
   };
@@ -151,7 +166,11 @@ export default function MerchantDashboard() {
       subtitle="إدارة نشاطك التجاري وإعلانات المنتجات والخدمات"
     >
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="الأنشطة التجارية" value={loadingBusinesses ? '...' : stats.totalBusinesses} icon={Building2} />
+        <StatCard
+          label="الأنشطة التجارية"
+          value={loadingBusinesses ? '...' : stats.totalBusinesses}
+          icon={Building2}
+        />
         <StatCard
           label="أنشطة موثقة"
           value={loadingBusinesses ? '...' : stats.verifiedBusinesses}
@@ -164,7 +183,11 @@ export default function MerchantDashboard() {
           icon={Clock}
           variant="warning"
         />
-        <StatCard label="إعلاناتي" value={loadingListings ? '...' : stats.listings} icon={Package2} />
+        <StatCard
+          label="إعلاناتي"
+          value={loadingListings ? '...' : stats.listings}
+          icon={Package2}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

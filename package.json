@@ -16,7 +16,7 @@
     "test:workspaces": "pnpm --filter @hena-wadeena/types --filter @hena-wadeena/nest-common --filter @hena-wadeena/identity --filter @hena-wadeena/market --filter @hena-wadeena/guide-booking --filter @hena-wadeena/map --filter @hena-wadeena/web run test",
     "dev": "pnpm --filter @hena-wadeena/identity --filter @hena-wadeena/market --filter @hena-wadeena/guide-booking --filter @hena-wadeena/map run dev",
     "build": "pnpm run build:shared && pnpm run build:workspaces",
-    "test": "pnpm run test:workspaces",
+    "test": "pnpm run build:shared && pnpm run test:workspaces",
     "check": "pnpm run typecheck && npx eslint .",
     "lint": "eslint . && pnpm --filter @hena-wadeena/web run lint",
     "typecheck": "pnpm run build:shared && pnpm run typecheck:workspaces",

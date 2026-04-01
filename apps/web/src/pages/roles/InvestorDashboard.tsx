@@ -23,7 +23,11 @@ import { formatPrice } from '@/lib/format';
 
 export default function InvestorDashboard() {
   const { data: opportunities, isLoading: loadingOpportunities, error } = useMyOpportunities();
-  const { data: myInterests, isLoading: loadingMyInterests } = useMyInvestmentApplications();
+  const {
+    data: myInterests,
+    isLoading: loadingMyInterests,
+    isError: myInterestsError,
+  } = useMyInvestmentApplications();
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -91,9 +95,7 @@ export default function InvestorDashboard() {
             ) : error ? (
               <p className="text-sm text-destructive">تعذر تحميل فرصك الاستثمارية</p>
             ) : !opportunities || opportunities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                لم تقم بإضافة فرص استثمارية بعد.
-              </p>
+              <p className="text-sm text-muted-foreground">لم تقم بإضافة فرص استثمارية بعد.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -141,6 +143,8 @@ export default function InvestorDashboard() {
                   <Skeleton key={index} className="h-16 w-full" />
                 ))}
               </div>
+            ) : applicationsQuery.isError ? (
+              <p className="text-sm text-destructive">تعذر تحميل الاستفسارات المستلمة</p>
             ) : receivedApplications.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 لا توجد استفسارات مستلمة لهذه الفرصة حتى الآن.
@@ -155,16 +159,17 @@ export default function InvestorDashboard() {
                   </p>
                 </div>
                 {receivedApplications.map((application) => (
-                  <div key={application.id} className="rounded-xl border border-border p-4 space-y-2">
+                  <div
+                    key={application.id}
+                    className="rounded-xl border border-border p-4 space-y-2"
+                  >
                     <div className="flex items-center justify-between gap-3">
                       {application.contactEmail ? (
                         <span className="font-semibold text-foreground">
                           {application.contactEmail}
                         </span>
                       ) : (
-                        <span className="text-sm text-muted-foreground">
-                          لا يوجد بريد إلكتروني
-                        </span>
+                        <span className="text-sm text-muted-foreground">لا يوجد بريد إلكتروني</span>
                       )}
                       <span className="rounded-full bg-muted px-3 py-1 text-xs">
                         {application.status}
@@ -214,10 +219,10 @@ export default function InvestorDashboard() {
                 <Skeleton key={index} className="h-12 w-full" />
               ))}
             </div>
+          ) : myInterestsError ? (
+            <p className="text-sm text-destructive">تعذر تحميل الاستفسارات المرسلة</p>
           ) : (myInterests?.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              لم ترسل استفسارات استثمارية بعد.
-            </p>
+            <p className="text-sm text-muted-foreground">لم ترسل استفسارات استثمارية بعد.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -232,7 +237,8 @@ export default function InvestorDashboard() {
                 {(myInterests?.data ?? []).map((application) => (
                   <TableRow key={application.id}>
                     <TableCell className="font-medium">
-                      {opportunityTitles.get(application.opportunityId) ?? application.opportunityId}
+                      {opportunityTitles.get(application.opportunityId) ??
+                        application.opportunityId}
                     </TableCell>
                     <TableCell>{application.status}</TableCell>
                     <TableCell>

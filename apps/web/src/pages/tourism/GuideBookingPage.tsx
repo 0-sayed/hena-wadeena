@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
   AlertCircle,
@@ -32,11 +32,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { usePackage } from '@/hooks/use-packages';
 import { formatRating, piastresToEgp } from '@/lib/format';
-import {
-  deductWalletBalance,
-  getWalletSnapshot,
-  topUpWallet,
-} from '@/lib/wallet-store';
+import { deductWalletBalance, getWalletSnapshot, topUpWallet } from '@/lib/wallet-store';
 
 const GuideBookingPage = () => {
   const navigate = useNavigate();
@@ -51,6 +47,7 @@ const GuideBookingPage = () => {
   const [peopleCount, setPeopleCount] = useState(1);
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const isProcessingRef = useRef(false);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -76,6 +73,7 @@ const GuideBookingPage = () => {
   };
 
   const handleConfirm = () => {
+    if (isProcessingRef.current) return;
     if (!pkg || !user) return;
 
     if (!canAfford) {
@@ -85,15 +83,16 @@ const GuideBookingPage = () => {
       return;
     }
 
+    isProcessingRef.current = true;
+
     try {
       deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
         reference_id: pkg.id,
         reference_type: 'package_booking',
       });
     } catch (walletError: unknown) {
-      toast.error(
-        walletError instanceof Error ? walletError.message : 'تعذر تحديث رصيد المحفظة',
-      );
+      isProcessingRef.current = false;
+      toast.error(walletError instanceof Error ? walletError.message : 'تعذر تحديث رصيد المحفظة');
       setShowConfirm(false);
       return;
     }
@@ -108,25 +107,37 @@ const GuideBookingPage = () => {
       },
       {
         onSuccess: () => {
+          isProcessingRef.current = false;
           toast.success('تم تأكيد الحجز وخصم قيمة الباقة من المحفظة بنجاح');
           setShowConfirm(false);
           void navigate('/bookings');
         },
         onError: (err) => {
+          isProcessingRef.current = false;
+          let refundSucceeded = false;
           try {
             topUpWallet(user.id, totalPrice, `استرداد حجز باقة سياحية: ${pkg.titleAr}`, {
               reference_id: pkg.id,
               reference_type: 'package_booking_refund',
             });
+            refundSucceeded = true;
           } catch {
-            // Best-effort rollback for the local wallet cache.
+            // Refund failed - will show appropriate message below.
           }
 
-          toast.error(
-            err instanceof Error
-              ? `${err.message}. تم استرداد المبلغ للمحفظة.`
-              : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
-          );
+          if (refundSucceeded) {
+            toast.error(
+              err instanceof Error
+                ? `${err.message}. تم استرداد المبلغ للمحفظة.`
+                : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
+            );
+          } else {
+            toast.error(
+              err instanceof Error
+                ? `${err.message}. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.`
+                : 'فشل إنشاء الحجز. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.',
+            );
+          }
           setShowConfirm(false);
         },
       },
@@ -307,7 +318,9 @@ const GuideBookingPage = () => {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setPeopleCount((count) => Math.min(pkg.maxPeople, count + 1))}
+                        onClick={() =>
+                          setPeopleCount((count) => Math.min(pkg.maxPeople, count + 1))
+                        }
                         disabled={peopleCount >= pkg.maxPeople}
                       >
                         +

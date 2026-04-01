@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { UserRole } from '@hena-wadeena/types';
 import { useAuth } from '@/hooks/use-auth';
 import { investmentApplicationsAPI } from '@/services/api';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
@@ -103,7 +104,9 @@ const ContactPage = () => {
       });
 
       toast.success('تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة');
-      void navigate(user?.role === 'merchant' ? '/dashboard/merchant' : '/dashboard/investor');
+      void navigate(
+        user?.role === UserRole.MERCHANT ? '/dashboard/merchant' : '/dashboard/investor',
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
       toast.error(message);

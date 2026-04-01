@@ -103,6 +103,10 @@ export function topUpWallet(
   description = DEFAULT_TOP_UP_DESCRIPTION,
   reference?: { reference_id?: string; reference_type?: string },
 ): StoredWalletState {
+  if (!Number.isSafeInteger(amountPiasters) || amountPiasters <= 0) {
+    throw new Error('amountPiasters must be a positive integer');
+  }
+
   const current = readState(userId);
   const transaction = buildTransaction('credit', amountPiasters, description, reference);
   const nextBalance = current.wallet.balance + amountPiasters;
@@ -121,10 +125,16 @@ export function deductWalletBalance(
   description: string,
   reference?: { reference_id?: string; reference_type?: string },
 ): StoredWalletState {
+  if (!Number.isSafeInteger(amountPiasters) || amountPiasters <= 0) {
+    throw new Error('amountPiasters must be a positive integer');
+  }
+
   const current = readState(userId);
 
   if (current.wallet.balance < amountPiasters) {
-    throw new Error('\u0631\u0635\u064a\u062f \u0627\u0644\u0645\u062d\u0641\u0638\u0629 \u063a\u064a\u0631 \u0643\u0627\u0641\u064d \u0644\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0639\u0645\u0644\u064a\u0629');
+    throw new Error(
+      '\u0631\u0635\u064a\u062f \u0627\u0644\u0645\u062d\u0641\u0638\u0629 \u063a\u064a\u0631 \u0643\u0627\u0641\u064d \u0644\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0639\u0645\u0644\u064a\u0629',
+    );
   }
 
   const transaction = buildTransaction('debit', amountPiasters, description, reference);
