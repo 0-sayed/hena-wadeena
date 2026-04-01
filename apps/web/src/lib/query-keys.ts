@@ -2,6 +2,9 @@ export const queryKeys = {
   auth: {
     me: () => ['auth', 'me'] as const,
   },
+  users: {
+    publicProfiles: (ids: string[]) => ['users', 'public-profiles', ids] as const,
+  },
   notifications: {
     all: () => ['notifications'] as const,
     lists: () => ['notifications', 'list'] as const,

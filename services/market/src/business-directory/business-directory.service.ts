@@ -146,7 +146,7 @@ export class BusinessDirectoryService {
 
   // --- CRUD ---
 
-  async create(dto: CreateBusinessDto, ownerId: string): Promise<BusinessDirectory> {
+  async create(dto: CreateBusinessDto, ownerId: string, role?: string): Promise<BusinessDirectory> {
     if (dto.commodityIds?.length) {
       await this.validateCommodityIds(dto.commodityIds);
     }
@@ -154,6 +154,7 @@ export class BusinessDirectoryService {
     const locationExpr = dto.location
       ? sql`public.ST_SetSRID(public.ST_MakePoint(${dto.location.lng}, ${dto.location.lat}), 4326)`
       : null;
+    const createdByAdmin = role === 'admin';
 
     const business = await this.db.transaction(async (tx) => {
       const [created] = await tx
@@ -169,7 +170,10 @@ export class BusinessDirectoryService {
           location: locationExpr as unknown as InsertBusinessDirectory['location'],
           phone: dto.phone,
           website: dto.website,
-          verificationStatus: 'pending',
+          logoUrl: dto.logoUrl,
+          verificationStatus: createdByAdmin ? 'verified' : 'pending',
+          verifiedBy: createdByAdmin ? ownerId : null,
+          verifiedAt: createdByAdmin ? new Date() : null,
         })
         .returning();
 
@@ -216,6 +220,7 @@ export class BusinessDirectoryService {
     if (dto.district !== undefined) updates.district = dto.district;
     if (dto.phone !== undefined) updates.phone = dto.phone;
     if (dto.website !== undefined) updates.website = dto.website;
+    if (dto.logoUrl !== undefined) updates.logoUrl = dto.logoUrl;
     if (dto.location !== undefined) {
       updates.location =
         sql`public.ST_SetSRID(public.ST_MakePoint(${dto.location.lng}, ${dto.location.lat}), 4326)` as unknown as InsertBusinessDirectory['location'];

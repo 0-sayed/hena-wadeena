@@ -16,7 +16,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, desc, eq, gte, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -25,6 +25,8 @@ import { SessionService } from '../session/session.service';
 
 type AuditEventType = typeof auditEvents.$inferInsert.eventType;
 const PG_UNIQUE_VIOLATION = '23505';
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -33,6 +35,10 @@ function isUniqueViolation(error: unknown): boolean {
     'code' in error &&
     (error as { code: string }).code === PG_UNIQUE_VIOLATION
   );
+}
+
+function isUuid(value: string) {
+  return UUID_PATTERN.test(value);
 }
 
 @Injectable()
@@ -74,6 +80,29 @@ export class UsersService {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async findPublicProfiles(ids: string[]) {
+    const normalizedIds = [...new Set(ids.filter(Boolean))];
+
+    if (normalizedIds.length === 0) {
+      return [];
+    }
+
+    if (normalizedIds.some((id) => !isUuid(id))) {
+      throw new BadRequestException('All ids must be valid UUIDs.');
+    }
+
+    return this.db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+        role: users.role,
+      })
+      .from(users)
+      .where(andRequired(inArray(users.id, normalizedIds), isNull(users.deletedAt)));
   }
 
   async findAll(query: {

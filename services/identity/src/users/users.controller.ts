@@ -1,6 +1,7 @@
 import { CurrentUser, InternalGuard, Public } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -9,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -17,6 +19,8 @@ import type { users } from '../db/schema/index';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { DeductDto, TopupDto } from './dto/wallet.dto';
 import { UsersService } from './users.service';
+
+const MAX_PUBLIC_USER_IDS = 100;
 
 function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
   void passwordHash;
@@ -46,6 +50,31 @@ export class UsersController {
     });
     if (!updated) throw new NotFoundException('User not found');
     return toPublicUser(updated);
+  }
+
+  @Public()
+  @Get('users/public')
+  async getPublicUsers(@Query('ids') ids?: string) {
+    const parsedIds = ids
+      ?.split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if ((parsedIds?.length ?? 0) > MAX_PUBLIC_USER_IDS) {
+      throw new BadRequestException(
+        `Too many IDs requested. Maximum is ${MAX_PUBLIC_USER_IDS}.`,
+      );
+    }
+
+    const publicUsers = await this.usersService.findPublicProfiles(parsedIds ?? []);
+
+    return publicUsers.map((user) => ({
+      id: user.id,
+      full_name: user.fullName,
+      display_name: user.displayName,
+      avatar_url: user.avatarUrl,
+      role: user.role,
+    }));
   }
 
   @Get('wallet')

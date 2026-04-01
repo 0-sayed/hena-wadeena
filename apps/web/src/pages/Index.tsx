@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { UserRole } from '@hena-wadeena/types';
 import { Layout } from '@/components/layout/Layout';
 import { HeroSection } from '@/components/home/HeroSection';
 import { QuickAccess } from '@/components/home/QuickAccess';
@@ -6,6 +7,7 @@ import { MissionCards } from '@/components/home/MissionCards';
 import { FeaturedSection } from '@/components/home/FeaturedSection';
 import { PriceSnapshot } from '@/components/home/PriceSnapshot';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Compass,
   FileCheck,
@@ -16,60 +18,136 @@ import {
   Store,
   TrendingUp,
   Truck,
-  Users,
 } from 'lucide-react';
 
-const adminLinks = [
-  { to: '/admin', icon: Shield, label: 'لوحة الإدارة', desc: 'صلاحيات كاملة' },
-  { to: '/admin/moderation', icon: Users, label: 'لوحة المنسق', desc: 'تنسيق بين الأدوار' },
-  { to: '/reviewer', icon: FileCheck, label: 'لوحة المراجع', desc: 'مراجعة المستندات' },
+type DashboardLink = {
+  to: string;
+  icon: typeof Shield;
+  label: string;
+  desc: string;
+  roles: UserRole[];
+};
+
+const adminLinks: DashboardLink[] = [
+  {
+    to: '/admin',
+    icon: Shield,
+    label: 'لوحة الإدارة',
+    desc: 'صلاحيات كاملة',
+    roles: [UserRole.ADMIN],
+  },
+  {
+    to: '/reviewer',
+    icon: FileCheck,
+    label: 'لوحة المراجع',
+    desc: 'مراجعة المستندات',
+    roles: [UserRole.ADMIN, UserRole.REVIEWER],
+  },
 ];
 
-const roleLinks = [
-  { to: '/dashboard/guide', icon: Compass, label: 'المرشد', desc: 'إدارة الجولات' },
-  { to: '/dashboard/merchant', icon: Store, label: 'التاجر', desc: 'إدارة المنتجات' },
-  { to: '/dashboard/driver', icon: Truck, label: 'السائق', desc: 'إدارة الرحلات' },
-  { to: '/dashboard/investor', icon: TrendingUp, label: 'المستثمر', desc: 'الفرص الاستثمارية' },
-  { to: '/dashboard/tourist', icon: MapPinned, label: 'السائح', desc: 'خطط الرحلات' },
-  { to: '/dashboard/student', icon: GraduationCap, label: 'الطالب', desc: 'الطلبات الأكاديمية' },
-  { to: '/dashboard/resident', icon: Home, label: 'المقيم', desc: 'خدمات الحي' },
+const roleLinks: DashboardLink[] = [
+  {
+    to: '/dashboard/guide',
+    icon: Compass,
+    label: 'المرشد',
+    desc: 'إدارة الجولات',
+    roles: [UserRole.GUIDE],
+  },
+  {
+    to: '/dashboard/merchant',
+    icon: Store,
+    label: 'التاجر',
+    desc: 'إدارة المنتجات',
+    roles: [UserRole.MERCHANT],
+  },
+  {
+    to: '/dashboard/driver',
+    icon: Truck,
+    label: 'السائق',
+    desc: 'إدارة الرحلات',
+    roles: [UserRole.DRIVER],
+  },
+  {
+    to: '/dashboard/investor',
+    icon: TrendingUp,
+    label: 'المستثمر',
+    desc: 'الفرص الاستثمارية',
+    roles: [UserRole.INVESTOR],
+  },
+  {
+    to: '/dashboard/tourist',
+    icon: MapPinned,
+    label: 'السائح',
+    desc: 'خطط الرحلات',
+    roles: [UserRole.TOURIST],
+  },
+  {
+    to: '/dashboard/student',
+    icon: GraduationCap,
+    label: 'الطالب',
+    desc: 'الطلبات الأكاديمية',
+    roles: [UserRole.STUDENT],
+  },
+  {
+    to: '/dashboard/resident',
+    icon: Home,
+    label: 'المقيم',
+    desc: 'خدمات الحي',
+    roles: [UserRole.RESIDENT],
+  },
 ];
+
+function filterLinks(links: DashboardLink[], role?: UserRole) {
+  if (!role) {
+    return [];
+  }
+
+  return links.filter((link) => link.roles.includes(role));
+}
 
 const Index = () => {
+  const { user } = useAuth();
+  const visibleAdminLinks = filterLinks(adminLinks, user?.role);
+  const visibleRoleLinks = filterLinks(roleLinks, user?.role);
+
   return (
     <Layout>
       <HeroSection />
       <QuickAccess />
 
-      <div className="container px-4 py-10">
-        <h2 className="mb-4 text-center text-2xl font-bold">لوحات التحكم الإدارية</h2>
-        <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-3">
-          {adminLinks.map(({ to, icon: Icon, label, desc }) => (
-            <Link key={to} to={to}>
-              <Button variant="outline" className="flex h-24 w-full flex-col gap-2">
-                <Icon className="h-7 w-7 text-primary" />
-                <span className="font-semibold">{label}</span>
-                <span className="text-xs text-muted-foreground">{desc}</span>
-              </Button>
-            </Link>
-          ))}
+      {visibleAdminLinks.length > 0 && (
+        <div className="container px-4 py-10">
+          <h2 className="mb-4 text-center text-2xl font-bold">لوحات التحكم الإدارية</h2>
+          <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
+            {visibleAdminLinks.map(({ to, icon: Icon, label, desc }) => (
+              <Link key={to} to={to}>
+                <Button variant="outline" className="flex h-24 w-full flex-col gap-2">
+                  <Icon className="h-7 w-7 text-primary" />
+                  <span className="font-semibold">{label}</span>
+                  <span className="text-xs text-muted-foreground">{desc}</span>
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="container px-4 pb-12">
-        <h2 className="mb-4 text-center text-2xl font-bold">لوحات الأدوار</h2>
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-7">
-          {roleLinks.map(({ to, icon: Icon, label, desc }) => (
-            <Link key={to} to={to}>
-              <Button variant="outline" className="flex h-24 w-full flex-col gap-1">
-                <Icon className="h-6 w-6 text-primary" />
-                <span className="text-sm font-semibold">{label}</span>
-                <span className="text-xs text-muted-foreground">{desc}</span>
-              </Button>
-            </Link>
-          ))}
+      {visibleRoleLinks.length > 0 && (
+        <div className="container px-4 pb-12">
+          <h2 className="mb-4 text-center text-2xl font-bold">لوحات الأدوار</h2>
+          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {visibleRoleLinks.map(({ to, icon: Icon, label, desc }) => (
+              <Link key={to} to={to}>
+                <Button variant="outline" className="flex h-24 w-full flex-col gap-1">
+                  <Icon className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-semibold">{label}</span>
+                  <span className="text-xs text-muted-foreground">{desc}</span>
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <MissionCards />
       <FeaturedSection />

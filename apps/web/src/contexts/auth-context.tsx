@@ -9,6 +9,8 @@ interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  language: 'ar' | 'en';
+  direction: 'rtl' | 'ltr';
 }
 
 export interface AuthContextValue extends AuthState {
@@ -20,9 +22,24 @@ export interface AuthContextValue extends AuthState {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+const LANGUAGE_STORAGE_KEY = 'hena-wadeena:language';
+
+function normalizeLanguage(language?: string | null): 'ar' | 'en' {
+  return language === 'en' ? 'en' : 'ar';
+}
+
+function getStoredLanguage(): 'ar' | 'en' {
+  if (typeof window === 'undefined') {
+    return 'ar';
+  }
+
+  return normalizeLanguage(window.localStorage.getItem(LANGUAGE_STORAGE_KEY));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [languagePreference, setLanguagePreference] = useState<'ar' | 'en'>(getStoredLanguage);
   const navigate = useNavigate();
 
   // Hydrate from localStorage on mount, then validate with server
@@ -41,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await authAPI.getMe();
         if (cancelled) return;
         setUser(currentUser);
+        setLanguagePreference(normalizeLanguage(currentUser.language));
       } catch {
         if (cancelled) return;
         authManager.clearTokens();
@@ -68,29 +86,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await authAPI.login(credentials);
     authManager.setTokens(response.access_token, response.refresh_token);
     setUser(response.user);
+    setLanguagePreference(normalizeLanguage(response.user.language));
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
     const response = await authAPI.register(data);
     authManager.setTokens(response.access_token, response.refresh_token);
     setUser(response.user);
+    setLanguagePreference(normalizeLanguage(response.user.language));
   }, []);
 
   const updateUser = useCallback((updatedUser: AuthUser) => {
     setUser(updatedUser);
+    setLanguagePreference(normalizeLanguage(updatedUser.language));
   }, []);
+
+  const language = normalizeLanguage(user?.language ?? languagePreference);
+  const direction = language === 'ar' ? 'rtl' : 'ltr';
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.lang = language;
+    document.documentElement.dir = direction;
+    document.body.dir = direction;
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  }, [direction, language]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       isAuthenticated: user !== null,
       isLoading,
+      language,
+      direction,
       login,
       register,
       logout,
       updateUser,
     }),
-    [user, isLoading, login, register, logout, updateUser],
+    [user, isLoading, language, direction, login, register, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

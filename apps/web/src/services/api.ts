@@ -114,6 +114,14 @@ export interface AuthUser {
   language: string;
 }
 
+export interface PublicUserProfile {
+  id: string;
+  full_name: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  role: UserRole;
+}
+
 interface AuthUserResponse {
   id: string;
   email: string;
@@ -198,7 +206,7 @@ export const authAPI = {
       body: JSON.stringify(body),
     }),
 
-  getMe: async () => normalizeAuthUser(await apiFetch<AuthUserResponse>('/auth/me')),
+  getMe: async () => normalizeAuthUser(await apiFetchWithRefresh<AuthUserResponse>('/auth/me')),
 
   updateMe: async (body: UpdateProfileRequest) =>
     normalizeAuthUser(
@@ -210,6 +218,13 @@ export const authAPI = {
 
   logout: (refresh_token?: string) =>
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
+};
+
+export const usersAPI = {
+  getPublicProfiles: (ids: string[]) =>
+    apiFetch<PublicUserProfile[]>(
+      `/users/public${toQueryString({ ids: ids.filter(Boolean).join(',') })}`,
+    ),
 };
 
 // ── Tourism — Attractions ───────────────────────────────────────────────────
@@ -500,6 +515,20 @@ export interface Business {
   updatedAt: string;
 }
 
+export interface BusinessUpsertRequest {
+  nameAr: string;
+  nameEn?: string;
+  category: string;
+  description?: string;
+  descriptionAr?: string;
+  district: string;
+  location?: { lat: number; lng: number };
+  phone?: string;
+  website?: string;
+  logoUrl?: string;
+  commodityIds?: string[];
+}
+
 // NOTE: GET /businesses/mine returns BusinessDirectory[] (plain array, no wrapper).
 export const businessesAPI = {
   getAll: (params?: {
@@ -511,18 +540,18 @@ export const businessesAPI = {
     offset?: number;
   }) => apiFetch<PaginatedResponse<BusinessEntry>>(`/businesses${toQueryString(params)}`),
   getById: (id: string) => apiFetch<BusinessEntry>(`/businesses/${id}`),
-  getMine: () => apiFetch<Business[]>('/businesses/mine'),
-  create: (body: { nameAr: string; description?: string; category: string; district: string }) =>
-    apiFetch<Business>('/businesses', {
+  getMine: () => apiFetchWithRefresh<Business[]>('/businesses/mine'),
+  create: (body: BusinessUpsertRequest) =>
+    apiFetchWithRefresh<Business>('/businesses', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  update: (id: string, body: Partial<{ nameAr: string; description: string }>) =>
-    apiFetch<Business>(`/businesses/${id}`, {
+  update: (id: string, body: Partial<BusinessUpsertRequest>) =>
+    apiFetchWithRefresh<Business>(`/businesses/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
-  remove: (id: string) => apiFetch<void>(`/businesses/${id}`, { method: 'DELETE' }),
+  remove: (id: string) => apiFetchWithRefresh<void>(`/businesses/${id}`, { method: 'DELETE' }),
 };
 
 // ── Listings ──────────────────────────────────────────────────────────────
@@ -592,12 +621,19 @@ export interface ListingUpsertRequest {
 }
 
 export const listingsAPI = {
-  getAll: (params?: { category?: string; district?: string; limit?: number; offset?: number }) => {
+  getAll: (params?: {
+    category?: string;
+    district?: string;
+    limit?: number;
+    offset?: number;
+    sort?: string;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
     if (params?.district) qs.set('area', params.district);
     if (params?.limit != null) qs.set('limit', String(params.limit));
     if (params?.offset != null) qs.set('offset', String(params.offset));
+    if (params?.sort) qs.set('sort', params.sort);
     const query = qs.toString();
     return apiFetch<{
       data: Listing[];
@@ -726,6 +762,7 @@ export const investmentApplicationsAPI = {
 
 export interface GuideListItem {
   id: string;
+  userId: string;
   bioAr: string | null;
   bioEn: string | null;
   profileImage: string | null;

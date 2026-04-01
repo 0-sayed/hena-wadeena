@@ -1,4 +1,11 @@
-import type { CommodityCategory, CommodityUnit, NvDistrict, PriceType } from '@hena-wadeena/types';
+import type {
+  CommodityCategory,
+  CommodityUnit,
+  ListingCategory,
+  NvDistrict,
+  PriceType,
+  TransactionType,
+} from '@hena-wadeena/types';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 export { piastresToEgp } from '@hena-wadeena/types';
 
@@ -56,6 +63,31 @@ export const categoryLabels: Record<CommodityCategory, string> = {
 
 export function categoryLabel(category: string): string {
   return categoryLabels[category as CommodityCategory] ?? category;
+}
+
+export const listingCategoryLabels: Record<ListingCategory, string> = {
+  place: 'مكان',
+  accommodation: 'إقامة',
+  restaurant: 'مطعم',
+  service: 'خدمة',
+  activity: 'نشاط',
+  transport: 'نقل',
+  education: 'تعليم',
+  healthcare: 'رعاية صحية',
+  shopping: 'تسوق',
+};
+
+export function listingCategoryLabel(category: string): string {
+  return listingCategoryLabels[category as ListingCategory] ?? category;
+}
+
+export const transactionLabels: Record<TransactionType, string> = {
+  sale: 'للبيع',
+  rent: 'للإيجار',
+};
+
+export function transactionLabel(transaction: string): string {
+  return transactionLabels[transaction as TransactionType] ?? transaction;
 }
 
 /** Select options derived from categoryLabels — first entry is "all" with undefined id */

@@ -53,6 +53,8 @@ function buildUnauthedContext(): AuthContextValue {
     user: null,
     isAuthenticated: false,
     isLoading: false,
+    language: 'ar',
+    direction: 'rtl',
     login: vi.fn().mockResolvedValue(undefined),
     register: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn(),
@@ -110,7 +112,6 @@ describe('ChatWidget', () => {
 
     expect(screen.getByText('Welcome from test')).toBeInTheDocument();
   });
-
 
   it('restores the most recent session page when history spans multiple pages', async () => {
     mockUseAuth.mockReturnValue({

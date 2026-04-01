@@ -37,7 +37,7 @@ import { deductWalletBalance, getWalletSnapshot, topUpWallet } from '@/lib/walle
 const GuideBookingPage = () => {
   const navigate = useNavigate();
   const { packageId = '' } = useParams<{ packageId: string }>();
-  const { user } = useAuth();
+  const { user, direction } = useAuth();
 
   const { data: pkg, isLoading, error } = usePackage(packageId);
   const createBooking = useCreateBooking();
@@ -373,7 +373,7 @@ const GuideBookingPage = () => {
       </section>
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogContent className="sm:max-w-md" dir={direction}>
           <DialogHeader>
             <DialogTitle>تأكيد الحجز</DialogTitle>
             <DialogDescription>يرجى مراجعة تفاصيل الحجز قبل التأكيد</DialogDescription>

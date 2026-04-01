@@ -3,7 +3,7 @@
  * =============================================
  * Single source of truth for token state.
  * - Access token: localStorage (survives page refresh)
- * - Refresh token: in-memory module variable (lost on page refresh — by design)
+ * - Refresh token: sessionStorage + in-memory cache (tab-scoped, reduced XSS blast radius)
  */
 
 import { apiFetch, ApiError } from './api';
@@ -13,24 +13,31 @@ import { apiFetch, ApiError } from './api';
 let refreshToken: string | null = null;
 let isRefreshing = false;
 let refreshPromise: Promise<void> | null = null;
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 // ── Token lifecycle ──────────────────────────────────────────────────────────
 
 export function setTokens(accessToken: string, rt: string): void {
-  localStorage.setItem('access_token', accessToken);
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, rt);
   refreshToken = rt;
 }
 
 export function getAccessToken(): string | null {
-  return localStorage.getItem('access_token');
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function getRefreshToken(): string | null {
+  if (refreshToken) return refreshToken;
+
+  refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
   return refreshToken;
 }
 
 export function clearTokens(): void {
-  localStorage.removeItem('access_token');
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   refreshToken = null;
 }
 
