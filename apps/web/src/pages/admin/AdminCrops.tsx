@@ -154,17 +154,8 @@ export default function AdminCrops() {
   const parsedPrice = parseEgpInputToPiasters(priceForm.priceEgp);
   const priceChange = getPriceChange(comparisonPrice, parsedPrice);
 
-  const refreshCommodities = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['market', 'commodities'] }),
-      queryClient.invalidateQueries({ queryKey: ['market', 'price-index'] }),
-      queryClient.invalidateQueries({ queryKey: ['market', 'price-summary'] }),
-      selectedCommodityId
-        ? queryClient.invalidateQueries({
-            queryKey: ['market', 'commodities', selectedCommodityId],
-          })
-        : Promise.resolve(),
-    ]);
+  const refreshCommodities = () => {
+    void queryClient.invalidateQueries({ queryKey: ['market'] });
   };
 
   const openCreateCropDialog = () => {
@@ -227,7 +218,7 @@ export default function AdminCrops() {
 
       setCropForm(emptyCropForm);
       setCropDialogOpen(false);
-      await refreshCommodities();
+      refreshCommodities();
       toast.success(cropForm.id ? 'تم تحديث المحصول' : 'تمت إضافة المحصول');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر حفظ المحصول';
@@ -243,7 +234,7 @@ export default function AdminCrops() {
       if (selectedCommodityId === id) {
         setSelectedCommodityId(undefined);
       }
-      await refreshCommodities();
+      refreshCommodities();
       toast.success('تم حذف المحصول من القائمة النشطة');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر حذف المحصول';
@@ -282,7 +273,7 @@ export default function AdminCrops() {
 
       setPriceForm(emptyPriceForm);
       setPriceDialogOpen(false);
-      await refreshCommodities();
+      refreshCommodities();
       toast.success(priceForm.priceId ? 'تم تحديث السعر' : 'تمت إضافة السعر');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر حفظ السعر';
@@ -295,7 +286,7 @@ export default function AdminCrops() {
   const handleDeletePrice = async (id: string) => {
     try {
       await commodityPricesAPI.remove(id);
-      await refreshCommodities();
+      refreshCommodities();
       if (priceForm.priceId === id) {
         setPriceForm(emptyPriceForm);
       }

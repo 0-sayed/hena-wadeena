@@ -37,6 +37,7 @@ import { TrendBadge } from '@/components/market/TrendBadge';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
 import { useBusinesses } from '@/hooks/use-businesses';
 import { useCommodities } from '@/hooks/use-commodities';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
@@ -64,6 +65,23 @@ const emptySupplierForm: SupplierFormState = {
   commodityIds: [],
 };
 
+function isValidAbsoluteHttpUrl(value: string) {
+  try {
+    const parsedUrl = new URL(value);
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isValidLogoUrl(value: string) {
+  return (
+    value.startsWith('/') ||
+    value.startsWith('data:image/') ||
+    isValidAbsoluteHttpUrl(value)
+  );
+}
+
 const MarketplacePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -75,6 +93,7 @@ const MarketplacePage = () => {
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [supplierForm, setSupplierForm] = useState<SupplierFormState>(emptySupplierForm);
   const [isSavingSupplier, setIsSavingSupplier] = useState(false);
+  const debouncedSupplierSearch = useDebounce(supplierSearch, 300);
 
   const {
     data: priceEntries,
@@ -90,7 +109,7 @@ const MarketplacePage = () => {
     hasNextPage: suppliersHasNext,
     isFetchingNextPage: suppliersFetchingNext,
     fetchNextPage: suppliersFetchNext,
-  } = useBusinesses({ q: supplierSearch || undefined });
+  } = useBusinesses({ q: debouncedSupplierSearch || undefined });
   const { data: summary } = usePriceSummary();
   const { data: commodities = [], isLoading: commoditiesLoading } = useCommodities();
 
@@ -143,8 +162,8 @@ const MarketplacePage = () => {
       return;
     }
 
-    if (supplierForm.logoUrl.trim() && !/^https?:\/\//i.test(supplierForm.logoUrl.trim())) {
-      toast.error('رابط الشعار يجب أن يكون رابطاً كاملاً');
+    if (supplierForm.logoUrl.trim() && !isValidLogoUrl(supplierForm.logoUrl.trim())) {
+      toast.error('رابط الشعار يجب أن يكون مساراً نسبياً أو رابط http(s) أو data URL');
       return;
     }
 
@@ -161,7 +180,7 @@ const MarketplacePage = () => {
         commodityIds: supplierForm.commodityIds,
       });
 
-      await queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
+      void queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
       resetSupplierDialog();
       toast.success('تمت إضافة المورد وظهر مباشرة في الدليل');
     } catch (error) {

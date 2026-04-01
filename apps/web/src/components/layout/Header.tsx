@@ -49,8 +49,7 @@ function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
         };
 
   const isAccommodationPath = (pathname: string) =>
-    pathname.startsWith('/tourism/accommodation') ||
-    pathname.startsWith('/tourism/accommodation-inquiry');
+    pathname.startsWith('/tourism/accommodation');
 
   return [
     {

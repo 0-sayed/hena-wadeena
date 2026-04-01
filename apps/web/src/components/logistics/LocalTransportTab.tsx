@@ -137,8 +137,8 @@ export function LocalTransportTab() {
     }
   };
 
-  const refreshCompanies = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
+  const refreshCompanies = () => {
+    void queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
   };
 
   const handleSaveCompany = async () => {
@@ -176,7 +176,7 @@ export function LocalTransportTab() {
         await businessesAPI.create(payload);
       }
 
-      await refreshCompanies();
+      refreshCompanies();
       setDialogOpen(false);
       setForm(emptyTransportForm);
       toast.success(form.id ? 'تم تحديث شركة النقل' : 'تمت إضافة شركة النقل');
@@ -195,7 +195,7 @@ export function LocalTransportTab() {
 
     try {
       await businessesAPI.remove(companyId);
-      await refreshCompanies();
+      refreshCompanies();
       toast.success('تم حذف شركة النقل');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر حذف شركة النقل';

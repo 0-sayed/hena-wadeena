@@ -54,12 +54,12 @@ export default function StudentDashboard() {
               أرخص 3 خيارات سكن متاحة حالياً مع وصول سريع إلى صفحة السكن الكاملة
             </CardDescription>
           </div>
-          <Link to="/tourism/accommodation">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Link to="/tourism/accommodation">
               عرض جميع السكن
               <ArrowLeft className="mr-2 h-4 w-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           {isHousingLoading ? (

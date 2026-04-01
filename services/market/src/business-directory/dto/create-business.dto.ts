@@ -2,6 +2,14 @@ import { NvDistrict } from '@hena-wadeena/types';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
+function isValidHttpUrl(value: string) {
+  return z.string().url().safeParse(value).success && /^https?:\/\//i.test(value);
+}
+
+function isValidLogoUrl(value: string) {
+  return value.startsWith('/') || value.startsWith('data:image/') || isValidHttpUrl(value);
+}
+
 export const createBusinessSchema = z.object({
   nameAr: z.string().min(1).max(255),
   nameEn: z.string().max(255).optional(),
@@ -24,8 +32,8 @@ export const createBusinessSchema = z.object({
     .optional(),
   logoUrl: z
     .string()
-    .refine((value) => /^https?:\/\//i.test(value) || value.startsWith('data:image/'), {
-      message: 'logoUrl must be an absolute URL or data URL',
+    .refine((value) => isValidLogoUrl(value), {
+      message: 'logoUrl must be a relative path, absolute http(s) URL, or data URL',
     })
     .optional(),
   commodityIds: z.array(z.uuid()).max(50).optional(),

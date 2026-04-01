@@ -1,6 +1,7 @@
 import { CurrentUser, InternalGuard, Public } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -18,6 +19,8 @@ import type { users } from '../db/schema/index';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { DeductDto, TopupDto } from './dto/wallet.dto';
 import { UsersService } from './users.service';
+
+const MAX_PUBLIC_USER_IDS = 100;
 
 function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
   void passwordHash;
@@ -56,6 +59,12 @@ export class UsersController {
       ?.split(',')
       .map((value) => value.trim())
       .filter(Boolean);
+
+    if ((parsedIds?.length ?? 0) > MAX_PUBLIC_USER_IDS) {
+      throw new BadRequestException(
+        `Too many IDs requested. Maximum is ${MAX_PUBLIC_USER_IDS}.`,
+      );
+    }
 
     const publicUsers = await this.usersService.findPublicProfiles(parsedIds ?? []);
 

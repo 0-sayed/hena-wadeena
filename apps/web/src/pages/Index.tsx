@@ -102,10 +102,6 @@ function filterLinks(links: DashboardLink[], role?: UserRole) {
     return [];
   }
 
-  if (role === UserRole.ADMIN) {
-    return links;
-  }
-
   return links.filter((link) => link.roles.includes(role));
 }
 

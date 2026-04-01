@@ -183,7 +183,7 @@ export function InteractiveMap({
     <div className="pointer-events-none absolute left-3 top-3 z-[500]">
       <Button variant="secondary" size="sm" className="pointer-events-auto shadow-md" asChild>
         <a href={resolvedGoogleMapsUrl} target="_blank" rel="noopener noreferrer">
-          <ExternalLink className="ml-2 h-4 w-4" />
+          <ExternalLink className="h-4 w-4" />
           Open in Google Maps
         </a>
       </Button>
