@@ -1,6 +1,7 @@
 import { CurrentUser, type JwtPayload, Roles } from '@hena-wadeena/nest-common';
 import { UserRole } from '@hena-wadeena/types';
 import {
+  Body,
   Controller,
   Delete,
   ForbiddenException,
@@ -10,18 +11,22 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
-  Body,
 } from '@nestjs/common';
 
 import { UsersService } from '../users/users.service';
 
+import { AdminUsersService } from './admin-users.service';
 import { ChangeRoleDto, ChangeStatusDto, QueryUsersDto } from './dto';
 
 @Controller('admin/users')
 @Roles(UserRole.ADMIN)
 export class AdminUsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly adminUsersService: AdminUsersService,
+  ) {}
 
   @Get()
   findAll(@Query() query: QueryUsersDto) {
@@ -30,11 +35,7 @@ export class AdminUsersController {
 
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const user = await this.usersService.findByIdOrThrow(id);
-    const { passwordHash, deletedAt, ...safe } = user;
-    void passwordHash;
-    void deletedAt;
-    return safe;
+    return this.adminUsersService.findDetail(id);
   }
 
   @Patch(':id/role')
@@ -77,5 +78,11 @@ export class AdminUsersController {
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() admin: JwtPayload) {
     if (id === admin.sub) throw new ForbiddenException('Cannot delete your own account');
     await this.usersService.softDelete(id, admin.sub);
+  }
+
+  @Post(':id/reset-password')
+  async resetPassword(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() admin: JwtPayload) {
+    if (id === admin.sub) throw new ForbiddenException('Cannot reset your own password here');
+    return this.adminUsersService.resetPassword(id, admin.sub);
   }
 }

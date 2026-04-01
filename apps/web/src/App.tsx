@@ -41,6 +41,8 @@ import RideDetailPage from './pages/logistics/RideDetailPage';
 
 import PricesPage from './pages/marketplace/PricesPage';
 import ListingDetailsPage from './pages/marketplace/ListingDetailsPage';
+import ListingInquiryPage from './pages/marketplace/ListingInquiryPage';
+import ListingInquiriesPage from './pages/marketplace/ListingInquiriesPage';
 import SupplierDetailsPage from './pages/marketplace/SupplierDetailsPage';
 
 import OpportunityDetailsPage from './pages/investment/OpportunityDetailsPage';
@@ -57,6 +59,7 @@ import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
 const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
+const AdminUserDetail = lazy(() => import('@/pages/admin/AdminUserDetail'));
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
 const AdminGuides = lazy(() => import('@/pages/admin/AdminGuides'));
 const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
@@ -88,6 +91,8 @@ const App = () => (
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/marketplace/inquiry/:id" element={<ListingInquiryPage />} />
+              <Route path="/marketplace/inquiries" element={<ListingInquiriesPage />} />
               <Route
                 element={
                   <RequireRole
@@ -119,6 +124,7 @@ const App = () => (
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="users/:id" element={<AdminUserDetail />} />
                 <Route path="moderation" element={<AdminModeration />} />
                 <Route path="guides" element={<AdminGuides />} />
                 <Route path="map" element={<AdminMap />} />

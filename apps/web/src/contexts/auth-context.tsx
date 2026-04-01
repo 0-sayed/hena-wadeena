@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { authAPI } from '@/services/api';
@@ -18,6 +18,7 @@ export interface AuthContextValue extends AuthState {
   register(this: void, data: RegisterRequest): Promise<void>;
   logout(this: void): void;
   updateUser(this: void, user: AuthUser): void;
+  setLanguage(this: void, language: 'ar' | 'en'): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [languagePreference, setLanguagePreference] = useState<'ar' | 'en'>(getStoredLanguage);
+  const languageRequestIdRef = useRef(0);
   const navigate = useNavigate();
 
   // Hydrate from localStorage on mount, then validate with server
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    languageRequestIdRef.current += 1;
     const rt = authManager.getRefreshToken();
     void authAPI.logout(rt ?? undefined).catch(() => undefined);
     authManager.clearTokens();
@@ -101,6 +104,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLanguagePreference(normalizeLanguage(updatedUser.language));
   }, []);
 
+  const setLanguage = useCallback(
+    async (nextLanguage: 'ar' | 'en') => {
+      const normalizedLanguage = normalizeLanguage(nextLanguage);
+      const previousLanguage = normalizeLanguage(user?.language ?? languagePreference);
+
+      if (user?.language === normalizedLanguage) {
+        setLanguagePreference(normalizedLanguage);
+        return;
+      }
+
+      const requestId = languageRequestIdRef.current + 1;
+      languageRequestIdRef.current = requestId;
+      setLanguagePreference(normalizedLanguage);
+
+      if (!user) {
+        return;
+      }
+
+      const previousUser = user;
+      setUser({ ...user, language: normalizedLanguage });
+
+      try {
+        const updatedUser = await authAPI.updateMe({ language: normalizedLanguage });
+        if (languageRequestIdRef.current !== requestId) {
+          return;
+        }
+        setUser(updatedUser);
+        setLanguagePreference(normalizeLanguage(updatedUser.language));
+      } catch (error) {
+        if (languageRequestIdRef.current !== requestId) {
+          return;
+        }
+        setUser(previousUser);
+        setLanguagePreference(previousLanguage);
+        throw error;
+      }
+    },
+    [languagePreference, user],
+  );
+
   const language = normalizeLanguage(user?.language ?? languagePreference);
   const direction = language === 'ar' ? 'rtl' : 'ltr';
 
@@ -126,8 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       updateUser,
+      setLanguage,
     }),
-    [user, isLoading, language, direction, login, register, logout, updateUser],
+    [user, isLoading, language, direction, login, register, logout, updateUser, setLanguage],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

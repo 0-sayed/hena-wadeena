@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, Eye, FileText, ShoppingBag, Store, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { KycStatus } from '@hena-wadeena/types';
 
 import { DocumentViewerDialog } from '@/components/admin/DocumentViewerDialog';
 
@@ -33,6 +34,41 @@ import {
   useVerifyBusiness,
   useVerifyListing,
 } from '@/hooks/use-admin';
+import type { KycSubmission } from '@/services/api';
+
+const kycStatusConfig: Record<
+  KycSubmission['status'],
+  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className?: string }
+> = {
+  pending: { label: 'معلق', variant: 'secondary' },
+  under_review: {
+    label: 'قيد المراجعة',
+    variant: 'outline',
+    className: 'border-blue-500/40 text-blue-700 dark:text-blue-300',
+  },
+  approved: {
+    label: 'مقبول',
+    variant: 'default',
+    className: 'bg-green-600 text-white hover:bg-green-600',
+  },
+  rejected: { label: 'مرفوض', variant: 'destructive' },
+};
+
+const kycFilterOptions: Array<{ value: 'all' | KycSubmission['status']; label: string }> = [
+  { value: 'all', label: 'الكل' },
+  { value: KycStatus.PENDING, label: 'معلق' },
+  { value: KycStatus.UNDER_REVIEW, label: 'قيد المراجعة' },
+  { value: KycStatus.APPROVED, label: 'مقبول' },
+  { value: KycStatus.REJECTED, label: 'مرفوض' },
+];
+
+const documentTypeLabels: Record<string, string> = {
+  national_id: 'بطاقة الرقم القومي',
+  student_id: 'بطاقة الطالب',
+  guide_license: 'رخصة الإرشاد',
+  commercial_register: 'السجل التجاري',
+  business_document: 'مستند تجاري',
+};
 
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
   return (
@@ -57,6 +93,7 @@ function TableSkeleton({ cols }: { cols: number }) {
 
 export default function AdminModeration() {
   const [activeTab, setActiveTab] = useState('kyc');
+  const [kycStatusFilter, setKycStatusFilter] = useState<'all' | KycSubmission['status']>('all');
   const [viewDocument, setViewDocument] = useState<{
     url: string;
     type: string;
@@ -68,7 +105,9 @@ export default function AdminModeration() {
   } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  const kycQuery = useAdminKyc({ status: 'pending' });
+  const kycQuery = useAdminKyc({
+    status: kycStatusFilter !== 'all' ? kycStatusFilter : undefined,
+  });
   const listingsQuery = useAdminPendingListings();
   const businessesQuery = useAdminPendingBusinesses();
 
@@ -96,6 +135,8 @@ export default function AdminModeration() {
     else if (type === 'business')
       verifyBusiness.mutate({ id, approved: false, reason: rejectReason }, { onSuccess });
   };
+
+  const activeKycFilter = kycFilterOptions.find((option) => option.value === kycStatusFilter);
 
   return (
     <div className="space-y-6">
@@ -140,9 +181,21 @@ export default function AdminModeration() {
           <Card>
             <CardHeader>
               <CardTitle>طلبات التحقق من الهوية</CardTitle>
-              <CardDescription>مستندات تحتاج مراجعة</CardDescription>
+              <CardDescription>جميع طلبات التحقق مع إمكانية التصفية حسب الحالة</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex flex-wrap gap-2">
+                {kycFilterOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    size="sm"
+                    variant={kycStatusFilter === option.value ? 'default' : 'outline'}
+                    onClick={() => setKycStatusFilter(option.value)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
               {kycQuery.error ? (
                 <EmptyState icon={AlertCircle} message="فشل تحميل البيانات" />
               ) : (
@@ -151,26 +204,60 @@ export default function AdminModeration() {
                     <TableRow>
                       <TableHead>الاسم</TableHead>
                       <TableHead>نوع المستند</TableHead>
+                      <TableHead>الحالة</TableHead>
                       <TableHead>تاريخ التقديم</TableHead>
-                      <TableHead className="w-32">الإجراءات</TableHead>
+                      <TableHead>آخر مراجعة</TableHead>
+                      <TableHead className="w-40">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {kycQuery.isLoading ? (
-                      <TableSkeleton cols={4} />
+                      <TableSkeleton cols={6} />
                     ) : kycQuery.data?.data.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4}>
-                          <EmptyState icon={CheckCircle} message="لا توجد طلبات معلقة" />
+                        <TableCell colSpan={6}>
+                          <EmptyState
+                            icon={CheckCircle}
+                            message={
+                              kycStatusFilter === 'all'
+                                ? 'لا توجد طلبات تحقق حالياً'
+                                : `لا توجد طلبات بحالة "${activeKycFilter?.label ?? ''}"`
+                            }
+                          />
                         </TableCell>
                       </TableRow>
                     ) : (
                       kycQuery.data?.data.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.fullName}</TableCell>
-                          <TableCell>{item.documentType}</TableCell>
+                          <TableCell>
+                            {documentTypeLabels[item.documentType] ?? item.documentType}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={kycStatusConfig[item.status].variant}
+                              className={kycStatusConfig[item.status].className}
+                            >
+                              {kycStatusConfig[item.status].label}
+                            </Badge>
+                            {item.notes ? (
+                              <p className="mt-1 text-xs text-muted-foreground">{item.notes}</p>
+                            ) : null}
+                          </TableCell>
                           <TableCell>
                             {new Date(item.submittedAt).toLocaleDateString('ar-EG')}
+                          </TableCell>
+                          <TableCell>
+                            {item.reviewedAt ? (
+                              <div className="space-y-1 text-sm">
+                                <p>{item.reviewedByName ?? 'تمت المراجعة'}</p>
+                                <p className="text-muted-foreground">
+                                  {new Date(item.reviewedAt).toLocaleDateString('ar-EG')}
+                                </p>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">لم تُراجع بعد</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
@@ -192,7 +279,7 @@ export default function AdminModeration() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-green-600 hover:text-green-700"
-                                disabled={reviewKyc.isPending}
+                                disabled={reviewKyc.isPending || item.status !== 'pending'}
                                 onClick={() => handleApprove('kyc', item.id)}
                               >
                                 <CheckCircle className="h-4 w-4" />
@@ -201,7 +288,7 @@ export default function AdminModeration() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-destructive hover:text-destructive"
-                                disabled={reviewKyc.isPending}
+                                disabled={reviewKyc.isPending || item.status !== 'pending'}
                                 onClick={() => setRejectDialog({ type: 'kyc', id: item.id })}
                               >
                                 <XCircle className="h-4 w-4" />

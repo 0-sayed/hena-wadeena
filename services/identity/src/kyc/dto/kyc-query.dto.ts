@@ -5,7 +5,7 @@ import { z } from 'zod';
 const kycQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.enum(Object.values(KycStatus) as [string, ...string[]]).default(KycStatus.PENDING),
+  status: z.enum(Object.values(KycStatus) as [string, ...string[]]).optional(),
 });
 
 export class KycQueryDto extends createZodDto(kycQuerySchema) {}

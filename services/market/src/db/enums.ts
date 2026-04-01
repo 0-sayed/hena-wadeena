@@ -25,6 +25,11 @@ export const listingStatusEnum = marketSchema.enum('listing_status', [
   'rented',
   'suspended',
 ]);
+export const listingInquiryStatusEnum = marketSchema.enum('listing_inquiry_status', [
+  'pending',
+  'read',
+  'replied',
+]);
 
 // Investment enums
 export const investmentSectorEnum = marketSchema.enum('investment_sector', [

@@ -3,6 +3,7 @@ import { EVENTS, NotificationType } from '@hena-wadeena/types';
 import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { alias } from 'drizzle-orm/pg-core';
 
 import { auditEventTypeEnum, kycDocTypeEnum, kycStatusEnum } from '../db/enums';
 import * as schema from '../db/schema';
@@ -18,6 +19,7 @@ import type { SubmitKycDto } from './dto/submit-kyc.dto';
 @Injectable()
 export class KycService {
   private readonly logger = new Logger(KycService.name);
+  private readonly reviewers = alias(users, 'reviewers');
 
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: NodePgDatabase<typeof schema>,
@@ -54,36 +56,37 @@ export class KycService {
       .orderBy(asc(userKyc.createdAt));
   }
 
-  async findPending(query: KycQueryDto) {
+  async findAll(query: KycQueryDto) {
     const offset = (query.page - 1) * query.limit;
-    const statusValue = query.status as (typeof kycStatusEnum.enumValues)[number];
-    const whereClause = eq(userKyc.status, statusValue);
+    const statusValue = query.status as ((typeof kycStatusEnum.enumValues)[number] | undefined);
+    const dataQuery = this.db
+      .select({
+        id: userKyc.id,
+        userId: userKyc.userId,
+        fullName: users.fullName,
+        documentType: userKyc.docType,
+        documentUrl: userKyc.docUrl,
+        status: userKyc.status,
+        submittedAt: userKyc.createdAt,
+        reviewedAt: userKyc.reviewedAt,
+        reviewedBy: userKyc.reviewedBy,
+        reviewedByName: this.reviewers.fullName,
+        notes: userKyc.rejectionReason,
+      })
+      .from(userKyc)
+      .innerJoin(users, eq(userKyc.userId, users.id))
+      .leftJoin(this.reviewers, eq(userKyc.reviewedBy, this.reviewers.id));
+    const countQuery = this.db
+      .select({ count: count() })
+      .from(userKyc)
+      .innerJoin(users, eq(userKyc.userId, users.id));
 
     const [rawData, [totalRow]] = await Promise.all([
-      this.db
-        .select({
-          id: userKyc.id,
-          userId: userKyc.userId,
-          fullName: users.fullName,
-          documentType: userKyc.docType,
-          documentUrl: userKyc.docUrl,
-          status: userKyc.status,
-          submittedAt: userKyc.createdAt,
-          reviewedAt: userKyc.reviewedAt,
-          reviewedBy: userKyc.reviewedBy,
-          notes: userKyc.rejectionReason,
-        })
-        .from(userKyc)
-        .innerJoin(users, eq(userKyc.userId, users.id))
-        .where(whereClause)
+      (statusValue ? dataQuery.where(eq(userKyc.status, statusValue)) : dataQuery)
         .orderBy(asc(userKyc.createdAt))
         .limit(query.limit)
         .offset(offset),
-      this.db
-        .select({ count: count() })
-        .from(userKyc)
-        .innerJoin(users, eq(userKyc.userId, users.id))
-        .where(whereClause),
+      statusValue ? countQuery.where(eq(userKyc.status, statusValue)) : countQuery,
     ]);
 
     return paginate(rawData, totalRow?.count ?? 0, offset, query.limit);

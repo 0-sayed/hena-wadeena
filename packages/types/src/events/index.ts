@@ -5,6 +5,8 @@ export const EVENTS = {
   USER_REGISTERED: 'user.registered',
   LISTING_CREATED: 'listing.created',
   LISTING_VERIFIED: 'listing.verified',
+  LISTING_INQUIRY_RECEIVED: 'listing_inquiry.received',
+  LISTING_INQUIRY_REPLIED: 'listing_inquiry.replied',
   BOOKING_REQUESTED: 'booking.requested',
   BOOKING_CONFIRMED: 'booking.confirmed',
   BOOKING_CANCELLED: 'booking.cancelled',

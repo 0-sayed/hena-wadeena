@@ -40,6 +40,10 @@ describe('queryKeys', () => {
     expect(queryKeys.market.priceSummary()).toEqual(['market', 'price-summary']);
   });
 
+  it('market.listingInquiries returns the shared base key', () => {
+    expect(queryKeys.market.listingInquiries()).toEqual(['market', 'listing-inquiries']);
+  });
+
   it('market.businesses includes filters in key', () => {
     const filters = { district: 'dakhla' };
     expect(queryKeys.market.businesses(filters)).toEqual([

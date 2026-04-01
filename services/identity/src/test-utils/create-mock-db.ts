@@ -14,7 +14,11 @@ interface MockDbChain {
   update: Mock;
   set: Mock;
   orderBy: Mock;
+  execute: Mock;
   transaction: Mock;
+  innerJoin: Mock;
+  leftJoin: Mock;
+  then: Mock;
 }
 
 /** Chain-style mock for Drizzle query builder. Shared across unit tests. */
@@ -32,7 +36,11 @@ export function createMockDb(): MockDbChain {
     update: vi.fn(),
     set: vi.fn(),
     orderBy: vi.fn(),
+    execute: vi.fn().mockResolvedValue([]),
     transaction: vi.fn(),
+    innerJoin: vi.fn(),
+    leftJoin: vi.fn(),
+    then: vi.fn(),
   };
   chain.transaction.mockImplementation(async (cb: (tx: MockDbChain) => Promise<unknown>) =>
     cb(chain),
@@ -47,5 +55,10 @@ export function createMockDb(): MockDbChain {
   chain.update.mockReturnValue(chain);
   chain.set.mockReturnValue(chain);
   chain.orderBy.mockReturnValue(chain);
+  chain.innerJoin.mockReturnValue(chain);
+  chain.leftJoin.mockReturnValue(chain);
+  chain.then.mockImplementation((resolve?: (value: unknown[]) => void) =>
+    Promise.resolve([]).then(resolve),
+  );
   return chain;
 }

@@ -2,8 +2,8 @@
  * auth-manager.ts — Token Lifecycle Management
  * =============================================
  * Single source of truth for token state.
- * - Access token: localStorage (survives page refresh)
- * - Refresh token: sessionStorage + in-memory cache (tab-scoped, reduced XSS blast radius)
+ * - Access token: localStorage
+ * - Refresh token: sessionStorage + in-memory cache
  */
 
 import { apiFetch, ApiError } from './api';
@@ -20,6 +20,7 @@ const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export function setTokens(accessToken: string, rt: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
   sessionStorage.setItem(REFRESH_TOKEN_KEY, rt);
   refreshToken = rt;
 }
@@ -32,11 +33,17 @@ export function getRefreshToken(): string | null {
   if (refreshToken) return refreshToken;
 
   refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
+
+  if (!refreshToken && localStorage.getItem(REFRESH_TOKEN_KEY)) {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+
   return refreshToken;
 }
 
 export function clearTokens(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
   sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   refreshToken = null;
 }

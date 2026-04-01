@@ -45,25 +45,29 @@ import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from 
 
 type SupplierFormState = {
   nameAr: string;
-  category: string;
   district: string;
   phone: string;
   website: string;
   logoUrl: string;
   descriptionAr: string;
+  primaryCommodityId: string;
+  customCommodityName: string;
   commodityIds: string[];
 };
 
 const emptySupplierForm: SupplierFormState = {
   nameAr: '',
-  category: '',
   district: 'kharga',
   phone: '',
   website: '',
   logoUrl: '',
   descriptionAr: '',
+  primaryCommodityId: '',
+  customCommodityName: '',
   commodityIds: [],
 };
+
+const OTHER_COMMODITY_VALUE = '__other__';
 
 function isValidAbsoluteHttpUrl(value: string) {
   try {
@@ -112,6 +116,15 @@ const MarketplacePage = () => {
   } = useBusinesses({ q: debouncedSupplierSearch || undefined });
   const { data: summary } = usePriceSummary();
   const { data: commodities = [], isLoading: commoditiesLoading } = useCommodities();
+  const selectedPrimaryCommodity = useMemo(
+    () => commodities.find((commodity) => commodity.id === supplierForm.primaryCommodityId),
+    [commodities, supplierForm.primaryCommodityId],
+  );
+  const additionalCommodityOptions = useMemo(
+    () =>
+      commodities.filter((commodity) => commodity.id !== supplierForm.primaryCommodityId),
+    [commodities, supplierForm.primaryCommodityId],
+  );
 
   const filteredProducts = useMemo(
     () =>
@@ -125,6 +138,18 @@ const MarketplacePage = () => {
 
   const handleSupplierFieldChange = (field: keyof SupplierFormState, value: string) => {
     setSupplierForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePrimaryCommodityChange = (value: string) => {
+    setSupplierForm((prev) => ({
+      ...prev,
+      primaryCommodityId: value,
+      customCommodityName: value === OTHER_COMMODITY_VALUE ? prev.customCommodityName : '',
+      commodityIds:
+        value === OTHER_COMMODITY_VALUE
+          ? prev.commodityIds
+          : prev.commodityIds.filter((commodityId) => commodityId !== value),
+    }));
   };
 
   const toggleCommodity = (commodityId: string, checked: boolean) => {
@@ -147,8 +172,18 @@ const MarketplacePage = () => {
       return;
     }
 
-    if (!supplierForm.category.trim()) {
-      toast.error('فئة المورد مطلوبة');
+    if (!supplierForm.primaryCommodityId) {
+      toast.error('اختر المحصول الرئيسي');
+      return;
+    }
+
+    const resolvedCropName =
+      supplierForm.primaryCommodityId === OTHER_COMMODITY_VALUE
+        ? supplierForm.customCommodityName.trim()
+        : selectedPrimaryCommodity?.nameAr.trim() ?? '';
+
+    if (!resolvedCropName) {
+      toast.error('أدخل اسم المحصول المخصص');
       return;
     }
 
@@ -169,15 +204,22 @@ const MarketplacePage = () => {
 
     setIsSavingSupplier(true);
     try {
+      const linkedCommodityIds =
+        supplierForm.primaryCommodityId === OTHER_COMMODITY_VALUE
+          ? supplierForm.commodityIds
+          : Array.from(
+              new Set([supplierForm.primaryCommodityId, ...supplierForm.commodityIds]),
+            );
+
       await businessesAPI.create({
         nameAr: supplierForm.nameAr.trim(),
-        category: supplierForm.category.trim(),
+        category: resolvedCropName,
         district: supplierForm.district,
         phone: supplierForm.phone.trim() || undefined,
         website: supplierForm.website.trim() || undefined,
         logoUrl: supplierForm.logoUrl.trim() || undefined,
         descriptionAr: supplierForm.descriptionAr.trim() || undefined,
-        commodityIds: supplierForm.commodityIds,
+        commodityIds: linkedCommodityIds.length > 0 ? linkedCommodityIds : undefined,
       });
 
       void queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
@@ -468,7 +510,7 @@ const MarketplacePage = () => {
             <DialogHeader>
               <DialogTitle>إضافة مورد جديد</DialogTitle>
               <DialogDescription>
-                اربط المورد بالمحاصيل نفسها المستخدمة في صفحة المحاصيل ولوحة الأسعار.
+                اختر المحصول الرئيسي من القائمة، أو استخدم "أخرى" لإدخال محصول غير موجود.
               </DialogDescription>
             </DialogHeader>
 
@@ -482,14 +524,37 @@ const MarketplacePage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="supplierCategory">الفئة</Label>
-                <Input
-                  id="supplierCategory"
-                  value={supplierForm.category}
-                  onChange={(event) => handleSupplierFieldChange('category', event.target.value)}
-                  placeholder="مثل: تمور، خضروات، خدمات زراعية"
-                />
+                <Label>المحصول الرئيسي</Label>
+                <Select
+                  value={supplierForm.primaryCommodityId}
+                  onValueChange={handlePrimaryCommodityChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المحصول الرئيسي" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {commodities.map((commodity) => (
+                      <SelectItem key={commodity.id} value={commodity.id}>
+                        {commodity.nameAr}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={OTHER_COMMODITY_VALUE}>أخرى</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              {supplierForm.primaryCommodityId === OTHER_COMMODITY_VALUE && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="supplierCustomCommodity">حدد المحصول</Label>
+                  <Input
+                    id="supplierCustomCommodity"
+                    value={supplierForm.customCommodityName}
+                    onChange={(event) =>
+                      handleSupplierFieldChange('customCommodityName', event.target.value)
+                    }
+                    placeholder="اكتب اسم المحصول"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>المنطقة</Label>
                 <Select
@@ -548,13 +613,13 @@ const MarketplacePage = () => {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>المحاصيل المرتبطة</Label>
+                <Label>محاصيل مرتبطة إضافية (اختياري)</Label>
                 {commoditiesLoading && (
                   <span className="text-sm text-muted-foreground">جارٍ التحميل...</span>
                 )}
               </div>
               <div className="grid gap-3 rounded-xl border border-border/60 p-4 md:grid-cols-2">
-                {commodities.map((commodity) => (
+                {additionalCommodityOptions.map((commodity) => (
                   <label
                     key={commodity.id}
                     className="flex items-start gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-border hover:bg-muted/30"

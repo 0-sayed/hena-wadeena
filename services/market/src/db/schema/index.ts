@@ -4,6 +4,7 @@ export { marketSchema } from '../schema';
 export { tsvector } from './types';
 
 export * from '../enums';
+export { listingInquiries } from './listing-inquiries';
 export { listings } from './listings';
 export { priceSnapshots } from './price-snapshots';
 export { businessDirectories } from './business-directories';
@@ -22,6 +23,7 @@ import { commodities } from './commodities';
 import { commodityPrices } from './commodity-prices';
 import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
+import { listingInquiries } from './listing-inquiries';
 import { listings } from './listings';
 import { reviewHelpfulVotes } from './review-helpful-votes';
 import { reviews } from './reviews';
@@ -30,6 +32,14 @@ import { reviews } from './reviews';
 
 export const listingsRelations = relations(listings, ({ many }) => ({
   reviews: many(reviews),
+  inquiries: many(listingInquiries),
+}));
+
+export const listingInquiriesRelations = relations(listingInquiries, ({ one }) => ({
+  listing: one(listings, {
+    fields: [listingInquiries.listingId],
+    references: [listings.id],
+  }),
 }));
 
 export const reviewsRelations = relations(reviews, ({ one, many }) => ({

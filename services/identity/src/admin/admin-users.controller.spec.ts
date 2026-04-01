@@ -1,9 +1,10 @@
 import { ForbiddenException } from '@nestjs/common';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UsersService } from '../users/users.service';
 
 import { AdminUsersController } from './admin-users.controller';
+import { AdminUsersService } from './admin-users.service';
 
 const mockAdmin = { sub: 'admin-uuid', email: 'admin@test.com', role: 'admin' };
 const mockUser = {
@@ -29,10 +30,13 @@ describe('AdminUsersController', () => {
   let controller: AdminUsersController;
   let mockUsersService: {
     findAll: ReturnType<typeof vi.fn>;
-    findByIdOrThrow: ReturnType<typeof vi.fn>;
     changeRole: ReturnType<typeof vi.fn>;
     changeStatus: ReturnType<typeof vi.fn>;
     softDelete: ReturnType<typeof vi.fn>;
+  };
+  let mockAdminUsersService: {
+    findDetail: ReturnType<typeof vi.fn>;
+    resetPassword: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -40,12 +44,25 @@ describe('AdminUsersController', () => {
       findAll: vi
         .fn()
         .mockResolvedValue({ data: [mockUser], total: 1, page: 1, limit: 20, hasMore: false }),
-      findByIdOrThrow: vi.fn().mockResolvedValue(mockUser),
       changeRole: vi.fn().mockResolvedValue({ ...mockUser, role: 'admin' }),
       changeStatus: vi.fn().mockResolvedValue({ ...mockUser, status: 'suspended' }),
       softDelete: vi.fn().mockResolvedValue(undefined),
     };
-    controller = new AdminUsersController(mockUsersService as unknown as UsersService);
+    mockAdminUsersService = {
+      findDetail: vi.fn().mockResolvedValue({
+        ...mockUser,
+        kycStatus: 'approved',
+        latestKycDocumentType: 'national_id',
+        kycSubmittedAt: new Date(),
+        kycReviewedAt: new Date(),
+        recentAuditEvents: [],
+      }),
+      resetPassword: vi.fn().mockResolvedValue({ password: 'Temp#Pass123' }),
+    };
+    controller = new AdminUsersController(
+      mockUsersService as unknown as UsersService,
+      mockAdminUsersService as unknown as AdminUsersService,
+    );
   });
 
   describe('findAll', () => {
@@ -57,9 +74,10 @@ describe('AdminUsersController', () => {
   });
 
   describe('findOne', () => {
-    it('should return a user by id', async () => {
+    it('should return a detailed user profile by id', async () => {
       const result = await controller.findOne('user-uuid');
       expect(result.id).toBe('user-uuid');
+      expect(mockAdminUsersService.findDetail).toHaveBeenCalledWith('user-uuid');
     });
   });
 
@@ -90,6 +108,23 @@ describe('AdminUsersController', () => {
         mockAdmin,
       );
       expect(result.status).toBe('suspended');
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should prevent admin from resetting their own password here', async () => {
+      await expect(controller.resetPassword('admin-uuid', mockAdmin)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should reset a user password', async () => {
+      const result = await controller.resetPassword('user-uuid', mockAdmin);
+      expect(result.password).toBe('Temp#Pass123');
+      expect(mockAdminUsersService.resetPassword).toHaveBeenCalledWith(
+        'user-uuid',
+        'admin-uuid',
+      );
     });
   });
 

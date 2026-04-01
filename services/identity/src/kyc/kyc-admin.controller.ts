@@ -13,7 +13,7 @@ export class KycAdminController {
 
   @Get()
   findAll(@Query() query: KycQueryDto) {
-    return this.kycService.findPending(query);
+    return this.kycService.findAll(query);
   }
 
   @Patch(':id')

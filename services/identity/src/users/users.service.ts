@@ -211,6 +211,24 @@ export class UsersService {
       .where(eq(users.id, id));
   }
 
+  async adminResetPassword(id: string, adminId: string, passwordHash: string) {
+    const rows = await this.db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(andRequired(eq(users.id, id), isNull(users.deletedAt)))
+      .returning();
+
+    const updatedUser = firstOrThrow(rows);
+
+    await this.sessionService.revokeAllUserSessions(id);
+    await this.recordAudit(adminId, 'password_reset', undefined, undefined, {
+      targetUserId: id,
+      source: 'admin_reset',
+    });
+
+    return updatedUser;
+  }
+
   async changeRole(id: string, role: string, adminId: string) {
     const user = await this.findByIdOrThrow(id);
     const oldRole = user.role;

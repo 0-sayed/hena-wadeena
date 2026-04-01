@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { Layout } from '@/components/layout/Layout';
 import {
   Bell,
@@ -73,6 +74,7 @@ const NotificationsPage = () => {
   const [page, setPage] = useState(1);
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.notifications.list({ page, limit: PAGE_SIZE }),
@@ -106,8 +108,20 @@ const NotificationsPage = () => {
     onError: () => toast.error('تعذر تحديث الإشعارات'),
   });
 
-  const handleMarkRead = (n: Notification) => {
-    if (!n.readAt) markReadMutation.mutate(n.id);
+  const handleNotificationClick = async (notification: Notification) => {
+    const path = notification.data?.path;
+
+    if (!notification.readAt) {
+      try {
+        await markReadMutation.mutateAsync(notification.id);
+      } catch {
+        return;
+      }
+    }
+
+    if (typeof path === 'string' && path.length > 0) {
+      void navigate(path);
+    }
   };
 
   return (
@@ -176,7 +190,9 @@ const NotificationsPage = () => {
                     <SR key={n.id} delay={idx * 40}>
                       <Card
                         className={`hover-lift cursor-pointer rounded-2xl transition-all duration-250 ${!n.readAt ? 'border-primary/30 bg-primary/5 shadow-sm' : 'border-border/50'}`}
-                        onClick={() => handleMarkRead(n)}
+                        onClick={() => {
+                          void handleNotificationClick(n);
+                        }}
                       >
                         <CardContent className="p-5 flex items-start gap-4">
                           <div

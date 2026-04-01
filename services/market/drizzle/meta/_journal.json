@@ -57,6 +57,13 @@
       "when": 1774840590219,
       "tag": "20260330031630_add-investment-location",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775071340481,
+      "tag": "20260401192220_jittery_earthquake",
+      "breakpoints": true
     }
   ]
 }
