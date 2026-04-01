@@ -85,6 +85,13 @@
       "when": 1775015452645,
       "tag": "20260401035052_wallet-balance-check",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775016524826,
+      "tag": "20260401040844_late_phalanx",
+      "breakpoints": true
     }
   ]
 }

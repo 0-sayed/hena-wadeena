@@ -1,12 +1,12 @@
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowRight, Star, Clock, Calendar, Sun, Users, MapPin, AlertCircle } from 'lucide-react';
+import { ArrowRight, Star, Clock, Calendar, Sun, Users, AlertCircle, MapPin } from 'lucide-react';
+import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
-import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { useAttraction, useNearbyAttractions } from '@/hooks/use-attractions';
 import {
   attractionTypeLabels,
@@ -201,7 +201,6 @@ const AttractionDetailsPage = () => {
             </SR>
           )}
 
-          {/* Map placeholder */}
           {attraction.location && (
             <SR>
               <div>

@@ -1,5 +1,7 @@
-import { AlertCircle, CheckCircle, FileText, ShoppingBag, Store, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Eye, FileText, ShoppingBag, Store, XCircle } from 'lucide-react';
 import { useState } from 'react';
+
+import { DocumentViewerDialog } from '@/components/admin/DocumentViewerDialog';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,6 +57,11 @@ function TableSkeleton({ cols }: { cols: number }) {
 
 export default function AdminModeration() {
   const [activeTab, setActiveTab] = useState('kyc');
+  const [viewDocument, setViewDocument] = useState<{
+    url: string;
+    type: string;
+    name: string;
+  } | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{
     type: 'kyc' | 'listing' | 'business';
     id: string;
@@ -167,6 +174,20 @@ export default function AdminModeration() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-blue-600 hover:text-blue-700"
+                                onClick={() =>
+                                  setViewDocument({
+                                    url: item.documentUrl,
+                                    type: item.documentType,
+                                    name: item.fullName,
+                                  })
+                                }
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -339,6 +360,15 @@ export default function AdminModeration() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Document Viewer Dialog */}
+      <DocumentViewerDialog
+        open={!!viewDocument}
+        onOpenChange={(open) => !open && setViewDocument(null)}
+        documentUrl={viewDocument?.url ?? null}
+        documentType={viewDocument?.type ?? ''}
+        userName={viewDocument?.name ?? ''}
+      />
 
       {/* Reject Dialog */}
       <Dialog

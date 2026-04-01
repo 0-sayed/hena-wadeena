@@ -8,7 +8,9 @@ import {
   logSummary,
 } from '../../../../scripts/seed/seed-utils.js';
 
+import { userKyc } from './schema/user-kyc.js';
 import { users } from './schema/users.js';
+import { essentialKycRecords } from './seed-data/kyc.js';
 import { essentialUsers, showcaseUsers } from './seed-data/users.js';
 
 const connectionString = process.env.DATABASE_URL;
@@ -71,7 +73,28 @@ async function main() {
     showcaseCount = showcaseResult.length;
   }
 
-  logSummary('identity', layer, { users: essentialResult.length + showcaseCount });
+  // 3. KYC records — always seed essential KYC for admin moderation demo
+  const kycResult = await db
+    .insert(userKyc)
+    .values(
+      essentialKycRecords.map((kyc) => ({
+        id: kyc.id,
+        userId: kyc.userId,
+        docType: kyc.docType,
+        docUrl: kyc.docUrl,
+        status: kyc.status,
+        reviewedBy: kyc.reviewedBy,
+        reviewedAt: kyc.reviewedAt,
+        rejectionReason: kyc.rejectionReason,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: userKyc.id });
+
+  logSummary('identity', layer, {
+    users: essentialResult.length + showcaseCount,
+    kyc: kycResult.length,
+  });
 }
 
 main()

@@ -59,18 +59,34 @@ export class KycService {
     const statusValue = query.status as (typeof kycStatusEnum.enumValues)[number];
     const whereClause = eq(userKyc.status, statusValue);
 
-    const [data, [totalRow]] = await Promise.all([
+    const [rawData, [totalRow]] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: userKyc.id,
+          userId: userKyc.userId,
+          fullName: users.fullName,
+          documentType: userKyc.docType,
+          documentUrl: userKyc.docUrl,
+          status: userKyc.status,
+          submittedAt: userKyc.createdAt,
+          reviewedAt: userKyc.reviewedAt,
+          reviewedBy: userKyc.reviewedBy,
+          notes: userKyc.rejectionReason,
+        })
         .from(userKyc)
+        .innerJoin(users, eq(userKyc.userId, users.id))
         .where(whereClause)
         .orderBy(asc(userKyc.createdAt))
         .limit(query.limit)
         .offset(offset),
-      this.db.select({ count: count() }).from(userKyc).where(whereClause),
+      this.db
+        .select({ count: count() })
+        .from(userKyc)
+        .innerJoin(users, eq(userKyc.userId, users.id))
+        .where(whereClause),
     ]);
 
-    return paginate(data, totalRow?.count ?? 0, offset, query.limit);
+    return paginate(rawData, totalRow?.count ?? 0, offset, query.limit);
   }
 
   async review(id: string, adminId: string, dto: ReviewKycDto) {

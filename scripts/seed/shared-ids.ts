@@ -160,3 +160,12 @@ export const RIDE = {
   CR04: '4cf41a53-deae-4550-a4b5-f2bb64de83ad',
   CR05: 'e7c3a918-5f24-4d0b-b167-9a4e82f10dc5',
 } as const;
+
+// ─── KYC Records ─────────────────────────────────────────────────────
+export const KYC = {
+  KYC01: '8a1b2c3d-4e5f-6789-abcd-ef0123456701',
+  KYC02: '8a1b2c3d-4e5f-6789-abcd-ef0123456702',
+  KYC03: '8a1b2c3d-4e5f-6789-abcd-ef0123456703',
+  KYC04: '8a1b2c3d-4e5f-6789-abcd-ef0123456704',
+  KYC05: '8a1b2c3d-4e5f-6789-abcd-ef0123456705',
+} as const;
