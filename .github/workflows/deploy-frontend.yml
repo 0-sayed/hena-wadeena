@@ -79,12 +79,12 @@ jobs:
       - name: Deploy via rsync
         run: |
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/id_rsa" \
             dist/ root@158.220.105.104:/var/www/hena-wadeena/
 
       - name: Reload Nginx
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/id_rsa \
             root@158.220.105.104 \
             "nginx -t && systemctl reload nginx"
 
