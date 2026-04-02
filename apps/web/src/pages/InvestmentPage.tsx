@@ -276,8 +276,10 @@ const InvestmentPage = () => {
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
                       {startups.map((startup) => {
-                        const startupDescription =
-                          language === 'en' ? '' : startup.descriptionAr ?? '';
+                        const startupDescription = pickLocalizedField(language, {
+                          ar: startup.descriptionAr,
+                          en: startup.description,
+                        });
 
                         return (
                           <Card
@@ -320,20 +322,35 @@ const InvestmentPage = () => {
                               <div className="mb-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1.5">
                                   <MapPin className="h-4 w-4" />
-                                  {districtLabel(startup.district, language)}
+                                  {districtLabel(startup.district ?? '', language)}
                                 </div>
                                 <div>{startupStatusLabel(startup.status, language)}</div>
                               </div>
-                              <Button
-                                className="w-full transition-transform hover:scale-[1.02]"
-                                onClick={() => void navigate(`/investment/contact/${startup.id}`)}
-                              >
-                                <Send className="ml-2 h-4 w-4" />
-                                {pickLocalizedCopy(language, {
-                                  ar: 'تواصل',
-                                  en: 'Contact',
-                                })}
-                              </Button>
+                              <div className="flex gap-3">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 transition-transform hover:scale-[1.02]"
+                                  onClick={() => void navigate(`/investment/startups/${startup.id}`)}
+                                >
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'التفاصيل',
+                                    en: 'Details',
+                                  })}{' '}
+                                  <ArrowLeft className="mr-2 h-4 w-4" />
+                                </Button>
+                                <Button
+                                  className="flex-1 transition-transform hover:scale-[1.02]"
+                                  onClick={() =>
+                                    void navigate(`/investment/contact/${startup.id}?entity=startup`)
+                                  }
+                                >
+                                  <Send className="ml-2 h-4 w-4" />
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'تواصل',
+                                    en: 'Contact',
+                                  })}
+                                </Button>
+                              </div>
                             </CardContent>
                           </Card>
                         );

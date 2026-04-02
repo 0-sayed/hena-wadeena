@@ -4,6 +4,7 @@ export { marketSchema } from '../schema';
 export { tsvector } from './types';
 
 export * from '../enums';
+export { businessInquiries } from './business-inquiries';
 export { listingInquiries } from './listing-inquiries';
 export { listings } from './listings';
 export { priceSnapshots } from './price-snapshots';
@@ -19,6 +20,7 @@ export { businessCommodities } from './business-commodities';
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';
 import { businessDirectories } from './business-directories';
+import { businessInquiries } from './business-inquiries';
 import { commodities } from './commodities';
 import { commodityPrices } from './commodity-prices';
 import { investmentApplications } from './investment-applications';
@@ -39,6 +41,13 @@ export const listingInquiriesRelations = relations(listingInquiries, ({ one }) =
   listing: one(listings, {
     fields: [listingInquiries.listingId],
     references: [listings.id],
+  }),
+}));
+
+export const businessInquiriesRelations = relations(businessInquiries, ({ one }) => ({
+  business: one(businessDirectories, {
+    fields: [businessInquiries.businessId],
+    references: [businessDirectories.id],
   }),
 }));
 
@@ -93,4 +102,5 @@ export const businessCommoditiesRelations = relations(businessCommodities, ({ on
 
 export const businessDirectoriesRelations = relations(businessDirectories, ({ many }) => ({
   businessCommodities: many(businessCommodities),
+  inquiries: many(businessInquiries),
 }));

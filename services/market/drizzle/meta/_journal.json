@@ -64,6 +64,13 @@
       "when": 1775071340481,
       "tag": "20260401192220_jittery_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775169459086,
+      "tag": "20260402223739_ambiguous_red_wolf",
+      "breakpoints": true
     }
   ]
 }

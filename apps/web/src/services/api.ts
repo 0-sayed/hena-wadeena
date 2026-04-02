@@ -621,6 +621,36 @@ export interface BusinessUpsertRequest {
   commodityIds?: string[];
 }
 
+export interface BusinessInquiry {
+  id: string;
+  businessId: string;
+  businessName: string;
+  businessOwnerId: string;
+  senderId: string;
+  receiverId: string;
+  contactName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  message: string;
+  replyMessage: string | null;
+  status: 'pending' | 'read' | 'replied';
+  readAt: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBusinessInquiryRequest {
+  contactName: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  message: string;
+}
+
+export interface ReplyBusinessInquiryRequest {
+  message: string;
+}
+
 // NOTE: GET /businesses/mine returns BusinessDirectory[] (plain array, no wrapper).
 export const businessesAPI = {
   getAll: (params?: {
@@ -644,6 +674,31 @@ export const businessesAPI = {
       body: JSON.stringify(body),
     }),
   remove: (id: string) => apiFetchWithRefresh<void>(`/businesses/${id}`, { method: 'DELETE' }),
+};
+
+export const businessInquiriesAPI = {
+  submit: (businessId: string, body: CreateBusinessInquiryRequest) =>
+    apiFetchWithRefresh<BusinessInquiry>(`/businesses/${businessId}/inquiries`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  getReceived: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<BusinessInquiry>>(
+      `/business-inquiries/mine/received${toQueryString(params)}`,
+    ),
+  getSent: (params?: { status?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<BusinessInquiry>>(
+      `/business-inquiries/mine/sent${toQueryString(params)}`,
+    ),
+  markRead: (id: string) =>
+    apiFetchWithRefresh<BusinessInquiry>(`/business-inquiries/${id}/read`, {
+      method: 'PATCH',
+    }),
+  reply: (id: string, body: ReplyBusinessInquiryRequest) =>
+    apiFetchWithRefresh<BusinessInquiry>(`/business-inquiries/${id}/reply`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
 };
 
 // ── Listings ──────────────────────────────────────────────────────────────
@@ -843,18 +898,7 @@ export interface Opportunity {
   updatedAt?: string;
 }
 
-export interface Startup {
-  id: string;
-  nameAr: string;
-  nameEn: string | null;
-  category: string;
-  descriptionAr: string | null;
-  district: string;
-  location: { x: number; y: number } | null;
-  phone: string | null;
-  logoUrl: string | null;
-  status: string;
-}
+export type Startup = BusinessEntry;
 
 export const investmentAPI = {
   getOpportunities: () => apiFetchWithRefresh<PaginatedResponse<Opportunity>>('/investments'),
@@ -863,7 +907,7 @@ export const investmentAPI = {
 
   getMine: () => apiFetchWithRefresh<Opportunity[]>('/investments/mine'),
 
-  getStartups: () => apiFetchWithRefresh<PaginatedResponse<Startup>>('/businesses?type=startup'),
+  getStartups: () => apiFetchWithRefresh<PaginatedResponse<Startup>>('/businesses'),
 };
 
 export interface InvestmentApplication {

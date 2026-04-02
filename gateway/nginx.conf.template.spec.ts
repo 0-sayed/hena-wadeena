@@ -15,4 +15,18 @@ describe('gateway routed flows', () => {
     expect(template).toMatch(/location ~ \^\/api\/v1\/my\/\(guide-profile\|packages\)\(\?:\/\|\$\)/);
     expect(template).toContain('set $upstream_guide http://guide-booking:8003;');
   });
+
+  it('routes listing inquiry endpoints to the market service', () => {
+    expect(template).toMatch(
+      /location ~ \^\/api\/v1\/\(listings\|market\|prices\|price-index\|business\|businesses\|commodities\|commodity-prices\|reviews\|opportunities\|investments\|listing-inquiries\|business-inquiries\)\(\?:\/\|\$\)/,
+    );
+    expect(template).toContain('set $upstream_market http://market:8002;');
+  });
+
+  it('routes business inquiry endpoints to the market service', () => {
+    expect(template).toMatch(
+      /location ~ \^\/api\/v1\/\(listings\|market\|prices\|price-index\|business\|businesses\|commodities\|commodity-prices\|reviews\|opportunities\|investments\|listing-inquiries\|business-inquiries\)\(\?:\/\|\$\)/,
+    );
+    expect(template).toContain('set $upstream_market http://market:8002;');
+  });
 });
