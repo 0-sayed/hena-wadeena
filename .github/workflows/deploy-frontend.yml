@@ -9,6 +9,10 @@ on:
       - 'packages/types/**'
       - '.github/workflows/deploy-frontend.yml'
 
+concurrency:
+  group: deploy-frontend-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build Frontend
