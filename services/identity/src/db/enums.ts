@@ -13,7 +13,12 @@ export const userRoleEnum = identitySchema.enum('user_role', [
   'admin',
 ]);
 
-export const userStatusEnum = identitySchema.enum('user_status', ['active', 'suspended', 'banned']);
+export const userStatusEnum = identitySchema.enum('user_status', [
+  'active',
+  'pending_kyc',
+  'suspended',
+  'banned',
+]);
 
 export const otpPurposeEnum = identitySchema.enum('otp_purpose', ['login', 'reset', 'verify']);
 

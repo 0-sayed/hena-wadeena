@@ -1,4 +1,5 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { UserStatus } from '@hena-wadeena/types';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { createMockDb } from '../test-utils/create-mock-db';
@@ -33,6 +34,7 @@ describe('KycService', () => {
 
   describe('submit', () => {
     it('should create a pending KYC submission', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ role: 'guide' }]);
       mockDb.returning.mockResolvedValueOnce([mockKyc]);
       const result = await service.submit('user-uuid', {
         docType: 'national_id',
@@ -40,6 +42,17 @@ describe('KycService', () => {
       });
       expect(result).toEqual(mockKyc);
       expect(mockDb.insert).toHaveBeenCalled();
+    });
+
+    it('rejects document types that are not required for the user role', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ role: 'investor' }]);
+
+      await expect(
+        service.submit('user-uuid', {
+          docType: 'guide_license',
+          docUrl: 'https://s3.example.com/doc.pdf',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -90,6 +103,8 @@ describe('KycService', () => {
     it('should approve KYC and create notification', async () => {
       // Inside transaction: update kyc → update users → insert audit
       mockDb.returning.mockResolvedValueOnce([{ ...mockKyc, status: 'approved' }]);
+      mockDb.limit.mockResolvedValueOnce([{ role: 'investor', status: UserStatus.PENDING_KYC }]);
+      mockDb.orderBy.mockResolvedValueOnce([{ ...mockKyc, status: 'approved' }]);
 
       await service.review('kyc-uuid', 'admin-uuid', {
         status: 'approved',
@@ -100,6 +115,40 @@ describe('KycService', () => {
         expect.objectContaining({ type: 'kyc_approved', userId: 'user-uuid' }),
       );
       expect(mockRedisStreams.publish).toHaveBeenCalled();
+    });
+
+    it('keeps multi-document roles pending until every required document is approved', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ ...mockKyc, status: 'approved' }]);
+      mockDb.limit.mockResolvedValueOnce([{ role: 'guide', status: UserStatus.PENDING_KYC }]);
+      mockDb.orderBy.mockResolvedValueOnce([{ ...mockKyc, status: 'approved' }]);
+
+      await service.review('kyc-uuid', 'admin-uuid', {
+        status: 'approved',
+      });
+
+      expect(mockNotifications.create).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'kyc_approved', userId: 'user-uuid' }),
+      );
+    });
+
+    it('activates the user when the final required document is approved', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ ...mockKyc, status: 'approved' }]);
+      mockDb.limit.mockResolvedValueOnce([{ role: 'guide', status: UserStatus.PENDING_KYC }]);
+      mockDb.orderBy.mockResolvedValueOnce([
+        { ...mockKyc, docType: 'national_id', status: 'approved' },
+        { ...mockKyc, docType: 'guide_license', status: 'approved' },
+      ]);
+
+      await service.review('kyc-uuid', 'admin-uuid', {
+        status: 'approved',
+      });
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'kyc_approved', userId: 'user-uuid' }),
+      );
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({ status: UserStatus.ACTIVE }),
+      );
     });
   });
 

@@ -1,6 +1,5 @@
-// apps/web/src/components/admin/DocumentViewerDialog.tsx
 import { useEffect, useState } from 'react';
-import { ExternalLink, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, ExternalLink, ZoomIn, ZoomOut } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { pickLocalizedCopy } from '@/lib/localization';
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -27,28 +28,64 @@ export function DocumentViewerDialog({
   userName,
 }: DocumentViewerDialogProps) {
   const [zoom, setZoom] = useState(1);
+  const { language } = useAuth();
 
-  // Reset zoom when document changes
   useEffect(() => {
     setZoom(1);
   }, [documentUrl]);
 
-  // Strip query string for file type detection (handles S3 signed URLs, CDN tokens)
   const urlPath = documentUrl?.split('?')[0] ?? '';
-  const isPdf = urlPath.toLowerCase().endsWith('.pdf');
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(urlPath);
+  const isDataUrl = documentUrl?.startsWith('data:') ?? false;
+  const isPdf = isDataUrl
+    ? documentUrl?.startsWith('data:application/pdf') ?? false
+    : urlPath.toLowerCase().endsWith('.pdf');
+  const isImage = isDataUrl
+    ? documentUrl?.startsWith('data:image/') ?? false
+    : /\.(jpg|jpeg|png|gif|webp)$/i.test(urlPath);
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.25, 3));
-  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.5));
+  const title = pickLocalizedCopy(language, {
+    ar: 'عرض المستند',
+    en: 'View document',
+  });
+  const emptyState = pickLocalizedCopy(language, {
+    ar: 'لا يوجد مستند للعرض',
+    en: 'No document available',
+  });
+  const openInNewTab = pickLocalizedCopy(language, {
+    ar: 'فتح في تبويب جديد',
+    en: 'Open in new tab',
+  });
+  const download = pickLocalizedCopy(language, {
+    ar: 'تحميل',
+    en: 'Download',
+  });
+  const unsupportedFile = pickLocalizedCopy(language, {
+    ar: 'لا يمكن عرض هذا النوع من الملفات مباشرة',
+    en: 'This file type cannot be previewed directly',
+  });
+  const openFile = pickLocalizedCopy(language, {
+    ar: 'فتح الملف',
+    en: 'Open file',
+  });
+  const userDocumentDescription = pickLocalizedCopy(language, {
+    ar: `مستند ${userName}`,
+    en: `${userName} document`,
+  });
+  const previewTitle = pickLocalizedCopy(language, {
+    ar: 'معاينة المستند',
+    en: 'Document preview',
+  });
 
-  // Keep Dialog mounted to maintain onOpenChange binding even when documentUrl is null
+  const handleZoomIn = () => setZoom((currentZoom) => Math.min(currentZoom + 0.25, 3));
+  const handleZoomOut = () => setZoom((currentZoom) => Math.max(currentZoom - 0.25, 0.5));
+
   if (!documentUrl) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>عرض المستند</DialogTitle>
-            <DialogDescription>لا يوجد مستند للعرض</DialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{emptyState}</DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>
@@ -57,10 +94,12 @@ export function DocumentViewerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle>عرض المستند - {documentType}</DialogTitle>
-          <DialogDescription>مستند {userName}</DialogDescription>
+          <DialogTitle>
+            {title} - {documentType}
+          </DialogTitle>
+          <DialogDescription>{userDocumentDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 border-b pb-3">
@@ -78,42 +117,42 @@ export function DocumentViewerDialog({
           <div className="flex-1" />
           <Button variant="outline" size="sm" asChild>
             <a href={documentUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 ml-2" />
-              فتح في تبويب جديد
+              <ExternalLink className="ml-2 h-4 w-4" />
+              {openInNewTab}
             </a>
           </Button>
           <Button variant="outline" size="sm" asChild>
             <a href={documentUrl} download>
-              <Download className="h-4 w-4 ml-2" />
-              تحميل
+              <Download className="ml-2 h-4 w-4" />
+              {download}
             </a>
           </Button>
         </div>
 
-        <div className="flex-1 overflow-auto min-h-0 bg-muted/30 rounded-lg p-4">
+        <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-muted/30 p-4">
           {isPdf ? (
             <iframe
               src={documentUrl ?? undefined}
-              className="w-full h-full min-h-[500px] rounded border"
-              title="Document preview"
+              className="h-full min-h-[500px] w-full rounded border"
+              title={previewTitle}
               sandbox="allow-scripts"
               referrerPolicy="no-referrer"
             />
           ) : isImage ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <img
                 src={documentUrl}
                 alt={`${documentType} - ${userName}`}
-                className="max-w-full max-h-full object-contain transition-transform duration-200"
+                className="max-h-full max-w-full object-contain transition-transform duration-200"
                 style={{ transform: `scale(${zoom})` }}
               />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
-              <p>لا يمكن عرض هذا النوع من الملفات مباشرة</p>
+            <div className="flex h-full flex-col items-center justify-center gap-4 text-muted-foreground">
+              <p>{unsupportedFile}</p>
               <Button asChild>
                 <a href={documentUrl} target="_blank" rel="noopener noreferrer">
-                  فتح الملف
+                  {openFile}
                 </a>
               </Button>
             </div>

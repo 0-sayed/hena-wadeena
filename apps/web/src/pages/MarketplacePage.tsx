@@ -41,6 +41,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
+import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from '@/lib/format';
 
 type SupplierFormState = {
@@ -89,7 +90,7 @@ function isValidLogoUrl(value: string) {
 const MarketplacePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, language } = useAuth();
   const canManageSuppliers = user?.role === UserRole.ADMIN;
   const [selectedCity, setSelectedCity] = useState('kharga');
   const [priceSearchQuery, setPriceSearchQuery] = useState('');
@@ -121,19 +122,34 @@ const MarketplacePage = () => {
     [commodities, supplierForm.primaryCommodityId],
   );
   const additionalCommodityOptions = useMemo(
-    () =>
-      commodities.filter((commodity) => commodity.id !== supplierForm.primaryCommodityId),
+    () => commodities.filter((commodity) => commodity.id !== supplierForm.primaryCommodityId),
     [commodities, supplierForm.primaryCommodityId],
   );
 
-  const filteredProducts = useMemo(
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = priceSearchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return priceEntries;
+
+    return priceEntries.filter((entry) => {
+      const commodityName = pickLocalizedField(language, {
+        ar: entry.commodity.nameAr,
+        en: entry.commodity.nameEn,
+      }).toLowerCase();
+      const commodityCategory = categoryLabel(entry.commodity.category, language).toLowerCase();
+
+      return (
+        commodityName.includes(normalizedQuery) || commodityCategory.includes(normalizedQuery)
+      );
+    });
+  }, [language, priceEntries, priceSearchQuery]);
+
+  const localizedDistricts = useMemo(
     () =>
-      priceEntries.filter(
-        (entry) =>
-          entry.commodity.nameAr.includes(priceSearchQuery) ||
-          categoryLabel(entry.commodity.category).includes(priceSearchQuery),
-      ),
-    [priceEntries, priceSearchQuery],
+      DISTRICTS.map((district) => ({
+        ...district,
+        label: districtLabel(district.id, language),
+      })),
+    [language],
   );
 
   const handleSupplierFieldChange = (field: keyof SupplierFormState, value: string) => {
@@ -168,12 +184,22 @@ const MarketplacePage = () => {
 
   const handleCreateSupplier = async () => {
     if (!supplierForm.nameAr.trim()) {
-      toast.error('اسم المورد مطلوب');
+      toast.error(
+        pickLocalizedCopy(language, {
+          ar: 'اسم المورد مطلوب',
+          en: 'Supplier name is required',
+        }),
+      );
       return;
     }
 
     if (!supplierForm.primaryCommodityId) {
-      toast.error('اختر المحصول الرئيسي');
+      toast.error(
+        pickLocalizedCopy(language, {
+          ar: 'اختر المحصول الرئيسي',
+          en: 'Choose the primary commodity',
+        }),
+      );
       return;
     }
 
@@ -183,22 +209,42 @@ const MarketplacePage = () => {
         : selectedPrimaryCommodity?.nameAr.trim() ?? '';
 
     if (!resolvedCropName) {
-      toast.error('أدخل اسم المحصول المخصص');
+      toast.error(
+        pickLocalizedCopy(language, {
+          ar: 'أدخل اسم المحصول المخصص',
+          en: 'Enter the custom commodity name',
+        }),
+      );
       return;
     }
 
     if (!supplierForm.district) {
-      toast.error('اختر المنطقة');
+      toast.error(
+        pickLocalizedCopy(language, {
+          ar: 'اختر المنطقة',
+          en: 'Choose the district',
+        }),
+      );
       return;
     }
 
     if (supplierForm.website.trim() && !/^https?:\/\//i.test(supplierForm.website.trim())) {
-      toast.error('رابط الموقع يجب أن يبدأ بـ http:// أو https://');
+      toast.error(
+        pickLocalizedCopy(language, {
+          ar: 'رابط الموقع يجب أن يبدأ بـ http:// أو https://',
+          en: 'Website URL must start with http:// or https://',
+        }),
+      );
       return;
     }
 
     if (supplierForm.logoUrl.trim() && !isValidLogoUrl(supplierForm.logoUrl.trim())) {
-      toast.error('رابط الشعار يجب أن يكون مساراً نسبياً أو رابط http(s) أو data URL');
+      toast.error(
+        pickLocalizedCopy(language, {
+          ar: 'رابط الشعار يجب أن يكون مساراً نسبياً أو رابط http(s) أو data URL',
+          en: 'Logo URL must be a relative path, an http(s) URL, or a data URL',
+        }),
+      );
       return;
     }
 
@@ -224,33 +270,81 @@ const MarketplacePage = () => {
 
       void queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
       resetSupplierDialog();
-      toast.success('تمت إضافة المورد وظهر مباشرة في الدليل');
+      toast.success(
+        pickLocalizedCopy(language, {
+          ar: 'تمت إضافة المورد وظهر مباشرة في الدليل',
+          en: 'Supplier added and published in the directory',
+        }),
+      );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'تعذر إضافة المورد';
+      const fallbackMessage = pickLocalizedCopy(language, {
+        ar: 'تعذر إضافة المورد',
+        en: 'Unable to add the supplier',
+      });
+      const message = error instanceof Error ? error.message : fallbackMessage;
       toast.error(message);
     } finally {
       setIsSavingSupplier(false);
     }
   };
 
+  const lastUpdatedLabel = summary?.lastUpdated
+    ? pickLocalizedCopy(language, {
+        ar: `آخر تحديث للبورصة: ${new Date(summary.lastUpdated).toLocaleString('ar-EG', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`,
+        en: `Last market update: ${new Date(summary.lastUpdated).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`,
+      })
+    : pickLocalizedCopy(language, {
+        ar: 'آخر تحديث: غير متاح',
+        en: 'Last update: unavailable',
+      });
+
   return (
     <Layout>
       <PageTransition>
-        <PageHero image={heroMarketplace} alt="البورصة والأسعار">
+        <PageHero
+          image={heroMarketplace}
+          alt={pickLocalizedCopy(language, {
+            ar: 'البورصة والأسعار',
+            en: 'Marketplace and prices',
+          })}
+        >
           <SR>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <BarChart3 className="h-5 w-5 text-accent" />
-              <span className="text-sm font-semibold text-card">البورصة والأسعار</span>
+              <span className="text-sm font-semibold text-card">
+                {pickLocalizedCopy(language, {
+                  ar: 'البورصة والأسعار',
+                  en: 'Marketplace & prices',
+                })}
+              </span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-              البورصة والأسعار
+              {pickLocalizedCopy(language, {
+                ar: 'البورصة والأسعار',
+                en: 'Marketplace & prices',
+              })}
             </h1>
           </SR>
           <SR delay={200}>
             <p className="mb-8 text-lg text-card/90 md:text-xl">
-              أسعار المنتجات المحلية، دليل الموردين، والتواصل المباشر
+              {pickLocalizedCopy(language, {
+                ar: 'أسعار المنتجات المحلية، دليل الموردين، والتواصل المباشر',
+                en: 'Local product prices, supplier directory, and direct contact',
+              })}
             </p>
           </SR>
         </PageHero>
@@ -261,10 +355,16 @@ const MarketplacePage = () => {
               <SR>
                 <TabsList className="mx-auto mb-10 grid h-12 w-full max-w-md grid-cols-2 rounded-xl">
                   <TabsTrigger value="prices" className="rounded-lg text-sm font-semibold">
-                    لوحة الأسعار
+                    {pickLocalizedCopy(language, {
+                      ar: 'لوحة الأسعار',
+                      en: 'Price board',
+                    })}
                   </TabsTrigger>
                   <TabsTrigger value="suppliers" className="rounded-lg text-sm font-semibold">
-                    دليل الموردين
+                    {pickLocalizedCopy(language, {
+                      ar: 'دليل الموردين',
+                      en: 'Supplier directory',
+                    })}
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -274,12 +374,17 @@ const MarketplacePage = () => {
                   <div className="flex flex-col gap-4 md:flex-row">
                     <Select value={selectedCity} onValueChange={setSelectedCity}>
                       <SelectTrigger className="h-12 w-full rounded-xl md:w-48">
-                        <SelectValue placeholder="اختر المدينة" />
+                        <SelectValue
+                          placeholder={pickLocalizedCopy(language, {
+                            ar: 'اختر المدينة',
+                            en: 'Select city',
+                          })}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {DISTRICTS.map((city) => (
+                        {localizedDistricts.map((city) => (
                           <SelectItem key={city.id} value={city.id}>
-                            {city.name}
+                            {city.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -287,7 +392,10 @@ const MarketplacePage = () => {
                     <div className="relative flex-1">
                       <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder="ابحث عن منتج..."
+                        placeholder={pickLocalizedCopy(language, {
+                          ar: 'ابحث عن منتج...',
+                          en: 'Search for a product...',
+                        })}
                         value={priceSearchQuery}
                         onChange={(event) => setPriceSearchQuery(event.target.value)}
                         className="h-12 rounded-xl pr-12"
@@ -301,13 +409,12 @@ const MarketplacePage = () => {
                     <div className="border-b border-border bg-primary/5 px-6 py-5">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-bold text-foreground">
-                          أسعار {DISTRICTS.find((city) => city.id === selectedCity)?.name}
+                          {pickLocalizedCopy(language, {
+                            ar: `أسعار ${districtLabel(selectedCity, language)}`,
+                            en: `Prices in ${districtLabel(selectedCity, language)}`,
+                          })}
                         </h3>
-                        <span className="text-sm text-muted-foreground">
-                          {summary?.lastUpdated
-                            ? `آخر تحديث للبورصة: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                            : 'آخر تحديث: غير متاح'}
-                        </span>
+                        <span className="text-sm text-muted-foreground">{lastUpdatedLabel}</span>
                       </div>
                     </div>
                     <CardContent className="p-0">
@@ -323,16 +430,19 @@ const MarketplacePage = () => {
                             <thead>
                               <tr className="border-b border-border bg-muted/30">
                                 <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  المنتج
+                                  {pickLocalizedCopy(language, { ar: 'المنتج', en: 'Product' })}
                                 </th>
                                 <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  التصنيف
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'التصنيف',
+                                    en: 'Category',
+                                  })}
                                 </th>
                                 <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  السعر
+                                  {pickLocalizedCopy(language, { ar: 'السعر', en: 'Price' })}
                                 </th>
                                 <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  التغير
+                                  {pickLocalizedCopy(language, { ar: 'التغير', en: 'Change' })}
                                 </th>
                               </tr>
                             </thead>
@@ -348,12 +458,15 @@ const MarketplacePage = () => {
                                 >
                                   <td className="px-6 py-5">
                                     <span className="font-semibold text-foreground">
-                                      {entry.commodity.nameAr}
+                                      {pickLocalizedField(language, {
+                                        ar: entry.commodity.nameAr,
+                                        en: entry.commodity.nameEn,
+                                      })}
                                     </span>
                                   </td>
                                   <td className="px-6 py-5">
                                     <Badge variant="outline">
-                                      {categoryLabel(entry.commodity.category)}
+                                      {categoryLabel(entry.commodity.category, language)}
                                     </Badge>
                                   </td>
                                   <td className="px-6 py-5">
@@ -361,7 +474,10 @@ const MarketplacePage = () => {
                                       {formatPrice(entry.latestPrice)}
                                     </span>
                                     <span className="mr-1 text-sm text-muted-foreground">
-                                      جنيه/{unitLabel(entry.commodity.unit)}
+                                      {pickLocalizedCopy(language, {
+                                        ar: `جنيه/${unitLabel(entry.commodity.unit, language)}`,
+                                        en: `EGP/${unitLabel(entry.commodity.unit, language)}`,
+                                      })}
                                     </span>
                                   </td>
                                   <td className="px-6 py-5">
@@ -389,7 +505,10 @@ const MarketplacePage = () => {
                     <div className="relative max-w-md flex-1">
                       <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder="ابحث عن مورد..."
+                        placeholder={pickLocalizedCopy(language, {
+                          ar: 'ابحث عن مورد...',
+                          en: 'Search for a supplier...',
+                        })}
                         value={supplierSearch}
                         onChange={(event) => setSupplierSearch(event.target.value)}
                         className="h-12 rounded-xl pr-12"
@@ -398,7 +517,10 @@ const MarketplacePage = () => {
                     {canManageSuppliers && (
                       <Button className="gap-2" onClick={() => setSupplierDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
-                        إضافة مورد
+                        {pickLocalizedCopy(language, {
+                          ar: 'إضافة مورد',
+                          en: 'Add supplier',
+                        })}
                       </Button>
                     )}
                   </div>
@@ -413,85 +535,115 @@ const MarketplacePage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
-                      {businesses.map((biz) => (
-                        <Card
-                          key={biz.id}
-                          className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
-                        >
-                          <CardContent className="p-7">
-                            <div className="mb-5 flex items-start gap-4">
-                              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted/40">
-                                {biz.logoUrl ? (
-                                  <img
-                                    src={biz.logoUrl}
-                                    alt={biz.nameAr}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <Building2 className="h-7 w-7 text-muted-foreground" />
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="mb-1 flex items-center gap-2">
-                                  <h3 className="truncate text-lg font-bold text-foreground">
-                                    {biz.nameAr}
-                                  </h3>
-                                  {biz.verificationStatus === 'verified' && (
-                                    <Badge className="bg-primary/10 text-primary">موثق</Badge>
+                      {businesses.map((biz) => {
+                        const businessName = pickLocalizedField(language, {
+                          ar: biz.nameAr,
+                          en: biz.nameEn,
+                        });
+                        const businessDescription =
+                          language === 'en'
+                            ? biz.description?.trim() ?? ''
+                            : biz.descriptionAr?.trim() ?? biz.description?.trim() ?? '';
+
+                        return (
+                          <Card
+                            key={biz.id}
+                            className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
+                          >
+                            <CardContent className="p-7">
+                              <div className="mb-5 flex items-start gap-4">
+                                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted/40">
+                                  {biz.logoUrl ? (
+                                    <img
+                                      src={biz.logoUrl}
+                                      alt={businessName}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <Building2 className="h-7 w-7 text-muted-foreground" />
                                   )}
                                 </div>
-                                <p className="mb-2 text-sm text-muted-foreground">{biz.category}</p>
-                                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                  <MapPin className="h-4 w-4" />
-                                  {districtLabel(biz.district ?? '')}
+                                <div className="min-w-0 flex-1">
+                                  <div className="mb-1 flex items-center gap-2">
+                                    <h3 className="truncate text-lg font-bold text-foreground">
+                                      {businessName}
+                                    </h3>
+                                    {biz.verificationStatus === 'verified' && (
+                                      <Badge className="bg-primary/10 text-primary">
+                                        {pickLocalizedCopy(language, {
+                                          ar: 'موثق',
+                                          en: 'Verified',
+                                        })}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="mb-2 text-sm text-muted-foreground">
+                                    {categoryLabel(biz.category, language)}
+                                  </p>
+                                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                    <MapPin className="h-4 w-4" />
+                                    {districtLabel(biz.district ?? '', language)}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="mb-4 flex flex-wrap gap-1.5">
-                              {biz.commodities.map((commodity) => (
-                                <Badge key={commodity.id} variant="secondary">
-                                  {commodity.nameAr}
-                                </Badge>
-                              ))}
-                            </div>
-                            {biz.descriptionAr && (
-                              <p className="mb-5 line-clamp-3 text-sm text-muted-foreground">
-                                {biz.descriptionAr}
-                              </p>
-                            )}
-                            <div className="flex flex-wrap gap-3">
-                              <Button
-                                variant="outline"
-                                className="flex-1 transition-transform hover:scale-[1.02]"
-                                onClick={() => void navigate(`/marketplace/supplier/${biz.id}`)}
-                              >
-                                عرض الملف
-                              </Button>
-                              {biz.phone ? (
+                              <div className="mb-4 flex flex-wrap gap-1.5">
+                                {biz.commodities.map((commodity) => (
+                                  <Badge key={commodity.id} variant="secondary">
+                                    {pickLocalizedField(language, {
+                                      ar: commodity.nameAr,
+                                      en: commodity.nameEn,
+                                    })}
+                                  </Badge>
+                                ))}
+                              </div>
+                              {businessDescription && (
+                                <p className="mb-5 line-clamp-3 text-sm text-muted-foreground">
+                                  {businessDescription}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap gap-3">
                                 <Button
-                                  asChild
+                                  variant="outline"
                                   className="flex-1 transition-transform hover:scale-[1.02]"
+                                  onClick={() => void navigate(`/marketplace/supplier/${biz.id}`)}
                                 >
-                                  <a href={`tel:${biz.phone}`}>
-                                    <Phone className="ml-2 h-4 w-4" />
-                                    تواصل
-                                  </a>
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'عرض الملف',
+                                    en: 'View profile',
+                                  })}
                                 </Button>
-                              ) : biz.website ? (
-                                <Button
-                                  asChild
-                                  className="flex-1 transition-transform hover:scale-[1.02]"
-                                >
-                                  <a href={biz.website} target="_blank" rel="noreferrer">
-                                    <ExternalLink className="ml-2 h-4 w-4" />
-                                    زيارة الموقع
-                                  </a>
-                                </Button>
-                              ) : null}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                                {biz.phone ? (
+                                  <Button
+                                    asChild
+                                    className="flex-1 transition-transform hover:scale-[1.02]"
+                                  >
+                                    <a href={`tel:${biz.phone}`}>
+                                      <Phone className="ml-2 h-4 w-4" />
+                                      {pickLocalizedCopy(language, {
+                                        ar: 'تواصل',
+                                        en: 'Contact',
+                                      })}
+                                    </a>
+                                  </Button>
+                                ) : biz.website ? (
+                                  <Button
+                                    asChild
+                                    className="flex-1 transition-transform hover:scale-[1.02]"
+                                  >
+                                    <a href={biz.website} target="_blank" rel="noreferrer">
+                                      <ExternalLink className="ml-2 h-4 w-4" />
+                                      {pickLocalizedCopy(language, {
+                                        ar: 'زيارة الموقع',
+                                        en: 'Visit website',
+                                      })}
+                                    </a>
+                                  </Button>
+                                ) : null}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   </SR>
                 )}
@@ -508,15 +660,25 @@ const MarketplacePage = () => {
         <Dialog open={supplierDialogOpen} onOpenChange={setSupplierDialogOpen}>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>إضافة مورد جديد</DialogTitle>
+              <DialogTitle>
+                {pickLocalizedCopy(language, {
+                  ar: 'إضافة مورد جديد',
+                  en: 'Add a new supplier',
+                })}
+              </DialogTitle>
               <DialogDescription>
-                اختر المحصول الرئيسي من القائمة، أو استخدم "أخرى" لإدخال محصول غير موجود.
+                {pickLocalizedCopy(language, {
+                  ar: 'اختر المحصول الرئيسي من القائمة، أو استخدم "أخرى" لإدخال محصول غير موجود.',
+                  en: 'Choose the main commodity from the list, or use "Other" to enter one manually.',
+                })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="supplierName">اسم المورد</Label>
+                <Label htmlFor="supplierName">
+                  {pickLocalizedCopy(language, { ar: 'اسم المورد', en: 'Supplier name' })}
+                </Label>
                 <Input
                   id="supplierName"
                   value={supplierForm.nameAr}
@@ -524,39 +686,62 @@ const MarketplacePage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>المحصول الرئيسي</Label>
+                <Label>
+                  {pickLocalizedCopy(language, {
+                    ar: 'المحصول الرئيسي',
+                    en: 'Primary commodity',
+                  })}
+                </Label>
                 <Select
                   value={supplierForm.primaryCommodityId}
                   onValueChange={handlePrimaryCommodityChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر المحصول الرئيسي" />
+                    <SelectValue
+                      placeholder={pickLocalizedCopy(language, {
+                        ar: 'اختر المحصول الرئيسي',
+                        en: 'Choose the primary commodity',
+                      })}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {commodities.map((commodity) => (
                       <SelectItem key={commodity.id} value={commodity.id}>
-                        {commodity.nameAr}
+                        {pickLocalizedField(language, {
+                          ar: commodity.nameAr,
+                          en: commodity.nameEn,
+                        })}
                       </SelectItem>
                     ))}
-                    <SelectItem value={OTHER_COMMODITY_VALUE}>أخرى</SelectItem>
+                    <SelectItem value={OTHER_COMMODITY_VALUE}>
+                      {pickLocalizedCopy(language, { ar: 'أخرى', en: 'Other' })}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {supplierForm.primaryCommodityId === OTHER_COMMODITY_VALUE && (
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="supplierCustomCommodity">حدد المحصول</Label>
+                  <Label htmlFor="supplierCustomCommodity">
+                    {pickLocalizedCopy(language, {
+                      ar: 'حدد المحصول',
+                      en: 'Custom commodity name',
+                    })}
+                  </Label>
                   <Input
                     id="supplierCustomCommodity"
                     value={supplierForm.customCommodityName}
                     onChange={(event) =>
                       handleSupplierFieldChange('customCommodityName', event.target.value)
                     }
-                    placeholder="اكتب اسم المحصول"
+                    placeholder={pickLocalizedCopy(language, {
+                      ar: 'اكتب اسم المحصول',
+                      en: 'Enter the commodity name',
+                    })}
                   />
                 </div>
               )}
               <div className="space-y-2">
-                <Label>المنطقة</Label>
+                <Label>{pickLocalizedCopy(language, { ar: 'المنطقة', en: 'District' })}</Label>
                 <Select
                   value={supplierForm.district}
                   onValueChange={(value) => handleSupplierFieldChange('district', value)}
@@ -565,16 +750,18 @@ const MarketplacePage = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {DISTRICTS.map((district) => (
+                    {localizedDistricts.map((district) => (
                       <SelectItem key={district.id} value={district.id}>
-                        {district.name}
+                        {district.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="supplierPhone">رقم التواصل</Label>
+                <Label htmlFor="supplierPhone">
+                  {pickLocalizedCopy(language, { ar: 'رقم التواصل', en: 'Phone number' })}
+                </Label>
                 <Input
                   id="supplierPhone"
                   value={supplierForm.phone}
@@ -582,7 +769,9 @@ const MarketplacePage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="supplierWebsite">رابط الموقع</Label>
+                <Label htmlFor="supplierWebsite">
+                  {pickLocalizedCopy(language, { ar: 'رابط الموقع', en: 'Website URL' })}
+                </Label>
                 <Input
                   id="supplierWebsite"
                   value={supplierForm.website}
@@ -591,7 +780,9 @@ const MarketplacePage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="supplierLogo">رابط الشعار</Label>
+                <Label htmlFor="supplierLogo">
+                  {pickLocalizedCopy(language, { ar: 'رابط الشعار', en: 'Logo URL' })}
+                </Label>
                 <Input
                   id="supplierLogo"
                   value={supplierForm.logoUrl}
@@ -602,7 +793,9 @@ const MarketplacePage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="supplierDescription">الوصف</Label>
+              <Label htmlFor="supplierDescription">
+                {pickLocalizedCopy(language, { ar: 'الوصف', en: 'Description' })}
+              </Label>
               <Textarea
                 id="supplierDescription"
                 rows={4}
@@ -613,9 +806,16 @@ const MarketplacePage = () => {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>محاصيل مرتبطة إضافية (اختياري)</Label>
+                <Label>
+                  {pickLocalizedCopy(language, {
+                    ar: 'محاصيل مرتبطة إضافية (اختياري)',
+                    en: 'Additional linked commodities (optional)',
+                  })}
+                </Label>
                 {commoditiesLoading && (
-                  <span className="text-sm text-muted-foreground">جارٍ التحميل...</span>
+                  <span className="text-sm text-muted-foreground">
+                    {pickLocalizedCopy(language, { ar: 'جارٍ التحميل...', en: 'Loading...' })}
+                  </span>
                 )}
               </div>
               <div className="grid gap-3 rounded-xl border border-border/60 p-4 md:grid-cols-2">
@@ -629,9 +829,15 @@ const MarketplacePage = () => {
                       onCheckedChange={(checked) => toggleCommodity(commodity.id, checked === true)}
                     />
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{commodity.nameAr}</p>
+                      <p className="text-sm font-medium">
+                        {pickLocalizedField(language, {
+                          ar: commodity.nameAr,
+                          en: commodity.nameEn,
+                        })}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {categoryLabel(commodity.category)} · {unitLabel(commodity.unit)}
+                        {categoryLabel(commodity.category, language)} ·{' '}
+                        {unitLabel(commodity.unit, language)}
                       </p>
                     </div>
                   </label>
@@ -641,10 +847,12 @@ const MarketplacePage = () => {
 
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={resetSupplierDialog} disabled={isSavingSupplier}>
-                إلغاء
+                {pickLocalizedCopy(language, { ar: 'إلغاء', en: 'Cancel' })}
               </Button>
               <Button onClick={() => void handleCreateSupplier()} disabled={isSavingSupplier}>
-                {isSavingSupplier ? 'جارٍ الحفظ...' : 'حفظ المورد'}
+                {isSavingSupplier
+                  ? pickLocalizedCopy(language, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
+                  : pickLocalizedCopy(language, { ar: 'حفظ المورد', en: 'Save supplier' })}
               </Button>
             </DialogFooter>
           </DialogContent>

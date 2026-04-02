@@ -1,4 +1,5 @@
 import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { UserStatus } from '@hena-wadeena/types';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { EmailService } from '../email/email.service';
@@ -8,6 +9,7 @@ import { UsersService } from '../users/users.service';
 
 import { AuthService } from './auth.service';
 import { HashingService } from './hashing.service';
+import type { AuthResponse, AuthenticatedAuthResponse, PendingKycAuthResponse } from './auth.service';
 
 const mockUser = {
   id: 'user-uuid',
@@ -28,6 +30,25 @@ const mockUser = {
   searchVector: null,
   balancePiasters: 0,
 };
+
+function expectAuthenticated(result: AuthResponse): AuthenticatedAuthResponse {
+  expect('access_token' in result).toBe(true);
+  if (!('access_token' in result)) {
+    throw new Error('Expected authenticated auth response');
+  }
+
+  return result;
+}
+
+function expectPendingKyc(result: AuthResponse): PendingKycAuthResponse {
+  expect('status' in result).toBe(true);
+  if (!('status' in result)) {
+    throw new Error('Expected pending KYC auth response');
+  }
+
+  expect(result.status).toBe(UserStatus.PENDING_KYC);
+  return result;
+}
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -115,7 +136,8 @@ describe('AuthService', () => {
   describe('register', () => {
     it('should create user and return tokens', async () => {
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(null);
-      vi.spyOn(mockUsersService, 'create').mockResolvedValue(mockUser);
+      const createSpy = vi.spyOn(mockUsersService, 'create').mockResolvedValue(mockUser);
+      const hashSpy = vi.spyOn(mockHashingService, 'hash').mockResolvedValue('$argon2id$hashed');
 
       const result = await authService.register({
         email: 'new@example.com',
@@ -123,14 +145,39 @@ describe('AuthService', () => {
         full_name: 'New User',
         role: 'tourist',
       });
+      const authenticatedResult = expectAuthenticated(result);
 
-      expect(result.access_token).toBeDefined();
-      expect(result.refresh_token).toBeDefined();
-      expect(result.user.email).toBe('test@example.com');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(mockHashingService.hash).toHaveBeenCalledWith('password123');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(mockUsersService.create).toHaveBeenCalled();
+      expect(authenticatedResult.access_token).toBeDefined();
+      expect(authenticatedResult.refresh_token).toBeDefined();
+      expect(authenticatedResult.user.email).toBe('test@example.com');
+      expect(hashSpy).toHaveBeenCalledWith('password123');
+      expect(createSpy).toHaveBeenCalled();
+    });
+
+    it('returns a pending KYC flow for roles that require verification', async () => {
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(null);
+      const createSpy = vi.spyOn(mockUsersService, 'create').mockResolvedValue({
+        ...mockUser,
+        role: 'guide',
+        status: UserStatus.PENDING_KYC,
+      });
+
+      const result = await authService.register({
+        email: 'guide@example.com',
+        password: 'password123',
+        full_name: 'Guide User',
+        role: 'guide',
+      });
+      const pendingResult = expectPendingKyc(result);
+
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: UserStatus.PENDING_KYC,
+        }),
+      );
+      expect(pendingResult.status).toBe(UserStatus.PENDING_KYC);
+      expect(pendingResult.required_documents).toEqual(['national_id', 'guide_license']);
+      expect(pendingResult.kyc_session_token).toBeDefined();
     });
 
     it('should throw ConflictException for duplicate email', async () => {
@@ -156,10 +203,32 @@ describe('AuthService', () => {
         email: 'test@example.com',
         password: 'password123',
       });
+      const authenticatedResult = expectAuthenticated(result);
 
-      expect(result.access_token).toBeDefined();
-      expect(result.refresh_token).toBeDefined();
-      expect(result.user.id).toBe('user-uuid');
+      expect(authenticatedResult.access_token).toBeDefined();
+      expect(authenticatedResult.refresh_token).toBeDefined();
+      expect(authenticatedResult.user.id).toBe('user-uuid');
+    });
+
+    it('returns a pending KYC flow instead of full tokens for pending users', async () => {
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue({
+        ...mockUser,
+        role: 'guide',
+        status: UserStatus.PENDING_KYC,
+      });
+      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(true);
+      const updateLastLoginSpy = vi.spyOn(mockUsersService, 'updateLastLogin');
+
+      const result = await authService.login({
+        email: 'guide@example.com',
+        password: 'password123',
+      });
+      const pendingResult = expectPendingKyc(result);
+
+      expect(pendingResult.status).toBe(UserStatus.PENDING_KYC);
+      expect(pendingResult.required_documents).toEqual(['national_id', 'guide_license']);
+      expect(pendingResult.kyc_session_token).toBeDefined();
+      expect(updateLastLoginSpy).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException for wrong password', async () => {
@@ -272,11 +341,12 @@ describe('AuthService', () => {
       vi.spyOn(mockUsersService, 'findById').mockResolvedValue(mockUser);
       vi.spyOn(mockHashingService, 'verify').mockResolvedValue(true);
       mockDb.returning.mockResolvedValueOnce([{ id: 'new-token-id' }]);
+      const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
 
       const result = await authService.changePassword('user-uuid', 'oldpass', 'newpass123');
-      expect(result.access_token).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(mockUsersService.updatePassword).toHaveBeenCalled();
+      const authenticatedResult = expectAuthenticated(result);
+      expect(authenticatedResult.access_token).toBeDefined();
+      expect(updatePasswordSpy).toHaveBeenCalled();
     });
 
     it('should throw on wrong current password', async () => {
@@ -325,17 +395,18 @@ describe('AuthService', () => {
       mockDb.limit.mockResolvedValueOnce([otpRecord]);
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
       mockDb.returning.mockResolvedValueOnce([{ id: 'new-token-id' }]);
+      const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
 
       const result = await authService.confirmPasswordReset(
         'test@example.com',
         '123456',
         'newpass123',
       );
-      expect(result.access_token).toBeDefined();
-      expect(result.refresh_token).toBeDefined();
-      expect(result.user.email).toBe('test@example.com');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(mockUsersService.updatePassword).toHaveBeenCalled();
+      const authenticatedResult = expectAuthenticated(result);
+      expect(authenticatedResult.access_token).toBeDefined();
+      expect(authenticatedResult.refresh_token).toBeDefined();
+      expect(authenticatedResult.user.email).toBe('test@example.com');
+      expect(updatePasswordSpy).toHaveBeenCalled();
       hashTokenSpy.mockRestore();
     });
 

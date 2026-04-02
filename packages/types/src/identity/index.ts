@@ -1,6 +1,7 @@
 import type { UserRole, UserStatus } from '../enums';
 
 export * from './notifications';
+export * from './kyc';
 
 export interface PublicUser {
   id: string;
