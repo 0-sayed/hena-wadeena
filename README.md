@@ -29,7 +29,7 @@ Unified digital platform for New Valley Governorate, Egypt — connecting touris
 | ORM                  | Drizzle ORM                                  |
 | API Gateway          | Nginx                                        |
 | Monorepo             | pnpm workspaces (NestJS) + uv (Python)       |
-| Infrastructure       | Docker Compose, AWS Amplify (frontend)       |
+| Infrastructure       | Docker Compose, GitHub Actions + Contabo VPS |
 
 ## Getting Started
 

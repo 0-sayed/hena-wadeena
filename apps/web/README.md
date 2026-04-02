@@ -238,16 +238,19 @@ Output:
 
 ### Deployment Target
 
-**AWS Amplify** — automatic deployments from `main` branch.
+**Contabo VPS** — automatic deployments from `main` branch via GitHub Actions.
 
-- Build command: `pnpm build`
-- Output directory: `dist`
-- Node version: 22 LTS
+- Server: `158.220.105.104` (hena-wadeena.online)
+- Workflow: `.github/workflows/deploy-frontend.yml`
+- Build: GitHub Actions runner
+- Deployment: rsync to `/var/www/hena-wadeena/`
+- Web server: System Nginx (config in `deployment/nginx/contabo.conf`)
 
 ### Environment Variables (Production)
 
-Set in Amplify console:
-- `VITE_API_BASE_URL` → Production API gateway URL (e.g., `https://api.henawadeena.com/api/v1`)
+Set in GitHub Secrets:
+- `CONTABO_SSH_KEY` → SSH private key for deployment
+- `VITE_API_BASE_URL` → Production API gateway URL (e.g., `https://api.hena-wadeena.online/api/v1`)
 
 ## Common Tasks
 
