@@ -93,6 +93,18 @@ describe('Internal Search (e2e)', () => {
       expect(res.body.data.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('matches Arabic word prefixes', async () => {
+      await seedPoi({ nameAr: 'مطعم الواحة' });
+
+      const res = await request(ctx.app.getHttpServer())
+        .get(`/api/v1/internal/search?q=${encodeURIComponent('مطع')}`)
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .expect(200);
+
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.data[0].title.ar).toContain('مطعم');
+    });
+
     it('excludes pending POIs', async () => {
       await seedPoi({ status: 'pending' });
 

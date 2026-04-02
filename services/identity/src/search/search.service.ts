@@ -1,4 +1,8 @@
-import { DRIZZLE_CLIENT, normalizeArabic, REDIS_CLIENT } from '@hena-wadeena/nest-common';
+import {
+  DRIZZLE_CLIENT,
+  normalizeArabic,
+  REDIS_CLIENT,
+} from '@hena-wadeena/nest-common';
 import type { SearchResult, ServiceSearchResponse } from '@hena-wadeena/types';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
@@ -7,6 +11,18 @@ import Redis from 'ioredis';
 
 const CACHE_TTL_SECONDS = 300;
 const PUBLIC_ROLES = ['guide', 'merchant', 'driver'];
+
+function buildPrefixTsQuery(text: string): string | null {
+  const tokens = normalizeArabic(text)
+    .trim()
+    .replace(/[&|!:()<>']/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  if (tokens.length === 0) return null;
+
+  return tokens.map((token) => `${token}:*`).join(' & ');
+}
 
 @Injectable()
 export class SearchService {
@@ -67,6 +83,9 @@ export class SearchService {
     limit: number,
     roleList: ReturnType<typeof sql.join>,
   ): Promise<SearchResult[]> {
+    const prefixQuery = buildPrefixTsQuery(q);
+    if (!prefixQuery) return [];
+
     const rows = await this.db.execute<{
       id: string;
       full_name: string;
@@ -79,7 +98,7 @@ export class SearchService {
         ts_rank_cd(u.search_vector, query) AS rank,
         u.role
       FROM identity.users u,
-        websearch_to_tsquery('simple', identity.normalize_arabic(${q})) AS query
+        to_tsquery('simple', ${prefixQuery}) AS query
       WHERE u.search_vector @@ query
         AND u.role IN (${roleList})
         AND u.status = 'active'

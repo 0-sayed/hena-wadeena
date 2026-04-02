@@ -153,6 +153,22 @@ describe('Internal Search (e2e)', () => {
       expect(res.body.data.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('matches Arabic word prefixes', async () => {
+      await seedListing({
+        titleAr: 'فندق الصحراء الكبير',
+        description: 'فندق فاخر',
+        slug: `prefix-${generateId()}`,
+      });
+
+      const res = await request(ctx.app.getHttpServer())
+        .get('/api/v1/internal/search?q=فن')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .expect(200);
+
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.data[0].title.ar).toContain('فندق');
+    });
+
     it('normalizes alef variants in search', async () => {
       await seedListing({ titleAr: 'اكل', description: 'طعام لذيذ', slug: `alef-${generateId()}` });
 

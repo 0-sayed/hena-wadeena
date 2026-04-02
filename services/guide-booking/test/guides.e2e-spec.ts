@@ -94,6 +94,17 @@ describe('Guide Management (e2e)', () => {
 
       expect(empty.body.data.length).toBe(0);
     });
+
+    it('filters by partial Arabic specialty text from the free-text search', async () => {
+      await seedGuide({ specialties: ['adventure'], bioAr: 'مرشد للرحلات الصحراوية' });
+
+      const res = await request(ctx.app.getHttpServer())
+        .get(`/api/v1/guides?search=${encodeURIComponent('مغا')}`)
+        .expect(200);
+
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.data[0].specialties).toContain('adventure');
+    });
   });
 
   describe('GET /api/v1/guides/:id (public)', () => {

@@ -93,6 +93,18 @@ describe('Identity Internal Search (e2e)', () => {
       expect(res.body.data).toHaveLength(1);
     });
 
+    it('matches Arabic word prefixes', async () => {
+      await seedUser({ fullName: 'فندق الواحات', role: 'merchant' });
+
+      const res = await request(ctx.app.getHttpServer())
+        .get('/api/v1/internal/search?q=فن')
+        .set('x-internal-secret', INTERNAL_SECRET)
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].title.ar).toContain('فندق');
+    });
+
     it('excludes users with non-public roles (tourist)', async () => {
       await seedUser({ fullName: 'سائح تجريبي', role: 'tourist' });
       await seedUser({ fullName: 'سائح مرشد', role: 'guide' });

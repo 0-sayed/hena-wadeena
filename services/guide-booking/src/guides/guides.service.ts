@@ -11,6 +11,71 @@ import type { CreateGuideDto, GuideFiltersDto, GuideUploadUrlDto, UpdateGuideDto
 
 type Guide = typeof guides.$inferSelect;
 
+const guideSearchLabels = {
+  languages: {
+    arabic: 'العربية',
+    english: 'الإنجليزية',
+    french: 'الفرنسية',
+    german: 'الألمانية',
+    italian: 'الإيطالية',
+    ar: 'العربية',
+    en: 'الإنجليزية',
+    fr: 'الفرنسية',
+    de: 'الألمانية',
+    it: 'الإيطالية',
+  },
+  specialties: {
+    history: 'تاريخ',
+    nature: 'طبيعة',
+    adventure: 'مغامرة',
+    culture: 'ثقافة',
+    photography: 'تصوير',
+    food: 'طعام',
+    archaeology: 'آثار',
+    temples: 'معابد',
+    desert: 'صحراء',
+    camping: 'تخييم',
+    safari: 'سفاري',
+    sandboarding: 'تزلج رملي',
+    wellness: 'استشفاء',
+    hot_springs: 'ينابيع حارة',
+    medical_tourism: 'سياحة علاجية',
+    landscapes: 'مناظر طبيعية',
+    architecture: 'عمارة',
+  },
+  areas: {
+    kharga: 'الخارجة',
+    dakhla: 'الداخلة',
+    farafra: 'الفرافرة',
+    baris: 'باريس',
+    balat: 'بلاط',
+  },
+} as const;
+
+function normalizeGuideSearchText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function expandGuideSearchTerms(value: string): string[] {
+  const normalizedValue = normalizeGuideSearchText(value);
+  if (!normalizedValue) return [];
+
+  const terms = new Set<string>([normalizedValue]);
+
+  for (const labelGroup of Object.values(guideSearchLabels)) {
+    for (const [key, label] of Object.entries(labelGroup)) {
+      if (
+        normalizeGuideSearchText(key).includes(normalizedValue) ||
+        normalizeGuideSearchText(label).includes(normalizedValue)
+      ) {
+        terms.add(key);
+      }
+    }
+  }
+
+  return [...terms];
+}
+
 @Injectable()
 export class GuidesService {
   constructor(
@@ -67,10 +132,16 @@ export class GuidesService {
     }
 
     if (query.search) {
-      const escaped = escapeLike(query.search);
+      const searchTerms = expandGuideSearchTerms(query.search);
+      const patterns = searchTerms.map((term) => `%${escapeLike(term)}%`);
       const searchCond = or(
-        ilike(guides.bioAr, `%${escaped}%`),
-        ilike(guides.bioEn, `%${escaped}%`),
+        ...patterns.flatMap((pattern) => [
+          ilike(guides.bioAr, pattern),
+          ilike(guides.bioEn, pattern),
+          sql`array_to_string(${guides.specialties}, ' ') ILIKE ${pattern}`,
+          sql`array_to_string(${guides.languages}, ' ') ILIKE ${pattern}`,
+          sql`array_to_string(${guides.areasOfOperation}, ' ') ILIKE ${pattern}`,
+        ]),
       );
       if (searchCond) conditions.push(searchCond);
     }

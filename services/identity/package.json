@@ -6,16 +6,16 @@
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "SERVICE_NAME=identity DB_SCHEMA=identity tsx watch --env-file ../../.env src/main.ts",
+    "dev": "SERVICE_NAME=identity DB_SCHEMA=identity node --watch --env-file ../../.env --import tsx src/main.ts",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "db:migrate": "tsx --env-file ../../.env src/db/migrate.ts",
-    "db:seed": "tsx --env-file ../../.env src/db/seed.ts",
-    "db:seed:showcase": "tsx --env-file ../../.env src/db/seed.ts --layer=showcase"
+    "db:migrate": "node --env-file ../../.env --import tsx src/db/migrate.ts",
+    "db:seed": "node --env-file ../../.env --import tsx src/db/seed.ts",
+    "db:seed:showcase": "node --env-file ../../.env --import tsx src/db/seed.ts --layer=showcase"
   },
   "dependencies": {
     "@hena-wadeena/nest-common": "workspace:*",

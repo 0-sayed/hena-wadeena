@@ -4,7 +4,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CreateGuideDto } from './dto';
-import { GuidesService } from './guides.service';
+import { expandGuideSearchTerms, GuidesService } from './guides.service';
 
 type MockChain = Record<string, ReturnType<typeof vi.fn>> & {
   then: ReturnType<typeof vi.fn>;
@@ -82,6 +82,16 @@ describe('GuidesService', () => {
     } as unknown as S3Service;
 
     service = new GuidesService(mockDb as any, mockS3);
+  });
+
+  describe('expandGuideSearchTerms', () => {
+    it('maps partial Arabic specialty text to the stored enum value', () => {
+      expect(expandGuideSearchTerms('مغا')).toContain('adventure');
+    });
+
+    it('maps partial Arabic area text to the stored enum value', () => {
+      expect(expandGuideSearchTerms('الخا')).toContain('kharga');
+    });
   });
 
   // ─────────────────────────────────────────── resolveGuideId

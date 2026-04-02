@@ -25,6 +25,25 @@ import { QueryBusinessesDto } from './dto/query-businesses.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { VerifyBusinessDto } from './dto/verify-business.dto';
 
+export function buildPrefixTsQuery(text: string): string | null {
+  const tokens = text
+    .trim()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ـ/g, '')
+    .replace(
+      /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,
+      '',
+    )
+    .replace(/[&|!:()<>']/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  if (tokens.length === 0) return null;
+
+  return tokens.map((token) => `${token}:*`).join(' & ');
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { searchVector, ...bizDirColumns } = getTableColumns(businessDirectories);
 
@@ -345,9 +364,12 @@ export class BusinessDirectoryService {
       );
     }
     if (q) {
-      conditions.push(
-        sql`${businessDirectories.searchVector} @@ websearch_to_tsquery('simple', market.normalize_arabic(${q}))`,
-      );
+      const prefixQuery = buildPrefixTsQuery(q);
+      if (prefixQuery) {
+        conditions.push(
+          sql`${businessDirectories.searchVector} @@ to_tsquery('simple', ${prefixQuery})`,
+        );
+      }
     }
 
     const whereClause = and(...conditions);

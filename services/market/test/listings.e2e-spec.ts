@@ -304,6 +304,15 @@ describe('Listings (e2e)', () => {
   // ---------------------------------------------------------------------------
 
   describe('Owner visibility', () => {
+    it('unauthenticated request can GET an active listing by id', async () => {
+      const listing = await insertActive({ slug: 'public-active-listing', titleEn: 'Public Active Listing' });
+
+      const readRes = await request(app.getHttpServer()).get(`/api/v1/listings/${listing.id}`).expect(200);
+
+      expect(readRes.body.id).toBe(listing.id);
+      expect(readRes.body.status).toBe('active');
+    });
+
     it('owner can GET their own draft listing', async () => {
       const createRes = await request(app.getHttpServer())
         .post('/api/v1/listings')

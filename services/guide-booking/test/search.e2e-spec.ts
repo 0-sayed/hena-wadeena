@@ -160,6 +160,18 @@ describe('Internal Search (e2e)', () => {
       expect(res.body.data.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('matches Arabic word prefixes', async () => {
+      await seedAttraction({ nameAr: 'معبد هيبس', slug: `prefix-${generateId()}` });
+
+      const res = await request(ctx.app.getHttpServer())
+        .get(`/api/v1/internal/search?q=${encodeURIComponent('معب')}`)
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .expect(200);
+
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.data[0].title.ar).toContain('معبد');
+    });
+
     it('returns results from all entity types', async () => {
       const guide = await seedGuide({ bioAr: 'الوادي الجديد مرشد' });
       await seedAttraction({ nameAr: 'الوادي الجديد معلم', slug: `cross-${generateId()}` });
