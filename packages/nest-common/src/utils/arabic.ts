@@ -18,3 +18,15 @@ export function normalizeArabic(text: string): string {
     .replace(/ة/g, 'ه')
     .replace(/ـ/g, '');
 }
+
+export function buildPrefixTsQuery(text: string): string | null {
+  const tokens = normalizeArabic(text)
+    .trim()
+    .replace(/[&|!:()<>']/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  if (tokens.length === 0) return null;
+
+  return tokens.map((token) => `${token}:*`).join(' & ');
+}
