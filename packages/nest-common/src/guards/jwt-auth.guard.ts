@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
+import { IS_OPTIONAL_JWT_KEY } from '../decorators/optional-jwt.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
@@ -18,8 +19,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
+    const isOptionalJwt = this.reflector.getAllAndOverride<boolean>(IS_OPTIONAL_JWT_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (isPublic) {
+    if (isPublic || isOptionalJwt) {
       return true;
     }
 
