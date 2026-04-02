@@ -79,12 +79,17 @@ const RegisterPage = () => {
     setFieldErrors({});
 
     try {
-      await auth.register({
+      const result = await auth.register({
         email: formData.email,
         full_name: formData.fullName,
         password: formData.password,
         role: formData.role,
       });
+      if (result.status === 'pending_kyc') {
+        toast.success('تم إنشاء الحساب. أكمل رفع وثائق التحقق لتفعيل الحساب');
+        void navigate('/kyc/continue');
+        return;
+      }
       toast.success('تم إنشاء الحساب بنجاح');
       void navigate('/');
     } catch (err: unknown) {

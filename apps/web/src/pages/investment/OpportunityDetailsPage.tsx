@@ -13,6 +13,7 @@ import {
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LtrText } from '@/components/ui/ltr-text';
 import { Badge } from '@/components/ui/badge';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { investmentAPI } from '@/services/api';
@@ -247,13 +248,13 @@ const OpportunityDetailsPage = () => {
                       {opportunity.contact.phone && (
                         <div className="flex items-center gap-3">
                           <Phone className="h-4 w-4 text-primary" />
-                          <span>{opportunity.contact.phone}</span>
+                          <LtrText>{opportunity.contact.phone}</LtrText>
                         </div>
                       )}
                       {opportunity.contact.email && (
                         <div className="flex items-center gap-3">
                           <Mail className="h-4 w-4 text-primary" />
-                          <span>{opportunity.contact.email}</span>
+                          <LtrText>{opportunity.contact.email}</LtrText>
                         </div>
                       )}
                       {opportunity.contact.website && (

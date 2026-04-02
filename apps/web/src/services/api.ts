@@ -159,6 +159,13 @@ interface AuthTokensResponse {
   user: AuthUserResponse;
 }
 
+interface PendingKycAuthResponse {
+  status: 'pending_kyc';
+  kyc_session_token: string;
+  required_documents: string[];
+  user: AuthUserResponse;
+}
+
 export interface AuthTokens {
   access_token: string;
   refresh_token: string;
@@ -167,11 +174,45 @@ export interface AuthTokens {
   user: AuthUser;
 }
 
+export interface PendingKycAuth {
+  status: 'pending_kyc';
+  kyc_session_token: string;
+  required_documents: string[];
+  user: AuthUser;
+}
+
+export type AuthFlowResponse = AuthTokens | PendingKycAuth;
+
 export interface AuthRefreshTokens {
   access_token: string;
   refresh_token: string;
   token_type: string;
   expires_in: number;
+}
+
+export interface KycOnboardingSubmission {
+  id: string;
+  userId: string;
+  docType: string;
+  docUrl: string;
+  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface KycOnboardingSessionResponse {
+  user: AuthUserResponse;
+  required_documents: string[];
+  submissions: KycOnboardingSubmission[];
+}
+
+export interface KycOnboardingSession {
+  user: AuthUser;
+  required_documents: string[];
+  submissions: KycOnboardingSubmission[];
 }
 
 export interface UpdateProfileRequest {
@@ -183,21 +224,51 @@ export interface UpdateProfileRequest {
   language?: 'ar' | 'en';
 }
 
+function isPendingKycAuthResponse(
+  response: AuthTokensResponse | PendingKycAuthResponse,
+): response is PendingKycAuthResponse {
+  return 'status' in response && response.status === 'pending_kyc';
+}
+
+function normalizeAuthFlowResponse(
+  response: AuthTokensResponse | PendingKycAuthResponse,
+): AuthFlowResponse {
+  if (isPendingKycAuthResponse(response)) {
+    return {
+      status: 'pending_kyc',
+      kyc_session_token: response.kyc_session_token,
+      required_documents: response.required_documents,
+      user: normalizeAuthUser(response.user),
+    };
+  }
+
+  return {
+    access_token: response.access_token,
+    refresh_token: response.refresh_token,
+    token_type: response.token_type,
+    expires_in: response.expires_in,
+    user: normalizeAuthUser(response.user),
+  };
+}
+
 export const authAPI = {
   login: async (body: LoginRequest) => {
-    const response = await apiFetch<AuthTokensResponse>('/auth/login', {
+    const response = await apiFetch<AuthTokensResponse | PendingKycAuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return { ...response, user: normalizeAuthUser(response.user) } satisfies AuthTokens;
+    return normalizeAuthFlowResponse(response);
   },
 
   register: async (body: RegisterRequest) => {
-    const response = await apiFetch<AuthTokensResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
-    return { ...response, user: normalizeAuthUser(response.user) } satisfies AuthTokens;
+    const response = await apiFetch<AuthTokensResponse | PendingKycAuthResponse>(
+      '/auth/register',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+    return normalizeAuthFlowResponse(response);
   },
 
   refresh: (body: { refresh_token: string }) =>
@@ -218,6 +289,27 @@ export const authAPI = {
 
   logout: (refresh_token?: string) =>
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
+};
+
+export const kycOnboardingAPI = {
+  getSession: async (kycSessionToken: string) => {
+    const response = await apiFetch<KycOnboardingSessionResponse>('/auth/kyc/session', {
+      headers: { Authorization: `Bearer ${kycSessionToken}` },
+    });
+
+    return {
+      user: normalizeAuthUser(response.user),
+      required_documents: response.required_documents,
+      submissions: response.submissions,
+    } satisfies KycOnboardingSession;
+  },
+
+  submitDocument: (kycSessionToken: string, body: { docType: string; docUrl: string }) =>
+    apiFetch<KycOnboardingSubmission>('/auth/kyc/submissions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kycSessionToken}` },
+      body: JSON.stringify(body),
+    }),
 };
 
 export const usersAPI = {
@@ -1385,7 +1477,7 @@ export interface AdminUser {
   displayName: string | null;
   avatarUrl: string | null;
   role: UserRole;
-  status: 'active' | 'suspended' | 'banned';
+  status: 'active' | 'pending_kyc' | 'suspended' | 'banned';
   language: string;
   createdAt: string;
   updatedAt: string;

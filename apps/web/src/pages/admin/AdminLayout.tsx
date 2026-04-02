@@ -17,20 +17,46 @@ import { Link, Navigate, NavLink, Outlet } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
+import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { to: '/admin/overview', label: 'نظرة عامة', icon: BarChart3 },
-  { to: '/admin/users', label: 'المستخدمون', icon: Users },
-  { to: '/admin/moderation', label: 'المراجعة', icon: UserCheck },
-  { to: '/admin/guides', label: 'المرشدون', icon: Shield },
-  { to: '/admin/map', label: 'الخريطة', icon: MapPin },
-  { to: '/admin/crops', label: 'المحاصيل', icon: Leaf },
+  {
+    to: '/admin/overview',
+    label: { ar: 'نظرة عامة', en: 'Overview' },
+    icon: BarChart3,
+  },
+  {
+    to: '/admin/users',
+    label: { ar: 'المستخدمون', en: 'Users' },
+    icon: Users,
+  },
+  {
+    to: '/admin/moderation',
+    label: { ar: 'المراجعة', en: 'Moderation' },
+    icon: UserCheck,
+  },
+  {
+    to: '/admin/guides',
+    label: { ar: 'المرشدون', en: 'Guides' },
+    icon: Shield,
+  },
+  {
+    to: '/admin/map',
+    label: { ar: 'الخريطة', en: 'Map' },
+    icon: MapPin,
+  },
+  {
+    to: '/admin/crops',
+    label: { ar: 'المحاصيل', en: 'Crops' },
+    icon: Leaf,
+  },
 ];
 
 export default function AdminLayout() {
-  const { user, isLoading, direction, logout } = useAuth();
+  const { user, isLoading, direction, language, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const sidebarEdgeClass = direction === 'rtl' ? 'right-0' : 'left-0';
   const sidebarHiddenClass = direction === 'rtl' ? 'translate-x-full' : '-translate-x-full';
 
@@ -65,7 +91,9 @@ export default function AdminLayout() {
         <div className="flex h-16 items-center justify-between border-b px-4">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">لوحة التحكم</span>
+            <span className="font-bold">
+              {pickLocalizedCopy(appLanguage, { ar: 'لوحة التحكم', en: 'Admin panel' })}
+            </span>
           </div>
           <Button
             variant="ghost"
@@ -93,7 +121,7 @@ export default function AdminLayout() {
               }
             >
               <item.icon className="h-5 w-5" />
-              {item.label}
+              {pickLocalizedCopy(appLanguage, item.label)}
             </NavLink>
           ))}
         </nav>
@@ -106,7 +134,10 @@ export default function AdminLayout() {
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <Home className="h-5 w-5" />
-              العودة إلى الرئيسية
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'العودة إلى الرئيسية',
+                en: 'Back to home',
+              })}
             </Link>
             <Link
               to="/profile"
@@ -114,7 +145,7 @@ export default function AdminLayout() {
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <User className="h-5 w-5" />
-              الملف الشخصي
+              {pickLocalizedCopy(appLanguage, { ar: 'الملف الشخصي', en: 'Profile' })}
             </Link>
             <button
               type="button"
@@ -125,7 +156,7 @@ export default function AdminLayout() {
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
             >
               <LogOut className="h-5 w-5" />
-              تسجيل الخروج
+              {pickLocalizedCopy(appLanguage, { ar: 'تسجيل الخروج', en: 'Logout' })}
             </button>
           </div>
         </div>
@@ -142,25 +173,27 @@ export default function AdminLayout() {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">مرحباً،</span>
+            <span className="text-sm text-muted-foreground">
+              {pickLocalizedCopy(appLanguage, { ar: 'مرحباً،', en: 'Welcome,' })}
+            </span>
             <span className="font-medium">{user.full_name}</span>
           </div>
           <div className="hidden items-center gap-2 lg:flex">
             <Button asChild variant="outline" size="sm">
               <Link to="/">
                 <Home className="h-4 w-4" />
-                الرئيسية
+                {pickLocalizedCopy(appLanguage, { ar: 'الرئيسية', en: 'Home' })}
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
               <Link to="/profile">
                 <User className="h-4 w-4" />
-                الملف الشخصي
+                {pickLocalizedCopy(appLanguage, { ar: 'الملف الشخصي', en: 'Profile' })}
               </Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="h-4 w-4" />
-              خروج
+              {pickLocalizedCopy(appLanguage, { ar: 'خروج', en: 'Logout' })}
             </Button>
           </div>
         </header>

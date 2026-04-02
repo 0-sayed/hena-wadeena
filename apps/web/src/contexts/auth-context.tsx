@@ -2,8 +2,9 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { authAPI } from '@/services/api';
-import type { AuthUser, LoginRequest, RegisterRequest } from '@/services/api';
+import type { AuthFlowResponse, AuthUser, LoginRequest, RegisterRequest } from '@/services/api';
 import * as authManager from '@/services/auth-manager';
+import * as kycSessionManager from '@/services/kyc-session-manager';
 
 interface AuthState {
   user: AuthUser | null;
@@ -14,8 +15,8 @@ interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  login(this: void, credentials: LoginRequest): Promise<void>;
-  register(this: void, data: RegisterRequest): Promise<void>;
+  login(this: void, credentials: LoginRequest): Promise<{ status: 'authenticated' | 'pending_kyc' }>;
+  register(this: void, data: RegisterRequest): Promise<{ status: 'authenticated' | 'pending_kyc' }>;
   logout(this: void): void;
   updateUser(this: void, user: AuthUser): void;
   setLanguage(this: void, language: 'ar' | 'en'): Promise<void>;
@@ -35,6 +36,12 @@ function getStoredLanguage(): 'ar' | 'en' {
   }
 
   return normalizeLanguage(window.localStorage.getItem(LANGUAGE_STORAGE_KEY));
+}
+
+function isPendingKycResponse(
+  response: AuthFlowResponse,
+): response is Extract<AuthFlowResponse, { status: 'pending_kyc' }> {
+  return 'status' in response && response.status === 'pending_kyc';
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -81,22 +88,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const rt = authManager.getRefreshToken();
     void authAPI.logout(rt ?? undefined).catch(() => undefined);
     authManager.clearTokens();
+    kycSessionManager.clearKycSessionToken();
     setUser(null);
     void navigate('/login');
   }, [navigate]);
 
   const login = useCallback(async (credentials: LoginRequest) => {
     const response = await authAPI.login(credentials);
-    authManager.setTokens(response.access_token, response.refresh_token);
-    setUser(response.user);
-    setLanguagePreference(normalizeLanguage(response.user.language));
+    if (isPendingKycResponse(response)) {
+      authManager.clearTokens();
+      kycSessionManager.setKycSessionToken(response.kyc_session_token);
+      setUser(null);
+      return { status: 'pending_kyc' } as const;
+    } else {
+      kycSessionManager.clearKycSessionToken();
+      authManager.setTokens(response.access_token, response.refresh_token);
+      setUser(response.user);
+      setLanguagePreference(normalizeLanguage(response.user.language));
+      return { status: 'authenticated' } as const;
+    }
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
     const response = await authAPI.register(data);
-    authManager.setTokens(response.access_token, response.refresh_token);
-    setUser(response.user);
-    setLanguagePreference(normalizeLanguage(response.user.language));
+    if (isPendingKycResponse(response)) {
+      authManager.clearTokens();
+      kycSessionManager.setKycSessionToken(response.kyc_session_token);
+      setUser(null);
+      return { status: 'pending_kyc' } as const;
+    } else {
+      kycSessionManager.clearKycSessionToken();
+      authManager.setTokens(response.access_token, response.refresh_token);
+      setUser(response.user);
+      setLanguagePreference(normalizeLanguage(response.user.language));
+      return { status: 'authenticated' } as const;
+    }
   }, []);
 
   const updateUser = useCallback((updatedUser: AuthUser) => {

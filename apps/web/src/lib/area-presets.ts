@@ -1,3 +1,5 @@
+import type { AppLanguage } from './localization';
+
 export interface AreaPreset {
   id: string;
   nameAr: string;
@@ -17,4 +19,20 @@ export const AREA_PRESETS: AreaPreset[] = [
 /** Find an area preset by its id */
 export function findArea(id: string): AreaPreset | undefined {
   return AREA_PRESETS.find((a) => a.id === id);
+}
+
+export function getAreaDisplayName(area: AreaPreset, language: AppLanguage = 'ar'): string {
+  return language === 'en' ? area.nameEn : area.nameAr;
+}
+
+export function localizeAreaName(value: string, language: AppLanguage = 'ar'): string {
+  const normalized = value.trim().toLowerCase();
+  const area = AREA_PRESETS.find(
+    (candidate) =>
+      candidate.id === normalized ||
+      candidate.nameAr.trim() === value.trim() ||
+      candidate.nameEn.trim().toLowerCase() === normalized,
+  );
+
+  return area ? getAreaDisplayName(area, language) : value;
 }

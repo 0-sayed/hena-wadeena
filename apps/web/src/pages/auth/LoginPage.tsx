@@ -23,7 +23,12 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await auth.login({ email: formData.email, password: formData.password });
+      const result = await auth.login({ email: formData.email, password: formData.password });
+      if (result.status === 'pending_kyc') {
+        toast.success('يجب استكمال وثائق التحقق قبل تفعيل الحساب');
+        void navigate('/kyc/continue');
+        return;
+      }
       toast.success('تم تسجيل الدخول بنجاح');
       const from = (location.state as { from?: Location })?.from?.pathname || '/';
       void navigate(from);

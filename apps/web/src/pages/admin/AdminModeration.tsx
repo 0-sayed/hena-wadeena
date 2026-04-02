@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { KycStatus } from '@hena-wadeena/types';
 
 import { DocumentViewerDialog } from '@/components/admin/DocumentViewerDialog';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/use-auth';
 import {
   useAdminKyc,
   useAdminPendingBusinesses,
@@ -34,40 +34,57 @@ import {
   useVerifyBusiness,
   useVerifyListing,
 } from '@/hooks/use-admin';
+import { districtLabel, listingCategoryLabel } from '@/lib/format';
+import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import type { KycSubmission } from '@/services/api';
+
+type LocalizedLabel = {
+  ar: string;
+  en: string;
+};
 
 const kycStatusConfig: Record<
   KycSubmission['status'],
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className?: string }
+  {
+    label: LocalizedLabel;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    className?: string;
+  }
 > = {
-  pending: { label: 'معلق', variant: 'secondary' },
+  pending: {
+    label: { ar: 'معلق', en: 'Pending' },
+    variant: 'secondary',
+  },
   under_review: {
-    label: 'قيد المراجعة',
+    label: { ar: 'قيد المراجعة', en: 'Under review' },
     variant: 'outline',
     className: 'border-blue-500/40 text-blue-700 dark:text-blue-300',
   },
   approved: {
-    label: 'مقبول',
+    label: { ar: 'مقبول', en: 'Approved' },
     variant: 'default',
     className: 'bg-green-600 text-white hover:bg-green-600',
   },
-  rejected: { label: 'مرفوض', variant: 'destructive' },
+  rejected: {
+    label: { ar: 'مرفوض', en: 'Rejected' },
+    variant: 'destructive',
+  },
 };
 
-const kycFilterOptions: Array<{ value: 'all' | KycSubmission['status']; label: string }> = [
-  { value: 'all', label: 'الكل' },
-  { value: KycStatus.PENDING, label: 'معلق' },
-  { value: KycStatus.UNDER_REVIEW, label: 'قيد المراجعة' },
-  { value: KycStatus.APPROVED, label: 'مقبول' },
-  { value: KycStatus.REJECTED, label: 'مرفوض' },
+const kycFilterOptions: Array<{ value: 'all' | KycSubmission['status']; label: LocalizedLabel }> = [
+  { value: 'all', label: { ar: 'الكل', en: 'All' } },
+  { value: KycStatus.PENDING, label: { ar: 'معلق', en: 'Pending' } },
+  { value: KycStatus.UNDER_REVIEW, label: { ar: 'قيد المراجعة', en: 'Under review' } },
+  { value: KycStatus.APPROVED, label: { ar: 'مقبول', en: 'Approved' } },
+  { value: KycStatus.REJECTED, label: { ar: 'مرفوض', en: 'Rejected' } },
 ];
 
-const documentTypeLabels: Record<string, string> = {
-  national_id: 'بطاقة الرقم القومي',
-  student_id: 'بطاقة الطالب',
-  guide_license: 'رخصة الإرشاد',
-  commercial_register: 'السجل التجاري',
-  business_document: 'مستند تجاري',
+const documentTypeLabels: Record<string, LocalizedLabel> = {
+  national_id: { ar: 'بطاقة الرقم القومي', en: 'National ID' },
+  student_id: { ar: 'بطاقة الطالب', en: 'Student ID' },
+  guide_license: { ar: 'رخصة الإرشاد', en: 'Guide license' },
+  commercial_register: { ar: 'السجل التجاري', en: 'Commercial register' },
+  business_document: { ar: 'مستند تجاري', en: 'Business document' },
 };
 
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
@@ -80,10 +97,10 @@ function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message:
 }
 
 function TableSkeleton({ cols }: { cols: number }) {
-  return Array.from({ length: 3 }).map((_, i) => (
-    <TableRow key={i}>
-      {Array.from({ length: cols }).map((_, j) => (
-        <TableCell key={j}>
+  return Array.from({ length: 3 }).map((_, rowIndex) => (
+    <TableRow key={rowIndex}>
+      {Array.from({ length: cols }).map((_, colIndex) => (
+        <TableCell key={colIndex}>
           <Skeleton className="h-4 w-full" />
         </TableCell>
       ))}
@@ -92,6 +109,11 @@ function TableSkeleton({ cols }: { cols: number }) {
 }
 
 export default function AdminModeration() {
+  const { language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
+  const currencyLabel = pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' });
+
   const [activeTab, setActiveTab] = useState('kyc');
   const [kycStatusFilter, setKycStatusFilter] = useState<'all' | KycSubmission['status']>('all');
   const [viewDocument, setViewDocument] = useState<{
@@ -115,25 +137,45 @@ export default function AdminModeration() {
   const verifyListing = useVerifyListing();
   const verifyBusiness = useVerifyBusiness();
 
+  const formatDate = (value: string) => new Date(value).toLocaleDateString(locale);
+  const badgeCountSide = appLanguage === 'en' ? 'ml-1' : 'mr-1';
+
   const handleApprove = (type: 'kyc' | 'listing' | 'business', id: string) => {
-    if (type === 'kyc') reviewKyc.mutate({ id, status: 'approved' });
-    else if (type === 'listing') verifyListing.mutate({ id, approved: true });
-    else if (type === 'business') verifyBusiness.mutate({ id, approved: true });
+    if (type === 'kyc') {
+      reviewKyc.mutate({ id, status: 'approved' });
+      return;
+    }
+
+    if (type === 'listing') {
+      verifyListing.mutate({ id, approved: true });
+      return;
+    }
+
+    verifyBusiness.mutate({ id, approved: true });
   };
 
   const handleReject = () => {
-    if (!rejectDialog) return;
+    if (!rejectDialog) {
+      return;
+    }
+
     const { type, id } = rejectDialog;
     const onSuccess = () => {
       setRejectDialog(null);
       setRejectReason('');
     };
-    if (type === 'kyc')
+
+    if (type === 'kyc') {
       reviewKyc.mutate({ id, status: 'rejected', notes: rejectReason }, { onSuccess });
-    else if (type === 'listing')
+      return;
+    }
+
+    if (type === 'listing') {
       verifyListing.mutate({ id, approved: false, notes: rejectReason }, { onSuccess });
-    else if (type === 'business')
-      verifyBusiness.mutate({ id, approved: false, reason: rejectReason }, { onSuccess });
+      return;
+    }
+
+    verifyBusiness.mutate({ id, approved: false, reason: rejectReason }, { onSuccess });
   };
 
   const activeKycFilter = kycFilterOptions.find((option) => option.value === kycStatusFilter);
@@ -141,8 +183,18 @@ export default function AdminModeration() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">المراجعة والموافقات</h1>
-        <p className="text-muted-foreground">مراجعة الطلبات المعلقة والموافقة عليها أو رفضها</p>
+        <h1 className="text-2xl font-bold">
+          {pickLocalizedCopy(appLanguage, {
+            ar: 'المراجعة والموافقات',
+            en: 'Moderation and approvals',
+          })}
+        </h1>
+        <p className="text-muted-foreground">
+          {pickLocalizedCopy(appLanguage, {
+            ar: 'مراجعة الطلبات المعلقة والموافقة عليها أو رفضها',
+            en: 'Review pending requests and approve or reject them',
+          })}
+        </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -151,37 +203,46 @@ export default function AdminModeration() {
             <FileText className="h-4 w-4" />
             KYC
             {kycQuery.data && kycQuery.data.total > 0 && (
-              <Badge variant="secondary" className="mr-1">
+              <Badge variant="secondary" className={badgeCountSide}>
                 {kycQuery.data.total}
               </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="listings" className="gap-2">
             <ShoppingBag className="h-4 w-4" />
-            الإعلانات
+            {pickLocalizedCopy(appLanguage, { ar: 'الإعلانات', en: 'Listings' })}
             {listingsQuery.data && listingsQuery.data.total > 0 && (
-              <Badge variant="secondary" className="mr-1">
+              <Badge variant="secondary" className={badgeCountSide}>
                 {listingsQuery.data.total}
               </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="businesses" className="gap-2">
             <Store className="h-4 w-4" />
-            الأنشطة التجارية
+            {pickLocalizedCopy(appLanguage, { ar: 'الأنشطة التجارية', en: 'Businesses' })}
             {businessesQuery.data && businessesQuery.data.total > 0 && (
-              <Badge variant="secondary" className="mr-1">
+              <Badge variant="secondary" className={badgeCountSide}>
                 {businessesQuery.data.total}
               </Badge>
             )}
           </TabsTrigger>
         </TabsList>
 
-        {/* KYC Tab */}
         <TabsContent value="kyc">
           <Card>
             <CardHeader>
-              <CardTitle>طلبات التحقق من الهوية</CardTitle>
-              <CardDescription>جميع طلبات التحقق مع إمكانية التصفية حسب الحالة</CardDescription>
+              <CardTitle>
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'طلبات التحقق من الهوية',
+                  en: 'KYC submissions',
+                })}
+              </CardTitle>
+              <CardDescription>
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'جميع طلبات التحقق مع إمكانية التصفية حسب الحالة',
+                  en: 'All identity-verification submissions with status-based filtering',
+                })}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-4 flex flex-wrap gap-2">
@@ -192,22 +253,45 @@ export default function AdminModeration() {
                     variant={kycStatusFilter === option.value ? 'default' : 'outline'}
                     onClick={() => setKycStatusFilter(option.value)}
                   >
-                    {option.label}
+                    {pickLocalizedCopy(appLanguage, option.label)}
                   </Button>
                 ))}
               </div>
               {kycQuery.error ? (
-                <EmptyState icon={AlertCircle} message="فشل تحميل البيانات" />
+                <EmptyState
+                  icon={AlertCircle}
+                  message={pickLocalizedCopy(appLanguage, {
+                    ar: 'فشل تحميل البيانات',
+                    en: 'Failed to load data',
+                  })}
+                />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>الاسم</TableHead>
-                      <TableHead>نوع المستند</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>تاريخ التقديم</TableHead>
-                      <TableHead>آخر مراجعة</TableHead>
-                      <TableHead className="w-40">الإجراءات</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</TableHead>
+                      <TableHead>
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'نوع المستند',
+                          en: 'Document type',
+                        })}
+                      </TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
+                      <TableHead>
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'تاريخ التقديم',
+                          en: 'Submitted on',
+                        })}
+                      </TableHead>
+                      <TableHead>
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'آخر مراجعة',
+                          en: 'Last review',
+                        })}
+                      </TableHead>
+                      <TableHead className="w-40">
+                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -220,83 +304,104 @@ export default function AdminModeration() {
                             icon={CheckCircle}
                             message={
                               kycStatusFilter === 'all'
-                                ? 'لا توجد طلبات تحقق حالياً'
-                                : `لا توجد طلبات بحالة "${activeKycFilter?.label ?? ''}"`
+                                ? pickLocalizedCopy(appLanguage, {
+                                    ar: 'لا توجد طلبات تحقق حاليًا',
+                                    en: 'No KYC submissions right now',
+                                  })
+                                : pickLocalizedCopy(appLanguage, {
+                                    ar: `لا توجد طلبات بحالة "${pickLocalizedCopy(appLanguage, activeKycFilter?.label ?? { ar: '', en: '' })}"`,
+                                    en: `No submissions with status "${pickLocalizedCopy(appLanguage, activeKycFilter?.label ?? { ar: '', en: '' })}"`,
+                                  })
                             }
                           />
                         </TableCell>
                       </TableRow>
                     ) : (
-                      kycQuery.data?.data.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.fullName}</TableCell>
-                          <TableCell>
-                            {documentTypeLabels[item.documentType] ?? item.documentType}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={kycStatusConfig[item.status].variant}
-                              className={kycStatusConfig[item.status].className}
-                            >
-                              {kycStatusConfig[item.status].label}
-                            </Badge>
-                            {item.notes ? (
-                              <p className="mt-1 text-xs text-muted-foreground">{item.notes}</p>
-                            ) : null}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(item.submittedAt).toLocaleDateString('ar-EG')}
-                          </TableCell>
-                          <TableCell>
-                            {item.reviewedAt ? (
-                              <div className="space-y-1 text-sm">
-                                <p>{item.reviewedByName ?? 'تمت المراجعة'}</p>
-                                <p className="text-muted-foreground">
-                                  {new Date(item.reviewedAt).toLocaleDateString('ar-EG')}
-                                </p>
+                      kycQuery.data?.data.map((item) => {
+                        const statusConfig = kycStatusConfig[item.status];
+                        const documentType = documentTypeLabels[item.documentType] ?? {
+                          ar: item.documentType,
+                          en: item.documentType,
+                        };
+
+                        return (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.fullName}</TableCell>
+                            <TableCell>{pickLocalizedCopy(appLanguage, documentType)}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={statusConfig.variant}
+                                className={statusConfig.className}
+                              >
+                                {pickLocalizedCopy(appLanguage, statusConfig.label)}
+                              </Badge>
+                              {item.notes ? (
+                                <p className="mt-1 text-xs text-muted-foreground">{item.notes}</p>
+                              ) : null}
+                            </TableCell>
+                            <TableCell>{formatDate(item.submittedAt)}</TableCell>
+                            <TableCell>
+                              {item.reviewedAt ? (
+                                <div className="space-y-1 text-sm">
+                                  <p>
+                                    {item.reviewedByName ??
+                                      pickLocalizedCopy(appLanguage, {
+                                        ar: 'تمت المراجعة',
+                                        en: 'Reviewed',
+                                      })}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    {formatDate(item.reviewedAt)}
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  {pickLocalizedCopy(appLanguage, {
+                                    ar: 'لم تُراجع بعد',
+                                    en: 'Not reviewed yet',
+                                  })}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-blue-600 hover:text-blue-700"
+                                  onClick={() =>
+                                    setViewDocument({
+                                      url: item.documentUrl,
+                                      type: item.documentType,
+                                      name: item.fullName,
+                                    })
+                                  }
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-green-600 hover:text-green-700"
+                                  disabled={reviewKyc.isPending || item.status !== 'pending'}
+                                  onClick={() => handleApprove('kyc', item.id)}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  disabled={reviewKyc.isPending || item.status !== 'pending'}
+                                  onClick={() => setRejectDialog({ type: 'kyc', id: item.id })}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground">لم تُراجع بعد</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-blue-600 hover:text-blue-700"
-                                onClick={() =>
-                                  setViewDocument({
-                                    url: item.documentUrl,
-                                    type: item.documentType,
-                                    name: item.fullName,
-                                  })
-                                }
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-green-600 hover:text-green-700"
-                                disabled={reviewKyc.isPending || item.status !== 'pending'}
-                                onClick={() => handleApprove('kyc', item.id)}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                disabled={reviewKyc.isPending || item.status !== 'pending'}
-                                onClick={() => setRejectDialog({ type: 'kyc', id: item.id })}
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
@@ -305,25 +410,47 @@ export default function AdminModeration() {
           </Card>
         </TabsContent>
 
-        {/* Listings Tab */}
         <TabsContent value="listings">
           <Card>
             <CardHeader>
-              <CardTitle>الإعلانات المعلقة</CardTitle>
-              <CardDescription>إعلانات تحتاج موافقة</CardDescription>
+              <CardTitle>
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'الإعلانات المعلقة',
+                  en: 'Pending listings',
+                })}
+              </CardTitle>
+              <CardDescription>
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'إعلانات تحتاج موافقة',
+                  en: 'Listings awaiting approval',
+                })}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {listingsQuery.error ? (
-                <EmptyState icon={AlertCircle} message="فشل تحميل البيانات" />
+                <EmptyState
+                  icon={AlertCircle}
+                  message={pickLocalizedCopy(appLanguage, {
+                    ar: 'فشل تحميل البيانات',
+                    en: 'Failed to load data',
+                  })}
+                />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>العنوان</TableHead>
-                      <TableHead>الفئة</TableHead>
-                      <TableHead>السعر</TableHead>
-                      <TableHead>تاريخ الإنشاء</TableHead>
-                      <TableHead className="w-32">الإجراءات</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Title' })}</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}</TableHead>
+                      <TableHead>
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'تاريخ الإنشاء',
+                          en: 'Created on',
+                        })}
+                      </TableHead>
+                      <TableHead className="w-32">
+                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -332,18 +459,29 @@ export default function AdminModeration() {
                     ) : listingsQuery.data?.data.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <EmptyState icon={CheckCircle} message="لا توجد إعلانات معلقة" />
+                          <EmptyState
+                            icon={CheckCircle}
+                            message={pickLocalizedCopy(appLanguage, {
+                              ar: 'لا توجد إعلانات معلقة',
+                              en: 'No pending listings',
+                            })}
+                          />
                         </TableCell>
                       </TableRow>
                     ) : (
                       listingsQuery.data?.data.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.titleAr}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{(item.price / 100).toLocaleString('ar-EG')} ج.م</TableCell>
-                          <TableCell>
-                            {new Date(item.createdAt).toLocaleDateString('ar-EG')}
+                          <TableCell className="font-medium">
+                            {pickLocalizedField(appLanguage, {
+                              ar: item.titleAr,
+                              en: item.titleEn,
+                            })}
                           </TableCell>
+                          <TableCell>{listingCategoryLabel(item.category, appLanguage)}</TableCell>
+                          <TableCell>
+                            {(item.price / 100).toLocaleString(locale)} {currencyLabel}
+                          </TableCell>
+                          <TableCell>{formatDate(item.createdAt)}</TableCell>
                           <TableCell>
                             <div className="flex gap-1">
                               <Button
@@ -376,25 +514,47 @@ export default function AdminModeration() {
           </Card>
         </TabsContent>
 
-        {/* Businesses Tab */}
         <TabsContent value="businesses">
           <Card>
             <CardHeader>
-              <CardTitle>الأنشطة التجارية المعلقة</CardTitle>
-              <CardDescription>أنشطة تجارية تحتاج موافقة</CardDescription>
+              <CardTitle>
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'الأنشطة التجارية المعلقة',
+                  en: 'Pending businesses',
+                })}
+              </CardTitle>
+              <CardDescription>
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'أنشطة تجارية تحتاج موافقة',
+                  en: 'Business entries awaiting approval',
+                })}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {businessesQuery.error ? (
-                <EmptyState icon={AlertCircle} message="فشل تحميل البيانات" />
+                <EmptyState
+                  icon={AlertCircle}
+                  message={pickLocalizedCopy(appLanguage, {
+                    ar: 'فشل تحميل البيانات',
+                    en: 'Failed to load data',
+                  })}
+                />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>الاسم</TableHead>
-                      <TableHead>الفئة</TableHead>
-                      <TableHead>المنطقة</TableHead>
-                      <TableHead>تاريخ الإنشاء</TableHead>
-                      <TableHead className="w-32">الإجراءات</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</TableHead>
+                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</TableHead>
+                      <TableHead>
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'تاريخ الإنشاء',
+                          en: 'Created on',
+                        })}
+                      </TableHead>
+                      <TableHead className="w-32">
+                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -403,18 +563,29 @@ export default function AdminModeration() {
                     ) : businessesQuery.data?.data.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <EmptyState icon={CheckCircle} message="لا توجد أنشطة معلقة" />
+                          <EmptyState
+                            icon={CheckCircle}
+                            message={pickLocalizedCopy(appLanguage, {
+                              ar: 'لا توجد أنشطة معلقة',
+                              en: 'No pending businesses',
+                            })}
+                          />
                         </TableCell>
                       </TableRow>
                     ) : (
                       businessesQuery.data?.data.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.nameAr}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.district || '-'}</TableCell>
-                          <TableCell>
-                            {new Date(item.createdAt).toLocaleDateString('ar-EG')}
+                          <TableCell className="font-medium">
+                            {pickLocalizedField(appLanguage, {
+                              ar: item.nameAr,
+                              en: item.nameEn,
+                            })}
                           </TableCell>
+                          <TableCell>{item.category}</TableCell>
+                          <TableCell>
+                            {item.district ? districtLabel(item.district, appLanguage) : '-'}
+                          </TableCell>
+                          <TableCell>{formatDate(item.createdAt)}</TableCell>
                           <TableCell>
                             <div className="flex gap-1">
                               <Button
@@ -448,16 +619,18 @@ export default function AdminModeration() {
         </TabsContent>
       </Tabs>
 
-      {/* Document Viewer Dialog */}
       <DocumentViewerDialog
         open={!!viewDocument}
-        onOpenChange={(open) => !open && setViewDocument(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewDocument(null);
+          }
+        }}
         documentUrl={viewDocument?.url ?? null}
         documentType={viewDocument?.type ?? ''}
         userName={viewDocument?.name ?? ''}
       />
 
-      {/* Reject Dialog */}
       <Dialog
         open={!!rejectDialog}
         onOpenChange={() => {
@@ -467,17 +640,31 @@ export default function AdminModeration() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>تأكيد الرفض</DialogTitle>
+            <DialogTitle>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'تأكيد الرفض',
+                en: 'Confirm rejection',
+              })}
+            </DialogTitle>
             <DialogDescription>
               {rejectDialog?.type === 'listing'
-                ? 'يرجى إدخال سبب الرفض (اختياري)'
-                : 'يرجى إدخال سبب الرفض (مطلوب)'}
+                ? pickLocalizedCopy(appLanguage, {
+                    ar: 'يرجى إدخال سبب الرفض (اختياري)',
+                    en: 'Add a rejection reason (optional)',
+                  })
+                : pickLocalizedCopy(appLanguage, {
+                    ar: 'يرجى إدخال سبب الرفض (مطلوب)',
+                    en: 'Add a rejection reason (required)',
+                  })}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="سبب الرفض..."
+            placeholder={pickLocalizedCopy(appLanguage, {
+              ar: 'سبب الرفض...',
+              en: 'Rejection reason...',
+            })}
             value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
+            onChange={(event) => setRejectReason(event.target.value)}
           />
           <DialogFooter>
             <Button
@@ -487,14 +674,17 @@ export default function AdminModeration() {
                 setRejectReason('');
               }}
             >
-              إلغاء
+              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
             </Button>
             <Button
               variant="destructive"
               disabled={!rejectReason.trim() && rejectDialog?.type !== 'listing'}
               onClick={handleReject}
             >
-              تأكيد الرفض
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'تأكيد الرفض',
+                en: 'Confirm rejection',
+              })}
             </Button>
           </DialogFooter>
         </DialogContent>

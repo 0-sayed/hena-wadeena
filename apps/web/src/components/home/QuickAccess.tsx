@@ -1,71 +1,85 @@
 import { Link } from 'react-router';
 import { User, Wallet, Bell, CalendarCheck } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useUnreadNotificationCount } from '@/hooks/use-notifications';
-import { useAuth } from '@/hooks/use-auth';
+
 import { SR } from '@/components/motion/ScrollReveal';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
+import { pickLocalizedCopy } from '@/lib/localization';
 
 const quickLinks = [
   {
     icon: User,
-    label: 'الملف الشخصي',
+    label: { ar: 'الملف الشخصي', en: 'Profile' },
     href: '/profile',
     gradient: 'from-blue-500 to-blue-600',
   },
   {
     icon: Wallet,
-    label: 'المحفظة',
+    label: { ar: 'المحفظة', en: 'Wallet' },
     href: '/wallet',
     gradient: 'from-green-500 to-emerald-600',
   },
   {
     icon: CalendarCheck,
-    label: 'حجوزاتي',
+    label: { ar: 'حجوزاتي', en: 'My bookings' },
     href: '/bookings',
     gradient: 'from-purple-500 to-violet-600',
   },
   {
     icon: Bell,
-    label: 'الإشعارات',
+    label: { ar: 'الإشعارات', en: 'Notifications' },
     href: '/notifications',
     gradient: 'from-red-500 to-rose-600',
   },
 ];
 
 export function QuickAccess() {
-  const { user } = useAuth();
+  const { user, language } = useAuth();
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
 
   if (!user) return null;
 
+  const greeting = pickLocalizedCopy(language, {
+    ar: `مرحباً، ${user.full_name}`,
+    en: `Hello, ${user.full_name}`,
+  });
+  const subtitle = pickLocalizedCopy(language, {
+    ar: 'الوصول السريع لحسابك',
+    en: 'Quick access to your account',
+  });
+
   return (
-    <section className="py-14 bg-gradient-to-b from-background to-muted/30">
+    <section className="bg-gradient-to-b from-background to-muted/30 py-14">
       <SR direction="up" className="container px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold">مرحباً، {user.full_name}</h2>
-          <p className="text-muted-foreground mt-2 text-lg">الوصول السريع لحسابك</p>
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl font-bold">{greeting}</h2>
+          <p className="mt-2 text-lg text-muted-foreground">{subtitle}</p>
         </div>
-        <SR stagger className="grid grid-cols-2 md:grid-cols-4 gap-5 max-w-3xl mx-auto">
+        <SR stagger className="mx-auto grid max-w-3xl grid-cols-2 gap-5 md:grid-cols-4">
           {quickLinks.map((link) => {
             const Icon = link.icon;
             const isNotif = link.href === '/notifications';
+
             return (
               <Link key={link.href} to={link.href}>
-                <Card className="hover-lift hover:border-primary/30 text-center rounded-2xl group transition-all duration-400">
-                  <CardContent className="p-5 flex flex-col items-center gap-3 relative">
+                <Card className="hover-lift group rounded-2xl text-center transition-all duration-400 hover:border-primary/30">
+                  <CardContent className="relative flex flex-col items-center gap-3 p-5">
                     <div
-                      className={`h-16 w-16 rounded-2xl flex items-center justify-center bg-gradient-to-br ${link.gradient} shadow-lg icon-hover`}
+                      className={`icon-hover flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${link.gradient} shadow-lg`}
                     >
                       <Icon className="h-8 w-8 text-primary-foreground" strokeWidth={1.8} />
                     </div>
                     {isNotif && unreadCount > 0 && (
-                      <Badge className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] h-5 w-5 p-0 flex items-center justify-center animate-pulse">
+                      <Badge className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center p-0 text-[10px] animate-pulse bg-destructive text-destructive-foreground">
                         {unreadCount}
                       </Badge>
                     )}
-                    <span className="text-sm font-semibold text-foreground">{link.label}</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {pickLocalizedCopy(language, link.label)}
+                    </span>
                   </CardContent>
                 </Card>
               </Link>

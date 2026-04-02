@@ -2,6 +2,8 @@ import { Navigate, Outlet } from 'react-router';
 import { UserRole } from '@hena-wadeena/types';
 import { useAuth } from '@/hooks/use-auth';
 
+import { hasRequiredRole } from './access-control';
+
 interface RequireRoleProps {
   roles: UserRole[];
 }
@@ -13,7 +15,7 @@ export function RequireRole({ roles }: RequireRoleProps) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!roles.includes(user.role)) {
+  if (!hasRequiredRole(user.role, roles)) {
     return <Navigate to="/" replace />;
   }
 

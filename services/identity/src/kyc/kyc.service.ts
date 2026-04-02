@@ -1,6 +1,18 @@
 import { DRIZZLE_CLIENT, paginate, RedisStreamsService } from '@hena-wadeena/nest-common';
-import { EVENTS, NotificationType } from '@hena-wadeena/types';
-import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  EVENTS,
+  KycDocType,
+  NotificationType,
+  UserStatus,
+  getRequiredKycDocuments,
+} from '@hena-wadeena/types';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { alias } from 'drizzle-orm/pg-core';
@@ -18,7 +30,6 @@ import type { SubmitKycDto } from './dto/submit-kyc.dto';
 
 @Injectable()
 export class KycService {
-  private readonly logger = new Logger(KycService.name);
   private readonly reviewers = alias(users, 'reviewers');
 
   constructor(
@@ -28,6 +39,20 @@ export class KycService {
   ) {}
 
   async submit(userId: string, dto: SubmitKycDto) {
+    const [user] = await this.db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const requiredDocuments = getRequiredKycDocuments(user.role);
+    if (!requiredDocuments.includes(dto.docType as (typeof kycDocTypeEnum.enumValues)[number])) {
+      throw new BadRequestException('This document type is not required for the user role');
+    }
+
     try {
       const [submission] = await this.db
         .insert(userKyc)
@@ -93,7 +118,7 @@ export class KycService {
   }
 
   async review(id: string, adminId: string, dto: ReviewKycDto) {
-    const updated = await this.db.transaction(async (tx) => {
+    const { updated, activated } = await this.db.transaction(async (tx) => {
       const [row] = await tx
         .update(userKyc)
         .set({
@@ -116,11 +141,45 @@ export class KycService {
         throw new ConflictException('KYC submission is not pending review or was already reviewed');
       }
 
+      let userActivated = false;
       if (dto.status === 'approved') {
-        await tx
-          .update(users)
-          .set({ verifiedAt: sql`now()` })
-          .where(eq(users.id, row.userId));
+        const [user] = await tx
+          .select({ role: users.role, status: users.status })
+          .from(users)
+          .where(eq(users.id, row.userId))
+          .limit(1);
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+
+        const requiredDocuments = getRequiredKycDocuments(user.role);
+        const submissions = await tx
+          .select({
+            docType: userKyc.docType,
+            status: userKyc.status,
+          })
+          .from(userKyc)
+          .where(eq(userKyc.userId, row.userId))
+          .orderBy(asc(userKyc.createdAt));
+
+        const approvedDocuments = new Set<KycDocType>(
+          submissions
+            .filter((submission) => submission.status === 'approved')
+            .map((submission) => submission.docType as KycDocType),
+        );
+
+        userActivated = requiredDocuments.every((docType) => approvedDocuments.has(docType));
+
+        if (userActivated && user.status !== 'active') {
+          await tx
+            .update(users)
+            .set({
+              status: UserStatus.ACTIVE,
+              verifiedAt: sql`now()`,
+              updatedAt: sql`now()`,
+            })
+            .where(eq(users.id, row.userId));
+        }
       }
 
       await tx.insert(auditEvents).values({
@@ -132,11 +191,10 @@ export class KycService {
             : { kycId: id, userId: row.userId, reason: dto.rejectionReason },
       });
 
-      return row;
+      return { updated: row, activated: userActivated };
     });
 
-    // Non-transactional side effects: notifications + events
-    if (dto.status === 'approved') {
+    if (dto.status === 'approved' && activated) {
       await Promise.all([
         this.redisStreams.publish(EVENTS.USER_VERIFIED, {
           userId: updated.userId,
@@ -148,12 +206,12 @@ export class KycService {
           type: NotificationType.KYC_APPROVED,
           titleAr: 'تم اعتماد وثائقك',
           titleEn: 'Documents Approved',
-          bodyAr: 'تم اعتماد وثائق التحقق الخاصة بك بنجاح',
-          bodyEn: 'Your verification documents have been approved',
+          bodyAr: 'تم اعتماد وثائق التحقق الخاصة بك وتفعيل الحساب بنجاح',
+          bodyEn: 'Your verification documents were approved and your account is now active',
           data: { kycId: id, docType: updated.docType },
         }),
       ]);
-    } else {
+    } else if (dto.status === 'rejected') {
       await this.notificationsService.create({
         userId: updated.userId,
         type: NotificationType.KYC_REJECTED,

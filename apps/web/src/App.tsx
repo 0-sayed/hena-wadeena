@@ -17,6 +17,7 @@ import NotFound from './pages/NotFound';
 
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import KycContinuePage from './pages/auth/KycContinuePage';
 
 import ProfilePage from './pages/profile/ProfilePage';
 import WalletPage from './pages/profile/WalletPage';
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/kyc/continue" element={<KycContinuePage />} />
 
             <Route element={<RequireAuth />}>
               <Route path="/profile" element={<ProfilePage />} />
@@ -174,7 +176,9 @@ const App = () => (
 
             <Route path="/logistics" element={<LogisticsPage />} />
             <Route element={<RequireAuth />}>
-              <Route path="/logistics/create-ride" element={<CreateRidePage />} />
+              <Route element={<RequireRole roles={[UserRole.DRIVER, UserRole.ADMIN]} />}>
+                <Route path="/logistics/create-ride" element={<CreateRidePage />} />
+              </Route>
             </Route>
             <Route path="/logistics/ride/:id" element={<RideDetailPage />} />
 

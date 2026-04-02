@@ -24,21 +24,39 @@ import {
 import type { CarpoolPassenger, PassengerStatus } from '@/services/api';
 import { formatRidePrice } from '@/lib/format';
 import { formatDateTimeFull } from '@/lib/dates';
+import type { AppLanguage } from '@/lib/localization';
+import { pickLocalizedCopy } from '@/lib/localization';
+import { localizeAreaName } from '@/lib/area-presets';
 
 const STATUS_STYLES: Record<
   PassengerStatus,
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+  {
+    label: { ar: string; en: string };
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+  }
 > = {
-  requested: { label: 'بانتظار التأكيد', variant: 'secondary' },
-  confirmed: { label: 'مؤكد', variant: 'default' },
-  declined: { label: 'مرفوض', variant: 'destructive' },
-  cancelled: { label: 'ملغي', variant: 'outline' },
+  requested: { label: { ar: 'بانتظار التأكيد', en: 'Pending confirmation' }, variant: 'secondary' },
+  confirmed: { label: { ar: 'مؤكد', en: 'Confirmed' }, variant: 'default' },
+  declined: { label: { ar: 'مرفوض', en: 'Declined' }, variant: 'destructive' },
+  cancelled: { label: { ar: 'ملغي', en: 'Cancelled' }, variant: 'outline' },
 };
+
+const rideStatusLabels = {
+  open: { ar: 'متاحة', en: 'Open' },
+  full: { ar: 'مكتملة المقاعد', en: 'Full' },
+  departed: { ar: 'غادرت', en: 'Departed' },
+  completed: { ar: 'مكتملة', en: 'Completed' },
+  cancelled: { ar: 'ملغاة', en: 'Cancelled' },
+} as const;
+
+function getRideStatusLabel(status: keyof typeof rideStatusLabels, language: AppLanguage): string {
+  return pickLocalizedCopy(language, rideStatusLabels[status]);
+}
 
 const RideDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, language: appLanguage } = useAuth();
   const { data: ride, isLoading, isError } = useRide(id);
   const { data: myRidesData, isSuccess: hasMyRidesState } = useMyRides(isAuthenticated);
 
@@ -67,9 +85,14 @@ const RideDetailPage = () => {
     return (
       <Layout>
         <section className="py-20 text-center">
-          <p className="text-lg text-muted-foreground">حدث خطأ أثناء تحميل الرحلة</p>
+          <p className="text-lg text-muted-foreground">
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'حدث خطأ أثناء تحميل الرحلة',
+              en: 'Something went wrong while loading the ride',
+            })}
+          </p>
           <Button variant="outline" className="mt-4" onClick={() => void navigate('/logistics')}>
-            العودة
+            {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
         </section>
       </Layout>
@@ -80,9 +103,14 @@ const RideDetailPage = () => {
     return (
       <Layout>
         <section className="py-20 text-center">
-          <p className="text-lg text-muted-foreground">الرحلة غير موجودة</p>
+          <p className="text-lg text-muted-foreground">
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'الرحلة غير موجودة',
+              en: 'Ride not found',
+            })}
+          </p>
           <Button variant="outline" className="mt-4" onClick={() => void navigate('/logistics')}>
-            العودة
+            {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
         </section>
       </Layout>
@@ -91,6 +119,8 @@ const RideDetailPage = () => {
 
   const isDriver = isAuthenticated && user?.id === ride.driverId;
   const available = ride.seatsTotal - ride.seatsTaken;
+  const originName = localizeAreaName(ride.originName, appLanguage);
+  const destinationName = localizeAreaName(ride.destinationName, appLanguage);
   const myPassengerRecord = myRidesData?.asPassenger.find((p) => p.rideId === id);
   const hasActiveJoin =
     myPassengerRecord &&
@@ -100,14 +130,14 @@ const RideDetailPage = () => {
   const mapLocations: MapLocation[] = [
     {
       id: 'origin',
-      name: ride.originName,
+      name: originName,
       lat: ride.origin.y,
       lng: ride.origin.x,
       color: '#16a34a',
     },
     {
       id: 'dest',
-      name: ride.destinationName,
+      name: destinationName,
       lat: ride.destination.y,
       lng: ride.destination.x,
       color: '#dc2626',
@@ -125,14 +155,25 @@ const RideDetailPage = () => {
 
   const handleJoin = () => {
     if (!isAuthenticated) {
-      toast.error('يجب تسجيل الدخول أولاً');
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'يجب تسجيل الدخول أولاً',
+          en: 'You need to sign in first',
+        }),
+      );
       void navigate('/login');
       return;
     }
     joinRide.mutate(
       { rideId: ride.id },
       {
-        onSuccess: () => toast.success('تم إرسال طلب الانضمام'),
+        onSuccess: () =>
+          toast.success(
+            pickLocalizedCopy(appLanguage, {
+              ar: 'تم إرسال طلب الانضمام',
+              en: 'Ride request sent',
+            }),
+          ),
         onError: (err) => toast.error(err.message),
       },
     );
@@ -140,33 +181,63 @@ const RideDetailPage = () => {
 
   const handleCancelJoin = () => {
     cancelJoin.mutate(ride.id, {
-      onSuccess: () => toast.success('تم إلغاء طلب الانضمام'),
+      onSuccess: () =>
+        toast.success(
+          pickLocalizedCopy(appLanguage, {
+            ar: 'تم إلغاء طلب الانضمام',
+            en: 'Ride request cancelled',
+          }),
+        ),
       onError: (err) => toast.error(err.message),
     });
   };
 
   const handleCancelRide = () => {
     cancelRide.mutate(ride.id, {
-      onSuccess: () => toast.success('تم إلغاء الرحلة'),
+      onSuccess: () =>
+        toast.success(
+          pickLocalizedCopy(appLanguage, {
+            ar: 'تم إلغاء الرحلة',
+            en: 'Ride cancelled',
+          }),
+        ),
       onError: (err) => toast.error(err.message),
     });
   };
 
   const handleActivateRide = () => {
     activateRide.mutate(ride.id, {
-      onSuccess: () => toast.success('تمت إعادة تفعيل الرحلة'),
+      onSuccess: () =>
+        toast.success(
+          pickLocalizedCopy(appLanguage, {
+            ar: 'تمت إعادة تفعيل الرحلة',
+            en: 'Ride reactivated',
+          }),
+        ),
       onError: (err) => toast.error(err.message),
     });
   };
 
   const handleDeleteRide = () => {
-    if (!window.confirm('هل تريد حذف هذه الرحلة نهائياً؟')) {
+    if (
+      !window.confirm(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'هل تريد حذف هذه الرحلة نهائياً؟',
+          en: 'Do you want to permanently delete this ride?',
+        }),
+      )
+    ) {
       return;
     }
 
     deleteRide.mutate(ride.id, {
       onSuccess: () => {
-        toast.success('تم حذف الرحلة');
+        toast.success(
+          pickLocalizedCopy(appLanguage, {
+            ar: 'تم حذف الرحلة',
+            en: 'Ride deleted',
+          }),
+        );
         void navigate('/logistics');
       },
       onError: (err) => toast.error(err.message),
@@ -177,7 +248,13 @@ const RideDetailPage = () => {
     confirmPassenger.mutate(
       { rideId: ride.id, passengerId },
       {
-        onSuccess: () => toast.success('تم تأكيد الراكب'),
+        onSuccess: () =>
+          toast.success(
+            pickLocalizedCopy(appLanguage, {
+              ar: 'تم تأكيد الراكب',
+              en: 'Passenger confirmed',
+            }),
+          ),
         onError: (err) => toast.error(err.message),
       },
     );
@@ -187,7 +264,13 @@ const RideDetailPage = () => {
     declinePassenger.mutate(
       { rideId: ride.id, passengerId },
       {
-        onSuccess: () => toast.success('تم رفض الراكب'),
+        onSuccess: () =>
+          toast.success(
+            pickLocalizedCopy(appLanguage, {
+              ar: 'تم رفض الراكب',
+              en: 'Passenger declined',
+            }),
+          ),
         onError: (err) => toast.error(err.message),
       },
     );
@@ -202,7 +285,7 @@ const RideDetailPage = () => {
         <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate('/logistics')} className="mb-6">
             <ArrowRight className="ml-2 h-4 w-4" />
-            العودة
+            {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
 
           <InteractiveMap
@@ -221,13 +304,13 @@ const RideDetailPage = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-2xl font-bold">
                   <MapPin className="h-5 w-5 text-green-600" />
-                  <span>{ride.originName}</span>
+                  <span>{originName}</span>
                   <ArrowLeft className="h-6 w-6 text-primary" />
                   <MapPin className="h-5 w-5 text-red-600" />
-                  <span>{ride.destinationName}</span>
+                  <span>{destinationName}</span>
                 </div>
                 <Badge variant={ride.status === 'open' ? 'default' : 'secondary'}>
-                  {ride.status === 'open' ? 'متاحة' : ride.status}
+                  {getRideStatusLabel(ride.status, appLanguage)}
                 </Badge>
               </div>
             </CardHeader>
@@ -235,16 +318,19 @@ const RideDetailPage = () => {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{formatDateTimeFull(ride.departureTime)}</span>
+                  <span className="text-sm">{formatDateTimeFull(ride.departureTime, appLanguage)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {available} من {ride.seatsTotal} مقاعد متاحة
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: `${available} من ${ride.seatsTotal} مقاعد متاحة`,
+                      en: `${available} of ${ride.seatsTotal} seats available`,
+                    })}
                   </span>
                 </div>
                 <div className="col-span-2 text-2xl font-bold text-primary md:col-span-1 md:text-left">
-                  {formatRidePrice(ride.pricePerSeat)}
+                  {formatRidePrice(ride.pricePerSeat, appLanguage)}
                 </div>
               </div>
 
@@ -254,7 +340,12 @@ const RideDetailPage = () => {
 
               <div className="flex flex-wrap gap-3 border-t pt-4">
                 {!isAuthenticated && (
-                  <Button onClick={() => void navigate('/login')}>سجل دخول للانضمام</Button>
+                  <Button onClick={() => void navigate('/login')}>
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'سجل دخول للانضمام',
+                      en: 'Sign in to join',
+                    })}
+                  </Button>
                 )}
                 {isAuthenticated &&
                   !isDriver &&
@@ -263,7 +354,15 @@ const RideDetailPage = () => {
                   !hasActiveJoin &&
                   available > 0 && (
                     <Button onClick={handleJoin} disabled={joinRide.isPending}>
-                      {joinRide.isPending ? 'جارٍ الإرسال...' : 'طلب مقعد'}
+                      {joinRide.isPending
+                        ? pickLocalizedCopy(appLanguage, {
+                            ar: 'جارٍ الإرسال...',
+                            en: 'Sending...',
+                          })
+                        : pickLocalizedCopy(appLanguage, {
+                            ar: 'طلب مقعد',
+                            en: 'Request a seat',
+                          })}
                     </Button>
                   )}
                 {isAuthenticated && !isDriver && hasActiveJoin && (
@@ -272,7 +371,10 @@ const RideDetailPage = () => {
                     onClick={handleCancelJoin}
                     disabled={cancelJoin.isPending}
                   >
-                    إلغاء طلبي
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'إلغاء طلبي',
+                      en: 'Cancel my request',
+                    })}
                   </Button>
                 )}
                 {isDriver && ride.status === 'open' && (
@@ -281,7 +383,10 @@ const RideDetailPage = () => {
                     onClick={handleCancelRide}
                     disabled={driverActionPending}
                   >
-                    إلغاء الرحلة
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'إلغاء الرحلة',
+                      en: 'Cancel ride',
+                    })}
                   </Button>
                 )}
                 {isDriver && ride.status === 'cancelled' && (
@@ -290,7 +395,10 @@ const RideDetailPage = () => {
                     onClick={handleActivateRide}
                     disabled={driverActionPending}
                   >
-                    إعادة التفعيل
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'إعادة التفعيل',
+                      en: 'Reactivate',
+                    })}
                   </Button>
                 )}
                 {isDriver && canDeleteRide && (
@@ -299,7 +407,10 @@ const RideDetailPage = () => {
                     onClick={handleDeleteRide}
                     disabled={driverActionPending}
                   >
-                    حذف الرحلة
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'حذف الرحلة',
+                      en: 'Delete ride',
+                    })}
                   </Button>
                 )}
               </div>
@@ -309,7 +420,12 @@ const RideDetailPage = () => {
           {isDriver && ride.passengers && ride.passengers.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">الركاب ({ride.passengers.length})</CardTitle>
+                <CardTitle className="text-lg">
+                  {pickLocalizedCopy(appLanguage, {
+                    ar: `الركاب (${ride.passengers.length})`,
+                    en: `Passengers (${ride.passengers.length})`,
+                  })}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -319,9 +435,14 @@ const RideDetailPage = () => {
                       className="flex items-center justify-between rounded-lg border p-3"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium">{p.seats} مقعد</span>
+                        <span className="text-sm font-medium">
+                          {pickLocalizedCopy(appLanguage, {
+                            ar: `${p.seats} مقعد`,
+                            en: `${p.seats} ${p.seats === 1 ? 'seat' : 'seats'}`,
+                          })}
+                        </span>
                         <Badge variant={STATUS_STYLES[p.status].variant}>
-                          {STATUS_STYLES[p.status].label}
+                          {pickLocalizedCopy(appLanguage, STATUS_STYLES[p.status].label)}
                         </Badge>
                       </div>
                       {p.status === 'requested' && (
@@ -332,7 +453,10 @@ const RideDetailPage = () => {
                             disabled={confirmPassenger.isPending}
                           >
                             <Check className="ml-1 h-4 w-4" />
-                            تأكيد
+                            {pickLocalizedCopy(appLanguage, {
+                              ar: 'تأكيد',
+                              en: 'Confirm',
+                            })}
                           </Button>
                           <Button
                             size="sm"
@@ -341,7 +465,10 @@ const RideDetailPage = () => {
                             disabled={declinePassenger.isPending}
                           >
                             <X className="ml-1 h-4 w-4" />
-                            رفض
+                            {pickLocalizedCopy(appLanguage, {
+                              ar: 'رفض',
+                              en: 'Decline',
+                            })}
                           </Button>
                         </div>
                       )}

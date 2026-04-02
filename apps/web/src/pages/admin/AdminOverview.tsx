@@ -11,6 +11,8 @@ import {
 import { Link } from 'react-router';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminStats } from '@/hooks/use-admin';
@@ -71,13 +73,21 @@ function StatCardSkeleton() {
 }
 
 export default function AdminOverview() {
+  const { language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
   const { data: stats, isLoading, error } = useAdminStats();
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <AlertCircle className="h-12 w-12 text-destructive" />
-        <p className="text-lg text-muted-foreground">فشل تحميل الإحصائيات</p>
+        <p className="text-lg text-muted-foreground">
+          {pickLocalizedCopy(appLanguage, {
+            ar: 'فشل تحميل الإحصائيات',
+            en: 'Failed to load statistics',
+          })}
+        </p>
       </div>
     );
   }
@@ -85,8 +95,15 @@ export default function AdminOverview() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">نظرة عامة</h1>
-        <p className="text-muted-foreground">إحصائيات المنصة وحالة الطلبات المعلقة</p>
+        <h1 className="text-2xl font-bold">
+          {pickLocalizedCopy(appLanguage, { ar: 'نظرة عامة', en: 'Overview' })}
+        </h1>
+        <p className="text-muted-foreground">
+          {pickLocalizedCopy(appLanguage, {
+            ar: 'إحصائيات المنصة وحالة الطلبات المعلقة',
+            en: 'Platform metrics and pending review queues',
+          })}
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -101,28 +118,40 @@ export default function AdminOverview() {
         ) : stats ? (
           <>
             <StatCard
-              title="إجمالي المستخدمين"
+              title={pickLocalizedCopy(appLanguage, { ar: 'إجمالي المستخدمين', en: 'Total users' })}
               value={stats.users.total}
               icon={Users}
-              description={`+${stats.users.newLast30Days} هذا الشهر`}
+              description={pickLocalizedCopy(appLanguage, {
+                ar: `+${stats.users.newLast30Days} هذا الشهر`,
+                en: `+${stats.users.newLast30Days} this month`,
+              })}
               href="/admin/users"
             />
             <StatCard
-              title="طلبات KYC المعلقة"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'طلبات KYC المعلقة',
+                en: 'Pending KYC submissions',
+              })}
               value={stats.kyc.pending}
               icon={FileCheck}
               href="/admin/moderation"
               variant={stats.kyc.pending > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title="إعلانات تحتاج مراجعة"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'إعلانات تحتاج مراجعة',
+                en: 'Listings awaiting review',
+              })}
               value={stats.listings.unverified}
               icon={ShoppingBag}
               href="/admin/moderation"
               variant={stats.listings.unverified > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title="نقاط اهتمام معلقة"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'نقاط اهتمام معلقة',
+                en: 'Pending points of interest',
+              })}
               value={stats.pois.pending}
               icon={MapPin}
               href="/admin/map"
@@ -144,31 +173,52 @@ export default function AdminOverview() {
         ) : stats ? (
           <>
             <StatCard
-              title="المرشدون النشطون"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'المرشدون النشطون',
+                en: 'Active guides',
+              })}
               value={stats.guides.active}
               icon={CheckCircle}
-              description={`${stats.guides.verified} موثق`}
+              description={pickLocalizedCopy(appLanguage, {
+                ar: `${stats.guides.verified} موثق`,
+                en: `${stats.guides.verified} verified`,
+              })}
               href="/admin/guides"
               variant="success"
             />
             <StatCard
-              title="الحجوزات المعلقة"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'الحجوزات المعلقة',
+                en: 'Pending bookings',
+              })}
               value={stats.bookings.pending}
               icon={Clock}
               href="/admin/guides"
               variant={stats.bookings.pending > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title="إجمالي الإعلانات"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'إجمالي الإعلانات',
+                en: 'Total listings',
+              })}
               value={stats.listings.total}
               icon={ShoppingBag}
-              description={`${stats.listings.verified} موثق`}
+              description={pickLocalizedCopy(appLanguage, {
+                ar: `${stats.listings.verified} موثق`,
+                en: `${stats.listings.verified} verified`,
+              })}
             />
             <StatCard
-              title="فرص الاستثمار"
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'فرص الاستثمار',
+                en: 'Investment opportunities',
+              })}
               value={stats.investments.total}
               icon={TrendingUp}
-              description={`${stats.investments.totalApplications} طلب`}
+              description={pickLocalizedCopy(appLanguage, {
+                ar: `${stats.investments.totalApplications} طلب`,
+                en: `${stats.investments.totalApplications} applications`,
+              })}
             />
           </>
         ) : null}
@@ -177,9 +227,15 @@ export default function AdminOverview() {
       {/* Meta info */}
       {stats?.meta && (
         <p className="text-xs text-muted-foreground">
-          آخر تحديث: {new Date(stats.meta.cachedAt).toLocaleString('ar-EG')}
+          {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث:', en: 'Updated:' })}{' '}
+          {new Date(stats.meta.cachedAt).toLocaleString(locale)}
           {stats.meta.degraded && (
-            <span className="mr-2 text-yellow-500">(بعض البيانات غير متاحة)</span>
+            <span className="mr-2 text-yellow-500">
+              {pickLocalizedCopy(appLanguage, {
+                ar: '(بعض البيانات غير متاحة)',
+                en: '(Some data is unavailable)',
+              })}
+            </span>
           )}
         </p>
       )}
