@@ -96,7 +96,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS,SEED_PASSWORD
+          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS,SEED_PASSWORD,CADDY_HTTP_PORT,CADDY_HTTPS_PORT
           script: |
             set -euo pipefail
             cd /opt/hena-wadeena
@@ -135,6 +135,69 @@ jobs:
             if [ -n "${SEED_PASSWORD:-}" ]; then
               upsert_env "SEED_PASSWORD" "$SEED_PASSWORD"
             fi
+            if [ -n "${CADDY_HTTP_PORT:-}" ]; then
+              upsert_env "CADDY_HTTP_PORT" "$CADDY_HTTP_PORT"
+            fi
+            if [ -n "${CADDY_HTTPS_PORT:-}" ]; then
+              upsert_env "CADDY_HTTPS_PORT" "$CADDY_HTTPS_PORT"
+            fi
+
+            read_env() {
+              local key="$1"
+              if [ ! -f .env ]; then
+                return 0
+              fi
+              grep -E "^${key}=" .env | tail -n 1 | cut -d '=' -f 2-
+            }
+
+            caddy_http_port="${CADDY_HTTP_PORT:-$(read_env CADDY_HTTP_PORT)}"
+            caddy_https_port="${CADDY_HTTPS_PORT:-$(read_env CADDY_HTTPS_PORT)}"
+            caddy_http_port="${caddy_http_port:-80}"
+            caddy_https_port="${caddy_https_port:-443}"
+
+            check_caddy_host_port() {
+              local port="$1"
+              local expected_container="hena-wadeena-caddy-1"
+              local holders unexpected_holder_count
+
+              holders="$(docker ps --format '{{.Names}}\t{{.Ports}}' | grep -F ":${port}->" || true)"
+              unexpected_holder_count=0
+              while IFS= read -r holder; do
+                [ -z "$holder" ] && continue
+                if [ "${holder%%$'\t'*}" != "$expected_container" ]; then
+                  unexpected_holder_count=$((unexpected_holder_count + 1))
+                fi
+              done <<EOF
+            $holders
+            EOF
+
+              if [ "$unexpected_holder_count" -gt 0 ]; then
+                echo "ERROR: Host port ${port} is already published by another Docker container."
+                echo "$holders"
+                echo "Set CADDY_HTTP_PORT/CADDY_HTTPS_PORT in /opt/hena-wadeena/.env or free the conflicting listener before deploy."
+                return 1
+              fi
+
+              if [ -z "$holders" ] && ss -ltnH "( sport = :${port} )" | grep -q .; then
+                echo "ERROR: Host port ${port} is already in use by a non-Docker listener."
+                ss -ltnp "( sport = :${port} )" || true
+                echo "Set CADDY_HTTP_PORT/CADDY_HTTPS_PORT in /opt/hena-wadeena/.env or free the conflicting listener before deploy."
+                return 1
+              fi
+
+              return 0
+            }
+
+            print_caddy_port_diagnostics() {
+              local port="$1"
+              echo "Set CADDY_HTTP_PORT/CADDY_HTTPS_PORT in /opt/hena-wadeena/.env or free the conflicting listener before deploy."
+              docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}' | grep -F ":${port}->" || true
+              ss -ltnp "( sport = :${port} )" || true
+            }
+
+            echo "==> Validating Caddy host ports"
+            check_caddy_host_port "$caddy_http_port"
+            check_caddy_host_port "$caddy_https_port"
 
             echo "==> Pulling images by SHA and tagging as :latest"
             pull_with_retry() {
@@ -182,7 +245,13 @@ jobs:
             fi
             docker compose up -d --wait --timeout 120 postgres redis qdrant identity market guide-booking map ai gateway
             # Start caddy without --wait (health depends on DNS/TLS - non-blocking)
-            docker compose up -d caddy
+            if ! docker compose up -d caddy; then
+              echo "==> Caddy failed to start; collecting diagnostics"
+              docker compose logs --tail 120 caddy || true
+              print_caddy_port_diagnostics "$caddy_http_port"
+              print_caddy_port_diagnostics "$caddy_https_port"
+              exit 1
+            fi
 
             echo "==> Cleaning up old images"
             docker image prune -f
@@ -198,3 +267,5 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
           SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}
+          CADDY_HTTP_PORT: ${{ vars.CADDY_HTTP_PORT }}
+          CADDY_HTTPS_PORT: ${{ vars.CADDY_HTTPS_PORT }}
