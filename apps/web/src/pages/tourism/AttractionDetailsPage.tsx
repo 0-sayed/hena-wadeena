@@ -1,6 +1,6 @@
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowRight, Star, Clock, Calendar, Sun, Users, AlertCircle, MapPin } from 'lucide-react';
+import { ArrowRight, Star, Clock, Calendar, Sun, Users, AlertCircle } from 'lucide-react';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,7 +27,7 @@ const AttractionDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل المعلم">
         <div className="container py-20 flex justify-center">
           <div className="h-96 w-full max-w-2xl rounded-2xl bg-muted animate-pulse" />
         </div>
@@ -37,7 +37,7 @@ const AttractionDetailsPage = () => {
 
   if (error || !attraction) {
     return (
-      <Layout>
+      <Layout title="تفاصيل المعلم">
         <div className="container py-20 flex flex-col items-center gap-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات المعلم السياحي</p>
@@ -52,7 +52,7 @@ const AttractionDetailsPage = () => {
   const heroImage = attraction.images?.[0] ?? attraction.thumbnail ?? '/placeholder.jpg';
 
   return (
-    <Layout>
+    <Layout title="تفاصيل المعلم">
       <PageTransition>
         {/* Hero Image */}
         <div className="relative h-72 md:h-96 overflow-hidden">
@@ -60,10 +60,10 @@ const AttractionDetailsPage = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
           <Button
             variant="ghost"
-            className="absolute top-4 right-4 bg-card/80 backdrop-blur-sm"
+            className="absolute top-4 end-4 bg-card/80 backdrop-blur-sm"
             onClick={() => void navigate('/tourism/attractions')}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             رجوع
           </Button>
         </div>
@@ -222,13 +222,8 @@ const AttractionDetailsPage = () => {
                     center={[attraction.location.y, attraction.location.x]}
                     zoom={13}
                     className="h-[320px] w-full rounded-xl overflow-hidden"
+                    popupTrigger="click"
                   />
-                  <div className="flex items-center gap-2 rounded-xl bg-muted p-4 text-muted-foreground">
-                    <MapPin className="h-5 w-5 text-accent" />
-                    <span>
-                      {attraction.location.y.toFixed(4)}, {attraction.location.x.toFixed(4)}
-                    </span>
-                  </div>
                 </div>
               </div>
             </SR>
@@ -259,7 +254,7 @@ const AttractionDetailsPage = () => {
                               {attractionTypeLabels[a.type]}
                             </Badge>
                             {a.ratingAvg != null && (
-                              <span className="flex items-center gap-0.5 mr-1">
+                              <span className="flex items-center gap-0.5 me-1">
                                 <Star className="h-3 w-3 text-accent fill-current" />
                                 {formatRating(a.ratingAvg)}
                               </span>

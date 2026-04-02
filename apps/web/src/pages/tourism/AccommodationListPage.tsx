@@ -41,11 +41,11 @@ const AccommodationListPage = () => {
   }, [data, searchQuery]);
 
   return (
-    <Layout>
+    <Layout title="أماكن الإقامة">
       <section className="bg-gradient-to-bl from-primary/10 via-accent/5 to-background py-12 md:py-16">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/tourism')} className="mb-4">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة إلى السياحة
           </Button>
           <div className="max-w-3xl">
@@ -67,12 +67,12 @@ const AccommodationListPage = () => {
         <div className="container px-4 space-y-6">
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="ابحث عن حي أو عنوان أو وصف"
-                className="pr-10"
+                className="search-input-with-icon-md"
               />
             </div>
             <Select value={district} onValueChange={setDistrict}>
@@ -164,7 +164,7 @@ const AccommodationListPage = () => {
                       </div>
                       <Button onClick={() => void navigate(`/tourism/accommodation/${listing.id}`)}>
                         التفاصيل
-                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        <ArrowLeft className="me-2 h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>

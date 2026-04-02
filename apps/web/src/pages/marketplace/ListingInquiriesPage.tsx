@@ -255,7 +255,7 @@ export default function ListingInquiriesPage() {
                             {inquiry.contactEmail && (
                               <Button asChild size="sm" variant="outline">
                                 <a href={`mailto:${inquiry.contactEmail}`}>
-                                  <Mail className="ml-2 h-4 w-4" />
+                                  <Mail className="ms-2 h-4 w-4" />
                                   مراسلة بالبريد
                                 </a>
                               </Button>
@@ -263,7 +263,7 @@ export default function ListingInquiriesPage() {
                             {inquiry.contactPhone && (
                               <Button asChild size="sm" variant="outline">
                                 <a href={`tel:${inquiry.contactPhone}`}>
-                                  <Phone className="ml-2 h-4 w-4" />
+                                  <Phone className="ms-2 h-4 w-4" />
                                   اتصال مباشر
                                 </a>
                               </Button>
@@ -300,7 +300,7 @@ export default function ListingInquiriesPage() {
                             )}
                             <Button
                               size="sm"
-                              className="mr-auto"
+                              className="me-auto"
                               disabled={replyMutation.isPending || !replyDraft.trim()}
                               onClick={() =>
                                 replyMutation.mutate({
@@ -309,7 +309,7 @@ export default function ListingInquiriesPage() {
                                 })
                               }
                             >
-                              <Send className="ml-2 h-4 w-4" />
+                              <Send className="ms-2 h-4 w-4" />
                               {inquiry.replyMessage ? 'تحديث الرد' : 'إرسال الرد'}
                             </Button>
                           </div>

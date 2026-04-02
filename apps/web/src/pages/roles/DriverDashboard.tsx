@@ -111,7 +111,7 @@ export default function DriverDashboard() {
                       <TableCell className="font-medium">
                         {ride.originName} ← {ride.destinationName}
                       </TableCell>
-                      <TableCell dir="ltr" className="text-right">
+                      <TableCell dir="ltr" className="text-end">
                         {new Date(ride.departureTime).toLocaleDateString('ar-EG', {
                           weekday: 'short',
                           hour: '2-digit',
@@ -121,7 +121,7 @@ export default function DriverDashboard() {
                       <TableCell>
                         {ride.seatsTaken}/{ride.seatsTotal}
                       </TableCell>
-                      <TableCell dir="ltr" className="text-right">
+                      <TableCell dir="ltr" className="text-end">
                         {(ride.pricePerSeat / 100).toFixed(0)} ج.م
                       </TableCell>
                       <TableCell>

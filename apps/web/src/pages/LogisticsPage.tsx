@@ -25,6 +25,7 @@ import {
   MapPin,
   Clock,
   Car,
+  Bus,
   Map as MapIcon,
   Search,
   LocateFixed,
@@ -33,9 +34,11 @@ import {
   Globe,
   Star,
   Plus,
+  ExternalLink,
 } from 'lucide-react';
 import { formatRidePrice } from '@/lib/format';
 import { formatDateTimeShort } from '@/lib/dates';
+import { buildGoogleMapsLocationUrl } from '@/lib/maps';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -129,15 +132,19 @@ const LogisticsPage = () => {
   const deleteRide = useDeleteRide();
 
   // ── POI Map locations ──
-  const poiLocations: MapLocation[] = (poisData?.data ?? []).map((poi) => ({
-    id: poi.id,
-    name: poi.nameAr,
-    lat: poi.location.y,
-    lng: poi.location.x,
-    type: getCategoryLabel(poi.category),
-    color: getCategoryColor(poi.category),
-    image: poi.images?.[0],
-  }));
+  const poiLocations = useMemo<MapLocation[]>(
+    () =>
+      (poisData?.data ?? []).map((poi) => ({
+        id: poi.id,
+        name: poi.nameAr,
+        lat: poi.location.y,
+        lng: poi.location.x,
+        type: getCategoryLabel(poi.category),
+        color: getCategoryColor(poi.category),
+        image: poi.images?.[0],
+      })),
+    [poisData],
+  );
 
   const handleMarkerClick = useCallback((loc: MapLocation) => {
     setSelectedPoiId(String(loc.id));
@@ -153,6 +160,8 @@ const LogisticsPage = () => {
       () => toast.error('لم نتمكن من تحديد موقعك'),
     );
   };
+
+  const hasNoNearbyPois = Boolean(geoFilter && poisData && poisData.total === 0);
 
   const canSuggestPoi =
     isAuthenticated &&
@@ -196,7 +205,7 @@ const LogisticsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="اللوجستيات والتنقل">
       <PageTransition>
         {/* Hero */}
         <PageHero image={heroLogistics} alt="الخريطة والتنقل">
@@ -224,16 +233,22 @@ const LogisticsPage = () => {
             <Tabs defaultValue="explore-map" className="w-full">
               <SR>
                 <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-3 mb-10 h-12 rounded-xl">
-                  <TabsTrigger value="explore-map" className="rounded-lg text-sm font-semibold">
-                    <MapIcon className="h-4 w-4 ml-2" />
+                  <TabsTrigger
+                    value="explore-map"
+                    className="rounded-lg text-sm font-semibold gap-2"
+                  >
+                    <MapIcon className="h-4 w-4" />
                     استكشف الخريطة
                   </TabsTrigger>
-                  <TabsTrigger value="carpool" className="rounded-lg text-sm font-semibold">
-                    <Car className="h-4 w-4 ml-2" />
+                  <TabsTrigger value="carpool" className="rounded-lg text-sm font-semibold gap-2">
+                    <Car className="h-4 w-4" />
                     مشاركة الرحلات
                   </TabsTrigger>
-                  <TabsTrigger value="local-transport" className="rounded-lg text-sm font-semibold">
-                    <Car className="h-4 w-4 ml-2" />
+                  <TabsTrigger
+                    value="local-transport"
+                    className="rounded-lg text-sm font-semibold gap-2"
+                  >
+                    <Bus className="h-4 w-4" />
                     النقل المحلي
                   </TabsTrigger>
                 </TabsList>
@@ -245,15 +260,15 @@ const LogisticsPage = () => {
                 <SR>
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="relative flex-1 min-w-[200px]">
-                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Search className="search-inline-icon-md absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="ابحث عن مكان..."
                         onChange={(e) => debouncedSetSearch(e.target.value)}
-                        className="pr-10"
+                        className="search-input-with-icon-md"
                       />
                     </div>
                     <Button variant="outline" size="sm" onClick={handleNearMe}>
-                      <LocateFixed className="h-4 w-4 ml-1" />
+                      <LocateFixed className="h-4 w-4 ms-1" />
                       بالقرب مني
                     </Button>
                     {geoFilter && (
@@ -267,7 +282,7 @@ const LogisticsPage = () => {
                         size="sm"
                         onClick={() => toast.info('ميزة اقتراح الأماكن قريباً')}
                       >
-                        <Plus className="h-4 w-4 ml-1" />
+                        <Plus className="h-4 w-4 ms-1" />
                         اقترح مكان
                       </Button>
                     )}
@@ -311,12 +326,38 @@ const LogisticsPage = () => {
                   {poisLoading ? (
                     <Skeleton h="h-[500px]" className="rounded-xl" />
                   ) : (
-                    <InteractiveMap
-                      locations={poiLocations}
-                      className="h-[500px] w-full rounded-xl"
-                      onMarkerClick={handleMarkerClick}
-                      fitBounds={poiLocations.length > 0}
-                    />
+                    <div className="relative overflow-hidden rounded-xl">
+                      <InteractiveMap
+                        locations={poiLocations}
+                        className="h-[500px] w-full rounded-xl"
+                        onMarkerClick={handleMarkerClick}
+                        fitBounds={poiLocations.length > 0}
+                        showGoogleMapsButton={false}
+                        popupTrigger="both"
+                      />
+                      {hasNoNearbyPois && (
+                        <div
+                          data-testid="nearby-empty-overlay"
+                          className="absolute inset-0 z-[1000] flex items-center justify-center bg-background/55 px-6 backdrop-blur-[2px]"
+                          aria-live="polite"
+                        >
+                          <div className="flex max-w-xl flex-col items-center gap-4 rounded-2xl border border-border/70 bg-background/80 px-6 py-7 text-center shadow-sm">
+                            <MapPin className="h-10 w-10 text-muted-foreground/60" />
+                            <p className="text-muted-foreground">
+                              لا توجد أماكن ضمن 50 كم من موقعك الحالي. اعرض جميع الأماكن في
+                              الوادي الجديد.
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setGeoFilter(undefined)}
+                            >
+                              إلغاء الموقع
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </SR>
 
@@ -409,7 +450,7 @@ const LogisticsPage = () => {
                           void navigate('/logistics/create-ride');
                         }}
                       >
-                        <Car className="h-5 w-5 ml-2" />
+                        <Car className="h-5 w-5 ms-2" />
                         أضف رحلتك
                       </Button>
                     </div>
@@ -500,81 +541,135 @@ export default LogisticsPage;
 // ── Sub-Components ─────────────────────────────────────────────────
 
 function PoiDetailContent({ poi }: { poi: Poi }) {
+  const googleMapsUrl = buildGoogleMapsLocationUrl(poi.location.y, poi.location.x);
+  const websiteLink = (() => {
+    if (!poi.website) return null;
+    try {
+      const normalized = /^https?:\/\//i.test(poi.website) ? poi.website : `https://${poi.website}`;
+      const url = new URL(normalized);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+      return {
+        href: url.href,
+        label: poi.website,
+      };
+    } catch {
+      return null;
+    }
+  })();
+
   return (
-    <div className="space-y-6 pt-4">
-      <SheetHeader>
-        <SheetTitle className="text-xl">{poi.nameAr}</SheetTitle>
-        {poi.nameEn && <p className="text-sm text-muted-foreground">{poi.nameEn}</p>}
-      </SheetHeader>
+    <div className="space-y-5 pt-4">
+      {poi.images?.[0] ? (
+        <div className="overflow-hidden rounded-3xl border border-border/60 bg-muted/30 shadow-sm">
+          <img
+            src={poi.images[0]}
+            alt={poi.nameAr}
+            className="h-52 w-full object-cover"
+          />
+        </div>
+      ) : null}
 
-      <Badge style={{ backgroundColor: getCategoryColor(poi.category) }} className="text-white">
-        {getCategoryLabel(poi.category)}
-      </Badge>
-
-      {poi.description && <p className="text-foreground/80">{poi.description}</p>}
-
-      <div className="space-y-3">
-        {poi.address && (
-          <div className="flex items-start gap-2 text-sm">
-            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-            <span>{poi.address}</span>
+      <div className="space-y-4 rounded-3xl border border-border/60 bg-card p-5 shadow-sm">
+        <SheetHeader className="space-y-2 text-start">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <SheetTitle className="text-2xl leading-tight">{poi.nameAr}</SheetTitle>
+              {poi.nameEn ? <p className="text-sm text-muted-foreground">{poi.nameEn}</p> : null}
+            </div>
+            <Badge
+              style={{ backgroundColor: getCategoryColor(poi.category) }}
+              className="rounded-full px-3 py-1 text-white shadow-sm"
+            >
+              {getCategoryLabel(poi.category)}
+            </Badge>
           </div>
-        )}
-        {poi.phone && (
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <a href={`tel:${poi.phone}`} className="text-primary hover:underline">
-              {poi.phone}
-            </a>
+        </SheetHeader>
+
+        {poi.description ? (
+          <p className="text-sm leading-7 text-foreground/80">{poi.description}</p>
+        ) : null}
+
+        {poi.ratingAvg ? (
+          <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-amber-800">
+            <Star className="h-4 w-4 fill-current" />
+            <span className="font-semibold">{Number(poi.ratingAvg).toFixed(1)}</span>
+            <span className="text-sm">({poi.ratingCount} تقييم)</span>
           </div>
-        )}
-        {(() => {
-          if (!poi.website) return null;
-          try {
-            const normalized = /^https?:\/\//i.test(poi.website)
-              ? poi.website
-              : `https://${poi.website}`;
-            const url = new URL(normalized);
-            if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-            return (
-              <div className="flex items-center gap-2 text-sm">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <a
-                  href={url.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate"
-                >
-                  {poi.website}
-                </a>
-              </div>
-            );
-          } catch {
-            return null;
-          }
-        })()}
+        ) : null}
       </div>
 
-      {poi.ratingAvg && (
-        <div className="flex items-center gap-2">
-          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-          <span className="font-semibold">{Number(poi.ratingAvg).toFixed(1)}</span>
-          <span className="text-sm text-muted-foreground">({poi.ratingCount} تقييم)</span>
-        </div>
-      )}
+      <div className="space-y-3">
+        {poi.address ? (
+          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+            <div className="flex items-start gap-3 text-sm">
+              <div className="rounded-full bg-muted p-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">العنوان</p>
+                <p className="leading-6 text-muted-foreground">{poi.address}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
-      {poi.images && poi.images.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {poi.images.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt={`${poi.nameAr} ${i + 1}`}
-              className="h-32 w-48 object-cover rounded-lg shrink-0"
-            />
-          ))}
+        {poi.phone ? (
+          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="rounded-full bg-muted p-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">الهاتف</p>
+                <a href={`tel:${poi.phone}`} className="text-primary hover:underline" dir="ltr">
+                  {poi.phone}
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {websiteLink ? (
+          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="rounded-full bg-muted p-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0 space-y-1">
+                <p className="font-medium text-foreground">الموقع الإلكتروني</p>
+                <a
+                  href={websiteLink.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block truncate text-primary hover:underline"
+                  dir="ltr"
+                >
+                  {websiteLink.label}
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="rounded-3xl border border-border/60 bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button className="flex-1" size="lg" asChild>
+            <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" />
+              Open in Google Maps
+            </a>
+          </Button>
+          {websiteLink ? (
+            <Button variant="outline" size="lg" className="flex-1" asChild>
+              <a href={websiteLink.href} target="_blank" rel="noopener noreferrer">
+                <Globe className="h-4 w-4" />
+                زيارة الموقع
+              </a>
+            </Button>
+          ) : null}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -61,7 +61,7 @@ export function QuickAccess() {
                       <Icon className="h-8 w-8 text-primary-foreground" strokeWidth={1.8} />
                     </div>
                     {isNotif && unreadCount > 0 && (
-                      <Badge className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] h-5 w-5 p-0 flex items-center justify-center animate-pulse">
+                      <Badge className="absolute top-2 end-2 bg-destructive text-destructive-foreground text-[10px] h-5 w-5 p-0 flex items-center justify-center animate-pulse">
                         {unreadCount}
                       </Badge>
                     )}

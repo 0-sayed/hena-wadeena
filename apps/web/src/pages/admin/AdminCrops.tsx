@@ -309,11 +309,11 @@ export default function AdminCrops() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Button onClick={openCreateCropDialog}>
-            <PlusCircle className="ml-2 h-4 w-4" />
+            <PlusCircle className="ms-2 h-4 w-4" />
             إضافة محصول
           </Button>
           <Button variant="outline" onClick={openCreatePriceDialog} disabled={!selectedCommodity}>
-            <Tag className="ml-2 h-4 w-4" />
+            <Tag className="ms-2 h-4 w-4" />
             إضافة سعر
           </Button>
         </div>

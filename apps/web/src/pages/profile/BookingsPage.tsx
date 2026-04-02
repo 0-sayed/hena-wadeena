@@ -132,11 +132,11 @@ const BookingsPage = () => {
       return isGuide ? (
         <div className="flex gap-2 mt-4">
           <Button size="sm" onClick={() => setActionTarget({ id: b.id, action: 'confirm' })}>
-            <CheckCircle className="h-4 w-4 ml-1" />
+            <CheckCircle className="h-4 w-4 ms-1" />
             قبول
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(b.id)}>
-            <XCircle className="h-4 w-4 ml-1" />
+            <XCircle className="h-4 w-4 ms-1" />
             رفض
           </Button>
         </div>
@@ -147,7 +147,7 @@ const BookingsPage = () => {
           className="mt-4"
           onClick={() => setCancelTarget(b.id)}
         >
-          <XCircle className="h-4 w-4 ml-1" />
+          <XCircle className="h-4 w-4 ms-1" />
           إلغاء
         </Button>
       );
@@ -162,7 +162,7 @@ const BookingsPage = () => {
             disabled={!isBookingDay}
             title={!isBookingDay ? 'يمكن بدء الجولة في يوم الحجز فقط' : ''}
           >
-            <Play className="h-4 w-4 ml-1" />
+            <Play className="h-4 w-4 ms-1" />
             بدء الجولة
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(b.id)}>
@@ -185,7 +185,7 @@ const BookingsPage = () => {
       return (
         <div className="flex gap-2 mt-4">
           <Button size="sm" onClick={() => setActionTarget({ id: b.id, action: 'complete' })}>
-            <CheckCircle className="h-4 w-4 ml-1" />
+            <CheckCircle className="h-4 w-4 ms-1" />
             إكمال الجولة
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(b.id)}>
@@ -199,7 +199,7 @@ const BookingsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="حجوزاتي">
       <PageTransition>
         <section className="relative py-14 md:py-20 overflow-hidden">
           <GradientMesh />
@@ -296,7 +296,7 @@ const BookingsPage = () => {
                               </div>
                               {b.peopleCount} أشخاص
                             </div>
-                            <div className="font-bold text-primary text-left text-lg">
+                            <div className="font-bold text-primary text-start text-lg">
                               {piastresToEgp(b.totalPrice)}
                             </div>
                           </div>
@@ -365,7 +365,7 @@ const BookingsPage = () => {
               onClick={handleCancel}
               disabled={!cancelReason.trim() || cancelMutation.isPending}
             >
-              {cancelMutation.isPending && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+              {cancelMutation.isPending && <Loader2 className="h-4 w-4 ms-2 animate-spin" />}
               تأكيد الإلغاء
             </Button>
           </DialogFooter>
@@ -404,7 +404,7 @@ const BookingsPage = () => {
             >
               {(confirmMutation.isPending ||
                 startMutation.isPending ||
-                completeMutation.isPending) && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+                completeMutation.isPending) && <Loader2 className="h-4 w-4 ms-2 animate-spin" />}
               تأكيد
             </Button>
           </DialogFooter>

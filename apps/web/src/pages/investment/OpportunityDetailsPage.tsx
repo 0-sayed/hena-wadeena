@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { investmentAPI } from '@/services/api';
-import { formatPrice } from '@/lib/format';
+import { formatArabicYears, formatPrice } from '@/lib/format';
 import { useAuth } from '@/hooks/use-auth';
 
 const OpportunityDetailsPage = () => {
@@ -31,7 +31,7 @@ const OpportunityDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الفرصة">
         <div className="container py-16 space-y-6">
           <div className="h-10 w-40 animate-pulse rounded-xl bg-muted" />
           <div className="h-80 animate-pulse rounded-2xl bg-muted" />
@@ -43,7 +43,7 @@ const OpportunityDetailsPage = () => {
 
   if (isError || !opportunity) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الفرصة">
         <div className="container py-20 text-center space-y-4">
           <p className="text-lg text-muted-foreground">تعذر تحميل بيانات الفرصة الاستثمارية.</p>
           <div className="flex justify-center gap-3">
@@ -61,11 +61,11 @@ const OpportunityDetailsPage = () => {
     isAuthenticated && ['investor', 'merchant', 'admin'].includes(user?.role ?? '');
 
   return (
-    <Layout>
+    <Layout title="تفاصيل الفرصة">
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة للاستثمار
           </Button>
 
@@ -214,7 +214,7 @@ const OpportunityDetailsPage = () => {
                       <p className="mb-1 text-xs text-muted-foreground">فترة الاسترداد</p>
                       <p className="font-semibold">
                         {opportunity.paybackPeriodYears != null
-                          ? `${opportunity.paybackPeriodYears} سنة`
+                          ? formatArabicYears(opportunity.paybackPeriodYears)
                           : '-'}
                       </p>
                     </div>
@@ -225,7 +225,7 @@ const OpportunityDetailsPage = () => {
                     size="lg"
                     onClick={() => void navigate(`/investment/contact/${opportunity.id}`)}
                   >
-                    <Mail className="h-5 w-5 ml-2" />
+                    <Mail className="h-5 w-5 ms-2" />
                     إرسال استفسار استثماري
                   </Button>
                 </CardContent>

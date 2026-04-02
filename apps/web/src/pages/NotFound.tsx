@@ -13,7 +13,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <Layout>
+    <Layout title="الصفحة غير موجودة">
       <PageTransition>
         <div className="relative min-h-[60vh] flex items-center justify-center px-4 overflow-hidden">
           <GradientMesh />
@@ -31,7 +31,7 @@ const NotFound = () => {
                   size="lg"
                   className="h-14 px-8 rounded-xl text-base hover:scale-[1.05] transition-transform"
                 >
-                  <Home className="h-5 w-5 ml-2" />
+                  <Home className="h-5 w-5 ms-2" />
                   العودة للرئيسية
                 </Button>
               </Link>

@@ -125,7 +125,7 @@ const NotificationsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="الإشعارات">
       <PageTransition>
         <section className="relative py-14 md:py-20 overflow-hidden">
           <GradientMesh />
@@ -149,7 +149,7 @@ const NotificationsPage = () => {
                     disabled={markAllReadMutation.isPending}
                     onClick={() => markAllReadMutation.mutate()}
                   >
-                    <CheckCheck className="h-4 w-4 ml-1" />
+                    <CheckCheck className="h-4 w-4 ms-1" />
                     قراءة الكل
                   </Button>
                 )}

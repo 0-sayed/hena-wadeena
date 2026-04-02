@@ -137,7 +137,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="تسجيل حساب جديد">
       <PageTransition>
         <section className="relative py-10 md:py-14 overflow-hidden">
           <GradientMesh />
@@ -183,7 +183,7 @@ const RegisterPage = () => {
                         <div className="space-y-2">
                           <Label htmlFor="fullName">الاسم الكامل *</Label>
                           <div className="relative">
-                            <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <User className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="fullName"
                               placeholder="أدخل اسمك الكامل"
@@ -193,7 +193,7 @@ const RegisterPage = () => {
                                 if (fieldErrors.fullName)
                                   setFieldErrors({ ...fieldErrors, fullName: '' });
                               }}
-                              className="pr-10"
+                              className="pe-10"
                             />
                           </div>
                           {fieldErrors.fullName && (
@@ -204,7 +204,7 @@ const RegisterPage = () => {
                         <div className="space-y-2">
                           <Label htmlFor="email">البريد الإلكتروني *</Label>
                           <div className="relative">
-                            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Mail className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="email"
                               type="email"
@@ -215,7 +215,7 @@ const RegisterPage = () => {
                                 if (fieldErrors.email)
                                   setFieldErrors({ ...fieldErrors, email: '' });
                               }}
-                              className="pr-10"
+                              className="pe-10"
                             />
                           </div>
                           {fieldErrors.email && (
@@ -227,7 +227,7 @@ const RegisterPage = () => {
                           <div className="space-y-2">
                             <Label htmlFor="password">كلمة المرور *</Label>
                             <div className="relative">
-                              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Lock className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 id="password"
                                 type="password"
@@ -238,7 +238,7 @@ const RegisterPage = () => {
                                   if (fieldErrors.password)
                                     setFieldErrors({ ...fieldErrors, password: '' });
                                 }}
-                                className="pr-10"
+                                className="pe-10"
                               />
                             </div>
                             {fieldErrors.password && (
@@ -248,7 +248,7 @@ const RegisterPage = () => {
                           <div className="space-y-2">
                             <Label htmlFor="confirmPassword">تأكيد كلمة المرور *</Label>
                             <div className="relative">
-                              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Lock className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 id="confirmPassword"
                                 type="password"
@@ -259,7 +259,7 @@ const RegisterPage = () => {
                                   if (fieldErrors.confirmPassword)
                                     setFieldErrors({ ...fieldErrors, confirmPassword: '' });
                                 }}
-                                className="pr-10"
+                                className="pe-10"
                               />
                             </div>
                             {fieldErrors.confirmPassword && (
@@ -275,7 +275,7 @@ const RegisterPage = () => {
                           onClick={nextStep}
                         >
                           التالي
-                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          <ArrowLeft className="h-4 w-4 me-2" />
                         </Button>
                       </div>
                     )}
@@ -334,7 +334,7 @@ const RegisterPage = () => {
                             className="flex-1"
                             onClick={() => setStep(1)}
                           >
-                            <ArrowRight className="h-4 w-4 ml-2" />
+                            <ArrowRight className="h-4 w-4" />
                             السابق
                           </Button>
                           <Button type="submit" className="flex-1" size="lg" disabled={isLoading}>

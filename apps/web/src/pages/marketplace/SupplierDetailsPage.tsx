@@ -4,6 +4,14 @@ import { ArrowRight, MapPin, Phone, Package, Shield, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useBusiness } from '@/hooks/use-businesses';
 import { districtLabel, unitLabel } from '@/lib/format';
 import { Skeleton } from '@/components/motion/Skeleton';
@@ -15,11 +23,11 @@ const SupplierDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل المورد">
         <section className="py-8 md:py-12">
           <div className="container px-4">
             <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-6">
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowRight className="h-4 w-4" />
               العودة للبورصة
             </Button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -38,7 +46,7 @@ const SupplierDetailsPage = () => {
 
   if (isError || !business) {
     return (
-      <Layout>
+      <Layout title="تفاصيل المورد">
         <section className="py-8 md:py-12">
           <div className="container px-4 text-center">
             <p className="text-lg text-muted-foreground mb-4">لم يتم العثور على المورد</p>
@@ -52,11 +60,11 @@ const SupplierDetailsPage = () => {
   const isVerified = business.verificationStatus === 'verified';
 
   return (
-    <Layout>
+    <Layout title="تفاصيل المورد">
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة للبورصة
           </Button>
 
@@ -121,43 +129,30 @@ const SupplierDetailsPage = () => {
                     <CardTitle className="text-lg">المنتجات</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-border bg-muted/30">
-                            <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                              المنتج
-                            </th>
-                            <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                              الوحدة
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {business.commodities.map((commodity, index) => (
-                            <tr
-                              key={commodity.id}
-                              className={
-                                index !== business.commodities.length - 1
-                                  ? 'border-b border-border/50'
-                                  : ''
-                              }
-                            >
-                              <td className="py-4 px-6">
-                                <span className="font-medium text-foreground">
-                                  {commodity.nameAr}
-                                </span>
-                              </td>
-                              <td className="py-4 px-6">
-                                <span className="text-sm text-muted-foreground">
-                                  {unitLabel(commodity.unit)}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <Table className="table-fixed">
+                      <TableHeader className="bg-muted/30">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="px-6 py-4">المنتج</TableHead>
+                          <TableHead className="px-6 py-4">الوحدة</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {business.commodities.map((commodity) => (
+                          <TableRow key={commodity.id}>
+                            <TableCell className="px-6 py-4 text-start">
+                              <span className="font-medium text-foreground">
+                                {commodity.nameAr}
+                              </span>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 text-start">
+                              <span className="text-sm text-muted-foreground">
+                                {unitLabel(commodity.unit)}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               )}
@@ -203,7 +198,7 @@ const SupplierDetailsPage = () => {
                       size="lg"
                       onClick={() => alert(`للتواصل مع ${business.nameAr}: ${business.phone}`)}
                     >
-                      <Phone className="h-5 w-5 ml-2" />
+                      <Phone className="h-5 w-5 ms-2" />
                       اتصل الآن
                     </Button>
                   )}
@@ -214,7 +209,7 @@ const SupplierDetailsPage = () => {
                       className="w-full"
                       onClick={() => window.open(business.website!, '_blank')}
                     >
-                      <Globe className="h-4 w-4 ml-2" />
+                      <Globe className="h-4 w-4 ms-2" />
                       زيارة الموقع
                     </Button>
                   )}

@@ -31,7 +31,7 @@ type NavigationItem = {
 };
 
 const CONTROL_BUTTON_CLASS =
-  'flex h-9 min-w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50';
+  'flex h-9 min-w-9 items-center justify-center rounded-[1.1rem] text-muted-foreground transition-[background-color,color,transform,box-shadow] duration-200 ease-out hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50';
 
 function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
   const labels =
@@ -114,7 +114,7 @@ function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground">
+      <div className="flex h-9 w-9 items-center justify-center rounded-[1.1rem] text-muted-foreground">
         <div className="h-5 w-5" />
       </div>
     );
@@ -126,7 +126,7 @@ function ThemeToggle() {
     <Classic
       toggled={isDark}
       onToggle={() => setTheme(isDark ? 'light' : 'dark')}
-      className={`${CONTROL_BUTTON_CLASS} hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
+      className={`${CONTROL_BUTTON_CLASS} w-9 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
       aria-label="تبديل الوضع"
       title="تبديل الوضع"
       placeholder={undefined}
@@ -153,7 +153,7 @@ function LanguageToggle({
       type="button"
       onClick={onToggle}
       disabled={disabled}
-      className={`${CONTROL_BUTTON_CLASS} w-12 gap-1 px-2 text-[11px] font-bold uppercase tracking-[0.18em]`}
+      className={`${CONTROL_BUTTON_CLASS} w-[3.35rem] gap-1 px-2 text-[11px] font-bold uppercase tracking-[0.18em]`}
       aria-label={title}
       title={title}
       dir="ltr"
@@ -174,7 +174,7 @@ function HeaderActionCluster({
   onToggleLanguage: () => void;
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm">
+    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm shadow-black/5 supports-[backdrop-filter]:bg-background/70">
       <LanguageToggle
         language={language}
         disabled={disabled}
@@ -326,7 +326,7 @@ export function Header() {
                 </Button>
               </Link>
 
-              <div className="relative mr-1">
+              <div className="relative me-1">
                 <button
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
@@ -398,7 +398,7 @@ export function Header() {
                           <Bell className="h-4 w-4 text-muted-foreground" />
                           الإشعارات
                           {unreadCount > 0 && (
-                            <span className="mr-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
                             </span>
                           )}
@@ -423,10 +423,10 @@ export function Header() {
               </div>
             </>
           ) : (
-            <div className="mr-2 flex items-center gap-2">
+            <div className="me-2 flex items-center gap-2">
               <Link to="/login">
                 <Button variant="outline" size="sm">
-                  <User className="ml-2 h-4 w-4" />
+                  <User className="ms-2 h-4 w-4" />
                   تسجيل الدخول
                 </Button>
               </Link>
@@ -492,12 +492,12 @@ export function Header() {
                 )}
 
                 <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="بحث في المنصة..."
-                    className="h-10 pr-10"
+                    className="search-input-with-icon-md h-10"
                   />
                 </form>
 
@@ -560,7 +560,7 @@ export function Header() {
                       <Bell className="h-5 w-5 text-muted-foreground" />
                       الإشعارات
                       {unreadCount > 0 && (
-                        <span className="mr-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                        <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
                         </span>
                       )}
@@ -581,7 +581,7 @@ export function Header() {
                   <div className="flex flex-col gap-2 border-t border-border pt-4">
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
-                        <User className="ml-2 h-4 w-4" />
+                        <User className="ms-2 h-4 w-4" />
                         تسجيل الدخول
                       </Button>
                     </Link>

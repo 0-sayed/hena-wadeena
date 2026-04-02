@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Calendar, Clock, MapPin, Search, Star } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
@@ -18,11 +18,13 @@ import { useGuides } from '@/hooks/use-guides';
 import { usePublicUsers } from '@/hooks/use-users';
 import {
   attractionTypeLabels,
+  areaLabels,
   formatRating,
   languageLabels,
   piastresToEgp,
   specialtyLabels,
 } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 import type { PublicUserProfile } from '@/services/api';
 
 function getGuideName(profile?: PublicUserProfile) {
@@ -44,13 +46,71 @@ const TourismPage = () => {
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-    void navigate(`/search?q=${encodeURIComponent(query)}`);
+    setSearchQuery((previous) => previous.trim());
   };
 
+  const filteredFeaturedAttractions = useMemo(
+    () =>
+      featuredAttractions.filter((attraction) =>
+        matchesSearchQuery(searchQuery, [
+          attraction.nameAr,
+          attraction.nameEn,
+          attraction.descriptionAr,
+          attraction.descriptionEn,
+          attraction.historyAr,
+          attraction.type,
+          attractionTypeLabels[attraction.type],
+          attraction.area,
+          areaLabels[attraction.area],
+          ...(attraction.tips ?? []),
+        ]),
+      ),
+    [featuredAttractions, searchQuery],
+  );
+
+  const filteredAllAttractions = useMemo(
+    () =>
+      allAttractions.filter((attraction) =>
+        matchesSearchQuery(searchQuery, [
+          attraction.nameAr,
+          attraction.nameEn,
+          attraction.descriptionAr,
+          attraction.descriptionEn,
+          attraction.historyAr,
+          attraction.type,
+          attractionTypeLabels[attraction.type],
+          attraction.area,
+          areaLabels[attraction.area],
+          ...(attraction.tips ?? []),
+        ]),
+      ),
+    [allAttractions, searchQuery],
+  );
+
+  const filteredGuides = useMemo(
+    () =>
+      guides.filter((guide) => {
+        const profile = publicUsers[guide.userId];
+
+        return matchesSearchQuery(searchQuery, [
+          getGuideName(profile),
+          guide.bioAr,
+          guide.bioEn,
+          ...guide.specialties,
+          ...guide.specialties.map((specialty) => specialtyLabels[specialty] ?? specialty),
+          ...guide.languages,
+          ...guide.languages.map((language) => languageLabels[language] ?? language),
+          ...guide.areasOfOperation,
+          ...guide.areasOfOperation.map(
+            (area) => areaLabels[area as keyof typeof areaLabels] ?? area,
+          ),
+        ]);
+      }),
+    [guides, publicUsers, searchQuery],
+  );
+
   return (
-    <Layout>
+    <Layout title="السياحة والمعالم">
       <PageTransition>
         <PageHero image={heroTourism} alt="السياحة في الوادي الجديد">
           <SR>
@@ -71,12 +131,12 @@ const TourismPage = () => {
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="absolute right-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="ابحث عن معالم أو مرشدين..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-16 rounded-2xl border-0 bg-card/90 pr-14 pl-28 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 ps-28 text-lg shadow-lg backdrop-blur-sm"
               />
               <Button
                 type="submit"
@@ -116,7 +176,7 @@ const TourismPage = () => {
                     </SR>
                     <SR stagger>
                       <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
-                        {featuredAttractions.map((attraction) => (
+                        {filteredFeaturedAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
                             className="group overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -162,13 +222,18 @@ const TourismPage = () => {
                                     void navigate(`/tourism/attraction/${attraction.slug}`)
                                   }
                                 >
-                                  المزيد <ArrowLeft className="mr-1 h-4 w-4" />
+                                  المزيد <ArrowLeft className="me-1 h-4 w-4" />
                                 </Button>
                               </div>
                             </CardContent>
                           </Card>
                         ))}
                       </div>
+                      {filteredFeaturedAttractions.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
+                          لا توجد وجهات مميزة مطابقة لبحثك حالياً
+                        </div>
+                      ) : null}
                     </SR>
 
                     <SR>
@@ -185,7 +250,7 @@ const TourismPage = () => {
                     </SR>
                     <SR stagger>
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-                        {allAttractions.map((attraction) => (
+                        {filteredAllAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
                             className="group cursor-pointer overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -215,6 +280,11 @@ const TourismPage = () => {
                           </Card>
                         ))}
                       </div>
+                      {filteredAllAttractions.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
+                          لا توجد معالم مطابقة لبحثك حالياً
+                        </div>
+                      ) : null}
                     </SR>
                   </>
                 )}
@@ -230,7 +300,7 @@ const TourismPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                      {guides.map((guide) => {
+                      {filteredGuides.map((guide) => {
                         const guideName = getGuideName(publicUsers[guide.userId]);
 
                         return (
@@ -292,13 +362,13 @@ const TourismPage = () => {
                                   <span className="text-2xl font-bold text-primary">
                                     {piastresToEgp(guide.basePrice)}
                                   </span>
-                                  <span className="mr-1 text-sm text-muted-foreground">/يوم</span>
+                                  <span className="me-1 text-sm text-muted-foreground">/يوم</span>
                                 </div>
                                 <Button
                                   className="transition-transform hover:scale-[1.03]"
                                   onClick={() => void navigate(`/guides/${guide.id}`)}
                                 >
-                                  <Calendar className="ml-2 h-4 w-4" />
+                                  <Calendar className="ms-2 h-4 w-4" />
                                   عرض الملف
                                 </Button>
                               </div>
@@ -307,6 +377,11 @@ const TourismPage = () => {
                         );
                       })}
                     </div>
+                    {filteredGuides.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
+                        لا يوجد مرشدون مطابقون لبحثك حالياً
+                      </div>
+                    ) : null}
                   </SR>
                 )}
               </TabsContent>

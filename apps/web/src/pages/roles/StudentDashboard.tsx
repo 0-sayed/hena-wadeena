@@ -57,7 +57,7 @@ export default function StudentDashboard() {
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <Link to="/tourism/accommodation">
               عرض جميع السكن
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="me-2 h-4 w-4" />
             </Link>
           </Button>
         </CardHeader>
@@ -98,7 +98,7 @@ export default function StudentDashboard() {
                         </span>
                       </div>
                     </div>
-                    <div className="shrink-0 text-left">
+                    <div className="shrink-0 text-start">
                       <p className="font-bold text-primary">{formatPrice(listing.price)}</p>
                       <p className="text-xs text-muted-foreground">{listing.priceUnit}</p>
                     </div>

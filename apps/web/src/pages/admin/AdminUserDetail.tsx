@@ -154,7 +154,7 @@ export default function AdminUserDetail() {
             void navigate('/admin/users');
           }}
         >
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="h-4 w-4" />
           العودة إلى المستخدمين
         </Button>
         <Card>
@@ -177,7 +177,7 @@ export default function AdminUserDetail() {
               void navigate('/admin/users');
             }}
           >
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
             العودة إلى المستخدمين
           </Button>
           <h1 className="text-2xl font-bold">الملف الإداري للمستخدم</h1>
@@ -187,7 +187,7 @@ export default function AdminUserDetail() {
         </div>
 
         <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-          <KeyRound className="ml-2 h-4 w-4" />
+          <KeyRound className="ms-2 h-4 w-4" />
           إعادة تعيين كلمة المرور
         </Button>
       </div>
@@ -394,7 +394,7 @@ export default function AdminUserDetail() {
                 void handleCopyPassword();
               }}
             >
-              <Copy className="ml-2 h-4 w-4" />
+              <Copy className="ms-2 h-4 w-4" />
               نسخ كلمة المرور
             </Button>
             <Button onClick={() => setPasswordDialogOpen(false)}>إغلاق</Button>

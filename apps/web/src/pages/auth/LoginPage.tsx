@@ -35,7 +35,7 @@ const LoginPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="تسجيل الدخول">
       <PageTransition>
         <section className="relative py-14 md:py-24 overflow-hidden">
           <GradientMesh />
@@ -54,14 +54,14 @@ const LoginPage = () => {
                     <div className="space-y-2">
                       <Label htmlFor="email">البريد الإلكتروني</Label>
                       <div className="relative">
-                        <Mail className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Mail className="absolute end-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
                           placeholder="example@email.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="pr-12 h-13 rounded-xl text-base"
+                          className="pe-12 h-13 rounded-xl text-base"
                           required
                         />
                       </div>
@@ -69,14 +69,14 @@ const LoginPage = () => {
                     <div className="space-y-2">
                       <Label htmlFor="password">كلمة المرور</Label>
                       <div className="relative">
-                        <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Lock className="absolute end-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="password"
                           type="password"
                           placeholder="••••••••"
                           value={formData.password}
                           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          className="pr-12 h-13 rounded-xl text-base"
+                          className="pe-12 h-13 rounded-xl text-base"
                           required
                         />
                       </div>

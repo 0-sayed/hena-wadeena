@@ -108,7 +108,7 @@ export default function ListingInquiryPage() {
       <section className="py-8 md:py-12">
         <div className="container max-w-2xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
             العودة
           </Button>
 
@@ -140,14 +140,14 @@ export default function ListingInquiryPage() {
                 <div className="space-y-2">
                   <Label htmlFor="listingInquiryName">الاسم *</Label>
                   <div className="relative">
-                    <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="listingInquiryName"
                       value={formData.name}
                       onChange={(event) =>
                         setFormData((prev) => ({ ...prev, name: event.target.value }))
                       }
-                      className="pr-10"
+                      className="pe-10"
                       required
                     />
                   </div>
@@ -157,7 +157,7 @@ export default function ListingInquiryPage() {
                   <div className="space-y-2">
                     <Label htmlFor="listingInquiryEmail">البريد الإلكتروني</Label>
                     <div className="relative">
-                      <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Mail className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="listingInquiryEmail"
                         type="email"
@@ -165,7 +165,7 @@ export default function ListingInquiryPage() {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, email: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                       />
                     </div>
                   </div>
@@ -173,7 +173,7 @@ export default function ListingInquiryPage() {
                   <div className="space-y-2">
                     <Label htmlFor="listingInquiryPhone">رقم الهاتف</Label>
                     <div className="relative">
-                      <Phone className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Phone className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="listingInquiryPhone"
                         type="tel"
@@ -181,7 +181,7 @@ export default function ListingInquiryPage() {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, phone: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                       />
                     </div>
                   </div>
@@ -202,7 +202,7 @@ export default function ListingInquiryPage() {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={submitting || isOwner}>
-                  <Send className="ml-2 h-5 w-5" />
+                  <Send className="ms-2 h-5 w-5" />
                   {submitting ? 'جارٍ الإرسال...' : 'إرسال الاستفسار'}
                 </Button>
               </form>

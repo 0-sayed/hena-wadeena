@@ -34,6 +34,14 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroMarketplace from '@/assets/hero-marketplace.jpg';
 import { TrendBadge } from '@/components/market/TrendBadge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
 import { useBusinesses } from '@/hooks/use-businesses';
 import { useCommodities } from '@/hooks/use-commodities';
@@ -42,6 +50,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 
 type SupplierFormState = {
   nameAr: string;
@@ -105,7 +114,7 @@ const MarketplacePage = () => {
     hasNextPage: pricesHasNext,
     isFetchingNextPage: pricesFetchingNext,
     fetchNextPage: pricesFetchNext,
-  } = usePriceIndex({ region: selectedCity });
+  } = usePriceIndex({ region: selectedCity, price_type: 'retail' });
 
   const {
     data: businesses,
@@ -134,6 +143,26 @@ const MarketplacePage = () => {
           categoryLabel(entry.commodity.category).includes(priceSearchQuery),
       ),
     [priceEntries, priceSearchQuery],
+  );
+
+  const filteredBusinesses = useMemo(
+    () =>
+      businesses.filter((biz) =>
+        matchesSearchQuery(supplierSearch, [
+          biz.nameAr,
+          biz.nameEn,
+          biz.category,
+          biz.descriptionAr,
+          biz.description,
+          districtLabel(biz.district ?? ''),
+          ...(biz.commodities.flatMap((commodity) => [
+            commodity.nameAr,
+            commodity.nameEn,
+            commodity.category,
+          ]) as string[]),
+        ]),
+      ),
+    [businesses, supplierSearch],
   );
 
   const handleSupplierFieldChange = (field: keyof SupplierFormState, value: string) => {
@@ -234,7 +263,7 @@ const MarketplacePage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="البورصة والأسعار">
       <PageTransition>
         <PageHero image={heroMarketplace} alt="البورصة والأسعار">
           <SR>
@@ -285,12 +314,12 @@ const MarketplacePage = () => {
                       </SelectContent>
                     </Select>
                     <div className="relative flex-1">
-                      <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                      <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         placeholder="ابحث عن منتج..."
                         value={priceSearchQuery}
                         onChange={(event) => setPriceSearchQuery(event.target.value)}
-                        className="h-12 rounded-xl pr-12"
+                        className="search-input-with-icon-md h-12 rounded-xl"
                       />
                     </div>
                   </div>
@@ -318,60 +347,48 @@ const MarketplacePage = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-border bg-muted/30">
-                                <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  المنتج
-                                </th>
-                                <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  التصنيف
-                                </th>
-                                <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  السعر
-                                </th>
-                                <th className="px-6 py-5 text-right text-sm font-semibold text-muted-foreground">
-                                  التغير
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {filteredProducts.map((entry, index) => (
-                                <tr
-                                  key={`${entry.commodity.id}-${entry.region}-${entry.priceType}`}
-                                  className={`transition-colors duration-200 hover:bg-muted/20 ${
-                                    index !== filteredProducts.length - 1
-                                      ? 'border-b border-border/50'
-                                      : ''
-                                  }`}
-                                >
-                                  <td className="px-6 py-5">
-                                    <span className="font-semibold text-foreground">
-                                      {entry.commodity.nameAr}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-5">
-                                    <Badge variant="outline">
-                                      {categoryLabel(entry.commodity.category)}
-                                    </Badge>
-                                  </td>
-                                  <td className="px-6 py-5">
+                        <Table className="table-fixed">
+                          <TableHeader className="bg-muted/30">
+                            <TableRow className="hover:bg-transparent">
+                              <TableHead className="px-6 py-5">المنتج</TableHead>
+                              <TableHead className="px-6 py-5">التصنيف</TableHead>
+                              <TableHead className="px-6 py-5">السعر</TableHead>
+                              <TableHead className="px-6 py-5">التغير</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredProducts.map((entry) => (
+                              <TableRow
+                                key={`${entry.commodity.id}-${entry.region}-${entry.priceType}`}
+                                className="transition-colors duration-200 hover:bg-muted/20"
+                              >
+                                <TableCell className="px-6 py-5 text-start">
+                                  <span className="font-semibold text-foreground">
+                                    {entry.commodity.nameAr}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="px-6 py-5 text-start">
+                                  <Badge variant="outline">
+                                    {categoryLabel(entry.commodity.category)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-6 py-5 text-start">
+                                  <div className="flex flex-wrap items-baseline gap-1">
                                     <span className="text-lg font-bold text-foreground">
                                       {formatPrice(entry.latestPrice)}
                                     </span>
-                                    <span className="mr-1 text-sm text-muted-foreground">
+                                    <span className="text-sm text-muted-foreground">
                                       جنيه/{unitLabel(entry.commodity.unit)}
                                     </span>
-                                  </td>
-                                  <td className="px-6 py-5">
-                                    <TrendBadge changePercent={entry.changePercent} />
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="px-6 py-5 text-start">
+                                  <TrendBadge changePercent={entry.changePercent} />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       )}
                     </CardContent>
                   </Card>
@@ -387,12 +404,12 @@ const MarketplacePage = () => {
                 <SR>
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="relative max-w-md flex-1">
-                      <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                      <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         placeholder="ابحث عن مورد..."
                         value={supplierSearch}
                         onChange={(event) => setSupplierSearch(event.target.value)}
-                        className="h-12 rounded-xl pr-12"
+                        className="search-input-with-icon-md h-12 rounded-xl"
                       />
                     </div>
                     {canManageSuppliers && (
@@ -413,7 +430,7 @@ const MarketplacePage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
-                      {businesses.map((biz) => (
+                      {filteredBusinesses.map((biz) => (
                         <Card
                           key={biz.id}
                           className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -473,7 +490,7 @@ const MarketplacePage = () => {
                                   className="flex-1 transition-transform hover:scale-[1.02]"
                                 >
                                   <a href={`tel:${biz.phone}`}>
-                                    <Phone className="ml-2 h-4 w-4" />
+                                    <Phone className="ms-2 h-4 w-4" />
                                     تواصل
                                   </a>
                                 </Button>
@@ -483,7 +500,7 @@ const MarketplacePage = () => {
                                   className="flex-1 transition-transform hover:scale-[1.02]"
                                 >
                                   <a href={biz.website} target="_blank" rel="noreferrer">
-                                    <ExternalLink className="ml-2 h-4 w-4" />
+                                    <ExternalLink className="ms-2 h-4 w-4" />
                                     زيارة الموقع
                                   </a>
                                 </Button>
@@ -494,6 +511,11 @@ const MarketplacePage = () => {
                       ))}
                     </div>
                   </SR>
+                )}
+                {!suppliersLoading && filteredBusinesses.length === 0 && (
+                  <div className="py-12 text-center">
+                    <p className="text-lg text-muted-foreground">لا يوجد موردون مطابقون للبحث</p>
+                  </div>
                 )}
                 <LoadMoreButton
                   hasNextPage={suppliersHasNext}

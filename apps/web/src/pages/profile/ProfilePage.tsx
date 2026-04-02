@@ -170,7 +170,7 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="الملف الشخصي">
         <div className="container max-w-2xl space-y-6 py-20">
           <Skeleton h="h-64" className="rounded-2xl" />
           <Skeleton h="h-48" className="rounded-2xl" />
@@ -181,7 +181,7 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <Layout>
+      <Layout title="الملف الشخصي">
         <div className="container max-w-2xl py-20 text-center text-muted-foreground">
           لا يمكن تحميل الملف الشخصي حالياً.
         </div>
@@ -190,7 +190,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <Layout>
+    <Layout title="الملف الشخصي">
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
@@ -211,7 +211,7 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-2 -left-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg transition-transform hover:scale-110"
+                      className="absolute -bottom-2 -start-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg transition-transform hover:scale-110"
                     >
                       <Camera className="h-5 w-5" />
                     </button>
@@ -228,7 +228,7 @@ const ProfilePage = () => {
                   <h2 className="text-2xl font-bold text-foreground">{formData.full_name}</h2>
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <Badge variant="secondary" className="px-3 py-1 text-sm">
-                      <Shield className="ml-1 h-3.5 w-3.5" />
+                      <Shield className="ms-1 h-3.5 w-3.5" />
                       {roleLabels[user.role] ?? user.role}
                     </Badge>
                     <Badge
@@ -361,7 +361,7 @@ const ProfilePage = () => {
                         className="mt-4 h-12 w-full transition-transform hover:scale-[1.01]"
                         variant="outline"
                       >
-                        <Edit2 className="ml-2 h-4 w-4" />
+                        <Edit2 className="ms-2 h-4 w-4" />
                         تعديل الملف الشخصي
                       </Button>
                     </div>

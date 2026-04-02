@@ -214,7 +214,7 @@ export function LocalTransportTab() {
         </div>
         {canManageCompanies && (
           <Button onClick={openCreateDialog}>
-            <Plus className="ml-2 h-4 w-4" />
+            <Plus className="ms-2 h-4 w-4" />
             إضافة شركة نقل
           </Button>
         )}
@@ -277,7 +277,7 @@ export function LocalTransportTab() {
                   {company.phone && (
                     <Button asChild variant="outline" className="flex-1">
                       <a href={`tel:${company.phone}`}>
-                        <Phone className="ml-2 h-4 w-4" />
+                        <Phone className="ms-2 h-4 w-4" />
                         {company.phone}
                       </a>
                     </Button>
@@ -285,7 +285,7 @@ export function LocalTransportTab() {
                   {company.website && (
                     <Button asChild className="flex-1">
                       <a href={company.website} target="_blank" rel="noreferrer">
-                        <ExternalLink className="ml-2 h-4 w-4" />
+                        <ExternalLink className="ms-2 h-4 w-4" />
                         رابط الحجز
                       </a>
                     </Button>
@@ -295,7 +295,7 @@ export function LocalTransportTab() {
                 {canManageCompanies && (
                   <div className="flex gap-2 border-t pt-4">
                     <Button variant="outline" size="sm" onClick={() => openEditDialog(company)}>
-                      <Pencil className="ml-2 h-4 w-4" />
+                      <Pencil className="ms-2 h-4 w-4" />
                       تعديل
                     </Button>
                     <Button
@@ -303,7 +303,7 @@ export function LocalTransportTab() {
                       size="sm"
                       onClick={() => void handleDeleteCompany(company.id)}
                     >
-                      <Trash2 className="ml-2 h-4 w-4" />
+                      <Trash2 className="ms-2 h-4 w-4" />
                       حذف
                     </Button>
                   </div>
@@ -397,7 +397,7 @@ export function LocalTransportTab() {
             <div className="flex items-center justify-between">
               <Label>الشعار</Label>
               <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="ml-2 h-4 w-4" />
+                <Upload className="ms-2 h-4 w-4" />
                 رفع الشعار
               </Button>
             </div>

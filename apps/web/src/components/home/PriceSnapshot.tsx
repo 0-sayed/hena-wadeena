@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { SR, FloatingBlob } from '@/components/motion/ScrollReveal';
 import { TableRowSkeleton } from '@/components/motion/Skeleton';
 import { TrendBadge } from '@/components/market/TrendBadge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { usePriceIndex } from '@/hooks/use-price-index';
 import { formatPrice, unitLabel } from '@/lib/format';
 
@@ -47,52 +55,41 @@ export function PriceSnapshot() {
         <SR direction="scale">
           <Card className="border-border/50 rounded-2xl overflow-hidden shadow-lg">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
-                        المنتج
-                      </th>
-                      <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
-                        السعر
-                      </th>
-                      <th className="text-right py-5 px-6 text-sm font-semibold text-muted-foreground">
-                        التغير
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading
-                      ? Array.from({ length: 4 }).map((_, i) => (
-                          <TableRowSkeleton key={i} cols={3} />
-                        ))
-                      : entries.map((entry, index) => (
-                          <tr
-                            key={entry.commodity.id}
-                            className={`hover:bg-muted/20 transition-colors duration-200 ${index !== entries.length - 1 ? 'border-b border-border/50' : ''}`}
-                          >
-                            <td className="py-5 px-6">
-                              <span className="font-semibold text-foreground">
-                                {entry.commodity.nameAr}
-                              </span>
-                            </td>
-                            <td className="py-5 px-6">
-                              <span className="font-bold text-lg text-foreground">
+              <Table className="table-fixed">
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="px-6 py-5">المنتج</TableHead>
+                    <TableHead className="px-6 py-5">السعر</TableHead>
+                    <TableHead className="px-6 py-5">التغير</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading
+                    ? Array.from({ length: 4 }).map((_, i) => <TableRowSkeleton key={i} cols={3} />)
+                    : entries.map((entry) => (
+                        <TableRow key={entry.commodity.id} className="hover:bg-muted/20">
+                          <TableCell className="px-6 py-5 text-start">
+                            <span className="font-semibold text-foreground">
+                              {entry.commodity.nameAr}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-start">
+                            <div className="flex flex-wrap items-baseline gap-1">
+                              <span className="text-lg font-bold text-foreground">
                                 {formatPrice(entry.latestPrice)}
                               </span>
-                              <span className="text-sm text-muted-foreground mr-1">
+                              <span className="text-sm text-muted-foreground">
                                 جنيه/{unitLabel(entry.commodity.unit)}
                               </span>
-                            </td>
-                            <td className="py-5 px-6">
-                              <TrendBadge changePercent={entry.changePercent} />
-                            </td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-start">
+                            <TrendBadge changePercent={entry.changePercent} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </SR>

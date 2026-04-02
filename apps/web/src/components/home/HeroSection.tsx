@@ -311,7 +311,7 @@ export function HeroSection() {
           {/* Card Deck Navigation */}
           <div className="hero-reveal hero-d4 mb-12">
             <CardDeck />
-            <p className="text-card/50 text-xs mt-4 text-center sm:text-right">
+            <p className="text-card/50 text-xs mt-4 text-center sm:text-end">
               المس أو مرّر على الكروت لاستكشاف الأقسام ✨
             </p>
           </div>

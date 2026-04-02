@@ -151,7 +151,7 @@ export default function AdminModeration() {
             <FileText className="h-4 w-4" />
             KYC
             {kycQuery.data && kycQuery.data.total > 0 && (
-              <Badge variant="secondary" className="mr-1">
+              <Badge variant="secondary" className="me-1">
                 {kycQuery.data.total}
               </Badge>
             )}
@@ -160,7 +160,7 @@ export default function AdminModeration() {
             <ShoppingBag className="h-4 w-4" />
             الإعلانات
             {listingsQuery.data && listingsQuery.data.total > 0 && (
-              <Badge variant="secondary" className="mr-1">
+              <Badge variant="secondary" className="me-1">
                 {listingsQuery.data.total}
               </Badge>
             )}
@@ -169,7 +169,7 @@ export default function AdminModeration() {
             <Store className="h-4 w-4" />
             الأنشطة التجارية
             {businessesQuery.data && businessesQuery.data.total > 0 && (
-              <Badge variant="secondary" className="mr-1">
+              <Badge variant="secondary" className="me-1">
                 {businessesQuery.data.total}
               </Badge>
             )}

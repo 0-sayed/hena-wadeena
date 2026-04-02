@@ -59,7 +59,7 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
                     <TableCell className="font-medium truncate max-w-[140px]">
                       {booking.packageTitleAr ?? `#${booking.id.slice(0, 8)}`}
                     </TableCell>
-                    <TableCell dir="ltr" className="text-right">
+                    <TableCell dir="ltr" className="text-end">
                       {new Date(booking.bookingDate).toLocaleDateString('ar-EG')}
                     </TableCell>
                     <TableCell>

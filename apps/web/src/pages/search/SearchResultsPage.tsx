@@ -114,7 +114,7 @@ const SearchResultsPage = () => {
   const results = data?.data ?? [];
 
   return (
-    <Layout>
+    <Layout title="نتائج البحث">
       <PageTransition>
         <section className="relative py-14 md:py-20 overflow-hidden">
           <GradientMesh />
@@ -131,12 +131,12 @@ const SearchResultsPage = () => {
 
             <SR delay={100}>
               <form onSubmit={handleSubmit} className="relative mb-8">
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
+                <Search className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
                 <Input
                   placeholder="ابحث عن أماكن، مرشدين، فرص استثمارية..."
                   value={inputValue}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  className="pr-14 h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
+                  className="search-input-with-icon-lg h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
                 />
               </form>
             </SR>

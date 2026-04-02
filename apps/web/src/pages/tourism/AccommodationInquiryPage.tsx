@@ -123,11 +123,11 @@ const AccommodationInquiryPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="حجز إقامة">
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة
           </Button>
 
@@ -147,7 +147,7 @@ const AccommodationInquiryPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="name">الاسم الكامل *</Label>
                     <div className="relative">
-                      <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="name"
                         placeholder="أدخل اسمك"
@@ -155,7 +155,7 @@ const AccommodationInquiryPage = () => {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, name: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                         required
                       />
                     </div>
@@ -163,7 +163,7 @@ const AccommodationInquiryPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="phone">رقم الهاتف *</Label>
                     <div className="relative">
-                      <Phone className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Phone className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="phone"
                         type="tel"
@@ -172,7 +172,7 @@ const AccommodationInquiryPage = () => {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, phone: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                         required
                       />
                     </div>
@@ -182,7 +182,7 @@ const AccommodationInquiryPage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="email">البريد الإلكتروني</Label>
                   <div className="relative">
-                    <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Mail className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
@@ -191,7 +191,7 @@ const AccommodationInquiryPage = () => {
                       onChange={(event) =>
                         setFormData((prev) => ({ ...prev, email: event.target.value }))
                       }
-                      className="pr-10"
+                      className="pe-10"
                     />
                   </div>
                 </div>
@@ -249,7 +249,7 @@ const AccommodationInquiryPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="moveInDate">تاريخ الانتقال المتوقع</Label>
                     <div className="relative">
-                      <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Calendar className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="moveInDate"
                         type="date"
@@ -257,7 +257,7 @@ const AccommodationInquiryPage = () => {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, moveInDate: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                       />
                     </div>
                   </div>
@@ -285,7 +285,7 @@ const AccommodationInquiryPage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="occupants">عدد الأفراد</Label>
                   <div className="relative">
-                    <Users className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Users className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="occupants"
                       type="number"
@@ -294,7 +294,7 @@ const AccommodationInquiryPage = () => {
                       onChange={(event) =>
                         setFormData((prev) => ({ ...prev, occupants: event.target.value }))
                       }
-                      className="pr-10"
+                      className="pe-10"
                     />
                   </div>
                 </div>
@@ -313,7 +313,7 @@ const AccommodationInquiryPage = () => {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg">
-                  <Send className="h-5 w-5 ml-2" />
+                  <Send className="h-5 w-5 ms-2" />
                   إرسال الاستفسار
                 </Button>
               </form>

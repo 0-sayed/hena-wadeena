@@ -52,7 +52,7 @@ const RideDetailPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الرحلة">
         <section className="py-8">
           <div className="container max-w-3xl px-4">
             <Skeleton h="h-[300px]" className="mb-6 rounded-xl" />
@@ -65,7 +65,7 @@ const RideDetailPage = () => {
 
   if (isError) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الرحلة">
         <section className="py-20 text-center">
           <p className="text-lg text-muted-foreground">حدث خطأ أثناء تحميل الرحلة</p>
           <Button variant="outline" className="mt-4" onClick={() => void navigate('/logistics')}>
@@ -78,7 +78,7 @@ const RideDetailPage = () => {
 
   if (!ride) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الرحلة">
         <section className="py-20 text-center">
           <p className="text-lg text-muted-foreground">الرحلة غير موجودة</p>
           <Button variant="outline" className="mt-4" onClick={() => void navigate('/logistics')}>
@@ -197,11 +197,11 @@ const RideDetailPage = () => {
     cancelRide.isPending || activateRide.isPending || deleteRide.isPending;
 
   return (
-    <Layout>
+    <Layout title="تفاصيل الرحلة">
       <section className="py-8">
         <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate('/logistics')} className="mb-6">
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
             العودة
           </Button>
 
@@ -243,7 +243,7 @@ const RideDetailPage = () => {
                     {available} من {ride.seatsTotal} مقاعد متاحة
                   </span>
                 </div>
-                <div className="col-span-2 text-2xl font-bold text-primary md:col-span-1 md:text-left">
+                <div className="col-span-2 text-2xl font-bold text-primary md:col-span-1 md:text-start">
                   {formatRidePrice(ride.pricePerSeat)}
                 </div>
               </div>
@@ -331,7 +331,7 @@ const RideDetailPage = () => {
                             onClick={() => handleConfirm(p.id)}
                             disabled={confirmPassenger.isPending}
                           >
-                            <Check className="ml-1 h-4 w-4" />
+                            <Check className="ms-1 h-4 w-4" />
                             تأكيد
                           </Button>
                           <Button
@@ -340,7 +340,7 @@ const RideDetailPage = () => {
                             onClick={() => handleDecline(p.id)}
                             disabled={declinePassenger.isPending}
                           >
-                            <X className="ml-1 h-4 w-4" />
+                            <X className="ms-1 h-4 w-4" />
                             رفض
                           </Button>
                         </div>

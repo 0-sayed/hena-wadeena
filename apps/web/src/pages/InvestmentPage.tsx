@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
 import { Search, MapPin, TrendingUp, Building2, Send, ArrowLeft, DollarSign } from 'lucide-react';
@@ -13,6 +13,8 @@ import { PageTransition } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroInvestment from '@/assets/hero-investment.jpg';
+import { districtLabel } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 
 const sectorLabels: Record<string, string> = {
   agriculture: 'زراعة',
@@ -50,13 +52,45 @@ const InvestmentPage = () => {
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-    void navigate(`/search?q=${encodeURIComponent(query)}`);
+    setSearchQuery((previous) => previous.trim());
   };
 
+  const filteredOpportunities = useMemo(
+    () =>
+      opportunities.filter((opp) =>
+        matchesSearchQuery(searchQuery, [
+          opp.titleAr,
+          opp.titleEn,
+          opp.description,
+          opp.sector,
+          sectorLabels[opp.sector],
+          opp.area,
+          areaLabels[opp.area],
+          ...opp.incentives,
+          ...(opp.contact?.name ? [opp.contact.name] : []),
+        ]),
+      ),
+    [opportunities, searchQuery],
+  );
+
+  const filteredStartups = useMemo(
+    () =>
+      startups.filter((startup) =>
+        matchesSearchQuery(searchQuery, [
+          startup.nameAr,
+          startup.nameEn,
+          startup.category,
+          startup.descriptionAr,
+          startup.district,
+          districtLabel(startup.district),
+          startup.status,
+        ]),
+      ),
+    [searchQuery, startups],
+  );
+
   return (
-    <Layout>
+    <Layout title="الاستثمار">
       <PageTransition>
         <PageHero image={heroInvestment} alt="فرص الاستثمار">
           <SR>
@@ -77,12 +111,12 @@ const InvestmentPage = () => {
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="absolute right-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="ابحث عن فرص استثمارية..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-16 rounded-2xl border-0 bg-card/90 pr-14 pl-28 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 ps-28 text-lg shadow-lg backdrop-blur-sm"
               />
               <Button
                 type="submit"
@@ -118,7 +152,7 @@ const InvestmentPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
-                      {opportunities.map((opp) => (
+                      {filteredOpportunities.map((opp) => (
                         <Card
                           key={opp.id}
                           className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -177,13 +211,13 @@ const InvestmentPage = () => {
                                 className="flex-1 transition-transform hover:scale-[1.02]"
                                 onClick={() => void navigate(`/investment/opportunity/${opp.id}`)}
                               >
-                                التفاصيل <ArrowLeft className="mr-2 h-4 w-4" />
+                                التفاصيل <ArrowLeft className="me-2 h-4 w-4" />
                               </Button>
                               <Button
                                 className="flex-1 transition-transform hover:scale-[1.02]"
                                 onClick={() => void navigate(`/investment/contact/${opp.id}`)}
                               >
-                                <Send className="ml-2 h-4 w-4" />
+                                <Send className="ms-2 h-4 w-4" />
                                 استفسار
                               </Button>
                             </div>
@@ -191,6 +225,11 @@ const InvestmentPage = () => {
                         </Card>
                       ))}
                     </div>
+                    {filteredOpportunities.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
+                        لا توجد فرص استثمارية مطابقة لبحثك حالياً
+                      </div>
+                    ) : null}
                   </SR>
                 )}
               </TabsContent>
@@ -205,7 +244,7 @@ const InvestmentPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                      {startups.map((startup) => (
+                      {filteredStartups.map((startup) => (
                         <Card
                           key={startup.id}
                           className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -238,7 +277,7 @@ const InvestmentPage = () => {
                             <div className="mb-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1.5">
                                 <MapPin className="h-4 w-4" />
-                                {startup.district}
+                                {districtLabel(startup.district)}
                               </div>
                               <div>{startup.status === 'active' ? 'نشط' : startup.status}</div>
                             </div>
@@ -246,13 +285,18 @@ const InvestmentPage = () => {
                               className="w-full transition-transform hover:scale-[1.02]"
                               onClick={() => void navigate(`/investment/contact/${startup.id}`)}
                             >
-                              <Send className="ml-2 h-4 w-4" />
+                              <Send className="ms-2 h-4 w-4" />
                               تواصل
                             </Button>
                           </CardContent>
                         </Card>
                       ))}
                     </div>
+                    {filteredStartups.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
+                        لا توجد شركات ناشئة مطابقة لبحثك حالياً
+                      </div>
+                    ) : null}
                   </SR>
                 )}
               </TabsContent>
