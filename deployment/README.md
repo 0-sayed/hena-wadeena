@@ -29,3 +29,13 @@ ssh root@158.220.105.104 "ln -sf /etc/nginx/sites-available/hena-wadeena /etc/ng
 3. Reloads nginx
 
 The nginx config itself is **not** automatically deployed - update it manually when needed.
+
+## DNS
+
+DNS is managed via **Cloudflare** (free plan). Nameservers are set in Namecheap:
+- `pablo.ns.cloudflare.com`
+- `reza.ns.cloudflare.com`
+
+All DNS changes (A records, MX, TXT, etc.) must be made in the Cloudflare dashboard, not Route 53 (deleted).
+
+SSL mode is set to **Full (strict)** — origin server has a valid Let's Encrypt certificate.
