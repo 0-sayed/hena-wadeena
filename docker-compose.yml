@@ -237,6 +237,8 @@ services:
       - RATE_AI=${RATE_AI:-30r/m}
     expose:
       - '80'
+    ports:
+      - '${GATEWAY_PORT:-8000}:80'
     depends_on:
       identity:
         condition: service_started
