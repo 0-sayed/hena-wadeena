@@ -10,6 +10,7 @@ describe('UsersController wallet routes', () => {
   let controller: UsersController;
   let mockUsersService: {
     getBalance: ReturnType<typeof vi.fn>;
+    getWalletSnapshot: ReturnType<typeof vi.fn>;
     topUp: ReturnType<typeof vi.fn>;
     deduct: ReturnType<typeof vi.fn>;
     findById: ReturnType<typeof vi.fn>;
@@ -28,6 +29,10 @@ describe('UsersController wallet routes', () => {
   beforeEach(() => {
     mockUsersService = {
       getBalance: vi.fn().mockResolvedValue(5000),
+      getWalletSnapshot: vi.fn().mockResolvedValue({
+        balance: 5000,
+        recentTransactions: [],
+      }),
       topUp: vi.fn().mockResolvedValue(7500),
       deduct: vi.fn().mockResolvedValue(2500),
       findById: vi.fn(),
@@ -48,7 +53,7 @@ describe('UsersController wallet routes', () => {
   it('returns the current user wallet snapshot', async () => {
     const result = await controller.getWallet(currentUser);
 
-    expect(mockUsersService.getBalance).toHaveBeenCalledWith(currentUser.sub);
+    expect(mockUsersService.getWalletSnapshot).toHaveBeenCalledWith(currentUser.sub);
     expect(result).toEqual({
       success: true,
       data: {

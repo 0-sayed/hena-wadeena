@@ -21,6 +21,11 @@ import { DeductDto, TopupDto } from './dto/wallet.dto';
 import { UsersService } from './users.service';
 
 const MAX_PUBLIC_USER_IDS = 100;
+const WALLET_TRANSACTION_DESCRIPTIONS = {
+  booking_debit: 'حجز باقة سياحية',
+  booking_refund: 'استرداد حجز باقة سياحية',
+  booking_payout: 'دفعة إكمال الحجز',
+} as const;
 
 function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
   void passwordHash;
@@ -79,15 +84,29 @@ export class UsersController {
 
   @Get('wallet')
   async getWallet(@CurrentUser() user: JwtPayload) {
-    const balance = await this.usersService.getBalance(user.sub);
+    const snapshot = await this.usersService.getWalletSnapshot(user.sub);
     return {
       success: true,
       data: {
         id: `wallet-${user.sub}`,
         user_id: user.sub,
-        balance,
+        balance: snapshot.balance,
         currency: 'EGP',
-        recent_transactions: [],
+        recent_transactions: snapshot.recentTransactions.map((entry) => ({
+          id: entry.id,
+          booking_id: entry.bookingId,
+          type: entry.kind,
+          amount: entry.amountPiasters,
+          direction: entry.direction,
+          balance_after: null,
+          description:
+            WALLET_TRANSACTION_DESCRIPTIONS[entry.kind as keyof typeof WALLET_TRANSACTION_DESCRIPTIONS] ??
+            entry.kind,
+          status: 'completed',
+          created_at: entry.createdAt,
+          reference_id: entry.bookingId,
+          reference_type: 'booking',
+        })),
       },
     };
   }
