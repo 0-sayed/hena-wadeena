@@ -2,6 +2,7 @@
 
 ## Status
 - [ ] Open
+- [x] State machine enforcement and slot conflict prevention implemented
 
 ## Priority
 🚨 Critical
@@ -20,11 +21,11 @@ The issues range from missing status transitions, lack of notifications, unhandl
 
 ## Known Leaks
 
-### Leak 1 — Cancellation Does Not Trigger Refund
-**See ISSUE-009.** When a trip/booking is canceled, the user's wallet is not refunded and the service provider receives no credit. The financial side of the booking lifecycle is detached from the booking state machine.
+### Leak 1 — Wallet Side Effects Still Depend on Cross-Service Event Delivery
+**See ISSUE-009.** Booking wallet side effects now exist for request, cancellation, and completion, but the lifecycle is still eventually consistent across guide-booking and identity. Escrow and cross-service atomicity are still absent.
 
-### Leak 2 — No Clear Booking Status Lifecycle Defined
-There is no documented or enforced state machine for bookings. It is unclear what the valid statuses are, which transitions are allowed, and who (user / provider / admin / system) can trigger each transition.
+### Leak 2 — Booking Status Lifecycle Was Previously Unclear
+The booking service now enforces the main lifecycle transitions server-side. Invalid transitions are rejected, and completed bookings can be reviewed. This umbrella issue stays open because adjacent lifecycle concerns still exist.
 
 **Suggested Status Lifecycle:**
 ```
@@ -34,12 +35,14 @@ PENDING ──► CONFIRMED ──► IN_PROGRESS ──► COMPLETED
 CANCELED       CANCELED       CANCELED (with partial refund policy)
 ```
 
-Each transition should:
-- Be validated server-side (no arbitrary status updates)
-- Trigger the appropriate side effects (wallet, notifications, ratings unlock)
+Current implementation:
+- Validates transitions server-side.
+- Publishes booking events with richer payloads.
+- Allows review creation after completed bookings.
+- Still relies on downstream consumers for some side effects.
 
-### Leak 3 — No Notifications on Booking State Changes
-Users and service providers do not appear to receive notifications when a booking status changes (confirmed, canceled, completed). This leads to confusion about the current state of a booking.
+### Leak 3 — Notification Payload Mismatch Previously Broke Booking Notifications
+The booking event payloads are now enriched with the fields the identity notification consumer needs, including user ids, package titles, and cancellation metadata. Notification creation is no longer blocked on sparse event payloads.
 
 **Expected notifications:**
 | Event | Notify User | Notify Provider |
@@ -53,11 +56,13 @@ Users and service providers do not appear to receive notifications when a bookin
 ### Leak 4 — Rating System Not Triggered on Completion
 When a booking reaches `completed` status, there is no mechanism to unlock or prompt the rating flow. See **ISSUE-010**.
 
-### Leak 5 — No Conflict / Double-Booking Prevention
-It is unclear whether the system prevents a service provider from being double-booked for the same time slot. If no conflict check exists, two users could book the same provider at the same time.
+### Leak 5 — Double Booking Prevention Was Missing
+Active same-slot double booking is now blocked in two layers:
+- application-level conflict detection during booking creation
+- database-level partial unique index for `pending`, `confirmed`, and `in_progress`
 
-### Leak 6 — Booking History Inconsistencies Across Dashboards
-Different dashboards (user, provider, admin) may show inconsistent or stale booking data. There is no clear indication of whether real-time updates or polling is used.
+### Leak 6 — Booking Freshness Needed Active Refresh
+The web client now polls booking queries for authenticated users with a 30-second interval. This closes the basic freshness gap, but it is still a polling-based first pass rather than real-time updates.
 
 ---
 
@@ -89,10 +94,10 @@ Different dashboards (user, provider, admin) may show inconsistent or stale book
 ---
 
 ## Acceptance Criteria
-- [ ] Booking status lifecycle is documented and enforced via a state machine
-- [ ] Invalid status transitions are rejected by the backend
-- [ ] Cancellation always triggers refund (ISSUE-009 resolved)
+- [x] Booking status lifecycle is documented and enforced via a state machine
+- [x] Invalid status transitions are rejected by the backend
+- [ ] Cancellation always triggers refund with cross-service atomic guarantees (ISSUE-009 fully resolved)
 - [ ] Completion always triggers provider credit + rating prompt (ISSUE-010 resolved)
-- [ ] Notifications are sent on all status transitions
-- [ ] Double-booking prevention is in place for service providers
-- [ ] All dashboards show consistent, up-to-date booking data
+- [x] Notifications are sent on booking create / confirm / cancel / complete with complete payloads
+- [x] Double-booking prevention is in place for service providers
+- [x] Booking dashboards use active polling to stay reasonably fresh
