@@ -31,17 +31,6 @@ const guideSearchLabels = {
     culture: 'ثقافة',
     photography: 'تصوير',
     food: 'طعام',
-    archaeology: 'آثار',
-    temples: 'معابد',
-    desert: 'صحراء',
-    camping: 'تخييم',
-    safari: 'سفاري',
-    sandboarding: 'تزلج رملي',
-    wellness: 'استشفاء',
-    hot_springs: 'ينابيع حارة',
-    medical_tourism: 'سياحة علاجية',
-    landscapes: 'مناظر طبيعية',
-    architecture: 'عمارة',
   },
   areas: {
     kharga: 'الخارجة',
@@ -51,6 +40,22 @@ const guideSearchLabels = {
     balat: 'بلاط',
   },
 } as const;
+
+// Maps Arabic synonym terms to the canonical GuideSpecialty enum value stored in the DB.
+// This covers terms that were normalised away by the fix-guides-enum-values migration.
+const specialtyArabicSynonyms: Record<string, string> = {
+  آثار: 'history',
+  معابد: 'history',
+  صحراء: 'nature',
+  استشفاء: 'nature',
+  'ينابيع حارة': 'nature',
+  'سياحة علاجية': 'nature',
+  'مناظر طبيعية': 'nature',
+  تخييم: 'adventure',
+  سفاري: 'adventure',
+  'تزلج رملي': 'adventure',
+  عمارة: 'culture',
+};
 
 function normalizeGuideSearchText(value: string): string {
   return value.trim().toLowerCase();
@@ -70,6 +75,12 @@ export function expandGuideSearchTerms(value: string): string[] {
       ) {
         terms.add(key);
       }
+    }
+  }
+
+  for (const [synonym, canonicalKey] of Object.entries(specialtyArabicSynonyms)) {
+    if (normalizeGuideSearchText(synonym).includes(normalizedValue)) {
+      terms.add(canonicalKey);
     }
   }
 
