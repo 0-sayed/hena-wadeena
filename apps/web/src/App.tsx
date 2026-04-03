@@ -48,6 +48,7 @@ import SupplierDetailsPage from './pages/marketplace/SupplierDetailsPage';
 
 import OpportunityDetailsPage from './pages/investment/OpportunityDetailsPage';
 import ContactPage from './pages/investment/ContactPage';
+import StartupDetailsPage from './pages/investment/StartupDetailsPage';
 
 import AttractionsPage from './pages/tourism/AttractionsPage';
 import AttractionDetailsPage from './pages/tourism/AttractionDetailsPage';
@@ -189,6 +190,7 @@ const App = () => (
 
             <Route path="/investment" element={<InvestmentPage />} />
             <Route path="/investment/opportunity/:id" element={<OpportunityDetailsPage />} />
+            <Route path="/investment/startups/:id" element={<StartupDetailsPage />} />
             <Route path="/investment/contact/:id" element={<ContactPage />} />
 
             <Route path="*" element={<NotFound />} />

@@ -13,7 +13,7 @@ const mockUsePriceSummary = vi.fn();
 const mockUseBusinesses = vi.fn();
 const mockUseCommodities = vi.fn();
 const mockGetOpportunities = vi.fn();
-const mockGetStartups = vi.fn();
+const mockGetBusinesses = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
 vi.mock('react-router', async () => {
@@ -45,13 +45,7 @@ vi.mock('@/components/layout/Layout', () => ({
 }));
 
 vi.mock('@/components/layout/PageHero', () => ({
-  PageHero: ({
-    children,
-    alt,
-  }: {
-    children: ReactNode;
-    alt: string;
-  }) => (
+  PageHero: ({ children, alt }: { children: ReactNode; alt: string }) => (
     <div>
       <img src="hero" alt={alt} />
       {children}
@@ -137,13 +131,8 @@ vi.mock('@/components/ui/tabs', () => ({
 }));
 
 vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({
-    children,
-    open,
-  }: {
-    children: ReactNode;
-    open?: boolean;
-  }) => (open ? <div>{children}</div> : null),
+  Dialog: ({ children, open }: { children: ReactNode; open?: boolean }) =>
+    open ? <div>{children}</div> : null,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -206,7 +195,7 @@ vi.mock('@/services/api', async () => {
     ...(actual as object),
     investmentAPI: {
       getOpportunities: () => mockGetOpportunities(),
-      getStartups: () => mockGetStartups(),
+      getBusinesses: () => mockGetBusinesses(),
     },
   };
 });
@@ -228,7 +217,7 @@ describe('Top-level page localization', () => {
     mockUseBusinesses.mockReset();
     mockUseCommodities.mockReset();
     mockGetOpportunities.mockReset();
-    mockGetStartups.mockReset();
+    mockGetBusinesses.mockReset();
 
     mockUseAuth.mockReturnValue({
       user: {
@@ -398,7 +387,7 @@ describe('Top-level page localization', () => {
       ],
     });
 
-    mockGetStartups.mockResolvedValue({
+    mockGetBusinesses.mockResolvedValue({
       data: [
         {
           id: 'startup-1',
@@ -420,9 +409,7 @@ describe('Top-level page localization', () => {
     render(<TourismPage />);
 
     expect(screen.getByAltText('Tourism in New Valley')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Tourism & community' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tourism & community' })).toBeInTheDocument();
     expect(
       screen.getByText('Discover attractions, book a guide, or browse tourism experiences'),
     ).toBeInTheDocument();
@@ -447,9 +434,7 @@ describe('Top-level page localization', () => {
     render(<MarketplacePage />);
 
     expect(screen.getByAltText('Marketplace and prices')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Marketplace & prices' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Marketplace & prices' })).toBeInTheDocument();
     expect(
       screen.getByText('Local product prices, supplier directory, and direct contact'),
     ).toBeInTheDocument();
@@ -479,13 +464,13 @@ describe('Top-level page localization', () => {
     render(<InvestmentPage />);
 
     expect(screen.getByAltText('Investment opportunities')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Investment opportunities' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Investment opportunities' })).toBeInTheDocument();
     expect(
       screen.getByText('Discover investment opportunities in New Valley and connect with startups'),
     ).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search for investment opportunities...')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Search for investment opportunities...'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Opportunities' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Startups' })).toBeInTheDocument();
@@ -496,7 +481,7 @@ describe('Top-level page localization', () => {
     expect(screen.getAllByText('Kharga').length).toBeGreaterThan(0);
     expect(screen.getByText('5-9 million EGP')).toBeInTheDocument();
     expect(screen.getByText('Expected return: 18%')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Details/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Details/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /Inquiry/i })).toBeInTheDocument();
     expect(screen.getByText('Palm Tech')).toBeInTheDocument();
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);

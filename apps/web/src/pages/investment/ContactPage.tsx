@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowRight, Building2, Mail, MessageSquare, Phone, Send, User } from 'lucide-react';
+import { UserRole } from '@hena-wadeena/types';
 import { toast } from 'sonner';
+
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,25 +18,69 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UserRole } from '@hena-wadeena/types';
 import { useAuth } from '@/hooks/use-auth';
-import { investmentApplicationsAPI } from '@/services/api';
+import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
+import { businessesAPI, businessInquiriesAPI, investmentApplicationsAPI } from '@/services/api';
 
-const investorTypes = ['مستثمر فردي', 'شركة', 'صندوق استثماري', 'مؤسسة حكومية', 'أخرى'];
+const investorTypes = [
+  {
+    value: 'individual',
+    label: { ar: 'مستثمر فردي', en: 'Individual investor' },
+  },
+  {
+    value: 'company',
+    label: { ar: 'شركة', en: 'Company' },
+  },
+  {
+    value: 'fund',
+    label: { ar: 'صندوق استثماري', en: 'Investment fund' },
+  },
+  {
+    value: 'government',
+    label: { ar: 'مؤسسة حكومية', en: 'Government institution' },
+  },
+  {
+    value: 'other',
+    label: { ar: 'أخرى', en: 'Other' },
+  },
+] as const;
 
 const investmentRanges = [
-  'أقل من مليون جنيه',
-  '1-5 مليون جنيه',
-  '5-10 مليون جنيه',
-  '10-50 مليون جنيه',
-  'أكثر من 50 مليون جنيه',
-];
+  {
+    value: 'under-1m',
+    label: { ar: 'أقل من مليون جنيه', en: 'Less than 1 million EGP' },
+  },
+  {
+    value: '1m-5m',
+    label: { ar: '1-5 مليون جنيه', en: '1-5 million EGP' },
+  },
+  {
+    value: '5m-10m',
+    label: { ar: '5-10 مليون جنيه', en: '5-10 million EGP' },
+  },
+  {
+    value: '10m-50m',
+    label: { ar: '10-50 مليون جنيه', en: '10-50 million EGP' },
+  },
+  {
+    value: '50m-plus',
+    label: { ar: 'أكثر من 50 مليون جنيه', en: 'More than 50 million EGP' },
+  },
+] as const;
 
 const ContactPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, isAuthenticated, isLoading = false, language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const entity = searchParams.get('entity') === 'startup' ? 'startup' : 'opportunity';
+  const isStartupFlow = entity === 'startup';
+  const canAccessInvestmentContact =
+    user?.role === UserRole.INVESTOR || user?.role === UserRole.ADMIN;
+  const postSubmitRedirect = user?.role === UserRole.ADMIN ? '/admin' : '/dashboard/investor';
+
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -46,8 +93,48 @@ const ContactPage = () => {
     message: '',
   });
 
+  const startupQuery = useQuery({
+    queryKey: ['investment', 'startups', 'contact', id],
+    queryFn: () => businessesAPI.getById(id!),
+    enabled: isStartupFlow && !!id,
+  });
+
+  const targetName = useMemo(() => {
+    if (!isStartupFlow || !startupQuery.data) return null;
+
+    return (
+      pickLocalizedField(appLanguage, {
+        ar: startupQuery.data.nameAr,
+        en: startupQuery.data.nameEn,
+      }) ??
+      startupQuery.data.nameAr ??
+      startupQuery.data.nameEn ??
+      null
+    );
+  }, [appLanguage, isStartupFlow, startupQuery.data]);
+
+  const investorTypeLabel = useMemo(
+    () =>
+      new Map<string, string>(
+        investorTypes.map((option) => [option.value, pickLocalizedCopy(appLanguage, option.label)]),
+      ),
+    [appLanguage],
+  );
+
+  const investmentRangeLabel = useMemo(
+    () =>
+      new Map<string, string>(
+        investmentRanges.map((option) => [
+          option.value,
+          pickLocalizedCopy(appLanguage, option.label),
+        ]),
+      ),
+    [appLanguage],
+  );
+
   useEffect(() => {
     if (!user) return;
+
     setFormData((prev) => ({
       ...prev,
       name: prev.name || user.full_name,
@@ -56,45 +143,143 @@ const ContactPage = () => {
     }));
   }, [user]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!id) {
-      toast.error('الفرصة غير متاحة حالياً');
+  useEffect(() => {
+    if (isLoading) {
       return;
     }
 
     if (!isAuthenticated) {
-      toast.error('سجل الدخول أولاً لإرسال الاستفسار');
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'سجل الدخول أولاً لإرسال الاستفسار',
+          en: 'Sign in first to send your inquiry',
+        }),
+      );
       void navigate('/login');
       return;
     }
 
-    if (!['investor', 'merchant'].includes(user?.role ?? '')) {
-      toast.error('هذه الميزة متاحة للمستثمرين والتجار فقط');
+    if (user && !canAccessInvestmentContact) {
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'هذه الميزة متاحة للمستثمرين والمسؤولين فقط',
+          en: 'This feature is available to investors and admins only',
+        }),
+      );
+      void navigate('/investment');
+    }
+  }, [appLanguage, canAccessInvestmentContact, isAuthenticated, isLoading, navigate, user]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!id) {
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: isStartupFlow ? 'الشركة غير متاحة حالياً' : 'الفرصة غير متاحة حالياً',
+          en: isStartupFlow
+            ? 'This startup is not available right now'
+            : 'This opportunity is not available right now',
+        }),
+      );
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'سجل الدخول أولاً لإرسال الاستفسار',
+          en: 'Sign in first to send your inquiry',
+        }),
+      );
+      void navigate('/login');
+      return;
+    }
+
+    if (!canAccessInvestmentContact) {
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'هذه الميزة متاحة للمستثمرين والمسؤولين فقط',
+          en: 'This feature is available to investors and admins only',
+        }),
+      );
       return;
     }
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      toast.error('يرجى استكمال الاسم والبريد الإلكتروني والرسالة');
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'يرجى استكمال الاسم والبريد الإلكتروني والرسالة',
+          en: 'Please complete your name, email, and message',
+        }),
+      );
       return;
     }
 
     setSubmitting(true);
+
     try {
       const amountProposed = formData.amount.trim()
         ? parseEgpInputToPiasters(formData.amount)
         : null;
+
       const enrichedMessage = [
-        `الاسم: ${formData.name.trim()}`,
-        formData.company.trim() ? `الشركة: ${formData.company.trim()}` : null,
-        formData.investorType ? `نوع المستثمر: ${formData.investorType}` : null,
-        formData.investmentRange ? `النطاق الاستثماري: ${formData.investmentRange}` : null,
+        `${pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}: ${formData.name.trim()}`,
+        formData.company.trim()
+          ? `${pickLocalizedCopy(appLanguage, { ar: 'الشركة', en: 'Company' })}: ${formData.company.trim()}`
+          : null,
+        formData.investorType
+          ? `${pickLocalizedCopy(appLanguage, { ar: 'نوع المستثمر', en: 'Investor type' })}: ${investorTypeLabel.get(formData.investorType)}`
+          : null,
+        formData.investmentRange
+          ? `${pickLocalizedCopy(appLanguage, { ar: 'النطاق الاستثماري', en: 'Investment range' })}: ${investmentRangeLabel.get(formData.investmentRange)}`
+          : null,
+        amountProposed != null
+          ? `${pickLocalizedCopy(appLanguage, { ar: 'القيمة المقترحة', en: 'Proposed amount' })}: ${(amountProposed / 100).toLocaleString(appLanguage === 'en' ? 'en-US' : 'ar-EG')} ${pickLocalizedCopy(appLanguage, { ar: 'جنيه', en: 'EGP' })}`
+          : null,
         '',
         formData.message.trim(),
       ]
-        .filter((line) => line != null)
+        .filter((line): line is string => line != null)
         .join('\n');
+
+      if (isStartupFlow) {
+        const startup = startupQuery.data;
+        if (!startup) {
+          throw new Error(
+            pickLocalizedCopy(appLanguage, {
+              ar: 'تعذر تحميل بيانات الشركة حالياً',
+              en: 'Unable to load startup details right now',
+            }),
+          );
+        }
+
+        if (startup.ownerId === user?.id) {
+          toast.error(
+            pickLocalizedCopy(appLanguage, {
+              ar: 'لا يمكنك إرسال استفسار إلى شركتك الخاصة',
+              en: 'You cannot send an inquiry to your own startup',
+            }),
+          );
+          return;
+        }
+
+        await businessInquiriesAPI.submit(id, {
+          contactName: formData.name.trim(),
+          contactEmail: formData.email.trim(),
+          contactPhone: formData.phone.trim() || undefined,
+          message: enrichedMessage,
+        });
+
+        toast.success(
+          pickLocalizedCopy(appLanguage, {
+            ar: 'تم إرسال استفسارك إلى صاحب الشركة بنجاح',
+            en: 'Your inquiry was sent to the startup owner successfully',
+          }),
+        );
+        void navigate(postSubmitRedirect);
+        return;
+      }
 
       await investmentApplicationsAPI.submitInterest(id, {
         contactEmail: formData.email.trim(),
@@ -103,47 +288,77 @@ const ContactPage = () => {
         message: enrichedMessage,
       });
 
-      toast.success('تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة');
-      void navigate(
-        user?.role === UserRole.MERCHANT ? '/dashboard/merchant' : '/dashboard/investor',
+      toast.success(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة',
+          en: 'Your inquiry was sent successfully and will appear in the opportunity owner inbox',
+        }),
       );
+      void navigate(postSubmitRedirect);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
-      toast.error(message);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : pickLocalizedCopy(appLanguage, {
+              ar: 'تعذر إرسال الاستفسار',
+              en: 'Unable to send inquiry',
+            }),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
+  const introText = isStartupFlow
+    ? startupQuery.isLoading
+      ? pickLocalizedCopy(appLanguage, {
+          ar: 'جارٍ تحميل بيانات الشركة قبل إرسال الاستفسار.',
+          en: 'Loading startup details before sending your inquiry.',
+        })
+      : targetName
+        ? pickLocalizedCopy(appLanguage, {
+            ar: `سيتم حفظ طلبك وإرساله مباشرة إلى صاحب الشركة ${targetName}.`,
+            en: `Your inquiry will be saved and sent directly to ${targetName}.`,
+          })
+        : pickLocalizedCopy(appLanguage, {
+            ar: 'سيتم حفظ طلبك وإرساله مباشرة إلى صاحب الشركة الناشئة.',
+            en: 'Your inquiry will be saved and sent directly to the startup owner.',
+          })
+    : pickLocalizedCopy(appLanguage, {
+        ar: 'سيتم حفظ طلبك وإرساله مباشرة إلى مالك الفرصة الاستثمارية.',
+        en: 'Your inquiry will be saved and sent directly to the opportunity owner.',
+      });
+
   return (
     <Layout>
       <section className="py-8 md:py-12">
-        <div className="container px-4 max-w-2xl">
+        <div className="container max-w-2xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
-            العودة
+            <ArrowRight className="ml-2 h-4 w-4" />
+            {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
 
           <Card className="border-border/50">
-            <CardHeader className="text-center pb-2">
+            <CardHeader className="pb-2 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <MessageSquare className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl">تواصل للاستثمار</CardTitle>
-              <p className="text-muted-foreground">
-                سيتم حفظ طلبك وإرساله مباشرة إلى مالك الفرصة الاستثمارية.
-              </p>
+              <CardTitle className="text-2xl">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: isStartupFlow ? 'تواصل مع شركة ناشئة' : 'تواصل للاستثمار',
+                  en: isStartupFlow ? 'Contact a startup' : 'Contact for investment',
+                })}
+              </CardTitle>
+              <p className="text-muted-foreground">{introText}</p>
             </CardHeader>
+
             <CardContent className="pt-6">
-              <form
-                onSubmit={(event) => {
-                  void handleSubmit(event);
-                }}
-                className="space-y-6"
-              >
+              <form onSubmit={(event) => void handleSubmit(event)} className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="name">الاسم الكامل *</Label>
+                    <Label htmlFor="name">
+                      {pickLocalizedCopy(appLanguage, { ar: 'الاسم الكامل', en: 'Full name' })} *
+                    </Label>
                     <div className="relative">
                       <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -157,8 +372,11 @@ const ContactPage = () => {
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="phone">رقم الهاتف</Label>
+                    <Label htmlFor="phone">
+                      {pickLocalizedCopy(appLanguage, { ar: 'رقم الهاتف', en: 'Phone number' })}
+                    </Label>
                     <div className="relative">
                       <Phone className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -176,7 +394,13 @@ const ContactPage = () => {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="email">البريد الإلكتروني *</Label>
+                    <Label htmlFor="email">
+                      {pickLocalizedCopy(appLanguage, {
+                        ar: 'البريد الإلكتروني',
+                        en: 'Email address',
+                      })}{' '}
+                      *
+                    </Label>
                     <div className="relative">
                       <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -191,8 +415,11 @@ const ContactPage = () => {
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="company">اسم الشركة</Label>
+                    <Label htmlFor="company">
+                      {pickLocalizedCopy(appLanguage, { ar: 'اسم الشركة', en: 'Company name' })}
+                    </Label>
                     <div className="relative">
                       <Building2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -209,7 +436,9 @@ const ContactPage = () => {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>نوع المستثمر</Label>
+                    <Label>
+                      {pickLocalizedCopy(appLanguage, { ar: 'نوع المستثمر', en: 'Investor type' })}
+                    </Label>
                     <Select
                       value={formData.investorType}
                       onValueChange={(value) =>
@@ -217,19 +446,30 @@ const ContactPage = () => {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر نوع المستثمر" />
+                        <SelectValue
+                          placeholder={pickLocalizedCopy(appLanguage, {
+                            ar: 'اختر نوع المستثمر',
+                            en: 'Select investor type',
+                          })}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {investorTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
+                          <SelectItem key={type.value} value={type.value}>
+                            {pickLocalizedCopy(appLanguage, type.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div className="space-y-2">
-                    <Label>النطاق الاستثماري المتوقع</Label>
+                    <Label>
+                      {pickLocalizedCopy(appLanguage, {
+                        ar: 'النطاق الاستثماري المتوقع',
+                        en: 'Expected investment range',
+                      })}
+                    </Label>
                     <Select
                       value={formData.investmentRange}
                       onValueChange={(value) =>
@@ -237,12 +477,17 @@ const ContactPage = () => {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر النطاق" />
+                        <SelectValue
+                          placeholder={pickLocalizedCopy(appLanguage, {
+                            ar: 'اختر النطاق',
+                            en: 'Select range',
+                          })}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {investmentRanges.map((range) => (
-                          <SelectItem key={range} value={range}>
-                            {range}
+                          <SelectItem key={range.value} value={range.value}>
+                            {pickLocalizedCopy(appLanguage, range.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -251,7 +496,12 @@ const ContactPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">القيمة المقترحة (جنيه)</Label>
+                  <Label htmlFor="amount">
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'القيمة المقترحة (جنيه)',
+                      en: 'Proposed amount (EGP)',
+                    })}
+                  </Label>
                   <Input
                     id="amount"
                     type="number"
@@ -265,7 +515,9 @@ const ContactPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">رسالتك *</Label>
+                  <Label htmlFor="message">
+                    {pickLocalizedCopy(appLanguage, { ar: 'رسالتك', en: 'Your message' })} *
+                  </Label>
                   <Textarea
                     id="message"
                     rows={5}
@@ -273,14 +525,23 @@ const ContactPage = () => {
                     onChange={(event) =>
                       setFormData((prev) => ({ ...prev, message: event.target.value }))
                     }
-                    placeholder="اشرح اهتمامك بالفرصة أو طبيعة الشراكة التي تبحث عنها..."
+                    placeholder={pickLocalizedCopy(appLanguage, {
+                      ar: isStartupFlow
+                        ? 'اشرح نوع الشراكة أو الاستثمار الذي ترغب في مناقشته مع هذه الشركة...'
+                        : 'اشرح اهتمامك بالفرصة أو طبيعة الشراكة التي تبحث عنها...',
+                      en: isStartupFlow
+                        ? 'Describe the partnership or investment you want to discuss with this startup...'
+                        : 'Describe your interest in this opportunity or the kind of partnership you are seeking...',
+                    })}
                     required
                   />
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                  <Send className="h-5 w-5 ml-2" />
-                  {submitting ? 'جارٍ الإرسال...' : 'إرسال الطلب'}
+                  <Send className="ml-2 h-5 w-5" />
+                  {submitting
+                    ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الإرسال...', en: 'Sending...' })
+                    : pickLocalizedCopy(appLanguage, { ar: 'إرسال الطلب', en: 'Send inquiry' })}
                 </Button>
               </form>
             </CardContent>

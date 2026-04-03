@@ -12,6 +12,13 @@ import { useMyListings } from '@/hooks/use-my-listings';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -109,6 +116,7 @@ export default function MerchantDashboard() {
     isError: inquiriesError,
   } = useListingInquiriesReceived({ limit: 5 });
   const [listingForm, setListingForm] = useState<ListingFormState>(emptyListingForm);
+  const [isListingDialogOpen, setIsListingDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const isSavingRef = useRef(false);
 
@@ -133,6 +141,32 @@ export default function MerchantDashboard() {
       queryClient.invalidateQueries({ queryKey: ['market', 'listings'] }),
       queryClient.invalidateQueries({ queryKey: ['market', 'listing-inquiries'] }),
     ]);
+  };
+
+  const openCreateListingDialog = () => {
+    setListingForm((prev) => (prev.id ? emptyListingForm : prev));
+    setIsListingDialogOpen(true);
+  };
+
+  const openEditListingDialog = (listing: {
+    id: string;
+    titleAr: string;
+    description: string | null;
+    price: number;
+    district: string | null;
+    category: string;
+    address: string | null;
+  }) => {
+    setListingForm({
+      id: listing.id,
+      titleAr: listing.titleAr,
+      description: listing.description ?? '',
+      priceEgp: String(listing.price / 100),
+      district: listing.district ?? emptyListingForm.district,
+      category: listing.category,
+      address: listing.address ?? '',
+    });
+    setIsListingDialogOpen(true);
   };
 
   const handleSaveListing = async () => {
@@ -180,6 +214,7 @@ export default function MerchantDashboard() {
       }
 
       setListingForm(emptyListingForm);
+      setIsListingDialogOpen(false);
       await refreshMerchantData();
       toast.success(
         listingForm.id
@@ -339,18 +374,46 @@ export default function MerchantDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {listingForm.id
-                ? pickLocalizedCopy(appLanguage, { ar: 'تعديل إعلان', en: 'Edit listing' })
-                : pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان جديد', en: 'Add a new listing' })}
+              {pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان جديد', en: 'Add a new listing' })}
             </CardTitle>
             <CardDescription>
               {pickLocalizedCopy(appLanguage, {
-                ar: 'أضف منتجًا أو خدمة مع السعر ويمكنك تعديلها لاحقًا',
-                en: 'Add a product or service with pricing and edit it later',
+                ar: 'افتح نافذة منبثقة لإضافة إعلان جديد أو تعديل إعلان حالي دون تغيير تخطيط الصفحة.',
+                en: 'Open a modal to add a new listing or edit an existing one without shifting the page layout.',
               })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'استخدم الزر التالي لفتح نموذج الإعلان في نافذة مستقلة. يمكنك أيضاً تعديل أي إعلان من الجدول أدناه بنفس النافذة.',
+                en: 'Use the button below to open the listing form in a dedicated modal. You can also edit any listing from the table below using the same dialog.',
+              })}
+            </p>
+            <Button onClick={openCreateListingDialog}>
+              {pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان', en: 'Add advertisement' })}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Dialog open={isListingDialogOpen} onOpenChange={setIsListingDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {listingForm.id
+                ? pickLocalizedCopy(appLanguage, { ar: 'تعديل إعلان', en: 'Edit listing' })
+                : pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان جديد', en: 'Add a new listing' })}
+            </DialogTitle>
+            <DialogDescription>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'أضف منتجاً أو خدمة مع السعر والموقع، ثم احفظ التغييرات لإظهارها في قائمتك.',
+                en: 'Add a product or service with pricing and location, then save to update your listings.',
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="listingTitle">{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</Label>
               <Input
@@ -447,15 +510,13 @@ export default function MerchantDashboard() {
                     ? pickLocalizedCopy(appLanguage, { ar: 'تحديث الإعلان', en: 'Update listing' })
                     : pickLocalizedCopy(appLanguage, { ar: 'إضافة الإعلان', en: 'Add listing' })}
               </Button>
-              {listingForm.id && (
-                <Button variant="outline" onClick={() => setListingForm(emptyListingForm)}>
-                  {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
-                </Button>
-              )}
+              <Button variant="outline" onClick={() => setIsListingDialogOpen(false)}>
+                {pickLocalizedCopy(appLanguage, { ar: 'إغلاق', en: 'Close' })}
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -609,17 +670,7 @@ export default function MerchantDashboard() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            setListingForm({
-                              id: listing.id,
-                              titleAr: listing.titleAr,
-                              description: listing.description ?? '',
-                              priceEgp: String(listing.price / 100),
-                              district: listing.district ?? emptyListingForm.district,
-                              category: listing.category,
-                              address: listing.address ?? '',
-                            })
-                          }
+                          onClick={() => openEditListingDialog(listing)}
                         >
                           {pickLocalizedCopy(appLanguage, { ar: 'تعديل', en: 'Edit' })}
                         </Button>

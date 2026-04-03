@@ -30,6 +30,11 @@ export const listingInquiryStatusEnum = marketSchema.enum('listing_inquiry_statu
   'read',
   'replied',
 ]);
+export const businessInquiryStatusEnum = marketSchema.enum('business_inquiry_status', [
+  'pending',
+  'read',
+  'replied',
+]);
 
 // Investment enums
 export const investmentSectorEnum = marketSchema.enum('investment_sector', [

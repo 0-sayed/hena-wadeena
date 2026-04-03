@@ -87,6 +87,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/coverage/**',
+      '.worktrees/**',
       '.claude/**',
       'apps/web/**',
       'services/ai/**',

@@ -29,16 +29,9 @@ import { toast } from 'sonner';
 import { UserRole } from '@hena-wadeena/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useListing } from '@/hooks/use-listings';
+import { listingInquiriesAPI } from '@/services/api';
 
 const tenantTypes = ['طالب جامعي', 'موظف حكومي', 'موظف قطاع خاص', 'عائلة', 'أخرى'];
-
-function getContactField(
-  contact: Record<string, unknown> | null,
-  key: 'phone' | 'email',
-): string | null {
-  const value = contact?.[key];
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
-}
 
 const AccommodationInquiryPage = () => {
   const navigate = useNavigate();
@@ -46,6 +39,7 @@ const AccommodationInquiryPage = () => {
   const { user } = useAuth();
   const { data: listing } = useListing(id);
   const hasAutoFilled = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -71,9 +65,6 @@ const AccommodationInquiryPage = () => {
     }));
   }, [user]);
 
-  const contactPhone = getContactField(listing?.contact ?? null, 'phone');
-  const contactEmail = getContactField(listing?.contact ?? null, 'email');
-
   const inquiryMessage = useMemo(() => {
     const details = [
       `الاسم: ${formData.name}`,
@@ -91,7 +82,7 @@ const AccommodationInquiryPage = () => {
     return `استفسار بخصوص السكن: ${listing?.titleAr ?? ''}\n\n${details.join('\n')}`;
   }, [formData, listing?.titleAr]);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!formData.name.trim() || !formData.phone.trim() || !formData.tenantType) {
@@ -99,27 +90,39 @@ const AccommodationInquiryPage = () => {
       return;
     }
 
-    if (contactEmail) {
-      const subject = `استفسار عن السكن: ${listing?.titleAr ?? 'إعلان سكن'}`;
-      window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(inquiryMessage)}`;
-      toast.success('تم فتح بريدك لإرسال الاستفسار مباشرة');
+    if (!id) {
+      toast.error('إعلان السكن غير متاح حاليًا');
       return;
     }
 
-    if (contactPhone) {
-      window.location.href = `tel:${contactPhone}`;
-      toast.success('تم تجهيز وسيلة التواصل المباشر مع المعلن');
+    if (!user) {
+      toast.error('سجل الدخول أولًا لإرسال الاستفسار');
+      void navigate('/login');
       return;
     }
 
-    void navigator.clipboard
-      .writeText(inquiryMessage)
-      .then(() => {
-        toast.success('تم نسخ نص الاستفسار. يمكنك مشاركته مع المعلن مباشرة');
-      })
-      .catch(() => {
-        toast.error('لا تتوفر وسيلة تواصل مباشرة لهذا الإعلان حالياً');
+    if (listing?.ownerId === user.id) {
+      toast.error('لا يمكنك إرسال استفسار إلى إعلانك الخاص');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const inquiry = await listingInquiriesAPI.submit(id, {
+        contactName: formData.name.trim(),
+        contactEmail: formData.email.trim() || undefined,
+        contactPhone: formData.phone.trim() || undefined,
+        message: inquiryMessage,
       });
+
+      toast.success('تم إرسال الاستفسار بنجاح، ويمكنك متابعته من تبويب الرسائل المرسلة.');
+      void navigate(`/marketplace/inquiries?tab=sent&focus=${inquiry.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -138,11 +141,16 @@ const AccommodationInquiryPage = () => {
               </div>
               <CardTitle className="text-2xl">استفسار عن السكن</CardTitle>
               <p className="text-muted-foreground">
-                أرسل استفسارك مباشرة إلى المعلن باستخدام بيانات التواصل المتاحة.
+                أرسل استفسارك إلى المعلن عبر المنصة ليظهر مباشرة في صندوق الوارد الخاص به.
               </p>
             </CardHeader>
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={(event) => {
+                  void handleSubmit(event);
+                }}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">الاسم الكامل *</Label>
@@ -312,9 +320,9 @@ const AccommodationInquiryPage = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
+                <Button type="submit" className="w-full" size="lg" disabled={submitting}>
                   <Send className="h-5 w-5 ml-2" />
-                  إرسال الاستفسار
+                  {submitting ? 'جارٍ إرسال الاستفسار...' : 'إرسال الاستفسار'}
                 </Button>
               </form>
             </CardContent>

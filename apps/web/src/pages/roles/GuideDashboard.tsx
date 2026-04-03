@@ -1,13 +1,17 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, CalendarCheck, Coins, MapPinned } from 'lucide-react';
+import { BookOpen, CalendarCheck, ChevronDown, Coins, MapPinned } from 'lucide-react';
+import { GuideLanguage, GuideSpecialty, NvDistrict } from '@hena-wadeena/types';
 import { toast } from 'sonner';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,18 +20,23 @@ import { useMyPackages } from '@/hooks/use-my-packages';
 import { useMyBookings } from '@/hooks/use-my-bookings';
 import { useAuth } from '@/hooks/use-auth';
 import { myGuideAPI, myPackagesAPI, bookingsAPI } from '@/services/api';
-import { formatPrice } from '@/lib/format';
+import { districtLabel, formatPrice, languageLabel, specialtyLabel } from '@/lib/format';
 import { getBookingStatusLabels } from '@/lib/booking-status';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
+
+type MultiSelectOption = {
+  value: string;
+  label: string;
+};
 
 type GuideFormState = {
   licenseNumber: string;
   basePriceEgp: string;
   bioAr: string;
-  languages: string;
-  specialties: string;
-  areasOfOperation: string;
+  languages: string[];
+  specialties: string[];
+  areasOfOperation: string[];
 };
 
 type PackageFormState = {
@@ -48,6 +57,67 @@ const emptyPackageForm: PackageFormState = {
   priceEgp: '',
   includes: '',
 };
+
+function MultiSelectField({
+  label,
+  placeholder,
+  options,
+  values,
+  onChange,
+}: {
+  label: string;
+  placeholder: string;
+  options: MultiSelectOption[];
+  values: string[];
+  onChange: (values: string[]) => void;
+}) {
+  const selectedLabels = options.filter((option) => values.includes(option.value)).map((option) => option.label);
+
+  const toggleValue = (value: string, checked: boolean) => {
+    if (checked) {
+      onChange([...values, value]);
+      return;
+    }
+
+    onChange(values.filter((item) => item !== value));
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline" className="w-full justify-between">
+            <span className="truncate">
+              {selectedLabels.length > 0 ? selectedLabels.join('، ') : placeholder}
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] space-y-3 p-3">
+          {options.map((option) => (
+            <label key={option.value} className="flex items-center gap-3 text-sm">
+              <Checkbox
+                checked={values.includes(option.value)}
+                onCheckedChange={(checked) => toggleValue(option.value, checked === true)}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </PopoverContent>
+      </Popover>
+      {selectedLabels.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedLabels.map((selectedLabel) => (
+            <Badge key={selectedLabel} variant="secondary">
+              {selectedLabel}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function splitCommaValues(value: string) {
   return value
@@ -73,9 +143,9 @@ export default function GuideDashboard() {
     licenseNumber: '',
     basePriceEgp: '',
     bioAr: '',
-    languages: '',
-    specialties: '',
-    areasOfOperation: '',
+    languages: [],
+    specialties: [],
+    areasOfOperation: [],
   });
   const [packageForm, setPackageForm] = useState<PackageFormState>(emptyPackageForm);
   const [savingGuide, setSavingGuide] = useState(false);
@@ -85,6 +155,30 @@ export default function GuideDashboard() {
   const guideProfile = guideProfileQuery.data;
   const myPackages = useMemo(() => packagesQuery.data?.data ?? [], [packagesQuery.data?.data]);
   const myBookings = useMemo(() => bookingsQuery.data?.data ?? [], [bookingsQuery.data?.data]);
+  const languageOptions = useMemo(
+    () =>
+      Object.values(GuideLanguage).map((value) => ({
+        value,
+        label: languageLabel(value, appLanguage),
+      })),
+    [appLanguage],
+  );
+  const specialtyOptions = useMemo(
+    () =>
+      Object.values(GuideSpecialty).map((value) => ({
+        value,
+        label: specialtyLabel(value, appLanguage),
+      })),
+    [appLanguage],
+  );
+  const areaOptions = useMemo(
+    () =>
+      Object.values(NvDistrict).map((value) => ({
+        value,
+        label: districtLabel(value, appLanguage),
+      })),
+    [appLanguage],
+  );
 
   useEffect(() => {
     if (!guideProfile) return;
@@ -92,9 +186,9 @@ export default function GuideDashboard() {
       licenseNumber: guideProfile.licenseNumber,
       basePriceEgp: String(guideProfile.basePrice / 100),
       bioAr: guideProfile.bioAr ?? '',
-      languages: guideProfile.languages.join(', '),
-      specialties: guideProfile.specialties.join(', '),
-      areasOfOperation: guideProfile.areasOfOperation.join(', '),
+      languages: guideProfile.languages,
+      specialties: guideProfile.specialties,
+      areasOfOperation: guideProfile.areasOfOperation,
     });
   }, [guideProfile]);
 
@@ -145,9 +239,9 @@ export default function GuideDashboard() {
         licenseNumber: guideForm.licenseNumber.trim(),
         basePrice,
         bioAr: guideForm.bioAr.trim() || undefined,
-        languages: splitCommaValues(guideForm.languages),
-        specialties: splitCommaValues(guideForm.specialties),
-        areasOfOperation: splitCommaValues(guideForm.areasOfOperation),
+        languages: guideForm.languages,
+        specialties: guideForm.specialties,
+        areasOfOperation: guideForm.areasOfOperation,
       };
 
       if (guideProfile) {
@@ -451,57 +545,54 @@ export default function GuideDashboard() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="languages">
-                    {pickLocalizedCopy(appLanguage, { ar: 'اللغات', en: 'Languages' })}
-                  </Label>
-                  <Input
-                    id="languages"
-                    placeholder="arabic, english"
-                    value={guideForm.languages}
-                    onChange={(event) =>
-                      setGuideForm((prev) => ({
-                        ...prev,
-                        languages: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="specialties">
-                    {pickLocalizedCopy(appLanguage, { ar: 'التخصصات', en: 'Specialties' })}
-                  </Label>
-                  <Input
-                    id="specialties"
-                    placeholder="history, nature"
-                    value={guideForm.specialties}
-                    onChange={(event) =>
-                      setGuideForm((prev) => ({
-                        ...prev,
-                        specialties: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="areas">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'مناطق العمل',
-                      en: 'Areas of operation',
-                    })}
-                  </Label>
-                  <Input
-                    id="areas"
-                    placeholder="kharga, dakhla"
-                    value={guideForm.areasOfOperation}
-                    onChange={(event) =>
-                      setGuideForm((prev) => ({
-                        ...prev,
-                        areasOfOperation: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
+                <MultiSelectField
+                  label={pickLocalizedCopy(appLanguage, { ar: 'اللغات', en: 'Languages' })}
+                  placeholder={pickLocalizedCopy(appLanguage, {
+                    ar: 'اختر اللغات المتاحة',
+                    en: 'Select supported languages',
+                  })}
+                  options={languageOptions}
+                  values={guideForm.languages}
+                  onChange={(languages) =>
+                    setGuideForm((prev) => ({
+                      ...prev,
+                      languages,
+                    }))
+                  }
+                />
+                <MultiSelectField
+                  label={pickLocalizedCopy(appLanguage, { ar: 'التخصصات', en: 'Specialties' })}
+                  placeholder={pickLocalizedCopy(appLanguage, {
+                    ar: 'اختر مجالات التخصص',
+                    en: 'Select specialties',
+                  })}
+                  options={specialtyOptions}
+                  values={guideForm.specialties}
+                  onChange={(specialties) =>
+                    setGuideForm((prev) => ({
+                      ...prev,
+                      specialties,
+                    }))
+                  }
+                />
+                <MultiSelectField
+                  label={pickLocalizedCopy(appLanguage, {
+                    ar: 'مناطق العمل',
+                    en: 'Areas of operation',
+                  })}
+                  placeholder={pickLocalizedCopy(appLanguage, {
+                    ar: 'اختر المناطق التي تعمل بها',
+                    en: 'Select operating areas',
+                  })}
+                  options={areaOptions}
+                  values={guideForm.areasOfOperation}
+                  onChange={(areasOfOperation) =>
+                    setGuideForm((prev) => ({
+                      ...prev,
+                      areasOfOperation,
+                    }))
+                  }
+                />
                 <Button onClick={() => void handleSaveGuide()} disabled={savingGuide}>
                   {savingGuide
                     ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })

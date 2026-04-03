@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockNavigate = vi.fn();
@@ -9,6 +9,7 @@ const mockUseMyBookings = vi.fn();
 const mockUseMyBusinesses = vi.fn();
 const mockUseMyListings = vi.fn();
 const mockUseListingInquiriesReceived = vi.fn();
+const mockUseBusinessInquiriesReceived = vi.fn();
 const mockUseMyOpportunities = vi.fn();
 const mockUseMyInvestmentApplications = vi.fn();
 const mockUseOpportunityApplications = vi.fn();
@@ -97,6 +98,27 @@ vi.mock('@/components/ui/card', () => ({
   CardDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }));
 
+vi.mock('@/components/ui/checkbox', () => ({
+  Checkbox: ({ checked }: { checked?: boolean }) => (
+    <input type="checkbox" checked={checked} readOnly />
+  ),
+}));
+
+vi.mock('@/components/ui/dialog', () => ({
+  Dialog: ({
+    children,
+    open = true,
+  }: {
+    children: ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }) => (open ? <div>{children}</div> : null),
+  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
+}));
+
 vi.mock('@/components/ui/input', () => ({
   Input: (props: Record<string, unknown>) => <input {...props} />,
 }));
@@ -105,6 +127,12 @@ vi.mock('@/components/ui/label', () => ({
   Label: ({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) => (
     <label htmlFor={htmlFor}>{children}</label>
   ),
+}));
+
+vi.mock('@/components/ui/popover', () => ({
+  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: ReactNode; asChild?: boolean }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/ui/textarea', () => ({
@@ -180,6 +208,10 @@ vi.mock('@/hooks/use-listing-inquiries', () => ({
   useListingInquiriesReceived: () => mockUseListingInquiriesReceived(),
 }));
 
+vi.mock('@/hooks/use-business-inquiries', () => ({
+  useBusinessInquiriesReceived: () => mockUseBusinessInquiriesReceived(),
+}));
+
 vi.mock('@/hooks/use-my-opportunities', () => ({
   useMyOpportunities: () => mockUseMyOpportunities(),
 }));
@@ -245,6 +277,7 @@ describe('Role dashboard localization', () => {
     mockUseMyBusinesses.mockReset();
     mockUseMyListings.mockReset();
     mockUseListingInquiriesReceived.mockReset();
+    mockUseBusinessInquiriesReceived.mockReset();
     mockUseMyOpportunities.mockReset();
     mockUseMyInvestmentApplications.mockReset();
     mockUseOpportunityApplications.mockReset();
@@ -331,6 +364,26 @@ describe('Role dashboard localization', () => {
             message: 'Interested',
             replyMessage: null,
             listingId: 'listing-1',
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    mockUseBusinessInquiriesReceived.mockReturnValue({
+      data: {
+        total: 1,
+        data: [
+          {
+            id: 'biz-inq-1',
+            businessId: 'biz-1',
+            businessName: 'Oasis store',
+            status: 'pending',
+            createdAt: '2026-04-02T09:00:00Z',
+            contactName: 'Ali',
+            contactEmail: 'ali@example.com',
+            contactPhone: '+201222222222',
+            message: 'Interested in partnering.',
           },
         ],
       },
@@ -430,8 +483,29 @@ describe('Role dashboard localization', () => {
     expect(screen.getByRole('heading', { name: 'Investor dashboard' })).toBeInTheDocument();
     expect(screen.getByText('My published opportunities')).toBeInTheDocument();
     expect(screen.getByText('Investment inbox')).toBeInTheDocument();
-    expect(screen.getByText('Reply by email')).toBeInTheDocument();
+    expect(screen.getAllByText('Reply by email')).toHaveLength(2);
+    expect(screen.getByText('Startup inquiry inbox')).toBeInTheDocument();
     expect(screen.getByText('Sent inquiries')).toBeInTheDocument();
+  });
+
+  it('shows a loading indicator for startup inquiries while businesses are still loading', () => {
+    mockUseMyBusinesses.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    });
+    mockUseBusinessInquiriesReceived.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<InvestorDashboard />);
+
+    const startupInquiriesCard = screen.getByText('Startup inquiries').parentElement;
+
+    expect(startupInquiriesCard).not.toBeNull();
+    expect(within(startupInquiriesCard!).getByText('...')).toBeInTheDocument();
   });
 
   it('renders DriverDashboard in English mode', () => {
