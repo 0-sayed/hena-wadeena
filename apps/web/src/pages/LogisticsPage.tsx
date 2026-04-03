@@ -750,98 +750,146 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
   });
   const secondaryName = appLanguage === 'ar' ? (poi.nameEn?.trim() ?? null) : null;
   const googleMapsUrl = buildGoogleMapsLocationUrl(poi.location.y, poi.location.x);
+  const websiteLink = (() => {
+    if (!poi.website) return null;
+    try {
+      const normalized = /^https?:\/\//i.test(poi.website) ? poi.website : `https://${poi.website}`;
+      const url = new URL(normalized);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+      return {
+        href: url.href,
+        label: poi.website,
+      };
+    } catch {
+      return null;
+    }
+  })();
 
   return (
-    <div className="space-y-6 pt-4">
-      <SheetHeader>
-        <SheetTitle className="text-xl">{poiName}</SheetTitle>
-        {secondaryName && <p className="text-sm text-muted-foreground">{secondaryName}</p>}
-      </SheetHeader>
+    <div className="space-y-5 pt-4">
+      {poi.images?.[0] ? (
+        <div className="overflow-hidden rounded-3xl border border-border/60 bg-muted/30 shadow-sm">
+          <img src={poi.images[0]} alt={poiName} className="h-52 w-full object-cover" />
+        </div>
+      ) : null}
 
-      <Badge style={{ backgroundColor: getCategoryColor(poi.category) }} className="text-white">
-        {getCategoryLabel(poi.category, appLanguage)}
-      </Badge>
-
-      {poi.description && <p className="text-foreground/80">{poi.description}</p>}
-
-      <div className="space-y-3">
-        {poi.address && (
-          <div className="flex items-start gap-2 text-sm">
-            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-            <span>{poi.address}</span>
+      <div className="space-y-4 rounded-3xl border border-border/60 bg-card p-5 shadow-sm">
+        <SheetHeader className="space-y-2 text-start">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <SheetTitle className="text-2xl leading-tight">{poiName}</SheetTitle>
+              {secondaryName ? <p className="text-sm text-muted-foreground">{secondaryName}</p> : null}
+            </div>
+            <Badge
+              style={{ backgroundColor: getCategoryColor(poi.category) }}
+              className="rounded-full px-3 py-1 text-white shadow-sm"
+            >
+              {getCategoryLabel(poi.category, appLanguage)}
+            </Badge>
           </div>
-        )}
-        {poi.phone && (
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <a href={`tel:${poi.phone}`} className="text-primary hover:underline">
-              <LtrText>{poi.phone}</LtrText>
-            </a>
+        </SheetHeader>
+
+        {poi.description ? <p className="text-sm leading-7 text-foreground/80">{poi.description}</p> : null}
+
+        {poi.ratingAvg ? (
+          <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-amber-800">
+            <Star className="h-4 w-4 fill-current" />
+            <span className="font-semibold">{Number(poi.ratingAvg).toFixed(1)}</span>
+            <span className="text-sm">
+              {pickLocalizedCopy(appLanguage, {
+                ar: `(${poi.ratingCount} تقييم)`,
+                en: `(${poi.ratingCount} reviews)`,
+              })}
+            </span>
           </div>
-        )}
-        {(() => {
-          if (!poi.website) return null;
-          try {
-            const normalized = /^https?:\/\//i.test(poi.website)
-              ? poi.website
-              : `https://${poi.website}`;
-            const url = new URL(normalized);
-            if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-            return (
-              <div className="flex items-center gap-2 text-sm">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <a
-                  href={url.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate"
-                >
-                  <LtrText>{poi.website}</LtrText>
-                </a>
-              </div>
-            );
-          } catch {
-            return null;
-          }
-        })()}
+        ) : null}
       </div>
 
-      {poi.ratingAvg && (
-        <div className="flex items-center gap-2">
-          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-          <span className="font-semibold">{Number(poi.ratingAvg).toFixed(1)}</span>
-          <span className="text-sm text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: `(${poi.ratingCount} تقييم)`,
-              en: `(${poi.ratingCount} reviews)`,
-            })}
-          </span>
-        </div>
-      )}
+      <div className="space-y-3">
+        {poi.address ? (
+          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+            <div className="flex items-start gap-3 text-sm">
+              <div className="rounded-full bg-muted p-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">
+                  {pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Address' })}
+                </p>
+                <p className="leading-6 text-muted-foreground">{poi.address}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
-      {poi.images && poi.images.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {poi.images.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt={`${poiName} ${i + 1}`}
-              className="h-32 w-48 object-cover rounded-lg shrink-0"
-            />
-          ))}
-        </div>
-      )}
+        {poi.phone ? (
+          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="rounded-full bg-muted p-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">
+                  {pickLocalizedCopy(appLanguage, { ar: 'الهاتف', en: 'Phone' })}
+                </p>
+                <a href={`tel:${poi.phone}`} className="text-primary hover:underline">
+                  <LtrText>{poi.phone}</LtrText>
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
-      <div className="flex">
-        <Button className="flex-1" size="lg" asChild>
-          <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'افتح في Google Maps',
-              en: 'Open in Google Maps',
-            })}
-          </a>
-        </Button>
+        {websiteLink ? (
+          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="rounded-full bg-muted p-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0 space-y-1">
+                <p className="font-medium text-foreground">
+                  {pickLocalizedCopy(appLanguage, {
+                    ar: 'الموقع الإلكتروني',
+                    en: 'Website',
+                  })}
+                </p>
+                <a
+                  href={websiteLink.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block truncate text-primary hover:underline"
+                >
+                  <LtrText>{websiteLink.label}</LtrText>
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="rounded-3xl border border-border/60 bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button className="flex-1" size="lg" asChild>
+            <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" />
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'افتح في Google Maps',
+                en: 'Open in Google Maps',
+              })}
+            </a>
+          </Button>
+          {websiteLink ? (
+            <Button variant="outline" size="lg" className="flex-1" asChild>
+              <a href={websiteLink.href} target="_blank" rel="noopener noreferrer">
+                <Globe className="h-4 w-4" />
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'زيارة الموقع',
+                  en: 'Visit website',
+                })}
+              </a>
+            </Button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

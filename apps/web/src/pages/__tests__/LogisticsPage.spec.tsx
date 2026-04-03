@@ -316,6 +316,18 @@ describe('LogisticsPage', () => {
     expect(screen.getByText('مستشفى الخارجة العام')).toBeInTheDocument();
   });
 
+  it('restores the polished poi detail sheet styling and metadata blocks', () => {
+    render(<LogisticsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'open poi' }));
+
+    expect(screen.getByText('العنوان')).toBeInTheDocument();
+    expect(screen.getByText('الهاتف')).toBeInTheDocument();
+    expect(screen.getByText('الموقع الإلكتروني')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'زيارة الموقع' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'مستشفى الخارجة العام' })).toBeInTheDocument();
+  });
+
   it('shows a clear empty state when near me returns no pois', () => {
     const getCurrentPosition = vi.fn((success: (position: GeolocationPosition) => void) => {
       success({
