@@ -120,6 +120,7 @@ Thumbs.db
 # Claude Code (local tooling — worktrees, agent memory, session state)
 # ==============================================================
 .claude/
+.worktrees/
 
 # ==============================================================
 # Seed scripts — compiled artifacts (tsx runs TS directly)

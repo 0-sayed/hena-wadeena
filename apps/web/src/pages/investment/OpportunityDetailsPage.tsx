@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { UserRole } from '@hena-wadeena/types';
 import { useNavigate, useParams } from 'react-router';
 import {
   ArrowRight,
@@ -13,17 +14,23 @@ import {
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LtrText } from '@/components/ui/ltr-text';
 import { Badge } from '@/components/ui/badge';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import { investmentAPI } from '@/services/api';
-import { formatArabicYears, formatPrice } from '@/lib/format';
+import { formatPrice } from '@/lib/format';
 import { useAuth } from '@/hooks/use-auth';
 
 const OpportunityDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated, user } = useAuth();
-  const { data: opportunity, isLoading, isError, refetch } = useQuery({
+  const {
+    data: opportunity,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['investment', 'opportunities', id],
     queryFn: () => investmentAPI.getOpportunity(id!),
     enabled: !!id,
@@ -31,7 +38,7 @@ const OpportunityDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Layout title="تفاصيل الفرصة">
+      <Layout>
         <div className="container py-16 space-y-6">
           <div className="h-10 w-40 animate-pulse rounded-xl bg-muted" />
           <div className="h-80 animate-pulse rounded-2xl bg-muted" />
@@ -43,7 +50,7 @@ const OpportunityDetailsPage = () => {
 
   if (isError || !opportunity) {
     return (
-      <Layout title="تفاصيل الفرصة">
+      <Layout>
         <div className="container py-20 text-center space-y-4">
           <p className="text-lg text-muted-foreground">تعذر تحميل بيانات الفرصة الاستثمارية.</p>
           <div className="flex justify-center gap-3">
@@ -57,14 +64,18 @@ const OpportunityDetailsPage = () => {
     );
   }
 
-  const canSeeSensitiveFields =
-    isAuthenticated && ['investor', 'merchant', 'admin'].includes(user?.role ?? '');
+  const canAccessInvestmentContact =
+    isAuthenticated && (user?.role === UserRole.INVESTOR || user?.role === UserRole.ADMIN);
 
   return (
-    <Layout title="تفاصيل الفرصة">
+    <Layout>
       <section className="py-8 md:py-12">
         <div className="container px-4">
-          <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => void navigate('/investment')}
+            className="mb-6 gap-2"
+          >
             <ArrowRight className="h-4 w-4" />
             العودة للاستثمار
           </Button>
@@ -161,27 +172,29 @@ const OpportunityDetailsPage = () => {
                   <CardTitle className="text-lg">المستندات</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {opportunity.documents && opportunity.documents.length > 0 ? (
-                    opportunity.documents.map((documentUrl) => (
-                      <a
-                        key={documentUrl}
-                        href={documentUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-5 w-5 text-primary" />
-                          <span className="font-medium">مستند مرفق</span>
-                        </div>
-                        <Badge variant="secondary">فتح</Badge>
-                      </a>
-                    ))
+                  {canAccessInvestmentContact ? (
+                    opportunity.documents && opportunity.documents.length > 0 ? (
+                      opportunity.documents.map((documentUrl) => (
+                        <a
+                          key={documentUrl}
+                          href={documentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-muted/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-primary" />
+                            <span className="font-medium">مستند مرفق</span>
+                          </div>
+                          <Badge variant="secondary">فتح</Badge>
+                        </a>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">لا توجد مستندات مرفقة حالياً.</p>
+                    )
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      {canSeeSensitiveFields
-                        ? 'لا توجد مستندات مرفقة حالياً.'
-                        : 'سجل الدخول كمستثمر أو تاجر لعرض المستندات التفصيلية.'}
+                      سجل الدخول كمستثمر أو مسؤول لعرض المستندات التفصيلية.
                     </p>
                   )}
                 </CardContent>
@@ -197,7 +210,8 @@ const OpportunityDetailsPage = () => {
                   <div className="rounded-lg bg-primary/5 p-4">
                     <p className="mb-1 text-sm text-muted-foreground">حجم الاستثمار المطلوب</p>
                     <p className="text-xl font-bold text-primary">
-                      {formatPrice(opportunity.minInvestment)} - {formatPrice(opportunity.maxInvestment)} ج.م
+                      {formatPrice(opportunity.minInvestment)} -{' '}
+                      {formatPrice(opportunity.maxInvestment)} ج.م
                     </p>
                   </div>
 
@@ -214,20 +228,22 @@ const OpportunityDetailsPage = () => {
                       <p className="mb-1 text-xs text-muted-foreground">فترة الاسترداد</p>
                       <p className="font-semibold">
                         {opportunity.paybackPeriodYears != null
-                          ? formatArabicYears(opportunity.paybackPeriodYears)
+                          ? `${opportunity.paybackPeriodYears} سنة`
                           : '-'}
                       </p>
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => void navigate(`/investment/contact/${opportunity.id}`)}
-                  >
-                    <Mail className="h-5 w-5 ms-2" />
-                    إرسال استفسار استثماري
-                  </Button>
+                  {canAccessInvestmentContact ? (
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={() => void navigate(`/investment/contact/${opportunity.id}`)}
+                    >
+                      <Mail className="h-5 w-5 ms-2" />
+                      إرسال استفسار استثماري
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
 
@@ -236,36 +252,40 @@ const OpportunityDetailsPage = () => {
                   <CardTitle className="text-lg">معلومات التواصل</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  {opportunity.contact ? (
-                    <>
-                      {opportunity.contact.name && (
-                        <div className="flex items-center gap-3">
-                          <Building2 className="h-4 w-4 text-primary" />
-                          <span>{opportunity.contact.name}</span>
-                        </div>
-                      )}
-                      {opportunity.contact.phone && (
-                        <div className="flex items-center gap-3">
-                          <Phone className="h-4 w-4 text-primary" />
-                          <span>{opportunity.contact.phone}</span>
-                        </div>
-                      )}
-                      {opportunity.contact.email && (
-                        <div className="flex items-center gap-3">
-                          <Mail className="h-4 w-4 text-primary" />
-                          <span>{opportunity.contact.email}</span>
-                        </div>
-                      )}
-                      {opportunity.contact.website && (
-                        <div className="flex items-center gap-3">
-                          <Globe className="h-4 w-4 text-primary" />
-                          <span>{opportunity.contact.website}</span>
-                        </div>
-                      )}
-                    </>
+                  {canAccessInvestmentContact ? (
+                    opportunity.contact ? (
+                      <>
+                        {opportunity.contact.name && (
+                          <div className="flex items-center gap-3">
+                            <Building2 className="h-4 w-4 text-primary" />
+                            <span>{opportunity.contact.name}</span>
+                          </div>
+                        )}
+                        {opportunity.contact.phone && (
+                          <div className="flex items-center gap-3">
+                            <Phone className="h-4 w-4 text-primary" />
+                            <LtrText>{opportunity.contact.phone}</LtrText>
+                          </div>
+                        )}
+                        {opportunity.contact.email && (
+                          <div className="flex items-center gap-3">
+                            <Mail className="h-4 w-4 text-primary" />
+                            <LtrText>{opportunity.contact.email}</LtrText>
+                          </div>
+                        )}
+                        {opportunity.contact.website && (
+                          <div className="flex items-center gap-3">
+                            <Globe className="h-4 w-4 text-primary" />
+                            <span>{opportunity.contact.website}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">لا توجد بيانات تواصل متاحة حالياً.</p>
+                    )
                   ) : (
                     <p className="text-muted-foreground">
-                      سجل الدخول كمستثمر أو تاجر لعرض بيانات التواصل الكاملة.
+                      سجل الدخول كمستثمر أو مسؤول لعرض بيانات التواصل الكاملة.
                     </p>
                   )}
                 </CardContent>

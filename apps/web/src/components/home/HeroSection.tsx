@@ -1,54 +1,57 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Sparkles, Mountain, ShoppingBag, Truck, TrendingUp, Users, Compass } from 'lucide-react';
 import { Link } from 'react-router';
+
 import heroImage from '@/assets/hero-desert-oasis.jpg';
+import { useAuth } from '@/hooks/use-auth';
+import { pickLocalizedCopy } from '@/lib/localization';
 
 const navCards = [
   {
     icon: Mountain,
-    label: 'السياحة',
-    desc: 'اكتشف المعالم',
+    label: { ar: 'السياحة', en: 'Tourism' },
+    desc: { ar: 'اكتشف المعالم', en: 'Discover places' },
     href: '/tourism',
     color: 'from-emerald-500 to-teal-600',
   },
   {
     icon: ShoppingBag,
-    label: 'البورصة',
-    desc: 'أسعار اليوم',
+    label: { ar: 'البورصة', en: 'Marketplace' },
+    desc: { ar: 'أسعار اليوم', en: "Today's prices" },
     href: '/marketplace',
     color: 'from-amber-500 to-orange-600',
   },
   {
     icon: Truck,
-    label: 'المواصلات',
-    desc: 'خطوط وحجز',
+    label: { ar: 'المواصلات', en: 'Transport' },
+    desc: { ar: 'خطوط وحجز', en: 'Routes & booking' },
     href: '/logistics',
     color: 'from-sky-500 to-blue-600',
   },
   {
     icon: TrendingUp,
-    label: 'الاستثمار',
-    desc: 'فرص واعدة',
+    label: { ar: 'الاستثمار', en: 'Investment' },
+    desc: { ar: 'فرص واعدة', en: 'Promising opportunities' },
     href: '/investment',
     color: 'from-violet-500 to-purple-600',
   },
   {
     icon: Users,
-    label: 'المرشدين',
-    desc: 'دليلك المحلي',
+    label: { ar: 'المرشدين', en: 'Guides' },
+    desc: { ar: 'دليلك المحلي', en: 'Your local guide' },
     href: '/guides',
     color: 'from-pink-500 to-rose-600',
   },
   {
     icon: Compass,
-    label: 'المعالم',
-    desc: 'أماكن مميزة',
+    label: { ar: 'المعالم', en: 'Attractions' },
+    desc: { ar: 'أماكن مميزة', en: 'Featured places' },
     href: '/tourism/attractions',
     color: 'from-cyan-500 to-indigo-600',
   },
-];
+] as const;
 
-function CardDeck() {
+function CardDeck({ language }: { language: 'ar' | 'en' }) {
   const deckRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -87,11 +90,10 @@ function CardDeck() {
       const x = (touch.clientX - rect.left) / rect.width - 0.5;
       setMousePos({ x, y: 0 });
 
-      // Detect which card is under the touch
       const cardWidth = 160;
       const total = navCards.length;
       const mid = (total - 1) / 2;
-      for (let i = total - 1; i >= 0; i--) {
+      for (let i = total - 1; i >= 0; i -= 1) {
         const offset = i - mid;
         const cardCenterX = rect.left + rect.width / 2 + offset * 55 + x * 15;
         if (Math.abs(touch.clientX - cardCenterX) < cardWidth / 2) {
@@ -133,9 +135,8 @@ function CardDeck() {
     };
   };
 
-  // Close fan when tapping outside
   useEffect(() => {
-    if (!isTouchFanned) return;
+    if (!isTouchFanned) return undefined;
     const handler = (e: TouchEvent) => {
       if (deckRef.current && !deckRef.current.contains(e.target as Node)) {
         setIsTouchFanned(false);
@@ -149,7 +150,7 @@ function CardDeck() {
   return (
     <div
       ref={deckRef}
-      className="relative h-[220px] w-full max-w-[380px] mx-auto sm:mx-0 flex items-center justify-center touch-manipulation"
+      className="relative mx-auto flex h-[220px] w-full max-w-[380px] touch-manipulation items-center justify-center sm:mx-0"
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => {
@@ -166,7 +167,7 @@ function CardDeck() {
           <Link
             key={item.href}
             to={item.href}
-            className="absolute w-[140px] sm:w-[160px] h-[170px] sm:h-[190px] cursor-pointer"
+            className="absolute h-[170px] w-[140px] cursor-pointer sm:h-[190px] sm:w-[160px]"
             style={style}
             onMouseEnter={() => setHoveredIndex(index)}
             onTouchEnd={(e) => {
@@ -178,14 +179,20 @@ function CardDeck() {
             }}
           >
             <div
-              className={`w-full h-full rounded-2xl bg-gradient-to-br ${item.color} p-4 sm:p-5 flex flex-col items-center justify-center gap-3 shadow-2xl border border-white/20 backdrop-blur-sm transition-shadow duration-300`}
+              className={`h-full w-full rounded-2xl bg-gradient-to-br ${item.color} border border-white/20 p-4 shadow-2xl backdrop-blur-sm transition-shadow duration-300 sm:p-5`}
             >
-              <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" strokeWidth={1.8} />
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-white text-sm sm:text-base">{item.label}</div>
-                <div className="text-[11px] sm:text-xs text-white/70 mt-0.5">{item.desc}</div>
+              <div className="flex h-full flex-col items-center justify-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm sm:h-14 sm:w-14">
+                  <Icon className="h-6 w-6 text-white sm:h-7 sm:w-7" strokeWidth={1.8} />
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-bold text-white sm:text-base">
+                    {pickLocalizedCopy(language, item.label)}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-white/70 sm:text-xs">
+                    {pickLocalizedCopy(language, item.desc)}
+                  </div>
+                </div>
               </div>
             </div>
           </Link>
@@ -200,29 +207,29 @@ function Counter({ target, label, delay }: { target: number; label: string; dela
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setShow(true), delay);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(timer);
   }, [delay]);
 
   useEffect(() => {
     if (!show) return;
-    const dur = 2000;
-    const t0 = performance.now();
+    const duration = 2000;
+    const startTime = performance.now();
     const tick = (now: number) => {
-      const p = Math.min((now - t0) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 4);
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 4);
       setVal(Math.floor(eased * target));
-      if (p < 1) requestAnimationFrame(tick);
+      if (progress < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }, [show, target]);
 
   return (
     <div
-      className={`transition-all duration-700 ${show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+      className={`transition-all duration-700 ${show ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'}`}
     >
-      <div className="text-4xl md:text-5xl font-bold text-card tabular-nums">+{val}</div>
-      <div className="text-sm text-card/70 mt-1">{label}</div>
+      <div className="tabular-nums text-4xl font-bold text-card md:text-5xl">+{val}</div>
+      <div className="mt-1 text-sm text-card/70">{label}</div>
     </div>
   );
 }
@@ -230,6 +237,33 @@ function Counter({ target, label, delay }: { target: number; label: string; dela
 export function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const { language } = useAuth();
+  const copy =
+    language === 'en'
+      ? {
+          brandName: 'Hena Wadeena',
+          portalBadge: 'Official digital portal',
+          tagline: 'Explore. Connect. Invest.',
+          description:
+            'Your all-in-one gateway to New Valley, from transport and daily prices to investment opportunities and tourism.',
+          helper: 'Tap or hover over the cards to explore each section',
+          transportLines: 'transport routes',
+          localProducts: 'local products',
+          investmentOpportunities: 'investment opportunities',
+          heroImageAlt: 'New Valley',
+        }
+      : {
+          brandName: 'هُنَا وَادِينَا',
+          portalBadge: 'البوابة الرقمية الرسمية',
+          tagline: 'اكتشف. تواصل. استثمر.',
+          description:
+            'بوابتك الشاملة للوادي الجديد — من المواصلات والأسعار إلى فرص الاستثمار والسياحة. كل ما تحتاجه في مكان واحد.',
+          helper: 'المس أو مرّر على الكروت لاستكشاف الأقسام',
+          transportLines: 'خط مواصلات',
+          localProducts: 'منتج محلي',
+          investmentOpportunities: 'فرصة استثمارية',
+          heroImageAlt: 'الوادي الجديد',
+        };
 
   useEffect(() => {
     setLoaded(true);
@@ -254,8 +288,7 @@ export function HeroSection() {
   const heroOpacity = Math.max(0, 1 - scrollY / 700);
 
   return (
-    <section className="relative min-h-[95vh] flex items-center overflow-hidden">
-      {/* Parallax Background */}
+    <section className="relative flex min-h-[95vh] items-center overflow-hidden">
       <div
         className="absolute inset-0 will-change-transform transition-transform duration-75"
         style={{
@@ -265,73 +298,64 @@ export function HeroSection() {
             : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <img src={heroImage} alt="الوادي الجديد" className="w-full h-[130%] object-cover" />
+        <img src={heroImage} alt={copy.heroImageAlt} className="h-[130%] w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-l from-foreground/85 via-foreground/65 to-foreground/40" />
       </div>
 
-      {/* Floating Particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {[
-          'top-[18%] right-[12%] h-2 w-2 bg-accent/30 particle-1',
-          'top-[38%] right-[28%] h-3 w-3 bg-primary/20 particle-2',
-          'top-[58%] right-[8%] h-1.5 w-1.5 bg-card/25 particle-3',
-          'top-[28%] right-[42%] h-2.5 w-2.5 bg-accent/20 particle-4',
-          'top-[68%] right-[55%] h-2 w-2 bg-primary/15 particle-1',
-          'top-[12%] right-[68%] h-3 w-3 bg-card/15 particle-3',
-          'top-[78%] right-[35%] h-1.5 w-1.5 bg-accent/25 particle-2',
-          'top-[8%] right-[50%] h-2 w-2 bg-card/20 particle-4',
-        ].map((cls, i) => (
-          <div key={i} className={`particle absolute rounded-full ${cls}`} />
+          'top-[18%] end-[12%] h-2 w-2 bg-accent/30 particle-1',
+          'top-[38%] end-[28%] h-3 w-3 bg-primary/20 particle-2',
+          'top-[58%] end-[8%] h-1.5 w-1.5 bg-card/25 particle-3',
+          'top-[28%] end-[42%] h-2.5 w-2.5 bg-accent/20 particle-4',
+          'top-[68%] end-[55%] h-2 w-2 bg-primary/15 particle-1',
+          'top-[12%] end-[68%] h-3 w-3 bg-card/15 particle-3',
+          'top-[78%] end-[35%] h-1.5 w-1.5 bg-accent/25 particle-2',
+          'top-[8%] end-[50%] h-2 w-2 bg-card/20 particle-4',
+        ].map((cls, index) => (
+          <div key={index} className={`particle absolute rounded-full ${cls}`} />
         ))}
       </div>
 
-      {/* Content with fade on scroll */}
       <div className="container relative z-10 px-4 py-20" style={{ opacity: heroOpacity }}>
         <div className="max-w-2xl">
-          {/* Badge */}
-          <div className="hero-reveal hero-d1 inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass mb-8">
-            <Sparkles className="h-5 w-5 text-accent animate-pulse" />
-            <span className="text-sm font-semibold text-card">البوابة الرقمية الرسمية</span>
+          <div className="hero-reveal hero-d1 mb-8 inline-flex items-center gap-2 rounded-full glass px-5 py-2.5">
+            <Sparkles className="h-5 w-5 animate-pulse text-accent" />
+            <span className="text-sm font-semibold text-card">{copy.portalBadge}</span>
           </div>
 
-          {/* Heading */}
-          <h1 className="hero-reveal hero-d2 text-5xl md:text-6xl lg:text-7xl font-bold text-card mb-6 leading-tight">
-            هُنَا وَادِينَا
-            <span className="block text-accent mt-3 text-3xl md:text-4xl lg:text-5xl">
-              اكتشف. تواصل. استثمر.
+          <h1 className="hero-reveal hero-d2 mb-6 text-5xl font-bold leading-tight text-card md:text-6xl lg:text-7xl">
+            {copy.brandName}
+            <span className="mt-3 block text-3xl text-accent md:text-4xl lg:text-5xl">
+              {copy.tagline}
             </span>
           </h1>
 
-          {/* Description */}
-          <p className="hero-reveal hero-d3 text-lg md:text-xl text-card/90 mb-10 leading-relaxed max-w-xl">
-            بوابتك الشاملة للوادي الجديد — من المواصلات والأسعار إلى فرص الاستثمار والسياحة. كل ما
-            تحتاجه في مكان واحد.
+          <p className="hero-reveal hero-d3 mb-10 max-w-xl text-lg leading-relaxed text-card/90 md:text-xl">
+            {copy.description}
           </p>
 
-          {/* Card Deck Navigation */}
           <div className="hero-reveal hero-d4 mb-12">
-            <CardDeck />
-            <p className="text-card/50 text-xs mt-4 text-center sm:text-end">
-              المس أو مرّر على الكروت لاستكشاف الأقسام ✨
+            <CardDeck language={language} />
+            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">
+              {copy.helper} ✨
             </p>
           </div>
 
-          {/* Animated Stats */}
           <div className="hero-reveal hero-d5 flex flex-wrap gap-12">
-            <Counter target={50} label="خط مواصلات" delay={900} />
-            <Counter target={200} label="منتج محلي" delay={1200} />
-            <Counter target={30} label="فرصة استثمارية" delay={1500} />
+            <Counter target={50} label={copy.transportLines} delay={900} />
+            <Counter target={200} label={copy.localProducts} delay={1200} />
+            <Counter target={30} label={copy.investmentOpportunities} delay={1500} />
           </div>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
       <div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 scroll-indicator"
+        className="scroll-indicator absolute bottom-8 start-1/2 -translate-x-1/2"
         style={{ opacity: heroOpacity }}
       >
-        <div className="w-7 h-11 rounded-full border-2 border-card/30 flex items-start justify-center p-1.5">
-          <div className="w-1.5 h-2.5 rounded-full bg-card/50" />
+        <div className="flex h-11 w-7 items-start justify-center rounded-full border-2 border-card/30 p-1.5">
+          <div className="h-2.5 w-1.5 rounded-full bg-card/50" />
         </div>
       </div>
     </section>

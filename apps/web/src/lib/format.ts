@@ -8,6 +8,7 @@ import type {
 } from '@hena-wadeena/types';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 export { piastresToEgp } from '@hena-wadeena/types';
+import type { AppLanguage } from './localization';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -20,11 +21,20 @@ export function formatPrice(piasters: number): string {
   });
 }
 
-/** Format a ride price in piasters with the "جنيه" label, returning "مجاني" for zero */
-export function formatRidePrice(piasters: number): string {
-  if (piasters === 0) return 'مجاني';
+/** Format a ride price in piasters with the currency label, returning free for zero */
+export function formatRidePrice(piasters: number, language: AppLanguage = 'ar'): string {
+  if (piasters === 0) {
+    return language === 'en' ? 'Free' : 'مجاني';
+  }
+
   const egp = piasters / 100;
-  return `${egp.toLocaleString('ar-u-nu-latn', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} جنيه`;
+  const locale = language === 'en' ? 'en-US' : 'ar-u-nu-latn';
+  const label = language === 'en' ? 'EGP' : 'جنيه';
+
+  return `${egp.toLocaleString(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })} ${label}`;
 }
 
 /** Format nullable rating to 1-decimal string, or '—' if missing */
@@ -61,8 +71,17 @@ export const districtLabels: Record<NvDistrict, string> = {
   balat: 'بلاط',
 };
 
-export function districtLabel(district: string): string {
-  return districtLabels[district as NvDistrict] ?? district;
+const districtLabelsEn: Record<NvDistrict, string> = {
+  kharga: 'Kharga',
+  dakhla: 'Dakhla',
+  farafra: 'Farafra',
+  baris: 'Baris',
+  balat: 'Balat',
+};
+
+export function districtLabel(district: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? districtLabelsEn : districtLabels;
+  return labels[district as NvDistrict] ?? district;
 }
 
 /** Select options derived from districtLabels */
@@ -79,8 +98,18 @@ export const categoryLabels: Record<CommodityCategory, string> = {
   other: 'أخرى',
 };
 
-export function categoryLabel(category: string): string {
-  return categoryLabels[category as CommodityCategory] ?? category;
+const categoryLabelsEn: Record<CommodityCategory, string> = {
+  fruits: 'Fruits',
+  grains: 'Grains',
+  vegetables: 'Vegetables',
+  oils: 'Oils',
+  livestock: 'Livestock',
+  other: 'Other',
+};
+
+export function categoryLabel(category: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? categoryLabelsEn : categoryLabels;
+  return labels[category as CommodityCategory] ?? category;
 }
 
 export const listingCategoryLabels: Record<ListingCategory, string> = {
@@ -95,8 +124,21 @@ export const listingCategoryLabels: Record<ListingCategory, string> = {
   shopping: 'تسوق',
 };
 
-export function listingCategoryLabel(category: string): string {
-  return listingCategoryLabels[category as ListingCategory] ?? category;
+const listingCategoryLabelsEn: Record<ListingCategory, string> = {
+  place: 'Place',
+  accommodation: 'Accommodation',
+  restaurant: 'Restaurant',
+  service: 'Service',
+  activity: 'Activity',
+  transport: 'Transport',
+  education: 'Education',
+  healthcare: 'Healthcare',
+  shopping: 'Shopping',
+};
+
+export function listingCategoryLabel(category: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? listingCategoryLabelsEn : listingCategoryLabels;
+  return labels[category as ListingCategory] ?? category;
 }
 
 export const transactionLabels: Record<TransactionType, string> = {
@@ -104,8 +146,14 @@ export const transactionLabels: Record<TransactionType, string> = {
   rent: 'للإيجار',
 };
 
-export function transactionLabel(transaction: string): string {
-  return transactionLabels[transaction as TransactionType] ?? transaction;
+const transactionLabelsEn: Record<TransactionType, string> = {
+  sale: 'For sale',
+  rent: 'Rent',
+};
+
+export function transactionLabel(transaction: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? transactionLabelsEn : transactionLabels;
+  return labels[transaction as TransactionType] ?? transaction;
 }
 
 /** Select options derived from categoryLabels — first entry is "all" with undefined id */
@@ -125,8 +173,19 @@ export const unitLabels: Record<CommodityUnit, string> = {
   box: 'صندوق',
 };
 
-export function unitLabel(unit: string): string {
-  return unitLabels[unit as CommodityUnit] ?? unit;
+const unitLabelsEn: Record<CommodityUnit, string> = {
+  kg: 'kg',
+  ton: 'ton',
+  ardeb: 'ardeb',
+  kantar: 'qintar',
+  liter: 'L',
+  piece: 'piece',
+  box: 'box',
+};
+
+export function unitLabel(unit: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? unitLabelsEn : unitLabels;
+  return labels[unit as CommodityUnit] ?? unit;
 }
 
 export const priceTypeLabels: Record<PriceType, string> = {
@@ -135,8 +194,15 @@ export const priceTypeLabels: Record<PriceType, string> = {
   farm_gate: 'بوابة المزرعة',
 };
 
-export function priceTypeLabel(type: string): string {
-  return priceTypeLabels[type as PriceType] ?? type;
+const priceTypeLabelsEn: Record<PriceType, string> = {
+  retail: 'Retail',
+  wholesale: 'Wholesale',
+  farm_gate: 'Farm gate',
+};
+
+export function priceTypeLabel(type: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? priceTypeLabelsEn : priceTypeLabels;
+  return labels[type as PriceType] ?? type;
 }
 
 export type AttractionType = 'attraction' | 'historical' | 'natural' | 'festival' | 'adventure';
@@ -152,6 +218,19 @@ export const attractionTypeLabels: Record<AttractionType, string> = {
   festival: 'مهرجان',
   adventure: 'مغامرة',
 };
+
+const attractionTypeLabelsEn: Record<AttractionType, string> = {
+  attraction: 'Attraction',
+  historical: 'Historical',
+  natural: 'Natural',
+  festival: 'Festival',
+  adventure: 'Adventure',
+};
+
+export function attractionTypeLabel(type: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? attractionTypeLabelsEn : attractionTypeLabels;
+  return labels[type as AttractionType] ?? type;
+}
 
 export const areaLabels: Record<AttractionArea, string> = {
   kharga: 'الخارجة',
@@ -186,13 +265,30 @@ export const languageLabels: Record<string, string> = {
   [GuideLanguage.FRENCH]: 'الفرنسية',
   [GuideLanguage.GERMAN]: 'الألمانية',
   [GuideLanguage.ITALIAN]: 'الإيطالية',
-  // Short codes from seed data
   ar: 'العربية',
   en: 'الإنجليزية',
   fr: 'الفرنسية',
   de: 'الألمانية',
   it: 'الإيطالية',
 };
+
+const languageLabelsEn: Record<string, string> = {
+  [GuideLanguage.ARABIC]: 'Arabic',
+  [GuideLanguage.ENGLISH]: 'English',
+  [GuideLanguage.FRENCH]: 'French',
+  [GuideLanguage.GERMAN]: 'German',
+  [GuideLanguage.ITALIAN]: 'Italian',
+  ar: 'Arabic',
+  en: 'English',
+  fr: 'French',
+  de: 'German',
+  it: 'Italian',
+};
+
+export function languageLabel(value: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? languageLabelsEn : languageLabels;
+  return labels[value] ?? value;
+}
 
 export const specialtyLabels: Record<string, string> = {
   [GuideSpecialty.HISTORY]: 'تاريخ',
@@ -201,7 +297,6 @@ export const specialtyLabels: Record<string, string> = {
   [GuideSpecialty.CULTURE]: 'ثقافة',
   [GuideSpecialty.PHOTOGRAPHY]: 'تصوير',
   [GuideSpecialty.FOOD]: 'طعام',
-  // Extended specialties from seed data
   archaeology: 'آثار',
   temples: 'معابد',
   desert: 'صحراء',
@@ -214,3 +309,28 @@ export const specialtyLabels: Record<string, string> = {
   landscapes: 'مناظر طبيعية',
   architecture: 'عمارة',
 };
+
+const specialtyLabelsEn: Record<string, string> = {
+  [GuideSpecialty.HISTORY]: 'History',
+  [GuideSpecialty.NATURE]: 'Nature',
+  [GuideSpecialty.ADVENTURE]: 'Adventure',
+  [GuideSpecialty.CULTURE]: 'Culture',
+  [GuideSpecialty.PHOTOGRAPHY]: 'Photography',
+  [GuideSpecialty.FOOD]: 'Food',
+  archaeology: 'Archaeology',
+  temples: 'Temples',
+  desert: 'Desert',
+  camping: 'Camping',
+  safari: 'Safari',
+  sandboarding: 'Sandboarding',
+  wellness: 'Wellness',
+  hot_springs: 'Hot springs',
+  medical_tourism: 'Medical tourism',
+  landscapes: 'Landscapes',
+  architecture: 'Architecture',
+};
+
+export function specialtyLabel(value: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? specialtyLabelsEn : specialtyLabels;
+  return labels[value] ?? value;
+}

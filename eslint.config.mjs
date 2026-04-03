@@ -8,13 +8,13 @@ export default tseslint.config(
   ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
-      parserOptions: {
-        projectService: {
-          allowDefaultProject: ['services/*/test/*.e2e-spec.ts'],
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 20,
+        parserOptions: {
+          projectService: {
+          allowDefaultProject: ['services/*/test/*.e2e-spec.ts', 'gateway/*.spec.ts'],
+            maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 20,
+          },
+          tsconfigRootDir: import.meta.dirname,
         },
-        tsconfigRootDir: import.meta.dirname,
-      },
     },
     plugins: {
       import: importPlugin,
@@ -87,6 +87,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/coverage/**',
+      '.worktrees/**',
       '.claude/**',
       'apps/web/**',
       'services/ai/**',

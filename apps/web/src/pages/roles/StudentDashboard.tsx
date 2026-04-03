@@ -3,14 +3,18 @@ import { ArrowLeft, BookOpen, CalendarCheck, GraduationCap, Home, MapPin } from 
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { BookingsCard } from '@/components/dashboard/BookingsCard';
+import { useAuth } from '@/hooks/use-auth';
 import { useMyBookings } from '@/hooks/use-my-bookings';
 import { useListings } from '@/hooks/use-listings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { districtLabel, formatPrice, transactionLabel } from '@/lib/format';
+import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 
 export default function StudentDashboard() {
+  const { language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const { data, isLoading, error } = useMyBookings();
   const { data: housingData, isLoading: isHousingLoading } = useListings({
     category: 'accommodation',
@@ -30,18 +34,30 @@ export default function StudentDashboard() {
   return (
     <DashboardShell
       icon={GraduationCap}
-      title="لوحة الطالب"
-      subtitle="متابعة السكن والحجوزات والخدمات الطلابية"
+      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة الطالب', en: 'Student dashboard' })}
+      subtitle={pickLocalizedCopy(appLanguage, {
+        ar: 'متابعة السكن والحجوزات والخدمات الطلابية',
+        en: 'Track housing, bookings, and student services',
+      })}
     >
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="حجوزاتي" value={isLoading ? '...' : stats.bookings} icon={CalendarCheck} />
         <StatCard
-          label="قادمة"
+          label={pickLocalizedCopy(appLanguage, { ar: 'حجوزاتي', en: 'My bookings' })}
+          value={isLoading ? '...' : stats.bookings}
+          icon={CalendarCheck}
+        />
+        <StatCard
+          label={pickLocalizedCopy(appLanguage, { ar: 'قادمة', en: 'Upcoming' })}
           value={isLoading ? '...' : stats.upcoming}
           icon={BookOpen}
           variant="warning"
         />
-        <StatCard label="السكن" value="تصفح" icon={Home} variant="muted" />
+        <StatCard
+          label={pickLocalizedCopy(appLanguage, { ar: 'السكن', en: 'Housing' })}
+          value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
+          icon={Home}
+          variant="muted"
+        />
       </div>
 
       <BookingsCard bookings={bookings} isLoading={isLoading} error={error} />
@@ -49,14 +65,17 @@ export default function StudentDashboard() {
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
-            <CardTitle>البحث عن سكن</CardTitle>
+            <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'البحث عن سكن', en: 'Find housing' })}</CardTitle>
             <CardDescription>
-              أرخص 3 خيارات سكن متاحة حالياً مع وصول سريع إلى صفحة السكن الكاملة
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'أرخص 3 خيارات سكن متاحة حاليًا مع وصول سريع إلى صفحة السكن الكاملة',
+                en: 'The lowest-priced housing options available now with quick access to the full housing page',
+              })}
             </CardDescription>
           </div>
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <Link to="/tourism/accommodation">
-              عرض جميع السكن
+              {pickLocalizedCopy(appLanguage, { ar: 'عرض جميع السكن', en: 'View all housing' })}
               <ArrowLeft className="me-2 h-4 w-4" />
             </Link>
           </Button>
@@ -84,31 +103,51 @@ export default function StudentDashboard() {
               >
                 <img
                   src={listing.images?.[0] ?? '/placeholder.jpg'}
-                  alt={listing.titleAr}
+                  alt={
+                    pickLocalizedField(appLanguage, {
+                      ar: listing.titleAr,
+                      en: listing.titleEn,
+                    }) || listing.id
+                  }
                   className="h-16 w-16 shrink-0 rounded-lg object-cover"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">{listing.titleAr}</p>
+                      <p className="truncate font-semibold">
+                        {pickLocalizedField(appLanguage, {
+                          ar: listing.titleAr,
+                          en: listing.titleEn,
+                        })}
+                      </p>
                       <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">
-                          {districtLabel(listing.district ?? 'غير محدد')}
+                          {districtLabel(
+                            listing.district ??
+                              pickLocalizedCopy(appLanguage, {
+                                ar: 'غير محدد',
+                                en: 'Unknown',
+                              }),
+                            appLanguage,
+                          )}
                         </span>
                       </div>
                     </div>
                     <div className="shrink-0 text-start">
-                      <p className="font-bold text-primary">{formatPrice(listing.price)}</p>
+                      <p className="font-bold text-primary">
+                        {formatPrice(listing.price)}{' '}
+                        {pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' })}
+                      </p>
                       <p className="text-xs text-muted-foreground">{listing.priceUnit}</p>
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="secondary" className="text-xs">
-                      سكن
+                      {pickLocalizedCopy(appLanguage, { ar: 'سكن', en: 'Housing' })}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
-                      {transactionLabel(listing.transaction)}
+                      {transactionLabel(listing.transaction, appLanguage)}
                     </Badge>
                   </div>
                 </div>
@@ -116,7 +155,10 @@ export default function StudentDashboard() {
             ))
           ) : (
             <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-              لا توجد خيارات سكن منشورة حالياً.
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'لا توجد خيارات سكن منشورة حاليًا.',
+                en: 'No housing options are published right now.',
+              })}
             </div>
           )}
         </CardContent>

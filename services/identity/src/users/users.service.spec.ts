@@ -93,6 +93,22 @@ describe('UsersService', () => {
       expect(result).toEqual(mockUser);
       expect(mockDb.insert).toHaveBeenCalled();
     });
+
+    it('passes through a requested account status', async () => {
+      await service.create({
+        email: 'guide@example.com',
+        fullName: 'Guide User',
+        passwordHash: 'hashed',
+        role: 'guide',
+        status: 'pending_kyc',
+      });
+
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'pending_kyc',
+        }),
+      );
+    });
   });
 
   describe('updateProfile', () => {

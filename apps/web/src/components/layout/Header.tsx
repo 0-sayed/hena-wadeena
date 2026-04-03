@@ -8,20 +8,23 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Moon,
   Search,
+  Sun,
   User,
   Wallet,
 } from 'lucide-react';
-import { Classic } from '@theme-toggles/react';
-import '@theme-toggles/react/css/Classic.css';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LtrText } from '@/components/ui/ltr-text';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/use-auth';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
+
+type AppLanguage = 'ar' | 'en';
 
 type NavigationItem = {
   href: string;
@@ -30,10 +33,77 @@ type NavigationItem = {
   matcher: (pathname: string) => boolean;
 };
 
-const CONTROL_BUTTON_CLASS =
-  'flex h-9 min-w-9 items-center justify-center rounded-[1.1rem] text-muted-foreground transition-[background-color,color,transform,box-shadow] duration-200 ease-out hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50';
+type HeaderCopy = {
+  accountMenu: string;
+  bookings: string;
+  brand: string;
+  inquiries: string;
+  languageSwitchArabicError: string;
+  languageSwitchEnglishError: string;
+  login: string;
+  logout: string;
+  menu: string;
+  mobileSearchPlaceholder: string;
+  notifications: string;
+  profile: string;
+  register: string;
+  search: string;
+  searchPlaceholder: string;
+  switchToArabic: string;
+  switchToEnglish: string;
+  themeToggle: string;
+  wallet: string;
+};
 
-function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
+const CONTROL_BUTTON_CLASS =
+  'flex h-9 min-w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50';
+
+const headerCopy: Record<AppLanguage, HeaderCopy> = {
+  ar: {
+    accountMenu: 'قائمة الحساب',
+    bookings: 'حجوزاتي',
+    brand: 'هنا وادينا',
+    inquiries: 'استفسارات الإعلانات',
+    languageSwitchArabicError: 'تعذر التبديل إلى العربية',
+    languageSwitchEnglishError: 'تعذر التبديل إلى الإنجليزية',
+    login: 'تسجيل الدخول',
+    logout: 'تسجيل الخروج',
+    menu: 'فتح القائمة',
+    mobileSearchPlaceholder: 'بحث في المنصة...',
+    notifications: 'الإشعارات',
+    profile: 'الملف الشخصي',
+    register: 'إنشاء حساب',
+    search: 'بحث',
+    searchPlaceholder: 'بحث...',
+    switchToArabic: 'التبديل إلى العربية',
+    switchToEnglish: 'Switch to English',
+    themeToggle: 'تبديل الوضع',
+    wallet: 'المحفظة',
+  },
+  en: {
+    accountMenu: 'Account menu',
+    bookings: 'My bookings',
+    brand: 'Hena Wadeena',
+    inquiries: 'Marketplace inquiries',
+    languageSwitchArabicError: 'Could not switch to Arabic',
+    languageSwitchEnglishError: 'Could not switch to English',
+    login: 'Log in',
+    logout: 'Log out',
+    menu: 'Open menu',
+    mobileSearchPlaceholder: 'Search the platform...',
+    notifications: 'Notifications',
+    profile: 'Profile',
+    register: 'Create account',
+    search: 'Search',
+    searchPlaceholder: 'Search...',
+    switchToArabic: 'Switch to Arabic',
+    switchToEnglish: 'Switch to English',
+    themeToggle: 'Toggle theme',
+    wallet: 'Wallet',
+  },
+};
+
+function buildNavigation(language: AppLanguage): NavigationItem[] {
   const labels =
     language === 'en'
       ? {
@@ -105,7 +175,7 @@ function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
   ];
 }
 
-function ThemeToggle() {
+function ThemeToggle({ language }: { language: AppLanguage }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -113,25 +183,25 @@ function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-[1.1rem] text-muted-foreground">
+      <div className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground">
         <div className="h-5 w-5" />
       </div>
     );
   }
 
   const isDark = resolvedTheme === 'dark';
+  const label = headerCopy[language].themeToggle;
 
   return (
-    <Classic
-      toggled={isDark}
-      onToggle={() => setTheme(isDark ? 'light' : 'dark')}
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className={`${CONTROL_BUTTON_CLASS} w-9 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
-      aria-label="تبديل الوضع"
-      title="تبديل الوضع"
-      placeholder={undefined}
-      onPointerEnterCapture={undefined}
-      onPointerLeaveCapture={undefined}
-    />
+      aria-label={label}
+      title={label}
+    >
+      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
   );
 }
 
@@ -140,19 +210,19 @@ function LanguageToggle({
   disabled = false,
   onToggle,
 }: {
-  language: 'ar' | 'en';
+  language: AppLanguage;
   disabled?: boolean;
   onToggle: () => void;
 }) {
   const nextLanguage = language === 'ar' ? 'en' : 'ar';
-  const title = language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية';
+  const title = language === 'ar' ? headerCopy.ar.switchToEnglish : headerCopy.en.switchToArabic;
 
   return (
     <button
       type="button"
       onClick={onToggle}
       disabled={disabled}
-      className={`${CONTROL_BUTTON_CLASS} w-[3.35rem] gap-1 px-2 text-[11px] font-bold uppercase tracking-[0.18em]`}
+      className={`${CONTROL_BUTTON_CLASS} w-12 gap-1 px-2 text-[11px] font-bold uppercase tracking-[0.18em]`}
       aria-label={title}
       title={title}
       dir="ltr"
@@ -168,14 +238,14 @@ function HeaderActionCluster({
   disabled,
   onToggleLanguage,
 }: {
-  language: 'ar' | 'en';
+  language: AppLanguage;
   disabled?: boolean;
   onToggleLanguage: () => void;
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm shadow-black/5 supports-[backdrop-filter]:bg-background/70">
+    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm">
       <LanguageToggle language={language} disabled={disabled} onToggle={onToggleLanguage} />
-      <ThemeToggle />
+      <ThemeToggle language={language} />
     </div>
   );
 }
@@ -195,6 +265,7 @@ export function Header() {
   const unreadCount = unreadData?.count ?? 0;
 
   const navigation = useMemo(() => buildNavigation(language), [language]);
+  const copy = headerCopy[language];
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -211,13 +282,13 @@ export function Header() {
   };
 
   const handleLanguageToggle = () => {
-    const nextLanguage = language === 'ar' ? 'en' : 'ar';
+    const nextLanguage: AppLanguage = language === 'ar' ? 'en' : 'ar';
 
     setIsSwitchingLanguage(true);
     void setLanguage(nextLanguage)
       .catch(() => {
         toast.error(
-          nextLanguage === 'en' ? 'تعذر التبديل إلى الإنجليزية' : 'تعذر التبديل إلى العربية',
+          nextLanguage === 'en' ? copy.languageSwitchEnglishError : copy.languageSwitchArabicError,
         );
       })
       .finally(() => {
@@ -231,8 +302,8 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/icon-source.png" alt="هُنا وَادِينَا" className="h-9 w-9 rounded-lg" />
-          <span className="text-xl font-bold text-foreground">هُنا وَادِينَا</span>
+          <img src="/icon-source.png" alt={copy.brand} className="h-9 w-9 rounded-lg" />
+          <span className="text-xl font-bold text-foreground">{copy.brand}</span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -269,7 +340,8 @@ export function Header() {
                     setSearchOpen(false);
                   }
                 }}
-                placeholder="بحث..."
+                placeholder={copy.searchPlaceholder}
+                aria-label={copy.search}
                 className="h-9 w-48 text-sm"
               />
             </form>
@@ -279,7 +351,8 @@ export function Header() {
               size="icon"
               className="text-muted-foreground hover:text-foreground"
               onClick={() => setSearchOpen(true)}
-              aria-label="بحث"
+              aria-label={copy.search}
+              title={copy.search}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -293,15 +366,17 @@ export function Header() {
 
           {user ? (
             <>
-              <Link to="/notifications" className="relative">
+              <Link to="/notifications" className="relative" aria-label={copy.notifications}>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-foreground"
+                  aria-label={copy.notifications}
+                  title={copy.notifications}
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
+                    <span className="absolute -end-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -315,7 +390,7 @@ export function Header() {
                   className="gap-1.5 text-muted-foreground hover:text-foreground"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span className="text-xs font-semibold">المحفظة</span>
+                  <span className="text-xs font-semibold">{copy.wallet}</span>
                 </Button>
               </Link>
 
@@ -324,6 +399,8 @@ export function Header() {
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
                   className="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-muted"
+                  aria-label={copy.accountMenu}
+                  title={copy.accountMenu}
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10">
                     {user.avatar_url ? (
@@ -342,10 +419,12 @@ export function Header() {
                 {profileOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                    <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200 fade-in">
+                    <div className="absolute start-0 top-full z-50 mt-2 w-56 animate-in fade-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200">
                       <div className="border-b border-border px-4 py-3">
                         <p className="truncate text-sm font-semibold">{user.full_name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                        <LtrText as="p" className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </LtrText>
                       </div>
                       <div className="py-1">
                         <Link
@@ -354,7 +433,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <User className="h-4 w-4 text-muted-foreground" />
-                          الملف الشخصي
+                          {copy.profile}
                         </Link>
                         <Link
                           to="/bookings"
@@ -362,7 +441,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <CalendarCheck className="h-4 w-4 text-muted-foreground" />
-                          حجوزاتي
+                          {copy.bookings}
                         </Link>
                         <Link
                           to="/marketplace/inquiries"
@@ -370,7 +449,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          استفسارات الإعلانات
+                          {copy.inquiries}
                         </Link>
                         <Link
                           to="/wallet"
@@ -378,7 +457,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Wallet className="h-4 w-4 text-muted-foreground" />
-                          المحفظة
+                          {copy.wallet}
                         </Link>
                         <Link
                           to="/notifications"
@@ -386,9 +465,9 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Bell className="h-4 w-4 text-muted-foreground" />
-                          الإشعارات
+                          {copy.notifications}
                           {unreadCount > 0 && (
-                            <span className="ms-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
                             </span>
                           )}
@@ -404,7 +483,7 @@ export function Header() {
                           className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
                           <LogOut className="h-4 w-4" />
-                          تسجيل الخروج
+                          {copy.logout}
                         </button>
                       </div>
                     </div>
@@ -416,20 +495,26 @@ export function Header() {
             <div className="me-2 flex items-center gap-2">
               <Link to="/login">
                 <Button variant="outline" size="sm">
-                  <User className="me-2 h-4 w-4" />
-                  تسجيل الدخول
+                  <User className="ms-2 h-4 w-4" />
+                  {copy.login}
                 </Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">إنشاء حساب</Button>
+                <Button size="sm">{copy.register}</Button>
               </Link>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-1 lg:hidden">
-          <Link to="/search">
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
+          <Link to="/search" aria-label={copy.search}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground"
+              aria-label={copy.search}
+              title={copy.search}
+            >
               <Search className="h-5 w-5" />
             </Button>
           </Link>
@@ -441,11 +526,17 @@ export function Header() {
           />
 
           {user && (
-            <Link to="/notifications" className="relative">
-              <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <Link to="/notifications" className="relative" aria-label={copy.notifications}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground"
+                aria-label={copy.notifications}
+                title={copy.notifications}
+              >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
+                  <span className="absolute -end-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -455,7 +546,7 @@ export function Header() {
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label={copy.menu} title={copy.menu}>
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
@@ -476,7 +567,9 @@ export function Header() {
                     </div>
                     <div>
                       <p className="text-sm font-bold">{user.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <LtrText as="p" className="text-xs text-muted-foreground">
+                        {user.email}
+                      </LtrText>
                     </div>
                   </div>
                 )}
@@ -486,7 +579,8 @@ export function Header() {
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="بحث في المنصة..."
+                    placeholder={copy.mobileSearchPlaceholder}
+                    aria-label={copy.search}
                     className="search-input-with-icon-md h-10"
                   />
                 </form>
@@ -516,7 +610,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <User className="h-5 w-5 text-muted-foreground" />
-                      الملف الشخصي
+                      {copy.profile}
                     </Link>
                     <Link
                       to="/bookings"
@@ -524,7 +618,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <CalendarCheck className="h-5 w-5 text-muted-foreground" />
-                      حجوزاتي
+                      {copy.bookings}
                     </Link>
                     <Link
                       to="/marketplace/inquiries"
@@ -532,7 +626,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                      استفسارات الإعلانات
+                      {copy.inquiries}
                     </Link>
                     <Link
                       to="/wallet"
@@ -540,7 +634,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Wallet className="h-5 w-5 text-muted-foreground" />
-                      المحفظة
+                      {copy.wallet}
                     </Link>
                     <Link
                       to="/notifications"
@@ -548,9 +642,9 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Bell className="h-5 w-5 text-muted-foreground" />
-                      الإشعارات
+                      {copy.notifications}
                       {unreadCount > 0 && (
-                        <span className="ms-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                        <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
                         </span>
                       )}
@@ -564,19 +658,19 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-5 w-5" />
-                      تسجيل الخروج
+                      {copy.logout}
                     </button>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 border-t border-border pt-4">
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
-                        <User className="me-2 h-4 w-4" />
-                        تسجيل الدخول
+                        <User className="ms-2 h-4 w-4" />
+                        {copy.login}
                       </Button>
                     </Link>
                     <Link to="/register" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full">إنشاء حساب</Button>
+                      <Button className="w-full">{copy.register}</Button>
                     </Link>
                   </div>
                 )}

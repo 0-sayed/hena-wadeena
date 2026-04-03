@@ -10,7 +10,7 @@ export class KycController {
   constructor(@Inject(KycService) private readonly kycService: KycService) {}
 
   @Post()
-  @Roles(UserRole.STUDENT, UserRole.INVESTOR, UserRole.GUIDE, UserRole.MERCHANT)
+  @Roles(UserRole.STUDENT, UserRole.INVESTOR, UserRole.GUIDE, UserRole.MERCHANT, UserRole.DRIVER)
   submit(@CurrentUser() user: JwtPayload, @Body() dto: SubmitKycDto) {
     return this.kycService.submit(user.sub, dto);
   }

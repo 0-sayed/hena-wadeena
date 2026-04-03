@@ -1,10 +1,23 @@
 import { CurrentUser, Public } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
-import { AuthService, type AuthResponse } from './auth.service';
+import { SubmitKycDto } from '../kyc/dto/submit-kyc.dto';
+
+import { AuthService, type AuthResponse, type AuthTokensResponse } from './auth.service';
 import {
   ChangePasswordDto,
   ConfirmResetDto,
@@ -15,6 +28,14 @@ import {
   RequestResetDto,
 } from './dto';
 
+function extractBearerToken(authorization?: string): string {
+  if (!authorization?.startsWith('Bearer ')) {
+    throw new UnauthorizedException('Missing KYC session token');
+  }
+
+  return authorization.slice('Bearer '.length).trim();
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(@Inject(AuthService) private readonly authService: AuthService) {}
@@ -24,7 +45,6 @@ export class AuthController {
   @Post('register')
   async register(@Req() req: Request, @Body() dto: RegisterDto): Promise<AuthResponse> {
     const ip: string | undefined = req.ip;
-
     const userAgent: string | undefined = req.headers['user-agent'];
     return this.authService.register(dto, { ip, userAgent });
   }
@@ -35,7 +55,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Req() req: Request, @Body() dto: LoginDto): Promise<AuthResponse> {
     const ip: string | undefined = req.ip;
-
     const userAgent: string | undefined = req.headers['user-agent'];
     return this.authService.login(dto, { ip, userAgent });
   }
@@ -44,7 +63,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body() dto: RefreshTokenDto): Promise<Omit<AuthResponse, 'user'>> {
+  async refresh(@Body() dto: RefreshTokenDto): Promise<AuthTokensResponse> {
     return this.authService.refresh(dto.refresh_token);
   }
 
@@ -80,5 +99,20 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async confirmReset(@Body() dto: ConfirmResetDto): Promise<AuthResponse> {
     return this.authService.confirmPasswordReset(dto.email, dto.otp, dto.new_password);
+  }
+
+  @Public()
+  @Get('kyc/session')
+  async getPendingKycSession(@Headers('authorization') authorization?: string) {
+    return this.authService.getPendingKycSession(extractBearerToken(authorization));
+  }
+
+  @Public()
+  @Post('kyc/submissions')
+  async submitPendingKyc(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() dto: SubmitKycDto,
+  ) {
+    return this.authService.submitPendingKyc(extractBearerToken(authorization), dto);
   }
 }

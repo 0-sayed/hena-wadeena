@@ -18,6 +18,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { BusinessDirectoryModule } from './business-directory/business-directory.module';
+import { BusinessInquiriesModule } from './business-inquiries/business-inquiries.module';
 import { CommodityPricesModule } from './commodity-prices/commodity-prices.module';
 import { InvestmentApplicationsModule } from './investment-applications/investment-applications.module';
 import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
@@ -67,6 +68,7 @@ function requireEnv(key: string): string {
     ListingInquiriesModule,
     CommodityPricesModule,
     BusinessDirectoryModule,
+    BusinessInquiriesModule,
     InvestmentOpportunitiesModule,
     InvestmentApplicationsModule,
     ReviewsModule,

@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LtrText } from '@/components/ui/ltr-text';
 import {
   Dialog,
   DialogContent,
@@ -26,59 +27,66 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 import { useAdminUser, useResetUserPassword } from '@/hooks/use-admin';
+import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 
-const roleLabels: Record<string, string> = {
-  admin: 'مدير',
-  moderator: 'مشرف',
-  reviewer: 'مراجع',
-  tourist: 'سائح',
-  resident: 'مقيم',
-  student: 'طالب',
-  merchant: 'تاجر',
-  driver: 'سائق',
-  guide: 'مرشد',
-  investor: 'مستثمر',
+type LocalizedLabel = {
+  ar: string;
+  en: string;
 };
 
-const statusLabels: Record<string, string> = {
-  active: 'نشط',
-  suspended: 'موقوف',
-  banned: 'محظور',
+const roleLabels: Record<string, LocalizedLabel> = {
+  admin: { ar: 'مدير', en: 'Admin' },
+  moderator: { ar: 'مشرف', en: 'Moderator' },
+  reviewer: { ar: 'مراجع', en: 'Reviewer' },
+  tourist: { ar: 'سائح', en: 'Tourist' },
+  resident: { ar: 'مقيم', en: 'Resident' },
+  student: { ar: 'طالب', en: 'Student' },
+  merchant: { ar: 'تاجر', en: 'Merchant' },
+  driver: { ar: 'سائق', en: 'Driver' },
+  guide: { ar: 'مرشد', en: 'Guide' },
+  investor: { ar: 'مستثمر', en: 'Investor' },
 };
 
-const kycLabels: Record<string, string> = {
-  pending: 'قيد الانتظار',
-  under_review: 'قيد المراجعة',
-  approved: 'معتمد',
-  rejected: 'مرفوض',
+const statusLabels: Record<string, LocalizedLabel> = {
+  active: { ar: 'نشط', en: 'Active' },
+  suspended: { ar: 'موقوف', en: 'Suspended' },
+  banned: { ar: 'محظور', en: 'Banned' },
 };
 
-const auditLabels: Record<string, string> = {
-  register: 'تسجيل حساب',
-  login: 'تسجيل دخول',
-  logout: 'تسجيل خروج',
-  failed_login: 'محاولة دخول فاشلة',
-  password_changed: 'تغيير كلمة المرور',
-  password_reset: 'إعادة تعيين كلمة المرور',
-  token_refreshed: 'تحديث الجلسة',
-  account_suspended: 'إيقاف الحساب',
-  account_banned: 'حظر الحساب',
-  role_changed: 'تغيير الدور',
-  account_activated: 'إعادة تفعيل الحساب',
-  account_deleted: 'حذف الحساب',
-  kyc_submitted: 'إرسال مستندات التحقق',
-  kyc_approved: 'اعتماد التحقق',
-  kyc_rejected: 'رفض التحقق',
+const kycLabels: Record<string, LocalizedLabel> = {
+  pending: { ar: 'قيد الانتظار', en: 'Pending' },
+  under_review: { ar: 'قيد المراجعة', en: 'Under review' },
+  approved: { ar: 'معتمد', en: 'Approved' },
+  rejected: { ar: 'مرفوض', en: 'Rejected' },
 };
 
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return 'غير متاح';
-  }
+const auditLabels: Record<string, LocalizedLabel> = {
+  register: { ar: 'تسجيل حساب', en: 'Account registration' },
+  login: { ar: 'تسجيل دخول', en: 'Login' },
+  logout: { ar: 'تسجيل خروج', en: 'Logout' },
+  failed_login: { ar: 'محاولة دخول فاشلة', en: 'Failed login attempt' },
+  password_changed: { ar: 'تغيير كلمة المرور', en: 'Password changed' },
+  password_reset: { ar: 'إعادة تعيين كلمة المرور', en: 'Password reset' },
+  token_refreshed: { ar: 'تحديث الجلسة', en: 'Session refreshed' },
+  account_suspended: { ar: 'إيقاف الحساب', en: 'Account suspended' },
+  account_banned: { ar: 'حظر الحساب', en: 'Account banned' },
+  role_changed: { ar: 'تغيير الدور', en: 'Role changed' },
+  account_activated: { ar: 'إعادة تفعيل الحساب', en: 'Account reactivated' },
+  account_deleted: { ar: 'حذف الحساب', en: 'Account deleted' },
+  kyc_submitted: { ar: 'إرسال مستندات التحقق', en: 'KYC submitted' },
+  kyc_approved: { ar: 'اعتماد التحقق', en: 'KYC approved' },
+  kyc_rejected: { ar: 'رفض التحقق', en: 'KYC rejected' },
+};
 
-  return new Date(value).toLocaleString('ar-EG');
-}
+const documentTypeLabels: Record<string, LocalizedLabel> = {
+  national_id: { ar: 'بطاقة الرقم القومي', en: 'National ID' },
+  student_id: { ar: 'بطاقة الطالب', en: 'Student ID' },
+  guide_license: { ar: 'رخصة الإرشاد', en: 'Guide license' },
+  commercial_register: { ar: 'السجل التجاري', en: 'Commercial register' },
+  business_document: { ar: 'مستند تجاري', en: 'Business document' },
+};
 
 function getInitials(fullName: string) {
   return fullName
@@ -93,11 +101,45 @@ function getInitials(fullName: string) {
 export default function AdminUserDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
+
   const { data: user, isLoading, error } = useAdminUser(id);
   const resetPasswordMutation = useResetUserPassword();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
+
+  const formatDateTime = (value: string | null) => {
+    if (!value) {
+      return pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' });
+    }
+
+    return new Date(value).toLocaleString(locale);
+  };
+
+  const localizedRole = (role: string) =>
+    pickLocalizedCopy(appLanguage, roleLabels[role] ?? { ar: role, en: role });
+  const localizedStatus = (status: string) =>
+    pickLocalizedCopy(appLanguage, statusLabels[status] ?? { ar: status, en: status });
+  const localizedKyc = (status: string) =>
+    pickLocalizedCopy(appLanguage, kycLabels[status] ?? { ar: status, en: status });
+  const localizedAudit = (eventType: string) =>
+    pickLocalizedCopy(appLanguage, auditLabels[eventType] ?? { ar: eventType, en: eventType });
+  const localizedDocumentType = (documentType: string | null) => {
+    if (!documentType) {
+      return pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' });
+    }
+
+    return pickLocalizedCopy(
+      appLanguage,
+      documentTypeLabels[documentType] ?? {
+        ar: documentType,
+        en: documentType,
+      },
+    );
+  };
 
   const handleResetPassword = async () => {
     if (!id) {
@@ -117,9 +159,19 @@ export default function AdminUserDetail() {
   const handleCopyPassword = async () => {
     try {
       await navigator.clipboard.writeText(generatedPassword);
-      toast.success('تم نسخ كلمة المرور الجديدة');
+      toast.success(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'تم نسخ كلمة المرور الجديدة',
+          en: 'The new password has been copied',
+        }),
+      );
     } catch {
-      toast.error('تعذر نسخ كلمة المرور');
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'تعذر نسخ كلمة المرور',
+          en: 'Could not copy the password',
+        }),
+      );
     }
   };
 
@@ -141,16 +193,20 @@ export default function AdminUserDetail() {
       <div className="space-y-4">
         <Button
           variant="ghost"
+          className="gap-2"
           onClick={() => {
             void navigate('/admin/users');
           }}
         >
           <ArrowRight className="h-4 w-4" />
-          العودة إلى المستخدمين
+          {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
         </Button>
         <Card>
           <CardContent className="p-8 text-center text-sm text-destructive">
-            تعذر تحميل تفاصيل المستخدم المطلوبة.
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'تعذر تحميل تفاصيل المستخدم المطلوبة.',
+              en: 'Could not load the requested user details.',
+            })}
           </CardContent>
         </Card>
       </div>
@@ -163,23 +219,34 @@ export default function AdminUserDetail() {
         <div className="space-y-2">
           <Button
             variant="ghost"
-            className="px-0"
+            className="gap-2 px-0"
             onClick={() => {
               void navigate('/admin/users');
             }}
           >
             <ArrowRight className="h-4 w-4" />
-            العودة إلى المستخدمين
+            {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
           </Button>
-          <h1 className="text-2xl font-bold">الملف الإداري للمستخدم</h1>
+          <h1 className="text-2xl font-bold">
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'الملف الإداري للمستخدم',
+              en: 'Admin user profile',
+            })}
+          </h1>
           <p className="text-muted-foreground">
-            عرض حالة الحساب، التحقق، وسجل النشاط مع إمكانية إعادة تعيين كلمة المرور.
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'عرض حالة الحساب، التحقق، وسجل النشاط مع إمكانية إعادة تعيين كلمة المرور.',
+              en: 'Review the account status, verification details, and activity log, with the option to reset the password.',
+            })}
           </p>
         </div>
 
         <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
           <KeyRound className="ms-2 h-4 w-4" />
-          إعادة تعيين كلمة المرور
+          {pickLocalizedCopy(appLanguage, {
+            ar: 'إعادة تعيين كلمة المرور',
+            en: 'Reset password',
+          })}
         </Button>
       </div>
 
@@ -193,22 +260,39 @@ export default function AdminUserDetail() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-2xl font-bold text-foreground">{user.fullName}</h2>
-                <Badge variant="secondary">{roleLabels[user.role] || user.role}</Badge>
+                <Badge variant="secondary">{localizedRole(user.role)}</Badge>
                 <Badge variant={user.status === 'active' ? 'default' : 'destructive'}>
-                  {statusLabels[user.status] || user.status}
+                  {localizedStatus(user.status)}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <LtrText as="p" className="text-sm text-muted-foreground">
+                {user.email}
+              </LtrText>
               {user.displayName && (
-                <p className="text-sm text-muted-foreground">الاسم الظاهر: {user.displayName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {pickLocalizedCopy(appLanguage, { ar: 'الاسم الظاهر:', en: 'Display name:' })}{' '}
+                  {user.displayName}
+                </p>
               )}
             </div>
           </div>
 
           <div className="grid gap-2 text-sm text-muted-foreground">
-            <p>تم إنشاء الحساب: {formatDateTime(user.createdAt)}</p>
-            <p>آخر تحديث: {formatDateTime(user.updatedAt)}</p>
-            <p>آخر تسجيل دخول: {formatDateTime(user.lastLoginAt)}</p>
+            <p>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'تم إنشاء الحساب:',
+                en: 'Account created:',
+              })}{' '}
+              {formatDateTime(user.createdAt)}
+            </p>
+            <p>
+              {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث:', en: 'Last updated:' })}{' '}
+              {formatDateTime(user.updatedAt)}
+            </p>
+            <p>
+              {pickLocalizedCopy(appLanguage, { ar: 'آخر تسجيل دخول:', en: 'Last login:' })}{' '}
+              {formatDateTime(user.lastLoginAt)}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -216,36 +300,64 @@ export default function AdminUserDetail() {
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-1">
           <CardHeader>
-            <CardTitle>بيانات الحساب</CardTitle>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, { ar: 'بيانات الحساب', en: 'Account details' })}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-4">
               <Mail className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-muted-foreground">البريد الإلكتروني</p>
-                <p className="font-medium text-foreground">{user.email}</p>
+                <p className="text-muted-foreground">
+                  {pickLocalizedCopy(appLanguage, {
+                    ar: 'البريد الإلكتروني',
+                    en: 'Email',
+                  })}
+                </p>
+                <LtrText as="p" className="font-medium text-foreground">
+                  {user.email}
+                </LtrText>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-4">
               <Phone className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-muted-foreground">الهاتف</p>
-                <p className="font-medium text-foreground">{user.phone ?? 'غير متاح'}</p>
+                <p className="text-muted-foreground">
+                  {pickLocalizedCopy(appLanguage, { ar: 'الهاتف', en: 'Phone' })}
+                </p>
+                {user.phone ? (
+                  <LtrText as="p" className="font-medium text-foreground">
+                    {user.phone}
+                  </LtrText>
+                ) : (
+                  <p className="font-medium text-foreground">
+                    {pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' })}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-4">
               <User className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-muted-foreground">الدور الحالي</p>
-                <p className="font-medium text-foreground">{roleLabels[user.role] || user.role}</p>
+                <p className="text-muted-foreground">
+                  {pickLocalizedCopy(appLanguage, {
+                    ar: 'الدور الحالي',
+                    en: 'Current role',
+                  })}
+                </p>
+                <p className="font-medium text-foreground">{localizedRole(user.role)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-4">
               <UserCog className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-muted-foreground">اللغة</p>
+                <p className="text-muted-foreground">
+                  {pickLocalizedCopy(appLanguage, { ar: 'اللغة', en: 'Language' })}
+                </p>
                 <p className="font-medium text-foreground">
-                  {user.language === 'en' ? 'English' : 'العربية'}
+                  {user.language === 'en'
+                    ? 'English'
+                    : pickLocalizedCopy(appLanguage, { ar: 'العربية', en: 'Arabic' })}
                 </p>
               </div>
             </div>
@@ -254,39 +366,79 @@ export default function AdminUserDetail() {
 
         <Card className="xl:col-span-1">
           <CardHeader>
-            <CardTitle>التحقق والحالة</CardTitle>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'التحقق والحالة',
+                en: 'Verification and status',
+              })}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="rounded-xl border border-border/60 p-4">
-              <p className="mb-1 text-muted-foreground">حالة الحساب</p>
+              <p className="mb-1 text-muted-foreground">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'حالة الحساب',
+                  en: 'Account status',
+                })}
+              </p>
+              <p className="font-medium text-foreground">{localizedStatus(user.status)}</p>
+            </div>
+            <div className="rounded-xl border border-border/60 p-4">
+              <p className="mb-1 text-muted-foreground">
+                {pickLocalizedCopy(appLanguage, { ar: 'حالة KYC', en: 'KYC status' })}
+              </p>
               <p className="font-medium text-foreground">
-                {statusLabels[user.status] || user.status}
+                {user.kycStatus
+                  ? localizedKyc(user.kycStatus)
+                  : pickLocalizedCopy(appLanguage, {
+                      ar: 'لا يوجد طلب تحقق',
+                      en: 'No KYC submission',
+                    })}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
-              <p className="mb-1 text-muted-foreground">حالة KYC</p>
+              <p className="mb-1 text-muted-foreground">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'نوع آخر مستند',
+                  en: 'Latest document type',
+                })}
+              </p>
               <p className="font-medium text-foreground">
-                {user.kycStatus ? kycLabels[user.kycStatus] || user.kycStatus : 'لا يوجد طلب تحقق'}
+                {localizedDocumentType(user.latestKycDocumentType)}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
-              <p className="mb-1 text-muted-foreground">نوع آخر مستند</p>
+              <p className="mb-1 text-muted-foreground">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'تم التحقق من الحساب',
+                  en: 'Account verified at',
+                })}
+              </p>
               <p className="font-medium text-foreground">
-                {user.latestKycDocumentType ?? 'غير متاح'}
+                {user.verifiedAt
+                  ? formatDateTime(user.verifiedAt)
+                  : pickLocalizedCopy(appLanguage, {
+                      ar: 'لم يتم التحقق بعد',
+                      en: 'Not verified yet',
+                    })}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
-              <p className="mb-1 text-muted-foreground">تم التحقق من الحساب</p>
-              <p className="font-medium text-foreground">
-                {user.verifiedAt ? formatDateTime(user.verifiedAt) : 'لم يتم التحقق بعد'}
+              <p className="mb-1 text-muted-foreground">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'آخر إرسال KYC',
+                  en: 'Last KYC submission',
+                })}
               </p>
-            </div>
-            <div className="rounded-xl border border-border/60 p-4">
-              <p className="mb-1 text-muted-foreground">آخر إرسال KYC</p>
               <p className="font-medium text-foreground">{formatDateTime(user.kycSubmittedAt)}</p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
-              <p className="mb-1 text-muted-foreground">آخر مراجعة KYC</p>
+              <p className="mb-1 text-muted-foreground">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'آخر مراجعة KYC',
+                  en: 'Last KYC review',
+                })}
+              </p>
               <p className="font-medium text-foreground">{formatDateTime(user.kycReviewedAt)}</p>
             </div>
           </CardContent>
@@ -294,12 +446,17 @@ export default function AdminUserDetail() {
 
         <Card className="xl:col-span-1">
           <CardHeader>
-            <CardTitle>ملخص النشاط</CardTitle>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, { ar: 'ملخص النشاط', en: 'Recent activity' })}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {user.recentAuditEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                لا توجد أحداث مسجلة لهذا الحساب حتى الآن.
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'لا توجد أحداث مسجلة لهذا الحساب حتى الآن.',
+                  en: 'No activity has been recorded for this account yet.',
+                })}
               </p>
             ) : (
               user.recentAuditEvents.map((event) => (
@@ -307,7 +464,7 @@ export default function AdminUserDetail() {
                   <div className="mb-1 flex items-center gap-2">
                     <Shield className="h-4 w-4 text-primary" />
                     <span className="font-medium text-foreground">
-                      {auditLabels[event.eventType] || event.eventType}
+                      {localizedAudit(event.eventType)}
                     </span>
                   </div>
                   <p className="text-muted-foreground">{formatDateTime(event.createdAt)}</p>
@@ -321,14 +478,23 @@ export default function AdminUserDetail() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>إعادة تعيين كلمة المرور</AlertDialogTitle>
+            <AlertDialogTitle>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'إعادة تعيين كلمة المرور',
+                en: 'Reset password',
+              })}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم إنشاء كلمة مرور عشوائية جديدة لهذا المستخدم وإلغاء جلساته الحالية. اعرض كلمة
-              المرور الجديدة مرة واحدة فقط وشاركها معه بشكل آمن.
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'سيتم إنشاء كلمة مرور عشوائية جديدة لهذا المستخدم وإلغاء جلساته الحالية. اعرض كلمة المرور الجديدة مرة واحدة فقط وشاركها معه بشكل آمن.',
+                en: 'A new random password will be generated for this user and all active sessions will be revoked. The new password is shown only once, so share it through a secure channel.',
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>
+              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();
@@ -336,7 +502,15 @@ export default function AdminUserDetail() {
               }}
               disabled={resetPasswordMutation.isPending}
             >
-              {resetPasswordMutation.isPending ? 'جارٍ التنفيذ...' : 'تأكيد إعادة التعيين'}
+              {resetPasswordMutation.isPending
+                ? pickLocalizedCopy(appLanguage, {
+                    ar: 'جارٍ التنفيذ...',
+                    en: 'Processing...',
+                  })
+                : pickLocalizedCopy(appLanguage, {
+                    ar: 'تأكيد إعادة التعيين',
+                    en: 'Confirm reset',
+                  })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -353,14 +527,27 @@ export default function AdminUserDetail() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>تم إنشاء كلمة مرور جديدة</DialogTitle>
+            <DialogTitle>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'تم إنشاء كلمة مرور جديدة',
+                en: 'A new password has been generated',
+              })}
+            </DialogTitle>
             <DialogDescription>
-              هذه الكلمة ستُعرض مرة واحدة فقط. يرجى نسخها ومشاركتها مع المستخدم عبر قناة آمنة.
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'هذه الكلمة ستُعرض مرة واحدة فقط. يرجى نسخها ومشاركتها مع المستخدم عبر قناة آمنة.',
+                en: 'This password is shown only once. Copy it now and share it with the user through a secure channel.',
+              })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-            <p className="mb-2 text-sm text-muted-foreground">كلمة المرور المؤقتة</p>
+            <p className="mb-2 text-sm text-muted-foreground">
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'كلمة المرور المؤقتة',
+                en: 'Temporary password',
+              })}
+            </p>
             <code className="block break-all rounded-lg bg-background px-3 py-3 text-base font-semibold">
               {generatedPassword}
             </code>
@@ -373,10 +560,15 @@ export default function AdminUserDetail() {
                 void handleCopyPassword();
               }}
             >
-              <Copy className="h-4 w-4" />
-              نسخ كلمة المرور
+              <Copy className="ms-2 h-4 w-4" />
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'نسخ كلمة المرور',
+                en: 'Copy password',
+              })}
             </Button>
-            <Button onClick={() => setPasswordDialogOpen(false)}>إغلاق</Button>
+            <Button onClick={() => setPasswordDialogOpen(false)}>
+              {pickLocalizedCopy(appLanguage, { ar: 'إغلاق', en: 'Close' })}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

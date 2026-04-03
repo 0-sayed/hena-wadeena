@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { UserRole } from '@hena-wadeena/types';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
 import { Search, MapPin, TrendingUp, Building2, Send, ArrowLeft, DollarSign } from 'lucide-react';
@@ -13,38 +14,64 @@ import { PageTransition } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroInvestment from '@/assets/hero-investment.jpg';
+import { useAuth } from '@/hooks/use-auth';
+import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import { districtLabel } from '@/lib/format';
 import { matchesSearchQuery } from '@/lib/search';
 
-const sectorLabels: Record<string, string> = {
-  agriculture: 'زراعة',
-  tourism: 'سياحة',
-  industry: 'صناعة',
-  real_estate: 'عقارات',
-  services: 'خدمات',
-  technology: 'تكنولوجيا',
-  energy: 'طاقة',
-};
+const sectorLabels = {
+  agriculture: { ar: 'زراعة', en: 'Agriculture' },
+  tourism: { ar: 'سياحة', en: 'Tourism' },
+  industry: { ar: 'صناعة', en: 'Industry' },
+  real_estate: { ar: 'عقارات', en: 'Real estate' },
+  services: { ar: 'خدمات', en: 'Services' },
+  technology: { ar: 'تكنولوجيا', en: 'Technology' },
+  energy: { ar: 'طاقة', en: 'Energy' },
+} as const satisfies Record<string, { ar: string; en: string }>;
 
-const areaLabels: Record<string, string> = {
-  kharga: 'الخارجة',
-  dakhla: 'الداخلة',
-  farafra: 'الفرافرة',
-  baris: 'باريس',
-  balat: 'بلاط',
-};
+function sectorLabel(sector: string, language: 'ar' | 'en') {
+  const copy = sectorLabels[sector as keyof typeof sectorLabels];
+  return copy ? pickLocalizedCopy(language, copy) : sector;
+}
+
+function opportunityStatusLabel(status: string, language: 'ar' | 'en') {
+  if (status === 'active') {
+    return pickLocalizedCopy(language, { ar: 'متاح', en: 'Available' });
+  }
+  return status;
+}
+
+function startupStatusLabel(status: string, language: 'ar' | 'en') {
+  if (status === 'active') {
+    return pickLocalizedCopy(language, { ar: 'نشط', en: 'Active' });
+  }
+  return status;
+}
+
+function formatInvestmentRange(opportunity: Opportunity, language: 'ar' | 'en') {
+  const minMillions = (opportunity.minInvestment / 100_000_000).toFixed(0);
+  const maxMillions = (opportunity.maxInvestment / 100_000_000).toFixed(0);
+
+  return pickLocalizedCopy(language, {
+    ar: `${minMillions}-${maxMillions} مليون ${opportunity.currency}`,
+    en: `${minMillions}-${maxMillions} million ${opportunity.currency}`,
+  });
+}
 
 const InvestmentPage = () => {
   const navigate = useNavigate();
+  const { language, user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const canAccessInvestmentContact =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.INVESTOR;
 
   useEffect(() => {
     Promise.all([
       investmentAPI.getOpportunities().then((r) => setOpportunities(r.data)),
-      investmentAPI.getStartups().then((r) => setStartups(r.data)),
+      investmentAPI.getBusinesses().then((r) => setStartups(r.data)),
     ])
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -63,14 +90,14 @@ const InvestmentPage = () => {
           opp.titleEn,
           opp.description,
           opp.sector,
-          sectorLabels[opp.sector],
+          sectorLabel(opp.sector, language),
           opp.area,
-          areaLabels[opp.area],
+          districtLabel(opp.area, language),
           ...opp.incentives,
           ...(opp.contact?.name ? [opp.contact.name] : []),
         ]),
       ),
-    [opportunities, searchQuery],
+    [opportunities, searchQuery, language],
   );
 
   const filteredStartups = useMemo(
@@ -79,47 +106,71 @@ const InvestmentPage = () => {
         matchesSearchQuery(searchQuery, [
           startup.nameAr,
           startup.nameEn,
-          startup.category,
+          startup.description,
           startup.descriptionAr,
+          startup.category,
           startup.district,
-          districtLabel(startup.district),
+          districtLabel(startup.district ?? '', language),
           startup.status,
         ]),
       ),
-    [searchQuery, startups],
+    [startups, searchQuery, language],
   );
 
   return (
-    <Layout title="الاستثمار">
+    <Layout>
       <PageTransition>
-        <PageHero image={heroInvestment} alt="فرص الاستثمار">
+        <PageHero
+          image={heroInvestment}
+          alt={pickLocalizedCopy(language, {
+            ar: 'فرص الاستثمار',
+            en: 'Investment opportunities',
+          })}
+        >
           <SR>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <TrendingUp className="h-5 w-5 text-accent" />
-              <span className="text-sm font-semibold text-card">فرص الاستثمار</span>
+              <span className="text-sm font-semibold text-card">
+                {pickLocalizedCopy(language, {
+                  ar: 'فرص الاستثمار',
+                  en: 'Investment opportunities',
+                })}
+              </span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-              فرص الاستثمار
+              {pickLocalizedCopy(language, {
+                ar: 'فرص الاستثمار',
+                en: 'Investment opportunities',
+              })}
             </h1>
           </SR>
           <SR delay={200}>
             <p className="mb-10 text-lg text-card/90 md:text-xl">
-              اكتشف الفرص الاستثمارية في الوادي الجديد وتواصل مع الشركات الناشئة
+              {pickLocalizedCopy(language, {
+                ar: 'اكتشف الفرص الاستثمارية في الوادي الجديد وتواصل مع الشركات الناشئة',
+                en: 'Discover investment opportunities in New Valley and connect with startups',
+              })}
             </p>
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="absolute start-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="ابحث عن فرص استثمارية..."
+                placeholder={pickLocalizedCopy(language, {
+                  ar: 'ابحث عن فرص استثمارية...',
+                  en: 'Search for investment opportunities...',
+                })}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-16 rounded-2xl border-0 bg-card/90 ps-12 pe-24 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm"
               />
-              <Button type="submit" className="absolute end-2 top-1/2 -translate-y-1/2 rounded-xl">
-                ابحث
+              <Button
+                type="submit"
+                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
+              >
+                {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
               </Button>
             </form>
           </SR>
@@ -131,10 +182,16 @@ const InvestmentPage = () => {
               <SR>
                 <TabsList className="mx-auto mb-10 grid h-12 w-full max-w-md grid-cols-2 rounded-xl">
                   <TabsTrigger value="opportunities" className="rounded-lg text-sm font-semibold">
-                    الفرص الاستثمارية
+                    {pickLocalizedCopy(language, {
+                      ar: 'الفرص الاستثمارية',
+                      en: 'Opportunities',
+                    })}
                   </TabsTrigger>
                   <TabsTrigger value="startups" className="rounded-lg text-sm font-semibold">
-                    الشركات الناشئة
+                    {pickLocalizedCopy(language, {
+                      ar: 'الشركات الناشئة',
+                      en: 'Startups',
+                    })}
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -149,30 +206,35 @@ const InvestmentPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
-                      {filteredOpportunities.map((opp) => (
+                      {filteredOpportunities.map((opportunity) => (
                         <Card
-                          key={opp.id}
+                          key={opportunity.id}
                           className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
                         >
                           <CardContent className="p-7">
                             <div className="mb-5 flex items-start justify-between">
                               <Badge
-                                variant={opp.status === 'active' ? 'default' : 'secondary'}
+                                variant={opportunity.status === 'active' ? 'default' : 'secondary'}
                                 className={
-                                  opp.status === 'active' ? 'bg-primary px-3 py-1' : 'px-3 py-1'
+                                  opportunity.status === 'active'
+                                    ? 'bg-primary px-3 py-1'
+                                    : 'px-3 py-1'
                                 }
                               >
-                                {opp.status === 'active' ? 'متاح' : opp.status}
+                                {opportunityStatusLabel(opportunity.status, language)}
                               </Badge>
                               <Badge variant="outline" className="px-3 py-1">
-                                {sectorLabels[opp.sector] ?? opp.sector}
+                                {sectorLabel(opportunity.sector, language)}
                               </Badge>
                             </div>
                             <h3 className="mb-3 text-xl font-bold text-foreground">
-                              {opp.titleAr}
+                              {pickLocalizedField(language, {
+                                ar: opportunity.titleAr,
+                                en: opportunity.titleEn,
+                              })}
                             </h3>
                             <p className="mb-5 line-clamp-2 leading-relaxed text-muted-foreground">
-                              {opp.incentives?.slice(0, 2).join(' • ')}
+                              {opportunity.incentives?.slice(0, 2).join(' • ')}
                             </p>
                             <div className="mb-5 grid grid-cols-2 gap-4">
                               <div className="flex items-center gap-2.5 text-sm">
@@ -180,7 +242,7 @@ const InvestmentPage = () => {
                                   <MapPin className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  {areaLabels[opp.area] ?? opp.area}
+                                  {districtLabel(opportunity.area, language)}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2.5 text-sm">
@@ -188,9 +250,7 @@ const InvestmentPage = () => {
                                   <DollarSign className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  {(opp.minInvestment / 100_000_000).toFixed(0)}-
-                                  {(opp.maxInvestment / 100_000_000).toFixed(0)} مليون{' '}
-                                  {opp.currency}
+                                  {formatInvestmentRange(opportunity, language)}
                                 </span>
                               </div>
                               <div className="col-span-2 flex items-center gap-2.5 text-sm">
@@ -198,7 +258,10 @@ const InvestmentPage = () => {
                                   <TrendingUp className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  العائد المتوقع: {opp.expectedReturnPct}%
+                                  {pickLocalizedCopy(language, {
+                                    ar: `العائد المتوقع: ${opportunity.expectedReturnPct}%`,
+                                    en: `Expected return: ${opportunity.expectedReturnPct}%`,
+                                  })}
                                 </span>
                               </div>
                             </div>
@@ -206,27 +269,35 @@ const InvestmentPage = () => {
                               <Button
                                 variant="outline"
                                 className="flex-1 transition-transform hover:scale-[1.02]"
-                                onClick={() => void navigate(`/investment/opportunity/${opp.id}`)}
+                                onClick={() =>
+                                  void navigate(`/investment/opportunity/${opportunity.id}`)
+                                }
                               >
-                                التفاصيل <ArrowLeft className="me-2 h-4 w-4" />
+                                {pickLocalizedCopy(language, {
+                                  ar: 'التفاصيل',
+                                  en: 'Details',
+                                })}{' '}
+                                <ArrowLeft className="me-2 h-4 w-4" />
                               </Button>
-                              <Button
-                                className="flex-1 transition-transform hover:scale-[1.02]"
-                                onClick={() => void navigate(`/investment/contact/${opp.id}`)}
-                              >
-                                <Send className="ms-2 h-4 w-4" />
-                                استفسار
-                              </Button>
+                              {canAccessInvestmentContact ? (
+                                <Button
+                                  className="flex-1 transition-transform hover:scale-[1.02]"
+                                  onClick={() =>
+                                    void navigate(`/investment/contact/${opportunity.id}`)
+                                  }
+                                >
+                                  <Send className="ms-2 h-4 w-4" />
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'استفسار',
+                                    en: 'Inquiry',
+                                  })}
+                                </Button>
+                              ) : null}
                             </div>
                           </CardContent>
                         </Card>
                       ))}
                     </div>
-                    {filteredOpportunities.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
-                        لا توجد فرص استثمارية مطابقة لبحثك حالياً
-                      </div>
-                    ) : null}
                   </SR>
                 )}
               </TabsContent>
@@ -241,59 +312,93 @@ const InvestmentPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                      {filteredStartups.map((startup) => (
-                        <Card
-                          key={startup.id}
-                          className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
-                        >
-                          <CardContent className="p-7">
-                            <div className="mb-5 flex items-center gap-4">
-                              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-md">
-                                {startup.logoUrl ? (
-                                  <img
-                                    src={startup.logoUrl}
-                                    alt={startup.nameAr}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <Building2 className="h-8 w-8 text-primary" />
-                                )}
+                      {filteredStartups.map((startup) => {
+                        const startupDescription = pickLocalizedField(language, {
+                          ar: startup.descriptionAr,
+                          en: startup.description,
+                        });
+
+                        return (
+                          <Card
+                            key={startup.id}
+                            className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
+                          >
+                            <CardContent className="p-7">
+                              <div className="mb-5 flex items-center gap-4">
+                                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-md">
+                                  {startup.logoUrl ? (
+                                    <img
+                                      src={startup.logoUrl}
+                                      alt={pickLocalizedField(language, {
+                                        ar: startup.nameAr,
+                                        en: startup.nameEn,
+                                      })}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <Building2 className="h-8 w-8 text-primary" />
+                                  )}
+                                </div>
+                                <div>
+                                  <h3 className="text-lg font-bold text-foreground">
+                                    {pickLocalizedField(language, {
+                                      ar: startup.nameAr,
+                                      en: startup.nameEn,
+                                    })}
+                                  </h3>
+                                  <Badge variant="secondary" className="mt-1">
+                                    {startup.category}
+                                  </Badge>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="text-lg font-bold text-foreground">
-                                  {startup.nameAr}
-                                </h3>
-                                <Badge variant="secondary" className="mt-1">
-                                  {startup.category}
-                                </Badge>
+                              {startupDescription && (
+                                <p className="mb-5 line-clamp-2 leading-relaxed text-muted-foreground">
+                                  {startupDescription}
+                                </p>
+                              )}
+                              <div className="mb-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
+                                  <MapPin className="h-4 w-4" />
+                                  {districtLabel(startup.district ?? '', language)}
+                                </div>
+                                <div>{startupStatusLabel(startup.status, language)}</div>
                               </div>
-                            </div>
-                            <p className="mb-5 line-clamp-2 leading-relaxed text-muted-foreground">
-                              {startup.descriptionAr}
-                            </p>
-                            <div className="mb-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="h-4 w-4" />
-                                {districtLabel(startup.district)}
+                              <div className="flex gap-3">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 transition-transform hover:scale-[1.02]"
+                                  onClick={() =>
+                                    void navigate(`/investment/startups/${startup.id}`)
+                                  }
+                                >
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'التفاصيل',
+                                    en: 'Details',
+                                  })}{' '}
+                                  <ArrowLeft className="me-2 h-4 w-4" />
+                                </Button>
+                                {canAccessInvestmentContact ? (
+                                  <Button
+                                    className="flex-1 transition-transform hover:scale-[1.02]"
+                                    onClick={() =>
+                                      void navigate(
+                                        `/investment/contact/${startup.id}?entity=startup`,
+                                      )
+                                    }
+                                  >
+                                    <Send className="ms-2 h-4 w-4" />
+                                    {pickLocalizedCopy(language, {
+                                      ar: 'تواصل',
+                                      en: 'Contact',
+                                    })}
+                                  </Button>
+                                ) : null}
                               </div>
-                              <div>{startup.status === 'active' ? 'نشط' : startup.status}</div>
-                            </div>
-                            <Button
-                              className="w-full transition-transform hover:scale-[1.02]"
-                              onClick={() => void navigate(`/investment/contact/${startup.id}`)}
-                            >
-                              <Send className="ms-2 h-4 w-4" />
-                              تواصل
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
-                    {filteredStartups.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-10 text-center text-muted-foreground">
-                        لا توجد شركات ناشئة مطابقة لبحثك حالياً
-                      </div>
-                    ) : null}
                   </SR>
                 )}
               </TabsContent>

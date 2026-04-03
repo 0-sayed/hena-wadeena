@@ -1,8 +1,13 @@
-import { randomBytes, createHash, randomInt } from 'node:crypto';
+import { createHash, randomBytes, randomInt } from 'node:crypto';
 
 import { DRIZZLE_CLIENT, RedisStreamsService, generateId } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { EVENTS, UserStatus } from '@hena-wadeena/types';
+import {
+  EVENTS,
+  UserStatus,
+  getRequiredKycDocuments,
+  requiresKycForRole,
+} from '@hena-wadeena/types';
 import {
   ConflictException,
   ForbiddenException,
@@ -13,14 +18,15 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { and, eq, isNull, desc } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import ms from 'ms';
 
-import { authTokens, auditEvents, otpCodes } from '../db/schema/index';
+import { auditEvents, authTokens, otpCodes } from '../db/schema/index';
 import type { users } from '../db/schema/index';
 import { EmailService } from '../email/email.service';
 import { KycService } from '../kyc/kyc.service';
+import type { SubmitKycDto } from '../kyc/dto/submit-kyc.dto';
 import { SessionService } from '../session/session.service';
 import { UsersService } from '../users/users.service';
 
@@ -28,25 +34,56 @@ import { HashingService } from './hashing.service';
 
 type AuditEventType = typeof auditEvents.$inferInsert.eventType;
 
-export interface AuthResponse {
+interface PendingKycSessionPayload {
+  sub: string;
+  email: string;
+  role: string;
+  purpose: string;
+}
+
+export interface AuthTokensResponse {
   access_token: string;
   refresh_token: string;
   token_type: 'bearer';
   expires_in: number;
-  user: {
-    id: string;
-    email: string;
-    full_name: string;
-    role: string;
-    avatar_url: string | null;
-  };
 }
+
+interface AuthUserPayload {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  avatar_url: string | null;
+  phone: string | null;
+  status: string;
+  language: string;
+}
+
+export interface AuthenticatedAuthResponse extends AuthTokensResponse {
+  user: AuthUserPayload;
+}
+
+export interface PendingKycAuthResponse {
+  status: UserStatus.PENDING_KYC;
+  kyc_session_token: string;
+  required_documents: readonly string[];
+  user: AuthUserPayload;
+}
+
+export interface PendingKycSessionResponse {
+  user: AuthUserPayload;
+  required_documents: readonly string[];
+  submissions: Awaited<ReturnType<KycService['findByUser']>>;
+}
+
+export type AuthResponse = AuthenticatedAuthResponse | PendingKycAuthResponse;
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly refreshExpiresMs: number;
   private readonly accessExpiresInSec: number;
+  private readonly kycSessionExpiresIn: Parameters<typeof ms>[0];
 
   constructor(
     @Inject(UsersService) private readonly usersService: UsersService,
@@ -76,6 +113,15 @@ export class AuthService {
       throw new Error(`Invalid JWT_ACCESS_EXPIRES_IN: "${accessExp}"`);
     }
     this.accessExpiresInSec = Math.floor(accessMs / 1000);
+
+    const kycSessionExp = this.configService.get<string>('JWT_KYC_EXPIRES_IN', '1d') as Parameters<
+      typeof ms
+    >[0];
+    const kycSessionMs = ms(kycSessionExp);
+    if (!Number.isFinite(kycSessionMs) || kycSessionMs <= 0) {
+      throw new Error(`Invalid JWT_KYC_EXPIRES_IN: "${kycSessionExp}"`);
+    }
+    this.kycSessionExpiresIn = kycSessionExp;
   }
 
   async register(
@@ -91,16 +137,9 @@ export class AuthService {
       fullName: dto.full_name,
       passwordHash,
       role: dto.role,
+      ...(requiresKycForRole(dto.role) && { status: UserStatus.PENDING_KYC }),
     });
 
-    const tokens = await this.generateTokenPair({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      lang: user.language,
-    });
-
-    // Fire-and-forget: audit + event are independent of each other and the response
     await Promise.all([
       this.recordAudit(user.id, 'register', meta?.ip, meta?.userAgent),
       this.redisStreams.publish(EVENTS.USER_REGISTERED, {
@@ -110,7 +149,7 @@ export class AuthService {
       }),
     ]);
 
-    return { ...tokens, user: this.toUserPayload(user) };
+    return this.createPostAuthResponse(user);
   }
 
   async login(
@@ -131,25 +170,22 @@ export class AuthService {
       throw new ForbiddenException('Account is suspended');
     }
 
-    const kycStatus = await this.getKycStatus(user.id);
-    const tokens = await this.generateTokenPair({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      lang: user.language,
-      kycStatus,
-    });
+    if (this.isPendingKycUser(user)) {
+      await this.recordAudit(user.id, 'login', meta?.ip, meta?.userAgent);
+      return this.createPendingKycResponse(user);
+    }
 
-    // Independent side-effects — parallelize
+    const response = await this.createAuthenticatedResponse(user);
+
     await Promise.all([
       this.usersService.updateLastLogin(user.id),
       this.recordAudit(user.id, 'login', meta?.ip, meta?.userAgent),
     ]);
 
-    return { ...tokens, user: this.toUserPayload(user) };
+    return response;
   }
 
-  async refresh(refreshToken: string): Promise<Omit<AuthResponse, 'user'>> {
+  async refresh(refreshToken: string): Promise<AuthTokensResponse> {
     const tokenHash = this.hashToken(refreshToken);
     const [stored] = await this.db
       .select()
@@ -160,7 +196,6 @@ export class AuthService {
     if (!stored) throw new UnauthorizedException('Invalid refresh token');
 
     if (stored.revokedAt) {
-      // Reuse detection: revoke entire family
       await this.db
         .update(authTokens)
         .set({ revokedAt: new Date() })
@@ -173,14 +208,12 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    // Revoke current token + fetch user in parallel (independent tables)
     const [, user] = await Promise.all([
       this.db.update(authTokens).set({ revokedAt: new Date() }).where(eq(authTokens.id, stored.id)),
       this.usersService.findById(stored.userId),
     ]);
     if (!user) throw new UnauthorizedException('User not found');
 
-    // Issue new token pair with same family
     const kycStatus = await this.getKycStatus(user.id);
     return this.generateTokenPair({
       userId: user.id,
@@ -220,26 +253,15 @@ export class AuthService {
 
     const passwordHash = await this.hashingService.hash(newPassword);
     await this.usersService.updatePassword(userId, passwordHash);
-
-    // Revoke all existing sessions
     await this.sessionService.revokeAllUserSessions(userId);
-
-    const kycStatus = await this.getKycStatus(user.id);
-    const tokens = await this.generateTokenPair({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      lang: user.language,
-      kycStatus,
-    });
     await this.recordAudit(userId, 'password_changed');
 
-    return { ...tokens, user: this.toUserPayload(user) };
+    return this.createPostAuthResponse(user);
   }
 
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
-    if (!user) return; // Silent — prevent email enumeration
+    if (!user) return;
 
     const otp = this.generateOtp();
     const codeHash = this.hashToken(otp);
@@ -248,7 +270,7 @@ export class AuthService {
       target: email,
       purpose: 'reset',
       codeHash,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
     await this.emailService.sendPasswordResetOtp(email, otp);
@@ -281,7 +303,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid OTP');
     }
 
-    // Mark OTP as used + fetch user in parallel (independent)
     const [, user] = await Promise.all([
       this.db.update(otpCodes).set({ usedAt: new Date() }).where(eq(otpCodes.id, otpRecord.id)),
       this.usersService.findByEmail(email),
@@ -290,10 +311,61 @@ export class AuthService {
 
     const passwordHash = await this.hashingService.hash(newPassword);
     await this.usersService.updatePassword(user.id, passwordHash);
-
-    // Revoke all sessions
     await this.sessionService.revokeAllUserSessions(user.id);
+    await this.recordAudit(user.id, 'password_reset');
 
+    return this.createPostAuthResponse(user);
+  }
+
+  async getPendingKycSession(token: string): Promise<PendingKycSessionResponse> {
+    const user = await this.validatePendingKycSession(token);
+    const submissions = await this.kycService.findByUser(user.id);
+
+    return {
+      user: this.toUserPayload(user),
+      required_documents: getRequiredKycDocuments(user.role),
+      submissions,
+    };
+  }
+
+  async submitPendingKyc(token: string, dto: SubmitKycDto) {
+    const user = await this.validatePendingKycSession(token);
+    return this.kycService.submit(user.id, dto);
+  }
+
+  private toUserPayload(user: typeof users.$inferSelect): AuthUserPayload {
+    return {
+      id: user.id,
+      email: user.email,
+      full_name: user.fullName,
+      role: user.role,
+      avatar_url: user.avatarUrl,
+      phone: user.phone,
+      status: user.status,
+      language: user.language,
+    };
+  }
+
+  private async getKycStatus(userId: string): Promise<string | undefined> {
+    const submissions = await this.kycService.findByUser(userId);
+    if (submissions.some((submission) => submission.status === 'approved')) {
+      return 'approved';
+    }
+
+    return submissions.at(-1)?.status;
+  }
+
+  private async createPostAuthResponse(user: typeof users.$inferSelect): Promise<AuthResponse> {
+    if (this.isPendingKycUser(user)) {
+      return this.createPendingKycResponse(user);
+    }
+
+    return this.createAuthenticatedResponse(user);
+  }
+
+  private async createAuthenticatedResponse(
+    user: typeof users.$inferSelect,
+  ): Promise<AuthenticatedAuthResponse> {
     const kycStatus = await this.getKycStatus(user.id);
     const tokens = await this.generateTokenPair({
       userId: user.id,
@@ -302,27 +374,55 @@ export class AuthService {
       lang: user.language,
       kycStatus,
     });
-    await this.recordAudit(user.id, 'password_reset');
 
     return { ...tokens, user: this.toUserPayload(user) };
   }
 
-  // --- Private helpers ---
-
-  private toUserPayload(user: typeof users.$inferSelect): AuthResponse['user'] {
+  private async createPendingKycResponse(
+    user: typeof users.$inferSelect,
+  ): Promise<PendingKycAuthResponse> {
     return {
-      id: user.id,
-      email: user.email,
-      full_name: user.fullName,
-      role: user.role,
-      avatar_url: user.avatarUrl,
+      status: UserStatus.PENDING_KYC,
+      kyc_session_token: await this.generatePendingKycSessionToken(user),
+      required_documents: getRequiredKycDocuments(user.role),
+      user: this.toUserPayload(user),
     };
   }
 
-  private async getKycStatus(userId: string): Promise<string | undefined> {
-    const submissions = await this.kycService.findByUser(userId);
-    if (submissions.some((s) => s.status === 'approved')) return 'approved';
-    return submissions.at(-1)?.status;
+  private async validatePendingKycSession(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<PendingKycSessionPayload>(token);
+      if (payload.purpose !== 'kyc') {
+        throw new UnauthorizedException('Invalid KYC session');
+      }
+
+      const user = await this.usersService.findById(payload.sub);
+      if (!user || !this.isPendingKycUser(user)) {
+        throw new UnauthorizedException('KYC session is no longer valid');
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new UnauthorizedException('Invalid or expired KYC session');
+    }
+  }
+
+  private async generatePendingKycSessionToken(user: typeof users.$inferSelect): Promise<string> {
+    return this.jwtService.signAsync(
+      {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        purpose: 'kyc',
+      } satisfies PendingKycSessionPayload,
+      {
+        expiresIn: this.kycSessionExpiresIn,
+      },
+    );
   }
 
   private async generateTokenPair(opts: {
@@ -332,7 +432,7 @@ export class AuthService {
     lang: string;
     family?: string;
     kycStatus?: string;
-  }) {
+  }): Promise<AuthTokensResponse> {
     const jti = generateId();
     const accessToken = await this.jwtService.signAsync({
       sub: opts.userId,
@@ -357,13 +457,19 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
-      token_type: 'bearer' as const,
+      token_type: 'bearer',
       expires_in: this.accessExpiresInSec,
     };
   }
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private isPendingKycUser(
+    user: Pick<typeof users.$inferSelect, 'role' | 'status'>,
+  ): boolean {
+    return user.status === 'pending_kyc' && requiresKycForRole(user.role);
   }
 
   private generateOtp(): string {

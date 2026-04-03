@@ -1,5 +1,7 @@
 import { CalendarCheck } from 'lucide-react';
-import { bookingStatusLabels } from '@/lib/booking-status';
+import { useAuth } from '@/hooks/use-auth';
+import { getBookingStatusLabels } from '@/lib/booking-status';
+import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,10 +23,14 @@ type BookingsCardProps = {
 };
 
 export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) {
+  const { language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const statusLabels = getBookingStatusLabels(appLanguage);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>حجوزاتي</CardTitle>
+        <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'حجوزاتي', en: 'My bookings' })}</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -34,33 +40,52 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
             ))}
           </div>
         ) : error ? (
-          <p className="text-destructive text-sm">حدث خطأ في تحميل البيانات</p>
+          <p className="text-destructive text-sm">
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'حدث خطأ في تحميل البيانات',
+              en: 'Something went wrong while loading your bookings',
+            })}
+          </p>
         ) : bookings.length === 0 ? (
           <EmptyState
             icon={CalendarCheck}
-            message="لا توجد حجوزات بعد"
-            actionLabel="تصفح المرشدين"
+            message={pickLocalizedCopy(appLanguage, {
+              ar: 'لا توجد حجوزات بعد',
+              en: 'No bookings yet',
+            })}
+            actionLabel={pickLocalizedCopy(appLanguage, {
+              ar: 'تصفح المرشدين',
+              en: 'Browse guides',
+            })}
             actionHref="/guides"
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>الباقة</TableHead>
-                <TableHead>التاريخ</TableHead>
-                <TableHead>الحالة</TableHead>
+                <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الباقة', en: 'Package' })}</TableHead>
+                <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التاريخ', en: 'Date' })}</TableHead>
+                <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {bookings.map((booking) => {
-                const st = bookingStatusLabels[booking.status] ?? bookingStatusLabels.pending;
+                const st = statusLabels[booking.status] ?? statusLabels.pending;
                 return (
                   <TableRow key={booking.id}>
                     <TableCell className="font-medium truncate max-w-[140px]">
-                      {booking.packageTitleAr ?? `#${booking.id.slice(0, 8)}`}
+                      {pickLocalizedField(appLanguage, {
+                        ar: booking.packageTitleAr,
+                        en: booking.packageTitleEn,
+                      }) || `#${booking.id.slice(0, 8)}`}
                     </TableCell>
-                    <TableCell dir="ltr" className="text-end">
-                      {new Date(booking.bookingDate).toLocaleDateString('ar-EG')}
+                    <TableCell
+                      dir="ltr"
+                      className={appLanguage === 'en' ? 'text-start' : 'text-end'}
+                    >
+                      {new Date(booking.bookingDate).toLocaleDateString(
+                        appLanguage === 'en' ? 'en-US' : 'ar-EG',
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={st.variant}>{st.label}</Badge>

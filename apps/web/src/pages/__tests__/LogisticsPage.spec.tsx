@@ -1,12 +1,19 @@
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { UserRole } from '@hena-wadeena/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import LogisticsPage from '../LogisticsPage';
 
 const mockNavigate = vi.fn();
+const mockUseAuth = vi.fn();
 const mockUsePoi = vi.fn();
 const mockUsePois = vi.fn();
+const mockUseRides = vi.fn();
+const mockUseMyRides = vi.fn();
+const mockUseActivateRide = vi.fn();
+const mockUseCancelRide = vi.fn();
+const mockUseDeleteRide = vi.fn();
 
 const samplePoi = {
   id: 'poi-1',
@@ -29,6 +36,23 @@ const samplePoi = {
   deletedAt: null,
 };
 
+const baseRide = {
+  id: 'ride-1',
+  driverId: 'driver-1',
+  originName: 'الخارجة',
+  destinationName: 'الداخلة',
+  departureTime: '2026-04-02T10:00:00.000Z',
+  seatsTotal: 4,
+  seatsTaken: 1,
+  pricePerSeat: 25000,
+  status: 'open' as const,
+  notes: null,
+  origin: { x: 30.55, y: 25.44 },
+  destination: { x: 28.98, y: 25.49 },
+  createdAt: '2026-04-01T10:00:00.000Z',
+  updatedAt: '2026-04-01T10:00:00.000Z',
+};
+
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
 
@@ -39,7 +63,9 @@ vi.mock('react-router', async () => {
 });
 
 vi.mock('lucide-react', () => {
-  const createIcon = (name: string) => () => <svg aria-hidden="true" data-testid={`icon-${name}`} />;
+  const createIcon = (name: string) => () => (
+    <svg aria-hidden="true" data-testid={`icon-${name}`} />
+  );
 
   return {
     MapPin: createIcon('map-pin'),
@@ -57,6 +83,22 @@ vi.mock('lucide-react', () => {
     ExternalLink: createIcon('external-link'),
   };
 });
+
+vi.mock('@/assets/hero-logistics.jpg', () => ({ default: 'hero-logistics.jpg' }));
+
+vi.mock('@/components/ui/ltr-text', () => ({
+  LtrText: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}));
+
+vi.mock('@/lib/localization', () => ({
+  pickLocalizedCopy: (_lang: string, copies: { ar: string; en: string }) => copies.ar,
+  pickLocalizedField: (_lang: string, fields: { ar: string; en?: string | null }) => fields.ar,
+}));
+
+vi.mock('@/lib/maps', () => ({
+  buildGoogleMapsLocationUrl: (lat: number, lng: number) =>
+    `https://www.google.com/maps?q=${lat},${lng}`,
+}));
 
 vi.mock('@/components/layout/Layout', () => ({
   Layout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -107,19 +149,32 @@ vi.mock('@/components/ui/button', () => ({
     children,
     onClick,
     asChild,
+    disabled,
     type,
   }: {
     children: ReactNode;
     onClick?: () => void;
     asChild?: boolean;
+    disabled?: boolean;
     type?: 'button' | 'submit' | 'reset';
-  }) => (asChild ? children : <button type={type} onClick={onClick}>{children}</button>),
+  }) =>
+    asChild ? (
+      children
+    ) : (
+      <button type={type} disabled={disabled} onClick={onClick}>
+        {children}
+      </button>
+    ),
 }));
 
 vi.mock('@/components/ui/input', () => ({
-  Input: ({ onChange, placeholder }: { onChange?: (event: { target: { value: string } }) => void; placeholder?: string }) => (
-    <input placeholder={placeholder} onChange={onChange} />
-  ),
+  Input: ({
+    onChange,
+    placeholder,
+  }: {
+    onChange?: (event: { target: { value: string } }) => void;
+    placeholder?: string;
+  }) => <input placeholder={placeholder} onChange={onChange} />,
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -140,13 +195,9 @@ vi.mock('@/components/ui/tabs', () => ({
 
 vi.mock('@/components/ui/sheet', () => ({
   Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  SheetContent: ({
-    children,
-    className,
-  }: {
-    children: ReactNode;
-    className?: string;
-  }) => <div className={className}>{children}</div>,
+  SheetContent: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   SheetHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
 }));
@@ -159,66 +210,77 @@ vi.mock('@/components/ui/select', () => ({
   SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
 }));
 
-vi.mock('@/lib/format', () => ({
-  formatRidePrice: () => '10 جنيه',
-}));
-
-vi.mock('@/lib/dates', () => ({
-  formatDateTimeShort: () => '2026-04-02',
-}));
-
 vi.mock('@/hooks/use-debounce', () => ({
   useDebouncedCallback: (callback: (value: string) => void) => callback,
 }));
 
 vi.mock('@/hooks/use-auth', () => ({
-  useAuth: () => ({
-    user: null,
-    isAuthenticated: false,
-    direction: 'rtl',
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('@/hooks/use-map', () => ({
-  usePois: (filters?: Record<string, unknown>) => mockUsePois(filters),
-  usePoi: (id?: string) => mockUsePoi(id),
-  useRides: () => ({ data: { data: [] }, isLoading: false }),
-  useMyRides: () => ({ data: undefined }),
-  useActivateRide: () => ({ mutate: vi.fn(), isPending: false }),
-  useCancelRide: () => ({ mutate: vi.fn(), isPending: false }),
-  useDeleteRide: () => ({ mutate: vi.fn(), isPending: false }),
-}));
-
-vi.mock('@hena-wadeena/types', () => ({
-  UserRole: {
-    RESIDENT: 'resident',
-    GUIDE: 'guide',
-    MERCHANT: 'merchant',
-  },
+  usePois: (...args: unknown[]) => mockUsePois(...args),
+  usePoi: (...args: unknown[]) => mockUsePoi(...args),
+  useRides: (...args: unknown[]) => mockUseRides(...args),
+  useMyRides: (...args: unknown[]) => mockUseMyRides(...args),
+  useActivateRide: () => mockUseActivateRide(),
+  useCancelRide: () => mockUseCancelRide(),
+  useDeleteRide: () => mockUseDeleteRide(),
 }));
 
 vi.mock('@/lib/area-presets', () => ({
-  AREA_PRESETS: [],
-  findArea: () => undefined,
+  AREA_PRESETS: [
+    { id: 'kharga', nameAr: 'الخارجة', nameEn: 'Al-Kharga', lat: 25.44, lng: 30.55 },
+    { id: 'dakhla', nameAr: 'الداخلة', nameEn: 'Al-Dakhla', lat: 25.49, lng: 28.98 },
+  ],
+  findArea: (id: string) =>
+    id
+      ? {
+          id,
+          nameAr: id === 'kharga' ? 'الخارجة' : 'الداخلة',
+          nameEn: id === 'kharga' ? 'Al-Kharga' : 'Al-Dakhla',
+          lat: 25.44,
+          lng: 30.55,
+        }
+      : undefined,
+  getAreaDisplayName: (area: { nameAr: string; nameEn: string }, language: 'ar' | 'en' = 'ar') =>
+    language === 'en' ? area.nameEn : area.nameAr,
+  localizeAreaName: (value: string) => value,
+}));
+
+vi.mock('@/lib/format', () => ({
+  formatRidePrice: () => '250 EGP',
+}));
+
+vi.mock('@/lib/dates', () => ({
+  formatDateTimeShort: () => '2026-04-02 10:00',
 }));
 
 vi.mock('sonner', () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),
+    info: vi.fn(),
   },
-}));
-
-vi.mock('@/assets/hero-logistics.jpg', () => ({
-  default: 'hero-logistics.jpg',
 }));
 
 describe('LogisticsPage', () => {
   beforeEach(() => {
     mockNavigate.mockReset();
+    mockUseAuth.mockReset();
     mockUsePois.mockReset();
     mockUsePoi.mockReset();
+    mockUseRides.mockReset();
+    mockUseMyRides.mockReset();
+    mockUseActivateRide.mockReset();
+    mockUseCancelRide.mockReset();
+    mockUseDeleteRide.mockReset();
 
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      direction: 'rtl',
+    });
     mockUsePois.mockReturnValue({
       data: { data: [samplePoi], total: 1 },
       isLoading: false,
@@ -226,6 +288,19 @@ describe('LogisticsPage', () => {
     mockUsePoi.mockImplementation((id?: string) => ({
       data: id ? samplePoi : undefined,
     }));
+    mockUseRides.mockReturnValue({ data: { data: [], total: 0 }, isLoading: false });
+    mockUseMyRides.mockReturnValue({ data: undefined });
+    mockUseActivateRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    mockUseCancelRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    mockUseDeleteRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  });
+
+  it('opens the poi detail sheet when a map marker is clicked', () => {
+    render(<LogisticsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'open poi' }));
+
+    expect(screen.getByText('مستشفى الخارجة العام')).toBeInTheDocument();
   });
 
   it('keeps the map clean and puts the google maps action inside the selected poi sheet', () => {
@@ -236,7 +311,7 @@ describe('LogisticsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'open poi' }));
 
-    const mapsLink = screen.getByRole('link', { name: /open in google maps/i });
+    const mapsLink = screen.getByRole('link', { name: /google maps/i });
     expect(mapsLink).toHaveAttribute('href', 'https://www.google.com/maps?q=25.451,30.546');
     expect(screen.getByText('مستشفى الخارجة العام')).toBeInTheDocument();
   });
@@ -257,10 +332,7 @@ describe('LogisticsPage', () => {
     });
 
     mockUsePois.mockImplementation((filters?: { lat?: number; lng?: number }) => ({
-      data:
-        filters?.lat && filters?.lng
-          ? { data: [], total: 0 }
-          : { data: [samplePoi], total: 1 },
+      data: filters?.lat && filters?.lng ? { data: [], total: 0 } : { data: [samplePoi], total: 1 },
       isLoading: false,
     }));
 
@@ -287,5 +359,53 @@ describe('LogisticsPage', () => {
     expect(carpoolTab.querySelector('[data-testid="icon-car"]')).not.toBeNull();
     expect(localTransportTab.querySelector('[data-testid="icon-car"]')).toBeNull();
     expect(localTransportTab.querySelector('[data-testid="icon-bus"]')).not.toBeNull();
+  });
+});
+
+describe('LogisticsPage ride creation access', () => {
+  beforeEach(() => {
+    mockNavigate.mockReset();
+    mockUseAuth.mockReset();
+    mockUsePois.mockReset();
+    mockUsePoi.mockReset();
+    mockUseRides.mockReset();
+    mockUseMyRides.mockReset();
+    mockUseActivateRide.mockReset();
+    mockUseCancelRide.mockReset();
+    mockUseDeleteRide.mockReset();
+
+    mockUsePois.mockReturnValue({ data: { data: [], total: 0 }, isLoading: false });
+    mockUsePoi.mockReturnValue({ data: undefined });
+    mockUseRides.mockReturnValue({ data: { data: [baseRide], total: 1 }, isLoading: false });
+    mockUseMyRides.mockReturnValue({ data: { asDriver: [], asPassenger: [] } });
+    mockUseActivateRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    mockUseCancelRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    mockUseDeleteRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  });
+
+  it('hides the add-trip action from unauthorized roles', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'tourist-1', role: UserRole.TOURIST },
+      isAuthenticated: true,
+      language: 'ar',
+      direction: 'rtl',
+    });
+
+    render(<LogisticsPage />);
+
+    expect(screen.queryByRole('button', { name: /أضف رحلتك/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the add-trip action for drivers', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'driver-1', role: UserRole.DRIVER },
+      isAuthenticated: true,
+      language: 'ar',
+      direction: 'rtl',
+    });
+
+    render(<LogisticsPage />);
+
+    expect(screen.getByRole('button', { name: /أضف رحلتك/i })).toBeInTheDocument();
   });
 });

@@ -135,7 +135,13 @@ export class UsersService {
     return paginate(publicData, total, offset, limit);
   }
 
-  async create(data: { email: string; fullName: string; passwordHash: string; role: string }) {
+  async create(data: {
+    email: string;
+    fullName: string;
+    passwordHash: string;
+    role: string;
+    status?: string;
+  }) {
     const [user] = await this.db
       .insert(users)
       .values({
@@ -143,6 +149,7 @@ export class UsersService {
         fullName: data.fullName,
         passwordHash: data.passwordHash,
         role: data.role as typeof users.$inferInsert.role,
+        ...(data.status !== undefined && { status: data.status as typeof users.$inferInsert.status }),
       })
       .returning();
     if (!user) throw new InternalServerErrorException('Insert did not return a row');

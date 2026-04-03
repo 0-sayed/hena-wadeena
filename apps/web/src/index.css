@@ -221,6 +221,21 @@ html {
   scroll-behavior: smooth;
 }
 
+input[type='tel'],
+input[type='email'] {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
+a[href^='mailto:'],
+a[href^='tel:'],
+[data-ltr='contact'] {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
 /* ── Page transition ───────────────────────────────── */
 @keyframes pageIn {
   from {

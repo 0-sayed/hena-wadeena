@@ -196,6 +196,44 @@ describe('useAuth', () => {
     expect(vi.mocked(authManager.setTokens)).toHaveBeenCalledWith('reg-token', 'refresh');
   });
 
+  it('does not store auth tokens when registration returns a pending KYC flow', async () => {
+    vi.mocked(authAPI.register).mockResolvedValue({
+      status: 'pending_kyc',
+      kyc_session_token: 'kyc-session-token',
+      required_documents: ['national_id', 'guide_license'],
+      user: {
+        id: '4',
+        email: 'guide@test.com',
+        full_name: 'Guide User',
+        role: UserRole.GUIDE,
+        phone: '',
+        status: 'pending_kyc',
+        language: 'ar',
+      },
+    } as any);
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let authResult: Awaited<ReturnType<typeof result.current.register>> | undefined;
+    await act(async () => {
+      authResult = await result.current.register({
+        email: 'guide@test.com',
+        full_name: 'Guide User',
+        password: 'pass',
+        role: UserRole.GUIDE,
+      });
+    });
+
+    expect(authResult).toEqual({ status: 'pending_kyc' });
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.user).toBeNull();
+    expect(vi.mocked(authManager.setTokens)).not.toHaveBeenCalled();
+  });
+
   it('updateUser updates state', async () => {
     const storedUser = {
       id: '1',

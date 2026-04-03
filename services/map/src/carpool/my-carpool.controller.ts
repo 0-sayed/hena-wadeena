@@ -1,5 +1,6 @@
-import { CurrentUser } from '@hena-wadeena/nest-common';
+import { CurrentUser, Roles } from '@hena-wadeena/nest-common';
 import type { JwtPayload } from '@hena-wadeena/nest-common';
+import { UserRole } from '@hena-wadeena/types';
 import {
   Body,
   Controller,
@@ -27,6 +28,7 @@ export class MyCarpoolController {
   }
 
   @Post()
+  @Roles(UserRole.DRIVER, UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   createRide(@Body() dto: CreateRideDto, @CurrentUser() user: JwtPayload) {
     return this.carpoolService.createRide(dto, user.sub);
