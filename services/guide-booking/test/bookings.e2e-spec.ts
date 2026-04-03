@@ -133,10 +133,104 @@ describe('Booking Lifecycle (e2e)', () => {
         'booking.requested',
         expect.objectContaining({
           bookingId: createRes.body.id,
-          touristId: TOURIST_ID,
-          guideId: guide.id,
+          touristUserId: TOURIST_ID,
+          guideUserId: GUIDE_USER_ID,
+          guideProfileId: guide.id,
+          packageId: pkg.id,
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '400000',
         }),
       );
+    });
+
+    it('rejects a duplicate active slot for the same guide/date/start time', async () => {
+      const guide = await seedGuide();
+      const pkg = await seedPackage(guide.id);
+      const bookingDate = tomorrowDate();
+
+      await ctx.db.insert(bookings).values({
+        id: generateId(),
+        packageId: pkg.id,
+        guideId: guide.id,
+        touristId: TOURIST_ID,
+        bookingDate,
+        startTime: '09:00',
+        peopleCount: 1,
+        totalPrice: 200000,
+        status: 'pending',
+      });
+
+      await request(ctx.app.getHttpServer())
+        .post('/api/v1/bookings')
+        .set('Authorization', tokens.tourist2Token())
+        .send({
+          packageId: pkg.id,
+          bookingDate,
+          startTime: '09:00',
+          peopleCount: 2,
+        })
+        .expect(409);
+    });
+
+    it('allows rebooking a slot after cancellation', async () => {
+      const guide = await seedGuide();
+      const pkg = await seedPackage(guide.id);
+      const bookingDate = tomorrowDate();
+
+      await ctx.db.insert(bookings).values({
+        id: generateId(),
+        packageId: pkg.id,
+        guideId: guide.id,
+        touristId: TOURIST_ID,
+        bookingDate,
+        startTime: '09:00',
+        peopleCount: 1,
+        totalPrice: 200000,
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancelReason: 'Initial customer cancelled',
+      });
+
+      await request(ctx.app.getHttpServer())
+        .post('/api/v1/bookings')
+        .set('Authorization', tokens.tourist2Token())
+        .send({
+          packageId: pkg.id,
+          bookingDate,
+          startTime: '09:00',
+          peopleCount: 2,
+        })
+        .expect(201);
+    });
+
+    it('allows rebooking a slot after completion', async () => {
+      const guide = await seedGuide();
+      const pkg = await seedPackage(guide.id);
+      const bookingDate = tomorrowDate();
+
+      await ctx.db.insert(bookings).values({
+        id: generateId(),
+        packageId: pkg.id,
+        guideId: guide.id,
+        touristId: TOURIST_ID,
+        bookingDate,
+        startTime: '09:00',
+        peopleCount: 1,
+        totalPrice: 200000,
+        status: 'completed',
+      });
+
+      await request(ctx.app.getHttpServer())
+        .post('/api/v1/bookings')
+        .set('Authorization', tokens.tourist2Token())
+        .send({
+          packageId: pkg.id,
+          bookingDate,
+          startTime: '09:00',
+          peopleCount: 2,
+        })
+        .expect(201);
     });
 
     it('guide confirms → starts → completes a booking', async () => {
@@ -170,7 +264,16 @@ describe('Booking Lifecycle (e2e)', () => {
       expect(confirmed.body.status).toBe('confirmed');
       expect(publishSpy).toHaveBeenCalledWith(
         'booking.confirmed',
-        expect.objectContaining({ bookingId }),
+        expect.objectContaining({
+          bookingId,
+          touristUserId: TOURIST_ID,
+          guideUserId: GUIDE_USER_ID,
+          guideProfileId: guide.id,
+          packageId: pkg.id,
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '200000',
+        }),
       );
 
       // Guide starts (booking date = today)
@@ -200,7 +303,16 @@ describe('Booking Lifecycle (e2e)', () => {
       expect(completed.body.status).toBe('completed');
       expect(publishSpy).toHaveBeenCalledWith(
         'booking.completed',
-        expect.objectContaining({ bookingId }),
+        expect.objectContaining({
+          bookingId,
+          touristUserId: TOURIST_ID,
+          guideUserId: GUIDE_USER_ID,
+          guideProfileId: guide.id,
+          packageId: pkg.id,
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '200000',
+        }),
       );
     });
 
@@ -415,7 +527,19 @@ describe('Booking Lifecycle (e2e)', () => {
 
       expect(publishSpy).toHaveBeenCalledWith(
         'booking.cancelled',
-        expect.objectContaining({ bookingId: booking.id }),
+        expect.objectContaining({
+          bookingId: booking.id,
+          touristUserId: TOURIST_ID,
+          guideUserId: GUIDE_USER_ID,
+          guideProfileId: guide.id,
+          packageId: pkg.id,
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '200000',
+          cancellationReason: 'Change of plans',
+          cancelledByRole: 'tourist',
+          cancelledByUserId: TOURIST_ID,
+        }),
       );
     });
 

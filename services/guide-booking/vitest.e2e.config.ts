@@ -7,9 +7,15 @@ import { defineConfig } from 'vitest/config';
 // Load .env for E2E tests so ConfigModule can validate env vars
 dotenvConfig({ path: path.resolve(__dirname, '../../.env') });
 
+if (!process.env['SERVICE_NAME']) {
+  process.env['SERVICE_NAME'] = 'guide-booking';
+}
+
 // Override DB_SCHEMA to include 'public' for PostGIS type resolution (geography, geometry).
 // Must be set before AppModule is imported so the @Module decorator captures the correct search_path.
-process.env['DB_SCHEMA'] = 'guide_booking, public';
+if (!process.env['DB_SCHEMA']) {
+  process.env['DB_SCHEMA'] = 'guide_booking, public';
+}
 
 export default defineConfig({
   test: {
