@@ -38,4 +38,12 @@ describe('EmailService', () => {
   it('should send password reset OTP email', async () => {
     await expect(service.sendPasswordResetOtp('user@example.com', '123456')).resolves.not.toThrow();
   });
+
+  it('should send password changed confirmation email', async () => {
+    await expect(service.sendPasswordChangedConfirmation('user@example.com')).resolves.not.toThrow();
+  });
+
+  it('should send password reset confirmation email', async () => {
+    await expect(service.sendPasswordResetConfirmation('user@example.com')).resolves.not.toThrow();
+  });
 });

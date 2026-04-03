@@ -4,7 +4,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type { Redis } from 'ioredis';
 
-import { authTokens } from '../db/schema/index';
+import { authTokens, users } from '../db/schema/index';
 
 @Injectable()
 export class SessionService {
@@ -15,10 +15,17 @@ export class SessionService {
 
   async revokeAllUserSessions(userId: string): Promise<void> {
     // Revoke all refresh tokens — used by logout, password change, and admin actions
-    await this.db
-      .update(authTokens)
-      .set({ revokedAt: new Date() })
-      .where(and(eq(authTokens.userId, userId), isNull(authTokens.revokedAt)));
+    const revokedAt = new Date();
+    await Promise.all([
+      this.db
+        .update(authTokens)
+        .set({ revokedAt })
+        .where(and(eq(authTokens.userId, userId), isNull(authTokens.revokedAt))),
+      this.db
+        .update(users)
+        .set({ sessionInvalidatedAt: revokedAt, updatedAt: revokedAt })
+        .where(eq(users.id, userId)),
+    ]);
   }
 
   async blockUser(userId: string): Promise<void> {

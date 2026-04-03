@@ -255,6 +255,9 @@ export class AuthService {
     await this.usersService.updatePassword(userId, passwordHash);
     await this.sessionService.revokeAllUserSessions(userId);
     await this.recordAudit(userId, 'password_changed');
+    await this.deliverEmailSafely('password change confirmation', () =>
+      this.emailService.sendPasswordChangedConfirmation(user.email),
+    );
 
     return this.createPostAuthResponse(user);
   }
@@ -313,6 +316,9 @@ export class AuthService {
     await this.usersService.updatePassword(user.id, passwordHash);
     await this.sessionService.revokeAllUserSessions(user.id);
     await this.recordAudit(user.id, 'password_reset');
+    await this.deliverEmailSafely('password reset confirmation', () =>
+      this.emailService.sendPasswordResetConfirmation(user.email),
+    );
 
     return this.createPostAuthResponse(user);
   }
@@ -488,5 +494,14 @@ export class AuthService {
       ipAddress: ipAddress ?? null,
       userAgent: userAgent ?? null,
     });
+  }
+
+  private async deliverEmailSafely(label: string, send: () => Promise<void>) {
+    try {
+      await send();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to send ${label}: ${message}`);
+    }
   }
 }

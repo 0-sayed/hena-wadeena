@@ -6,11 +6,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import Redis from 'ioredis';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+import { UsersService } from '../../users/users.service';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @Inject(ConfigService) configService: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(UsersService) private readonly usersService: UsersService,
   ) {
     const accessSecret = configService.get<string>('JWT_ACCESS_SECRET');
     if (!accessSecret) {
@@ -38,6 +41,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     if (isBlocked) {
       throw new UnauthorizedException('Account has been suspended');
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (
+      user.sessionInvalidatedAt &&
+      payload.iat &&
+      payload.iat * 1000 <= user.sessionInvalidatedAt.getTime()
+    ) {
+      throw new UnauthorizedException('Session has been invalidated');
     }
 
     return {
