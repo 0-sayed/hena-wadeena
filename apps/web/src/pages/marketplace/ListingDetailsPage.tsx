@@ -78,7 +78,7 @@ export default function ListingDetailsPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الإعلان">
         <div className="container py-10 space-y-6">
           <Skeleton h="h-10" className="w-32 rounded-xl" />
           <Skeleton h="h-80" className="rounded-2xl" />
@@ -90,7 +90,7 @@ export default function ListingDetailsPage() {
 
   if (isError || !listing) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الإعلان">
         <div className="container py-20 text-center space-y-4">
           <p className="text-lg text-muted-foreground">تعذر تحميل تفاصيل الإعلان.</p>
           <div className="flex items-center justify-center gap-3">
@@ -105,11 +105,11 @@ export default function ListingDetailsPage() {
   }
 
   return (
-    <Layout>
+    <Layout title="تفاصيل الإعلان">
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة
           </Button>
 
@@ -273,7 +273,7 @@ export default function ListingDetailsPage() {
                       className="w-full"
                       onClick={() => void navigate(`/tourism/accommodation/${listing.id}`)}
                     >
-                      <MessageSquare className="ml-2 h-5 w-5" />
+                      <MessageSquare className="ms-2 h-5 w-5" />
                       عرض صفحة السكن
                     </Button>
                   )}
@@ -284,7 +284,7 @@ export default function ListingDetailsPage() {
                       className="w-full"
                       onClick={() => void navigate('/marketplace/inquiries?tab=received')}
                     >
-                      <MessageSquare className="ml-2 h-5 w-5" />
+                      <MessageSquare className="ms-2 h-5 w-5" />
                       متابعة الاستفسارات الواردة
                     </Button>
                   ) : (
@@ -296,7 +296,7 @@ export default function ListingDetailsPage() {
                         )
                       }
                     >
-                      <MessageSquare className="ml-2 h-5 w-5" />
+                      <MessageSquare className="ms-2 h-5 w-5" />
                       إرسال استفسار إلى المالك
                     </Button>
                   )}

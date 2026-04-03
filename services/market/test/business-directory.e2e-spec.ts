@@ -226,6 +226,27 @@ describe('Business Directory (e2e)', () => {
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].nameEn).toBe('Unique Trading Store');
     });
+
+    it('GET /businesses?q=partial query matches incomplete Arabic text', async () => {
+      const bizRes = await request(ctx.app.getHttpServer())
+        .post('/api/v1/businesses')
+        .set('Authorization', merchantToken())
+        .send({ ...BASE_BUSINESS, nameAr: 'متجر الفرافرة للتمور' })
+        .expect(201);
+
+      await request(ctx.app.getHttpServer())
+        .patch(`/api/v1/businesses/${bizRes.body.id}/verify`)
+        .set('Authorization', adminToken())
+        .send({ status: 'verified' })
+        .expect(200);
+
+      const res = await request(ctx.app.getHttpServer())
+        .get(`/api/v1/businesses?q=${encodeURIComponent('الفرا')}`)
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].nameAr).toBe('متجر الفرافرة للتمور');
+    });
   });
 
   // ---------------------------------------------------------------------------

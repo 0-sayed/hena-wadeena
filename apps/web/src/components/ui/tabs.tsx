@@ -3,7 +3,17 @@ import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 import { cn } from '@/lib/utils';
 
-const Tabs = TabsPrimitive.Root;
+const Tabs = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>(({ dir, ...props }, ref) => {
+  const inheritedDir = typeof document !== 'undefined' ? document.documentElement.dir : '';
+  const resolvedDir =
+    dir ?? (inheritedDir === 'rtl' || inheritedDir === 'ltr' ? inheritedDir : undefined);
+
+  return <TabsPrimitive.Root ref={ref} dir={resolvedDir} {...props} />;
+});
+Tabs.displayName = TabsPrimitive.Root.displayName;
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,

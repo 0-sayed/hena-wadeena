@@ -148,6 +148,26 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  /* Ensure direction is explicitly inherited by form elements.
+     Browsers sometimes don't propagate direction: rtl to input/select/textarea
+     purely through CSS inheritance — the [dir] attribute on html helps but
+     an explicit rule here guarantees it even through Tailwind's preflight. */
+  html[dir='rtl'] input,
+  html[dir='rtl'] textarea,
+  html[dir='rtl'] select,
+  html[dir='rtl'] button {
+    direction: rtl;
+    text-align: start;
+  }
+
+  html[dir='ltr'] input,
+  html[dir='ltr'] textarea,
+  html[dir='ltr'] select,
+  html[dir='ltr'] button {
+    direction: ltr;
+    text-align: start;
+  }
+
   h1,
   h2,
   h3,
@@ -155,6 +175,44 @@
   h5,
   h6 {
     @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  html[dir='rtl'] .search-inline-icon-lg {
+    left: 1rem;
+    right: auto;
+  }
+
+  html[dir='ltr'] .search-inline-icon-lg {
+    right: 1rem;
+    left: auto;
+  }
+
+  html[dir='rtl'] .search-inline-icon-md {
+    left: 0.75rem;
+    right: auto;
+  }
+
+  html[dir='ltr'] .search-inline-icon-md {
+    right: 0.75rem;
+    left: auto;
+  }
+
+  html[dir='rtl'] .search-input-with-icon-lg {
+    padding-left: 3.5rem;
+  }
+
+  html[dir='ltr'] .search-input-with-icon-lg {
+    padding-right: 3.5rem;
+  }
+
+  html[dir='rtl'] .search-input-with-icon-md {
+    padding-left: 3rem;
+  }
+
+  html[dir='ltr'] .search-input-with-icon-md {
+    padding-right: 3rem;
   }
 }
 

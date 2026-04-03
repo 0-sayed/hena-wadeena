@@ -262,6 +262,8 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/lib/maps', () => ({
   buildGoogleMapsDirectionsUrl: () => 'https://maps.example.com/directions',
+  buildGoogleMapsLocationUrl: (lat: number, lng: number) =>
+    `https://maps.example.com/location/${lat},${lng}`,
 }));
 
 vi.mock('@/lib/area-presets', () => ({

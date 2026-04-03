@@ -42,6 +42,24 @@ export function formatRating(value: number | null | undefined): string {
   return value != null ? value.toFixed(1) : '—';
 }
 
+/** Format a year count with Arabic plural rules for "year". */
+export function formatArabicYears(years: number): string {
+  const category = new Intl.PluralRules('ar').select(Math.abs(years));
+
+  const label =
+    category === 'one'
+      ? 'سنة'
+      : category === 'two'
+        ? 'سنتان'
+        : category === 'few'
+          ? 'سنوات'
+          : category === 'zero'
+            ? 'سنوات'
+            : 'سنة';
+
+  return `${years} ${label}`;
+}
+
 // ── Enum → Arabic label maps ────────────────────────────────────────────────
 
 /** District enum value → Arabic display name */

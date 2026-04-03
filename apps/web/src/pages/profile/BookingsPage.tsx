@@ -208,14 +208,14 @@ const BookingsPage = () => {
       return isGuide ? (
         <div className="mt-4 flex gap-2">
           <Button size="sm" onClick={() => setActionTarget({ id: booking.id, action: 'confirm' })}>
-            <CheckCircle className="ml-1 h-4 w-4" />
+            <CheckCircle className="ms-1 h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'قبول',
               en: 'Accept',
             })}
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(booking.id)}>
-            <XCircle className="ml-1 h-4 w-4" />
+            <XCircle className="ms-1 h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'رفض',
               en: 'Reject',
@@ -229,7 +229,7 @@ const BookingsPage = () => {
           className="mt-4"
           onClick={() => setCancelTarget(booking.id)}
         >
-          <XCircle className="ml-1 h-4 w-4" />
+          <XCircle className="ms-1 h-4 w-4" />
           {pickLocalizedCopy(appLanguage, {
             ar: 'إلغاء',
             en: 'Cancel',
@@ -254,7 +254,7 @@ const BookingsPage = () => {
                 : ''
             }
           >
-            <Play className="ml-1 h-4 w-4" />
+            <Play className="ms-1 h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'بدء الجولة',
               en: 'Start tour',
@@ -286,7 +286,7 @@ const BookingsPage = () => {
       return (
         <div className="mt-4 flex gap-2">
           <Button size="sm" onClick={() => setActionTarget({ id: booking.id, action: 'complete' })}>
-            <CheckCircle className="ml-1 h-4 w-4" />
+            <CheckCircle className="ms-1 h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'إكمال الجولة',
               en: 'Complete tour',
@@ -434,7 +434,7 @@ const BookingsPage = () => {
                               </div>
                               {formatPeopleCount(booking.peopleCount, appLanguage)}
                             </div>
-                            <div className="text-left text-lg font-bold text-primary">
+                            <div className="text-start text-lg font-bold text-primary">
                               {piastresToEgp(booking.totalPrice)}
                             </div>
                           </div>
@@ -527,7 +527,7 @@ const BookingsPage = () => {
               onClick={handleCancel}
               disabled={!cancelReason.trim() || cancelMutation.isPending}
             >
-              {cancelMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              {cancelMutation.isPending && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
               {pickLocalizedCopy(appLanguage, {
                 ar: 'تأكيد الإلغاء',
                 en: 'Confirm cancellation',
@@ -570,7 +570,7 @@ const BookingsPage = () => {
               {(confirmMutation.isPending ||
                 startMutation.isPending ||
                 completeMutation.isPending) && (
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                <Loader2 className="ms-2 h-4 w-4 animate-spin" />
               )}
               {pickLocalizedCopy(appLanguage, {
                 ar: 'تأكيد',

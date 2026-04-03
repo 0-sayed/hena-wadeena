@@ -230,7 +230,7 @@ export default function AdminOverview() {
           {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث:', en: 'Updated:' })}{' '}
           {new Date(stats.meta.cachedAt).toLocaleString(locale)}
           {stats.meta.degraded && (
-            <span className="mr-2 text-yellow-500">
+            <span className="me-2 text-yellow-500">
               {pickLocalizedCopy(appLanguage, {
                 ar: '(بعض البيانات غير متاحة)',
                 en: '(Some data is unavailable)',

@@ -4,28 +4,37 @@ Infrastructure and deployment configurations for Hena Wadeena.
 
 ## Structure
 
-- `nginx/` - Nginx configuration files for various deployment targets
-  - `contabo.conf` - System nginx config for Contabo VPS (serves frontend + proxies API)
+- `nginx/` - Legacy nginx configuration kept for reference from the pre-Caddy deployment
+  - `contabo.conf` - Historical system nginx config used before Caddy replaced it
 
 ## Usage
 
 ### Contabo VPS
 
-The frontend is deployed to Contabo VPS at `158.220.105.104` via GitHub Actions (`.github/workflows/deploy-frontend.yml`).
+Production now terminates TLS and serves traffic through the `caddy` service defined in `docker-compose.yml`.
 
-**Initial setup** (one-time manual step):
-
-```bash
-# Copy nginx config to server
-scp deployment/nginx/contabo.conf root@158.220.105.104:/etc/nginx/sites-available/hena-wadeena
-
-# Enable site
-ssh root@158.220.105.104 "ln -sf /etc/nginx/sites-available/hena-wadeena /etc/nginx/sites-enabled/ && nginx -t && systemctl reload nginx"
-```
+- App server: `158.220.105.104`
+- Frontend files: `/var/www/hena-wadeena/` on the VPS
+- Public domains: `hena-wadeena.online`, `www.hena-wadeena.online`, `api.hena-wadeena.online`
+- Config source: root [`Caddyfile`](../Caddyfile)
 
 **Subsequent deploys** run automatically on push to `main` - the workflow:
-1. Builds the frontend
-2. Uploads to `/var/www/hena-wadeena/`
-3. Reloads nginx
+1. Builds service images and deploys the Compose stack
+2. Starts Caddy for API + frontend traffic
 
-The nginx config itself is **not** automatically deployed - update it manually when needed.
+Frontend-only deploys (`.github/workflows/deploy-frontend.yml`):
+1. Build the React app
+2. Upload `apps/web/dist/` to `/var/www/hena-wadeena/`
+3. Verify the Caddy container is running
+
+The legacy nginx config is **not** used in production anymore. Do not restart system `nginx` on the VPS unless you are intentionally rolling back the Caddy migration.
+
+## DNS
+
+DNS is managed via **Cloudflare** (free plan). Nameservers are set in Namecheap:
+- `pablo.ns.cloudflare.com`
+- `reza.ns.cloudflare.com`
+
+All DNS changes (A records, MX, TXT, etc.) must be made in the Cloudflare dashboard, not Route 53 (deleted).
+
+SSL mode is set to **Full (strict)** — Caddy obtains and renews the origin Let's Encrypt certificates automatically.

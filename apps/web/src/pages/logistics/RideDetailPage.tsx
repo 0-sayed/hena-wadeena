@@ -283,8 +283,12 @@ const RideDetailPage = () => {
     <Layout>
       <section className="py-8">
         <div className="container max-w-3xl px-4">
-          <Button variant="ghost" onClick={() => void navigate('/logistics')} className="mb-6">
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button
+            variant="ghost"
+            onClick={() => void navigate('/logistics')}
+            className="mb-6 gap-2"
+          >
+            <ArrowRight className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
 
@@ -318,7 +322,9 @@ const RideDetailPage = () => {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{formatDateTimeFull(ride.departureTime, appLanguage)}</span>
+                  <span className="text-sm">
+                    {formatDateTimeFull(ride.departureTime, appLanguage)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -329,7 +335,7 @@ const RideDetailPage = () => {
                     })}
                   </span>
                 </div>
-                <div className="col-span-2 text-2xl font-bold text-primary md:col-span-1 md:text-left">
+                <div className="col-span-2 text-2xl font-bold text-primary md:col-span-1 md:text-start">
                   {formatRidePrice(ride.pricePerSeat, appLanguage)}
                 </div>
               </div>
@@ -452,7 +458,7 @@ const RideDetailPage = () => {
                             onClick={() => handleConfirm(p.id)}
                             disabled={confirmPassenger.isPending}
                           >
-                            <Check className="ml-1 h-4 w-4" />
+                            <Check className="ms-1 h-4 w-4" />
                             {pickLocalizedCopy(appLanguage, {
                               ar: 'تأكيد',
                               en: 'Confirm',
@@ -464,7 +470,7 @@ const RideDetailPage = () => {
                             onClick={() => handleDecline(p.id)}
                             disabled={declinePassenger.isPending}
                           >
-                            <X className="ml-1 h-4 w-4" />
+                            <X className="ms-1 h-4 w-4" />
                             {pickLocalizedCopy(appLanguage, {
                               ar: 'رفض',
                               en: 'Decline',

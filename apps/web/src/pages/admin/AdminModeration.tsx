@@ -138,7 +138,7 @@ export default function AdminModeration() {
   const verifyBusiness = useVerifyBusiness();
 
   const formatDate = (value: string) => new Date(value).toLocaleDateString(locale);
-  const badgeCountSide = appLanguage === 'en' ? 'ml-1' : 'mr-1';
+  const badgeCountSide = appLanguage === 'en' ? 'ms-1' : 'me-1';
 
   const handleApprove = (type: 'kyc' | 'listing' | 'business', id: string) => {
     if (type === 'kyc') {

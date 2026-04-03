@@ -121,6 +121,7 @@ Thumbs.db
 # ==============================================================
 .claude/
 .worktrees/
+.codex
 
 # ==============================================================
 # Seed scripts — compiled artifacts (tsx runs TS directly)

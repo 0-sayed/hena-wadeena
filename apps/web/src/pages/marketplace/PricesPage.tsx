@@ -7,6 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -65,12 +73,12 @@ const PricesPage = () => {
   );
 
   return (
-    <Layout>
+    <Layout title="أسعار السوق">
       {/* Hero */}
       <section className="bg-gradient-to-bl from-accent/20 via-background to-background py-12 md:py-16">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-4">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة للبورصة
           </Button>
           <div className="max-w-3xl">
@@ -205,13 +213,13 @@ const PricesPage = () => {
               ))}
             </div>
 
-            <div className="relative flex-1 md:max-w-xs mr-auto">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="relative flex-1 md:max-w-xs me-auto">
+              <Search className="search-inline-icon-md absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="ابحث عن منتج..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
+                className="search-input-with-icon-md"
               />
             </div>
           </div>
@@ -219,66 +227,51 @@ const PricesPage = () => {
           {/* Price Table */}
           <Card className="border-border/50">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                        المنتج
-                      </th>
-                      <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                        التصنيف
-                      </th>
-                      <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                        المدينة
-                      </th>
-                      <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                        السعر
-                      </th>
-                      <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">
-                        التغير
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading
-                      ? Array.from({ length: 8 }).map((_, i) => (
-                          <TableRowSkeleton key={i} cols={5} />
-                        ))
-                      : filteredProducts.map((entry, index) => (
-                          <tr
-                            key={entry.commodity.id}
-                            className={`hover:bg-muted/30 ${index !== filteredProducts.length - 1 ? 'border-b border-border/50' : ''}`}
-                          >
-                            <td className="py-4 px-6">
-                              <span className="font-medium text-foreground">
-                                {entry.commodity.nameAr}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <Badge variant="outline">
-                                {categoryLabel(entry.commodity.category)}
-                              </Badge>
-                            </td>
-                            <td className="py-4 px-6 text-muted-foreground">
-                              {districtLabel(entry.region)}
-                            </td>
-                            <td className="py-4 px-6">
+              <Table className="table-fixed">
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="px-6 py-4">المنتج</TableHead>
+                    <TableHead className="px-6 py-4">التصنيف</TableHead>
+                    <TableHead className="px-6 py-4">المدينة</TableHead>
+                    <TableHead className="px-6 py-4">السعر</TableHead>
+                    <TableHead className="px-6 py-4">التغير</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading
+                    ? Array.from({ length: 8 }).map((_, i) => <TableRowSkeleton key={i} cols={5} />)
+                    : filteredProducts.map((entry) => (
+                        <TableRow key={entry.commodity.id} className="hover:bg-muted/30">
+                          <TableCell className="px-6 py-4 text-start">
+                            <span className="font-medium text-foreground">
+                              {entry.commodity.nameAr}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-6 py-4 text-start">
+                            <Badge variant="outline">
+                              {categoryLabel(entry.commodity.category)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-6 py-4 text-start text-muted-foreground">
+                            {districtLabel(entry.region)}
+                          </TableCell>
+                          <TableCell className="px-6 py-4 text-start">
+                            <div className="flex flex-wrap items-baseline gap-1">
                               <span className="font-semibold text-foreground">
                                 {formatPrice(entry.latestPrice)}
                               </span>
-                              <span className="text-sm text-muted-foreground mr-1">
+                              <span className="text-sm text-muted-foreground">
                                 جنيه/{unitLabel(entry.commodity.unit)}
                               </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <TrendBadge changePercent={entry.changePercent} size="sm" showSign />
-                            </td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-6 py-4 text-start">
+                            <TrendBadge changePercent={entry.changePercent} size="sm" showSign />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
 

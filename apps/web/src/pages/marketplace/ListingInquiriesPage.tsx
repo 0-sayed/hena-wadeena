@@ -1,16 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UserRole } from '@hena-wadeena/types';
 import { Link, useSearchParams } from 'react-router';
-import {
-  Bell,
-  Inbox,
-  Mail,
-  MessageSquare,
-  Phone,
-  Send,
-  Store,
-  User,
-} from 'lucide-react';
+import { Bell, Inbox, Mail, MessageSquare, Phone, Send, Store, User } from 'lucide-react';
 
 import { Layout } from '@/components/layout/Layout';
 import { Badge } from '@/components/ui/badge';
@@ -118,8 +109,7 @@ export default function ListingInquiriesPage() {
   }, [activeTab, focusId, markRead, received]);
 
   const handleTabChange = (value: string) => {
-    const nextTab: InquiryTab =
-      value === 'sent' || !canReceiveInquiries ? 'sent' : 'received';
+    const nextTab: InquiryTab = value === 'sent' || !canReceiveInquiries ? 'sent' : 'received';
     setActiveTab(nextTab);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -153,7 +143,7 @@ export default function ListingInquiriesPage() {
                 <CardContent className="p-4 text-center">
                   <p className="text-xs text-muted-foreground">الوارد</p>
                   <p className="mt-1 text-2xl font-bold text-foreground">
-                    {receivedQuery.isLoading ? '...' : receivedQuery.data?.total ?? 0}
+                    {receivedQuery.isLoading ? '...' : (receivedQuery.data?.total ?? 0)}
                   </p>
                 </CardContent>
               </Card>
@@ -161,7 +151,7 @@ export default function ListingInquiriesPage() {
                 <CardContent className="p-4 text-center">
                   <p className="text-xs text-muted-foreground">المرسل</p>
                   <p className="mt-1 text-2xl font-bold text-foreground">
-                    {sentQuery.isLoading ? '...' : sentQuery.data?.total ?? 0}
+                    {sentQuery.isLoading ? '...' : (sentQuery.data?.total ?? 0)}
                   </p>
                 </CardContent>
               </Card>
@@ -169,7 +159,9 @@ export default function ListingInquiriesPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className={`grid w-full ${canReceiveInquiries ? 'grid-cols-2 md:w-[320px]' : 'grid-cols-1 md:w-[160px]'}`}>
+            <TabsList
+              className={`grid w-full ${canReceiveInquiries ? 'grid-cols-2 md:w-[320px]' : 'grid-cols-1 md:w-[160px]'}`}
+            >
               <TabsTrigger value="received">الوارد</TabsTrigger>
               <TabsTrigger value="sent">المرسل</TabsTrigger>
             </TabsList>
@@ -255,7 +247,7 @@ export default function ListingInquiriesPage() {
                             {inquiry.contactEmail && (
                               <Button asChild size="sm" variant="outline">
                                 <a href={`mailto:${inquiry.contactEmail}`}>
-                                  <Mail className="ml-2 h-4 w-4" />
+                                  <Mail className="me-2 h-4 w-4" />
                                   مراسلة بالبريد
                                 </a>
                               </Button>
@@ -263,7 +255,7 @@ export default function ListingInquiriesPage() {
                             {inquiry.contactPhone && (
                               <Button asChild size="sm" variant="outline">
                                 <a href={`tel:${inquiry.contactPhone}`}>
-                                  <Phone className="ml-2 h-4 w-4" />
+                                  <Phone className="me-2 h-4 w-4" />
                                   اتصال مباشر
                                 </a>
                               </Button>
@@ -300,7 +292,7 @@ export default function ListingInquiriesPage() {
                             )}
                             <Button
                               size="sm"
-                              className="mr-auto"
+                              className="ms-auto"
                               disabled={replyMutation.isPending || !replyDraft.trim()}
                               onClick={() =>
                                 replyMutation.mutate({
@@ -309,7 +301,7 @@ export default function ListingInquiriesPage() {
                                 })
                               }
                             >
-                              <Send className="ml-2 h-4 w-4" />
+                              <Send className="me-2 h-4 w-4" />
                               {inquiry.replyMessage ? 'تحديث الرد' : 'إرسال الرد'}
                             </Button>
                           </div>

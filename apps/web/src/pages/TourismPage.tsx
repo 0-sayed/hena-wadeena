@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Calendar, Clock, MapPin, Search, Star } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -18,12 +18,17 @@ import { useGuides } from '@/hooks/use-guides';
 import { usePublicUsers } from '@/hooks/use-users';
 import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import {
+  areaLabels,
   attractionTypeLabel,
+  attractionTypeLabels,
   formatRating,
   languageLabel,
+  languageLabels,
   piastresToEgp,
   specialtyLabel,
+  specialtyLabels,
 } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 import type { AppLanguage } from '@/lib/localization';
 import type { PublicUserProfile } from '@/services/api';
 
@@ -49,15 +54,75 @@ const TourismPage = () => {
   );
   const { data: allAttractions, isLoading: loadingAll } = useAttractions(undefined, 8);
   const { data: guides, isLoading: loadingGuides } = useGuides(undefined, 6);
-  const publicUsers = usePublicUsers(guides.map((guide) => guide.userId)).data ?? {};
+  const { data: publicUsersData } = usePublicUsers(guides.map((guide) => guide.userId));
+  const publicUsers = useMemo(() => publicUsersData ?? {}, [publicUsersData]);
   const loading = loadingFeatured || loadingAll || loadingGuides;
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-    void navigate(`/search?q=${encodeURIComponent(query)}`);
+    setSearchQuery((previous) => previous.trim());
   };
+
+  const filteredFeaturedAttractions = useMemo(
+    () =>
+      featuredAttractions.filter((attraction) =>
+        matchesSearchQuery(searchQuery, [
+          attraction.nameAr,
+          attraction.nameEn,
+          attraction.descriptionAr,
+          attraction.descriptionEn,
+          attraction.historyAr,
+          attraction.type,
+          attractionTypeLabels[attraction.type],
+          attraction.area,
+          areaLabels[attraction.area],
+          ...(attraction.tips ?? []),
+        ]),
+      ),
+    [featuredAttractions, searchQuery],
+  );
+
+  const filteredAllAttractions = useMemo(
+    () =>
+      allAttractions.filter((attraction) =>
+        matchesSearchQuery(searchQuery, [
+          attraction.nameAr,
+          attraction.nameEn,
+          attraction.descriptionAr,
+          attraction.descriptionEn,
+          attraction.historyAr,
+          attraction.type,
+          attractionTypeLabels[attraction.type],
+          attraction.area,
+          areaLabels[attraction.area],
+          ...(attraction.tips ?? []),
+        ]),
+      ),
+    [allAttractions, searchQuery],
+  );
+
+  const filteredGuides = useMemo(
+    () =>
+      guides.filter((guide) => {
+        const profile = publicUsers[guide.userId];
+
+        return matchesSearchQuery(searchQuery, [
+          profile?.display_name,
+          profile?.full_name,
+          guide.bioAr,
+          guide.bioEn,
+          ...guide.specialties,
+          ...guide.specialties.map((specialty) => specialtyLabels[specialty] ?? specialty),
+          ...guide.languages,
+          ...guide.languages.map((lang) => languageLabels[lang] ?? lang),
+          ...(guide.areasOfOperation ?? []),
+          ...(guide.areasOfOperation ?? []).map(
+            (area) => areaLabels[area as keyof typeof areaLabels] ?? area,
+          ),
+        ]);
+      }),
+    [guides, publicUsers, searchQuery],
+  );
 
   return (
     <Layout>
@@ -98,7 +163,7 @@ const TourismPage = () => {
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="absolute right-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={pickLocalizedCopy(language, {
                   ar: 'ابحث عن معالم أو مرشدين...',
@@ -106,11 +171,11 @@ const TourismPage = () => {
                 })}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-16 rounded-2xl border-0 bg-card/90 pr-14 pl-28 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 ps-28 text-lg shadow-lg backdrop-blur-sm"
               />
               <Button
                 type="submit"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl"
+                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
               >
                 {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
               </Button>
@@ -151,7 +216,7 @@ const TourismPage = () => {
                     </SR>
                     <SR stagger>
                       <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
-                        {featuredAttractions.map((attraction) => (
+                        {filteredFeaturedAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
                             className="group overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -165,7 +230,7 @@ const TourismPage = () => {
                                 })}
                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                               />
-                              <Badge className="absolute right-4 top-4 glass font-medium text-foreground">
+                              <Badge className="absolute end-4 top-4 glass font-medium text-foreground">
                                 {attractionTypeLabel(attraction.type, language)}
                               </Badge>
                               <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -214,7 +279,7 @@ const TourismPage = () => {
                                     ar: 'المزيد',
                                     en: 'View details',
                                   })}{' '}
-                                  <ArrowLeft className="mr-1 h-4 w-4" />
+                                  <ArrowLeft className="me-1 h-4 w-4" />
                                 </Button>
                               </div>
                             </CardContent>
@@ -245,7 +310,7 @@ const TourismPage = () => {
                     </SR>
                     <SR stagger>
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-                        {allAttractions.map((attraction) => (
+                        {filteredAllAttractions.map((attraction) => (
                           <Card
                             key={attraction.id}
                             className="group cursor-pointer overflow-hidden rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -296,7 +361,7 @@ const TourismPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                      {guides.map((guide) => {
+                      {filteredGuides.map((guide) => {
                         const guideName = getGuideName(language, publicUsers[guide.userId]);
 
                         return (
@@ -329,7 +394,9 @@ const TourismPage = () => {
                                   </p>
                                   <div className="mt-2 flex items-center gap-1.5 text-accent">
                                     <Star className="h-5 w-5 fill-current" />
-                                    <span className="font-bold">{formatRating(guide.ratingAvg)}</span>
+                                    <span className="font-bold">
+                                      {formatRating(guide.ratingAvg)}
+                                    </span>
                                     <span className="text-sm text-muted-foreground">
                                       ({guide.ratingCount}{' '}
                                       {pickLocalizedCopy(language, {
@@ -384,7 +451,7 @@ const TourismPage = () => {
                                   <span className="text-2xl font-bold text-primary">
                                     {piastresToEgp(guide.basePrice)}
                                   </span>
-                                  <span className="mr-1 text-sm text-muted-foreground">
+                                  <span className="me-1 text-sm text-muted-foreground">
                                     {pickLocalizedCopy(language, { ar: '/يوم', en: '/day' })}
                                   </span>
                                 </div>
@@ -392,7 +459,7 @@ const TourismPage = () => {
                                   className="transition-transform hover:scale-[1.03]"
                                   onClick={() => void navigate(`/guides/${guide.id}`)}
                                 >
-                                  <Calendar className="ml-2 h-4 w-4" />
+                                  <Calendar className="ms-2 h-4 w-4" />
                                   {pickLocalizedCopy(language, {
                                     ar: 'عرض الملف',
                                     en: 'View profile',

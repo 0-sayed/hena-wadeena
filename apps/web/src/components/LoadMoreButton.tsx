@@ -46,7 +46,7 @@ export function LoadMoreButton({
         onClick={() => void fetchNextPage()}
         disabled={isFetchingNextPage}
       >
-        {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+        {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin ms-2" /> : null}
         تحميل المزيد
       </Button>
     </div>

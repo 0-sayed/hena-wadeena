@@ -53,7 +53,7 @@ const PackagesPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="البرامج السياحية">
       <PageTransition>
         <PageHero image={heroTourism} alt="باقات السياحة">
           <SR>
@@ -74,11 +74,11 @@ const PackagesPage = () => {
           </SR>
           <SR delay={300}>
             <div className="relative max-w-xl mx-auto">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
               <Input
                 placeholder="ابحث في الباقات..."
                 onChange={handleSearchChange}
-                className="pr-14 h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
               />
             </div>
           </SR>
@@ -167,7 +167,7 @@ const PackagesPage = () => {
                                     </>
                                   )}
                                   {pkg.guideLicenseVerified && (
-                                    <Badge className="h-4 text-[10px] bg-green-500/10 text-green-600 mr-1">
+                                    <Badge className="h-4 text-[10px] bg-green-500/10 text-green-600 me-1">
                                       مرخّص
                                     </Badge>
                                   )}
@@ -195,7 +195,7 @@ const PackagesPage = () => {
                           <div className="flex justify-between items-center pt-2 border-t border-border/50">
                             <span className="text-xl font-bold text-primary">
                               {piastresToEgp(pkg.price)}
-                              <span className="text-xs font-normal text-muted-foreground mr-1">
+                              <span className="text-xs font-normal text-muted-foreground me-1">
                                 / فرد
                               </span>
                             </span>

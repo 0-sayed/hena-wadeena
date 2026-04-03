@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { formatPrice, districtLabel, categoryLabel, unitLabel } from '../format';
+import {
+  formatArabicYears,
+  formatPrice,
+  districtLabel,
+  categoryLabel,
+  unitLabel,
+} from '../format';
 
 describe('formatPrice', () => {
   it('converts piasters to EGP', () => {
@@ -18,6 +24,24 @@ describe('formatPrice', () => {
     const result = formatPrice(125000);
     // 1250.00 EGP — locale formatting may vary, just check it contains digits
     expect(result).toContain('1');
+  });
+});
+
+describe('formatArabicYears', () => {
+  it('uses the singular form for one year', () => {
+    expect(formatArabicYears(1)).toBe('1 سنة');
+  });
+
+  it('uses the dual form for two years', () => {
+    expect(formatArabicYears(2)).toBe('2 سنتان');
+  });
+
+  it('uses the plural few form for values from three to ten', () => {
+    expect(formatArabicYears(8)).toBe('8 سنوات');
+  });
+
+  it('uses the singular form again for values above ten', () => {
+    expect(formatArabicYears(11)).toBe('11 سنة');
   });
 });
 

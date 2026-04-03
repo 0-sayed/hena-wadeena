@@ -157,7 +157,7 @@ export default function DriverDashboard() {
                       <TableCell className="font-medium">
                         {ride.originName} ← {ride.destinationName}
                       </TableCell>
-                      <TableCell dir="ltr" className="text-right">
+                      <TableCell dir="ltr" className="text-end">
                         {new Date(ride.departureTime).toLocaleDateString(
                           appLanguage === 'en' ? 'en-US' : 'ar-EG',
                           {
@@ -170,7 +170,7 @@ export default function DriverDashboard() {
                       <TableCell>
                         {ride.seatsTaken}/{ride.seatsTotal}
                       </TableCell>
-                      <TableCell dir="ltr" className="text-right">
+                      <TableCell dir="ltr" className="text-end">
                         {(ride.pricePerSeat / 100).toFixed(0)}{' '}
                         {pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' })}
                       </TableCell>

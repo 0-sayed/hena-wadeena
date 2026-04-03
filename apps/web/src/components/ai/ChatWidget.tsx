@@ -188,14 +188,14 @@ export function ChatWidget() {
     <>
       <button
         onClick={() => setOpen((value) => !value)}
-        className="fixed bottom-6 left-6 z-50 h-14 w-14 rounded-full bg-primary text-white shadow-xl transition-all hover:scale-110 hover:bg-primary/90"
+        className="fixed bottom-6 start-6 z-50 h-14 w-14 rounded-full bg-primary text-white shadow-xl transition-all hover:scale-110 hover:bg-primary/90"
         aria-label="AI assistant"
       >
         {open ? <X className="m-auto h-6 w-6" /> : <MessageCircle className="m-auto h-6 w-6" />}
       </button>
 
       {open && (
-        <div className="fixed bottom-24 left-6 z-50 flex max-h-[560px] w-[360px] flex-col overflow-hidden rounded-2xl border border-border/50 bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-24 inset-x-4 z-50 flex max-h-[560px] w-auto max-w-[360px] flex-col overflow-hidden rounded-2xl border border-border/50 bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 sm:inset-x-auto sm:start-6 sm:w-[360px]">
           <div className="flex items-center justify-between bg-gradient-to-l from-primary to-primary/80 px-5 py-4 text-white">
             <div className="flex items-center gap-3">
               <Bot className="h-6 w-6" />
@@ -224,7 +224,7 @@ export function ChatWidget() {
             <div className="space-y-4 p-5 text-sm">
               <p>You need to log in to use AI chat sessions.</p>
               <Button type="button" className="w-full" onClick={() => void navigate('/login')}>
-                <LogIn className="mr-2 h-4 w-4" />
+                <LogIn className="me-2 h-4 w-4" />
                 Login
               </Button>
             </div>
@@ -262,8 +262,8 @@ export function ChatWidget() {
                     <div
                       className={`max-w-[75%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                         msg.role === 'user'
-                          ? 'rounded-tr-none bg-primary text-white'
-                          : 'rounded-tl-none bg-muted'
+                          ? 'rounded-se-none bg-primary text-white'
+                          : 'rounded-ss-none bg-muted'
                       }`}
                     >
                       {msg.content}
@@ -276,7 +276,7 @@ export function ChatWidget() {
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/30">
                       <Bot className="h-4 w-4 text-accent-foreground" />
                     </div>
-                    <div className="rounded-2xl rounded-tl-none bg-muted px-4 py-3">
+                    <div className="rounded-2xl rounded-ss-none bg-muted px-4 py-3">
                       <div className="flex gap-1">
                         <span
                           className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"

@@ -304,7 +304,7 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-2 -left-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg transition-transform hover:scale-110"
+                      className="absolute -bottom-2 -start-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg transition-transform hover:scale-110"
                     >
                       <Camera className="h-5 w-5" />
                     </button>
@@ -321,7 +321,7 @@ const ProfilePage = () => {
                   <h2 className="text-2xl font-bold text-foreground">{formData.full_name}</h2>
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <Badge variant="secondary" className="px-3 py-1 text-sm">
-                      <Shield className="ml-1 h-3.5 w-3.5" />
+                      <Shield className="ms-1 h-3.5 w-3.5" />
                       {getRoleLabel(user.role, appLanguage)}
                     </Badge>
                     <Badge
@@ -524,7 +524,7 @@ const ProfilePage = () => {
                         className="mt-4 h-12 w-full transition-transform hover:scale-[1.01]"
                         variant="outline"
                       >
-                        <Edit2 className="ml-2 h-4 w-4" />
+                        <Edit2 className="ms-2 h-4 w-4" />
                         {pickLocalizedCopy(appLanguage, {
                           ar: 'تعديل الملف الشخصي',
                           en: 'Edit profile',

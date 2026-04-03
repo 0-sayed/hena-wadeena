@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@hena-wadeena/types';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
@@ -17,6 +17,7 @@ import heroInvestment from '@/assets/hero-investment.jpg';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import { districtLabel } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 
 const sectorLabels = {
   agriculture: { ar: 'زراعة', en: 'Agriculture' },
@@ -78,10 +79,43 @@ const InvestmentPage = () => {
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-    void navigate(`/search?q=${encodeURIComponent(query)}`);
+    setSearchQuery((previous) => previous.trim());
   };
+
+  const filteredOpportunities = useMemo(
+    () =>
+      opportunities.filter((opp) =>
+        matchesSearchQuery(searchQuery, [
+          opp.titleAr,
+          opp.titleEn,
+          opp.description,
+          opp.sector,
+          sectorLabel(opp.sector, language),
+          opp.area,
+          districtLabel(opp.area, language),
+          ...opp.incentives,
+          ...(opp.contact?.name ? [opp.contact.name] : []),
+        ]),
+      ),
+    [opportunities, searchQuery, language],
+  );
+
+  const filteredStartups = useMemo(
+    () =>
+      startups.filter((startup) =>
+        matchesSearchQuery(searchQuery, [
+          startup.nameAr,
+          startup.nameEn,
+          startup.description,
+          startup.descriptionAr,
+          startup.category,
+          startup.district,
+          districtLabel(startup.district ?? '', language),
+          startup.status,
+        ]),
+      ),
+    [startups, searchQuery, language],
+  );
 
   return (
     <Layout>
@@ -122,7 +156,7 @@ const InvestmentPage = () => {
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="absolute right-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={pickLocalizedCopy(language, {
                   ar: 'ابحث عن فرص استثمارية...',
@@ -130,9 +164,12 @@ const InvestmentPage = () => {
                 })}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-16 rounded-2xl border-0 bg-card/90 pr-14 pl-28 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm"
               />
-              <Button type="submit" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl">
+              <Button
+                type="submit"
+                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
+              >
                 {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
               </Button>
             </form>
@@ -169,7 +206,7 @@ const InvestmentPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
-                      {opportunities.map((opportunity) => (
+                      {filteredOpportunities.map((opportunity) => (
                         <Card
                           key={opportunity.id}
                           className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
@@ -240,7 +277,7 @@ const InvestmentPage = () => {
                                   ar: 'التفاصيل',
                                   en: 'Details',
                                 })}{' '}
-                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                <ArrowLeft className="me-2 h-4 w-4" />
                               </Button>
                               {canAccessInvestmentContact ? (
                                 <Button
@@ -249,7 +286,7 @@ const InvestmentPage = () => {
                                     void navigate(`/investment/contact/${opportunity.id}`)
                                   }
                                 >
-                                  <Send className="ml-2 h-4 w-4" />
+                                  <Send className="ms-2 h-4 w-4" />
                                   {pickLocalizedCopy(language, {
                                     ar: 'استفسار',
                                     en: 'Inquiry',
@@ -275,7 +312,7 @@ const InvestmentPage = () => {
                 ) : (
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                      {startups.map((startup) => {
+                      {filteredStartups.map((startup) => {
                         const startupDescription = pickLocalizedField(language, {
                           ar: startup.descriptionAr,
                           en: startup.description,
@@ -338,7 +375,7 @@ const InvestmentPage = () => {
                                     ar: 'التفاصيل',
                                     en: 'Details',
                                   })}{' '}
-                                  <ArrowLeft className="mr-2 h-4 w-4" />
+                                  <ArrowLeft className="me-2 h-4 w-4" />
                                 </Button>
                                 {canAccessInvestmentContact ? (
                                   <Button
@@ -349,7 +386,7 @@ const InvestmentPage = () => {
                                       )
                                     }
                                   >
-                                    <Send className="ml-2 h-4 w-4" />
+                                    <Send className="ms-2 h-4 w-4" />
                                     {pickLocalizedCopy(language, {
                                       ar: 'تواصل',
                                       en: 'Contact',

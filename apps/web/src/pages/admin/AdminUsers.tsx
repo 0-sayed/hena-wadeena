@@ -146,7 +146,7 @@ export default function AdminUsers() {
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={pickLocalizedCopy(appLanguage, {
                   ar: 'بحث بالاسم أو البريد...',
@@ -157,7 +157,7 @@ export default function AdminUsers() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                className="pr-9"
+                className="search-input-with-icon-md"
               />
             </div>
             <Select
@@ -275,7 +275,7 @@ export default function AdminUsers() {
                       <TableCell className="font-medium">
                         <button
                           type="button"
-                          className="text-right text-primary transition-colors hover:text-primary/80 hover:underline"
+                          className="text-end text-primary transition-colors hover:text-primary/80 hover:underline"
                           onClick={() => {
                             void navigate(`/admin/users/${user.id}`);
                           }}
@@ -305,7 +305,7 @@ export default function AdminUsers() {
                             void navigate(`/admin/users/${user.id}`);
                           }}
                         >
-                          <Eye className="ml-2 h-4 w-4" />
+                          <Eye className="ms-2 h-4 w-4" />
                           {pickLocalizedCopy(appLanguage, { ar: 'عرض', en: 'View' })}
                         </Button>
                       </TableCell>
@@ -322,7 +322,7 @@ export default function AdminUsers() {
                                 void navigate(`/admin/users/${user.id}`);
                               }}
                             >
-                              <Eye className="ml-2 h-4 w-4" />
+                              <Eye className="ms-2 h-4 w-4" />
                               {pickLocalizedCopy(appLanguage, {
                                 ar: 'عرض الملف',
                                 en: 'View profile',

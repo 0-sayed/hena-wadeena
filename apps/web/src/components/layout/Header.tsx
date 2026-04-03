@@ -125,8 +125,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           investment: 'الاستثمار',
         };
 
-  const isAccommodationPath = (pathname: string) =>
-    pathname.startsWith('/tourism/accommodation');
+  const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
 
   return [
     {
@@ -197,7 +196,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className={`${CONTROL_BUTTON_CLASS} hover:text-amber-500 dark:hover:text-amber-400`}
+      className={`${CONTROL_BUTTON_CLASS} w-9 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
       aria-label={label}
       title={label}
     >
@@ -216,10 +215,7 @@ function LanguageToggle({
   onToggle: () => void;
 }) {
   const nextLanguage = language === 'ar' ? 'en' : 'ar';
-  const title =
-    language === 'ar'
-      ? headerCopy.ar.switchToEnglish
-      : headerCopy.en.switchToArabic;
+  const title = language === 'ar' ? headerCopy.ar.switchToEnglish : headerCopy.en.switchToArabic;
 
   return (
     <button
@@ -248,11 +244,7 @@ function HeaderActionCluster({
 }) {
   return (
     <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm">
-      <LanguageToggle
-        language={language}
-        disabled={disabled}
-        onToggle={onToggleLanguage}
-      />
+      <LanguageToggle language={language} disabled={disabled} onToggle={onToggleLanguage} />
       <ThemeToggle language={language} />
     </div>
   );
@@ -296,9 +288,7 @@ export function Header() {
     void setLanguage(nextLanguage)
       .catch(() => {
         toast.error(
-          nextLanguage === 'en'
-            ? copy.languageSwitchEnglishError
-            : copy.languageSwitchArabicError,
+          nextLanguage === 'en' ? copy.languageSwitchEnglishError : copy.languageSwitchArabicError,
         );
       })
       .finally(() => {
@@ -386,7 +376,7 @@ export function Header() {
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
+                    <span className="absolute -end-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -404,7 +394,7 @@ export function Header() {
                 </Button>
               </Link>
 
-              <div className="relative mr-1">
+              <div className="relative me-1">
                 <button
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
@@ -428,11 +418,8 @@ export function Header() {
 
                 {profileOpen && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setProfileOpen(false)}
-                    />
-                    <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-in fade-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200">
+                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                    <div className="absolute start-0 top-full z-50 mt-2 w-56 animate-in fade-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200">
                       <div className="border-b border-border px-4 py-3">
                         <p className="truncate text-sm font-semibold">{user.full_name}</p>
                         <LtrText as="p" className="truncate text-xs text-muted-foreground">
@@ -480,7 +467,7 @@ export function Header() {
                           <Bell className="h-4 w-4 text-muted-foreground" />
                           {copy.notifications}
                           {unreadCount > 0 && (
-                            <span className="mr-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
                             </span>
                           )}
@@ -505,10 +492,10 @@ export function Header() {
               </div>
             </>
           ) : (
-            <div className="mr-2 flex items-center gap-2">
+            <div className="me-2 flex items-center gap-2">
               <Link to="/login">
                 <Button variant="outline" size="sm">
-                  <User className="ml-2 h-4 w-4" />
+                  <User className="ms-2 h-4 w-4" />
                   {copy.login}
                 </Button>
               </Link>
@@ -549,7 +536,7 @@ export function Header() {
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
+                  <span className="absolute -end-0.5 -top-0.5 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-card">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -588,13 +575,13 @@ export function Header() {
                 )}
 
                 <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder={copy.mobileSearchPlaceholder}
                     aria-label={copy.search}
-                    className="h-10 pr-10"
+                    className="search-input-with-icon-md h-10"
                   />
                 </form>
 
@@ -657,7 +644,7 @@ export function Header() {
                       <Bell className="h-5 w-5 text-muted-foreground" />
                       {copy.notifications}
                       {unreadCount > 0 && (
-                        <span className="mr-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                        <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
                         </span>
                       )}
@@ -678,7 +665,7 @@ export function Header() {
                   <div className="flex flex-col gap-2 border-t border-border pt-4">
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
-                        <User className="ml-2 h-4 w-4" />
+                        <User className="ms-2 h-4 w-4" />
                         {copy.login}
                       </Button>
                     </Link>

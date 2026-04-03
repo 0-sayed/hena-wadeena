@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { useListings } from '@/hooks/use-listings';
 import { districtLabel, DISTRICTS_WITH_ALL, formatPrice } from '@/lib/format';
@@ -41,11 +47,11 @@ const AccommodationListPage = () => {
   }, [data, searchQuery]);
 
   return (
-    <Layout>
+    <Layout title="أماكن الإقامة">
       <section className="bg-gradient-to-bl from-primary/10 via-accent/5 to-background py-12 md:py-16">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/tourism')} className="mb-4">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة إلى السياحة
           </Button>
           <div className="max-w-3xl">
@@ -67,12 +73,12 @@ const AccommodationListPage = () => {
         <div className="container px-4 space-y-6">
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="ابحث عن حي أو عنوان أو وصف"
-                className="pr-10"
+                className="search-input-with-icon-md"
               />
             </div>
             <Select value={district} onValueChange={setDistrict}>
@@ -133,7 +139,9 @@ const AccommodationListPage = () => {
                         <h2 className="text-lg font-bold text-foreground">{listing.titleAr}</h2>
                         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                           <MapPin className="h-4 w-4 text-primary" />
-                          <span>{districtLabel(listing.district ?? listing.address ?? 'غير محدد')}</span>
+                          <span>
+                            {districtLabel(listing.district ?? listing.address ?? 'غير محدد')}
+                          </span>
                         </div>
                       </div>
                       <Badge variant="secondary">إقامة</Badge>
@@ -164,7 +172,7 @@ const AccommodationListPage = () => {
                       </div>
                       <Button onClick={() => void navigate(`/tourism/accommodation/${listing.id}`)}>
                         التفاصيل
-                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        <ArrowLeft className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>

@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import {
-  ArrowRight,
-  Copy,
-  KeyRound,
-  Mail,
-  Phone,
-  Shield,
-  User,
-  UserCog,
-} from 'lucide-react';
+import { ArrowRight, Copy, KeyRound, Mail, Phone, Shield, User, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -141,10 +132,13 @@ export default function AdminUserDetail() {
       return pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' });
     }
 
-    return pickLocalizedCopy(appLanguage, documentTypeLabels[documentType] ?? {
-      ar: documentType,
-      en: documentType,
-    });
+    return pickLocalizedCopy(
+      appLanguage,
+      documentTypeLabels[documentType] ?? {
+        ar: documentType,
+        en: documentType,
+      },
+    );
   };
 
   const handleResetPassword = async () => {
@@ -199,11 +193,12 @@ export default function AdminUserDetail() {
       <div className="space-y-4">
         <Button
           variant="ghost"
+          className="gap-2"
           onClick={() => {
             void navigate('/admin/users');
           }}
         >
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="h-4 w-4" />
           {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
         </Button>
         <Card>
@@ -224,12 +219,12 @@ export default function AdminUserDetail() {
         <div className="space-y-2">
           <Button
             variant="ghost"
-            className="px-0"
+            className="gap-2 px-0"
             onClick={() => {
               void navigate('/admin/users');
             }}
           >
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
           </Button>
           <h1 className="text-2xl font-bold">
@@ -247,7 +242,7 @@ export default function AdminUserDetail() {
         </div>
 
         <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-          <KeyRound className="ml-2 h-4 w-4" />
+          <KeyRound className="ms-2 h-4 w-4" />
           {pickLocalizedCopy(appLanguage, {
             ar: 'إعادة تعيين كلمة المرور',
             en: 'Reset password',
@@ -565,7 +560,7 @@ export default function AdminUserDetail() {
                 void handleCopyPassword();
               }}
             >
-              <Copy className="ml-2 h-4 w-4" />
+              <Copy className="ms-2 h-4 w-4" />
               {pickLocalizedCopy(appLanguage, {
                 ar: 'نسخ كلمة المرور',
                 en: 'Copy password',

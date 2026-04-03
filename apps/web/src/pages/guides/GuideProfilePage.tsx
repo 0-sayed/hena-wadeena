@@ -43,7 +43,7 @@ const GuideProfilePage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="ملف المرشد">
         <div className="container flex justify-center py-20">
           <div className="h-64 w-full max-w-2xl animate-pulse rounded-2xl bg-muted" />
         </div>
@@ -53,7 +53,7 @@ const GuideProfilePage = () => {
 
   if (error || !guide) {
     return (
-      <Layout>
+      <Layout title="ملف المرشد">
         <div className="container flex flex-col items-center gap-4 py-20">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات المرشد</p>
@@ -66,7 +66,7 @@ const GuideProfilePage = () => {
   }
 
   return (
-    <Layout>
+    <Layout title="ملف المرشد">
       <PageTransition>
         {guide.coverImage && (
           <div className="h-56 overflow-hidden">
@@ -87,7 +87,7 @@ const GuideProfilePage = () => {
                     />
                   </div>
 
-                  <div className="flex-1 text-center md:text-right">
+                  <div className="flex-1 text-center md:text-end">
                     <h1 className="mb-2 text-3xl font-bold text-foreground">{guideName}</h1>
                     <p className="mb-3 line-clamp-3 text-muted-foreground">
                       {guide.bioAr ?? guide.bioEn ?? 'مرشد معتمد لرحلات الوادي الجديد'}
@@ -95,7 +95,7 @@ const GuideProfilePage = () => {
                     <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                       {guide.licenseVerified && (
                         <Badge className="bg-green-500 text-white">
-                          <Shield className="ml-1 h-3 w-3" />
+                          <Shield className="ms-1 h-3 w-3" />
                           مرخّص
                         </Badge>
                       )}

@@ -96,13 +96,13 @@ export function MissionCards() {
   return (
     <section className="relative overflow-hidden bg-muted/30 py-24">
       <FloatingBlob
-        className="left-0 top-0 -translate-x-1/2 -translate-y-1/2"
+        className="start-0 top-0 -translate-x-1/2 -translate-y-1/2"
         color="primary"
         size="lg"
         animation={1}
       />
       <FloatingBlob
-        className="bottom-0 right-0 translate-x-1/3 translate-y-1/3"
+        className="bottom-0 end-0 translate-x-1/3 translate-y-1/3"
         color="accent"
         size="lg"
         animation={2}
@@ -138,7 +138,7 @@ export function MissionCards() {
                     </p>
                     <div className="flex items-center font-semibold text-primary">
                       {copy.cta}
-                      <ArrowLeft className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-x-2" />
+                      <ArrowLeft className="me-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-x-2" />
                     </div>
                   </CardContent>
                 </Card>

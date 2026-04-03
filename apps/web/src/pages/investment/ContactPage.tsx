@@ -333,8 +333,8 @@ const ContactPage = () => {
     <Layout>
       <section className="py-8 md:py-12">
         <div className="container max-w-2xl px-4">
-          <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6 gap-2">
+            <ArrowRight className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
 
@@ -360,14 +360,14 @@ const ContactPage = () => {
                       {pickLocalizedCopy(appLanguage, { ar: 'الاسم الكامل', en: 'Full name' })} *
                     </Label>
                     <div className="relative">
-                      <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, name: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                         required
                       />
                     </div>
@@ -378,7 +378,7 @@ const ContactPage = () => {
                       {pickLocalizedCopy(appLanguage, { ar: 'رقم الهاتف', en: 'Phone number' })}
                     </Label>
                     <div className="relative">
-                      <Phone className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Phone className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="phone"
                         type="tel"
@@ -386,7 +386,7 @@ const ContactPage = () => {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, phone: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                       />
                     </div>
                   </div>
@@ -402,7 +402,7 @@ const ContactPage = () => {
                       *
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Mail className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
@@ -410,7 +410,7 @@ const ContactPage = () => {
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, email: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                         required
                       />
                     </div>
@@ -421,14 +421,14 @@ const ContactPage = () => {
                       {pickLocalizedCopy(appLanguage, { ar: 'اسم الشركة', en: 'Company name' })}
                     </Label>
                     <div className="relative">
-                      <Building2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Building2 className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="company"
                         value={formData.company}
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, company: event.target.value }))
                         }
-                        className="pr-10"
+                        className="pe-10"
                       />
                     </div>
                   </div>
@@ -538,7 +538,7 @@ const ContactPage = () => {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                  <Send className="ml-2 h-5 w-5" />
+                  <Send className="ms-2 h-5 w-5" />
                   {submitting
                     ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الإرسال...', en: 'Sending...' })
                     : pickLocalizedCopy(appLanguage, { ar: 'إرسال الطلب', en: 'Send inquiry' })}

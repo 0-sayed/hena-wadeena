@@ -62,13 +62,13 @@ const AttractionsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="المعالم السياحية">
       {/* Hero Section */}
       <section className="relative py-12 md:py-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-background" />
         <div className="container relative px-4">
           <Button variant="ghost" onClick={() => void navigate('/tourism')} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4" />
             العودة للسياحة
           </Button>
 
@@ -83,10 +83,10 @@ const AttractionsPage = () => {
             {/* Search & Filter */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Search className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   placeholder="ابحث عن معلم سياحي..."
-                  className="pr-12 h-12"
+                  className="search-input-with-icon-md h-12"
                   onChange={handleSearchChange}
                 />
               </div>
@@ -161,7 +161,7 @@ const AttractionsPage = () => {
                         alt={attraction.nameAr}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <Badge className="absolute top-4 right-4 bg-card/90 text-foreground backdrop-blur-sm">
+                      <Badge className="absolute top-4 end-4 bg-card/90 text-foreground backdrop-blur-sm">
                         {attractionTypeLabels[attraction.type]}
                       </Badge>
                     </div>

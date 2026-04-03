@@ -81,7 +81,7 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
                     </TableCell>
                     <TableCell
                       dir="ltr"
-                      className={appLanguage === 'en' ? 'text-left' : 'text-right'}
+                      className={appLanguage === 'en' ? 'text-start' : 'text-end'}
                     >
                       {new Date(booking.bookingDate).toLocaleDateString(
                         appLanguage === 'en' ? 'en-US' : 'ar-EG',

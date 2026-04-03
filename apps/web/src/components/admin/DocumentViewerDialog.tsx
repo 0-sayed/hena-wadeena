@@ -117,13 +117,13 @@ export function DocumentViewerDialog({
           <div className="flex-1" />
           <Button variant="outline" size="sm" asChild>
             <a href={documentUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="ml-2 h-4 w-4" />
+              <ExternalLink className="ms-2 h-4 w-4" />
               {openInNewTab}
             </a>
           </Button>
           <Button variant="outline" size="sm" asChild>
             <a href={documentUrl} download>
-              <Download className="ml-2 h-4 w-4" />
+              <Download className="ms-2 h-4 w-4" />
               {download}
             </a>
           </Button>

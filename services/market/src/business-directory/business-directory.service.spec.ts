@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockDb, createMockRedis, createMockRedisStreams } from '../shared/test-helpers';
 
-import { BusinessDirectoryService } from './business-directory.service';
+import { buildPrefixTsQuery, BusinessDirectoryService } from './business-directory.service';
 
 // ---------------------------------------------------------------------------
 // Mock factories
@@ -84,6 +84,16 @@ describe('BusinessDirectoryService', () => {
       mockRedis as never,
       mockRedisStreams as never,
     );
+  });
+
+  describe('buildPrefixTsQuery', () => {
+    it('builds prefix tsquery tokens for partial Arabic text', () => {
+      expect(buildPrefixTsQuery('الفرا')).toBe('الفرا:*');
+    });
+
+    it('normalizes and combines multiple search terms', () => {
+      expect(buildPrefixTsQuery('  ألبان  الخارجة  ')).toBe('البان:* & الخارجه:*');
+    });
   });
 
   // -------------------------------------------------------------------------

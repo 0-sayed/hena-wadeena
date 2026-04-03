@@ -10,6 +10,25 @@ import type { SearchResponse, SearchResult } from './types';
 
 const CACHE_TTL_SECONDS = 300;
 
+function buildPrefixTsQuery(text: string): string | null {
+  const tokens = text
+    .trim()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ـ/g, '')
+    .replace(
+      /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,
+      '',
+    )
+    .replace(/[&|!:()<>']/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  if (tokens.length === 0) return null;
+
+  return tokens.map((token) => `${token}:*`).join(' & ');
+}
+
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
@@ -58,6 +77,9 @@ export class SearchService {
   }
 
   private async searchPois(q: string, limit: number): Promise<SearchResult[]> {
+    const prefixQuery = buildPrefixTsQuery(q);
+    if (!prefixQuery) return [];
+
     const rows = await this.db.execute<{
       id: string;
       name_ar: string;
@@ -73,7 +95,7 @@ export class SearchService {
         ts_rank_cd(p.search_vector, query) AS rank,
         p.category, p.status, p.rating_avg
       FROM map.points_of_interest p,
-        websearch_to_tsquery('simple', map.normalize_arabic(${q})) AS query
+        to_tsquery('simple', ${prefixQuery}) AS query
       WHERE p.search_vector @@ query
         AND p.status = 'approved' AND p.deleted_at IS NULL
       ORDER BY rank DESC
@@ -119,14 +141,14 @@ export class SearchService {
     }>(sql`
       SELECT p.id, p.name_ar, p.name_en, p.description,
         greatest(
-          similarity(map.normalize_arabic(p.name_ar), map.normalize_arabic(${q})),
-          similarity(coalesce(p.name_en, ''), ${q})
+          public.similarity(map.normalize_arabic(p.name_ar), map.normalize_arabic(${q})),
+          public.similarity(coalesce(p.name_en, ''), ${q})
         ) AS rank,
         p.category, p.status, p.rating_avg
       FROM map.points_of_interest p
       WHERE (
-        similarity(map.normalize_arabic(p.name_ar), map.normalize_arabic(${q})) > 0.3
-        OR similarity(coalesce(p.name_en, ''), ${q}) > 0.3
+        public.similarity(map.normalize_arabic(p.name_ar), map.normalize_arabic(${q})) > 0.3
+        OR public.similarity(coalesce(p.name_en, ''), ${q}) > 0.3
       )
         AND p.status = 'approved' AND p.deleted_at IS NULL
         ${excludeList ? sql`AND p.id NOT IN (${excludeList})` : sql``}

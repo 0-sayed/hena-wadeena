@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { AlertCircle, Search, Star, Users } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
@@ -30,6 +30,7 @@ import {
   piastresToEgp,
   specialtyLabels,
 } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 import type { GuideFilters, PublicUserProfile } from '@/services/api';
 
 function getGuideName(profile?: PublicUserProfile) {
@@ -38,6 +39,7 @@ function getGuideName(profile?: PublicUserProfile) {
 
 const GuidesPage = () => {
   const [filters, setFilters] = useState<Omit<GuideFilters, 'page' | 'limit'>>({});
+  const [searchInput, setSearchInput] = useState('');
 
   const {
     data: guides,
@@ -49,15 +51,40 @@ const GuidesPage = () => {
     fetchNextPage,
   } = useGuides(filters, 12);
 
-  const publicUsers = usePublicUsers(guides.map((guide) => guide.userId)).data ?? {};
+  const { data: publicUsersData } = usePublicUsers(guides.map((guide) => guide.userId));
+  const publicUsers = useMemo(() => publicUsersData ?? {}, [publicUsersData]);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((previous) => ({ ...previous, search: value || undefined }));
   });
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    debouncedSetSearch(event.target.value);
+    const nextValue = event.target.value;
+    setSearchInput(nextValue);
+    debouncedSetSearch(nextValue);
   };
+
+  const filteredGuides = useMemo(
+    () =>
+      guides.filter((guide) => {
+        const profile = publicUsers[guide.userId];
+
+        return matchesSearchQuery(searchInput, [
+          getGuideName(profile),
+          guide.bioAr,
+          guide.bioEn,
+          ...guide.specialties,
+          ...guide.specialties.map((specialty) => specialtyLabels[specialty] ?? specialty),
+          ...guide.languages,
+          ...guide.languages.map((language) => languageLabels[language] ?? language),
+          ...guide.areasOfOperation,
+          ...guide.areasOfOperation.map(
+            (area) => areaLabels[area as keyof typeof areaLabels] ?? area,
+          ),
+        ]);
+      }),
+    [guides, publicUsers, searchInput],
+  );
 
   const handleLanguageChange = (value: string) => {
     setFilters((previous) => ({ ...previous, language: value === 'all' ? undefined : value }));
@@ -72,7 +99,7 @@ const GuidesPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="المرشدون السياحيون">
       <PageTransition>
         <PageHero image={heroGuides} alt="المرشدين السياحيين">
           <SR>
@@ -93,11 +120,12 @@ const GuidesPage = () => {
           </SR>
           <SR delay={300}>
             <div className="relative mx-auto max-w-xl">
-              <Search className="absolute right-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="ابحث بالتخصص أو الوصف..."
+                value={searchInput}
                 onChange={handleSearchChange}
-                className="h-16 rounded-2xl border-0 bg-card/90 pr-14 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm"
               />
             </div>
           </SR>
@@ -169,7 +197,7 @@ const GuidesPage = () => {
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                    {guides.map((guide) => {
+                    {filteredGuides.map((guide) => {
                       const guideName = getGuideName(publicUsers[guide.userId]);
 
                       return (
@@ -187,7 +215,7 @@ const GuidesPage = () => {
                                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 {guide.licenseVerified && (
-                                  <Badge className="absolute left-3 top-3 bg-green-500 text-white shadow-lg">
+                                  <Badge className="absolute start-3 top-3 bg-green-500 text-white shadow-lg">
                                     ✓ مرخّص
                                   </Badge>
                                 )}
@@ -198,7 +226,9 @@ const GuidesPage = () => {
                                 <div className="space-y-1">
                                   <h2 className="text-xl font-bold text-foreground">{guideName}</h2>
                                   <p className="line-clamp-2 text-sm text-muted-foreground">
-                                    {guide.bioAr ?? guide.bioEn ?? 'مرشد معتمد لرحلات الوادي الجديد'}
+                                    {guide.bioAr ??
+                                      guide.bioEn ??
+                                      'مرشد معتمد لرحلات الوادي الجديد'}
                                   </p>
                                 </div>
 
@@ -232,7 +262,7 @@ const GuidesPage = () => {
                                     <span className="text-xl font-bold text-primary">
                                       {piastresToEgp(guide.basePrice)}
                                     </span>
-                                    <span className="mr-1 text-sm text-muted-foreground">/يوم</span>
+                                    <span className="ms-1 text-sm text-muted-foreground">/يوم</span>
                                   </div>
                                 </div>
 
@@ -253,6 +283,11 @@ const GuidesPage = () => {
                 {guides.length === 0 && (
                   <div className="py-12 text-center">
                     <p className="text-lg text-muted-foreground">لا يوجد مرشدون متاحون</p>
+                  </div>
+                )}
+                {guides.length > 0 && filteredGuides.length === 0 && (
+                  <div className="py-12 text-center">
+                    <p className="text-lg text-muted-foreground">لا يوجد مرشدون مطابقون للبحث</p>
                   </div>
                 )}
 

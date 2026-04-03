@@ -158,7 +158,7 @@ const GuideBookingPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="حجز مرشد">
         <section className="py-8 md:py-12">
           <div className="container max-w-3xl px-4">
             <Skeleton h="h-96" className="rounded-2xl" />
@@ -170,7 +170,7 @@ const GuideBookingPage = () => {
 
   if (error || !pkg) {
     return (
-      <Layout>
+      <Layout title="حجز مرشد">
         <div className="container flex flex-col items-center gap-4 py-20">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات الباقة</p>
@@ -183,11 +183,11 @@ const GuideBookingPage = () => {
   }
 
   return (
-    <Layout>
+    <Layout title="حجز مرشد">
       <section className="py-8 md:py-12">
         <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
             رجوع
           </Button>
 
@@ -212,8 +212,8 @@ const GuideBookingPage = () => {
                         </>
                       )}
                       {pkg.guideLicenseVerified && (
-                        <Badge className="mr-2 h-5 bg-green-500/10 text-[10px] text-green-600">
-                          <Shield className="ml-1 h-3 w-3" />
+                        <Badge className="me-2 h-5 bg-green-500/10 text-[10px] text-green-600">
+                          <Shield className="ms-1 h-3 w-3" />
                           مرخّص
                         </Badge>
                       )}
@@ -285,14 +285,14 @@ const GuideBookingPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="date">تاريخ الرحلة</Label>
                     <div className="relative">
-                      <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Calendar className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="date"
                         type="date"
                         value={bookingDate}
                         min={minDate}
                         onChange={(event) => setBookingDate(event.target.value)}
-                        className="pr-10"
+                        className="pe-10"
                         required
                       />
                     </div>
@@ -301,13 +301,13 @@ const GuideBookingPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="time">وقت البدء</Label>
                     <div className="relative">
-                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Clock className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="time"
                         type="time"
                         value={startTime}
                         onChange={(event) => setStartTime(event.target.value)}
-                        className="pr-10"
+                        className="pe-10"
                         required
                       />
                     </div>
@@ -398,7 +398,7 @@ const GuideBookingPage = () => {
             {notes && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">ملاحظات</span>
-                <span className="max-w-[200px] text-left">{notes}</span>
+                <span className="max-w-[200px] text-start">{notes}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
@@ -428,7 +428,7 @@ const GuideBookingPage = () => {
               disabled={createBooking.isPending || walletLoading}
             >
               {(createBooking.isPending || walletLoading) && (
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                <Loader2 className="ms-2 h-4 w-4 animate-spin" />
               )}
               تأكيد الحجز
             </Button>

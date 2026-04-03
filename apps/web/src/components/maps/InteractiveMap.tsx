@@ -22,6 +22,8 @@ export interface MapPolyline {
   dashArray?: string;
 }
 
+export type MapPopupTrigger = 'click' | 'hover' | 'both';
+
 interface InteractiveMapProps {
   locations: MapLocation[];
   center?: [number, number];
@@ -31,6 +33,8 @@ interface InteractiveMapProps {
   fitBounds?: boolean;
   polylines?: MapPolyline[];
   googleMapsUrl?: string;
+  showGoogleMapsButton?: boolean;
+  popupTrigger?: MapPopupTrigger;
 }
 
 // Fix default marker icon (bundlers often fail to resolve these assets)
@@ -72,6 +76,8 @@ export function InteractiveMap({
   fitBounds = false,
   polylines,
   googleMapsUrl,
+  showGoogleMapsButton = true,
+  popupTrigger = 'click',
 }: InteractiveMapProps) {
   const [isClient, setIsClient] = useState(false);
   const [mapReady, setMapReady] = useState(0);
@@ -79,8 +85,27 @@ export function InteractiveMap({
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const polylinesLayerRef = useRef<L.LayerGroup | null>(null);
+  const lastFitSignatureRef = useRef<string | null>(null);
 
   const normalizedClassName = useMemo(() => className ?? '', [className]);
+  const locationsSignature = useMemo(
+    () =>
+      locations
+        .map((location) =>
+          [
+            location.id,
+            location.lat,
+            location.lng,
+            location.name,
+            location.type ?? '',
+            location.description ?? '',
+            location.color ?? '',
+            location.image ?? '',
+          ].join(':'),
+        )
+        .join('|'),
+    [locations],
+  );
   const resolvedGoogleMapsUrl = useMemo(() => {
     if (googleMapsUrl) return googleMapsUrl;
     const primaryLocation = locations[0];
@@ -135,20 +160,30 @@ export function InteractiveMap({
       const icon = location.color ? createColoredIcon(location.color) : new L.Icon.Default();
       const marker = L.marker([location.lat, location.lng], { icon });
 
-      const tooltipHtml = `
-        <div style="text-align:center; padding:4px; max-width:220px;">
-          ${location.image ? `<img src="${escapeHtml(location.image)}" alt="" style="width:100%; height:80px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />` : ''}
+      const popupHtml = `
+        <div style="direction:rtl; text-align:center; padding:4px; width:min(220px, calc(100vw - 48px)); max-width:min(220px, calc(100vw - 48px)); box-sizing:border-box; white-space:normal; overflow-wrap:anywhere; word-break:break-word; line-height:1.45;">
+          ${location.image ? `<img src="${escapeHtml(location.image)}" alt="" style="display:block; width:100%; height:80px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />` : ''}
           <div style="font-weight:600; font-size:12px;">${escapeHtml(location.name)}</div>
           ${location.type ? `<div style="font-size:11px; opacity:0.75;">${escapeHtml(location.type)}</div>` : ''}
-          ${location.description ? `<div style="font-size:11px; margin-top:4px;">${escapeHtml(location.description)}</div>` : ''}
+          ${location.description ? `<div style="font-size:11px; margin-top:4px; white-space:normal; text-align:start;">${escapeHtml(location.description)}</div>` : ''}
         </div>
       `;
 
-      marker.bindTooltip(tooltipHtml, {
-        direction: 'top',
-        offset: [0, -10],
-        className: 'leaflet-tooltip-custom',
+      marker.bindPopup(popupHtml, {
+        autoPan: true,
+        keepInView: true,
+        maxWidth: 260,
+        minWidth: 220,
       });
+
+      if (popupTrigger === 'hover' || popupTrigger === 'both') {
+        marker.on('mouseover', () => marker.openPopup());
+        marker.on('mouseout', () => marker.closePopup());
+      }
+
+      if (popupTrigger === 'hover') {
+        marker.off('click');
+      }
 
       if (onMarkerClick) {
         marker.on('click', () => onMarkerClick(location));
@@ -157,11 +192,19 @@ export function InteractiveMap({
       marker.addTo(markersLayerRef.current!);
     });
 
-    if (fitBounds && locations.length > 0 && mapRef.current) {
+    if (!fitBounds || locations.length === 0 || !mapRef.current) {
+      if (!fitBounds || locations.length === 0) {
+        lastFitSignatureRef.current = null;
+      }
+      return;
+    }
+
+    if (lastFitSignatureRef.current !== locationsSignature) {
       const bounds = L.latLngBounds(locations.map((location) => [location.lat, location.lng]));
       mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      lastFitSignatureRef.current = locationsSignature;
     }
-  }, [locations, onMarkerClick, fitBounds, mapReady]);
+  }, [fitBounds, locations, locationsSignature, mapReady, onMarkerClick, popupTrigger]);
 
   useEffect(() => {
     if (!mapRef.current || !polylinesLayerRef.current) return;
@@ -180,8 +223,8 @@ export function InteractiveMap({
   }, [polylines, mapReady]);
 
   const googleMapsButton = (
-    <div className="pointer-events-none absolute left-3 top-3 z-[500]">
-      <Button variant="secondary" size="sm" className="pointer-events-auto shadow-md" asChild>
+    <div className="ms-auto flex w-full justify-end">
+      <Button variant="outline" size="sm" className="shadow-sm" asChild>
         <a href={resolvedGoogleMapsUrl} target="_blank" rel="noopener noreferrer">
           <ExternalLink className="h-4 w-4" />
           Open in Google Maps
@@ -192,19 +235,19 @@ export function InteractiveMap({
 
   if (!isClient) {
     return (
-      <div className="relative">
+      <div className="space-y-3">
         <div className={`${normalizedClassName} bg-muted/50 flex items-center justify-center`}>
           <span className="text-muted-foreground">جارٍ تحميل الخريطة...</span>
         </div>
-        {googleMapsButton}
+        {showGoogleMapsButton ? googleMapsButton : null}
       </div>
     );
   }
 
   return (
-    <div className="relative">
-      <div ref={mapContainerRef} className={normalizedClassName} />
-      {googleMapsButton}
+    <div className="space-y-3">
+      <div ref={mapContainerRef} className={normalizedClassName} dir="ltr" />
+      {showGoogleMapsButton ? googleMapsButton : null}
     </div>
   );
 }

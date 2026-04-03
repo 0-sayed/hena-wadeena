@@ -8,6 +8,26 @@ import type { SearchResponse, SearchResult } from './types';
 
 const CACHE_TTL_SECONDS = 300;
 
+function buildPrefixTsQuery(text: string): string | null {
+  const tokens = text
+    .trim()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/ـ/g, '')
+    .replace(
+      /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,
+      '',
+    )
+    .replace(/[&|!:()<>'"\\-]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  if (tokens.length === 0) return null;
+
+  return tokens.map((token) => `${token}:*`).join(' & ');
+}
+
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
@@ -64,6 +84,9 @@ export class SearchService {
   }
 
   private async searchListings(q: string, limit: number): Promise<SearchResult[]> {
+    const prefixQuery = buildPrefixTsQuery(q);
+    if (!prefixQuery) return [];
+
     const rows = await this.db.execute<{
       id: string;
       title_ar: string;
@@ -79,7 +102,7 @@ export class SearchService {
         ts_rank_cd(l.search_vector, query) AS rank,
         l.category, l.district, l.status
       FROM market.listings l,
-        websearch_to_tsquery('simple', market.normalize_arabic(${q})) AS query
+        to_tsquery('simple', ${prefixQuery}) AS query
       WHERE l.search_vector @@ query
         AND l.status = 'active' AND l.is_published = true AND l.deleted_at IS NULL
       ORDER BY rank DESC
@@ -97,6 +120,9 @@ export class SearchService {
   }
 
   private async searchOpportunities(q: string, limit: number): Promise<SearchResult[]> {
+    const prefixQuery = buildPrefixTsQuery(q);
+    if (!prefixQuery) return [];
+
     const rows = await this.db.execute<{
       id: string;
       title_ar: string;
@@ -112,7 +138,7 @@ export class SearchService {
         ts_rank_cd(o.search_vector, query) AS rank,
         o.sector, o.area, o.status
       FROM market.investment_opportunities o,
-        websearch_to_tsquery('simple', market.normalize_arabic(${q})) AS query
+        to_tsquery('simple', ${prefixQuery}) AS query
       WHERE o.search_vector @@ query
         AND o.status = 'active'
       ORDER BY rank DESC
@@ -130,6 +156,9 @@ export class SearchService {
   }
 
   private async searchBusinesses(q: string, limit: number): Promise<SearchResult[]> {
+    const prefixQuery = buildPrefixTsQuery(q);
+    if (!prefixQuery) return [];
+
     const rows = await this.db.execute<{
       id: string;
       name_ar: string;
@@ -145,7 +174,7 @@ export class SearchService {
         ts_rank_cd(b.search_vector, query) AS rank,
         b.category, b.district, b.status
       FROM market.business_directories b,
-        websearch_to_tsquery('simple', market.normalize_arabic(${q})) AS query
+        to_tsquery('simple', ${prefixQuery}) AS query
       WHERE b.search_vector @@ query
         AND b.status = 'active' AND b.verification_status = 'verified' AND b.deleted_at IS NULL
       ORDER BY rank DESC

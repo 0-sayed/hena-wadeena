@@ -123,8 +123,8 @@ const CreateRidePage = () => {
     <Layout>
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
-          <Button variant="ghost" onClick={() => void navigate('/logistics')} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+          <Button variant="ghost" onClick={() => void navigate('/logistics')} className="mb-6 gap-2">
+            <ArrowRight className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'العودة للخريطة والتنقل',
               en: 'Back to maps & transport',

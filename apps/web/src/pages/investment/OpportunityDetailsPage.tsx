@@ -71,8 +71,12 @@ const OpportunityDetailsPage = () => {
     <Layout>
       <section className="py-8 md:py-12">
         <div className="container px-4">
-          <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
-            <ArrowRight className="h-4 w-4 ml-2" />
+          <Button
+            variant="ghost"
+            onClick={() => void navigate('/investment')}
+            className="mb-6 gap-2"
+          >
+            <ArrowRight className="h-4 w-4" />
             العودة للاستثمار
           </Button>
 
@@ -236,7 +240,7 @@ const OpportunityDetailsPage = () => {
                       size="lg"
                       onClick={() => void navigate(`/investment/contact/${opportunity.id}`)}
                     >
-                      <Mail className="h-5 w-5 ml-2" />
+                      <Mail className="h-5 w-5 ms-2" />
                       إرسال استفسار استثماري
                     </Button>
                   ) : null}

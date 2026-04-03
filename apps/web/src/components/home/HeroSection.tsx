@@ -304,14 +304,14 @@ export function HeroSection() {
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {[
-          'top-[18%] right-[12%] h-2 w-2 bg-accent/30 particle-1',
-          'top-[38%] right-[28%] h-3 w-3 bg-primary/20 particle-2',
-          'top-[58%] right-[8%] h-1.5 w-1.5 bg-card/25 particle-3',
-          'top-[28%] right-[42%] h-2.5 w-2.5 bg-accent/20 particle-4',
-          'top-[68%] right-[55%] h-2 w-2 bg-primary/15 particle-1',
-          'top-[12%] right-[68%] h-3 w-3 bg-card/15 particle-3',
-          'top-[78%] right-[35%] h-1.5 w-1.5 bg-accent/25 particle-2',
-          'top-[8%] right-[50%] h-2 w-2 bg-card/20 particle-4',
+          'top-[18%] end-[12%] h-2 w-2 bg-accent/30 particle-1',
+          'top-[38%] end-[28%] h-3 w-3 bg-primary/20 particle-2',
+          'top-[58%] end-[8%] h-1.5 w-1.5 bg-card/25 particle-3',
+          'top-[28%] end-[42%] h-2.5 w-2.5 bg-accent/20 particle-4',
+          'top-[68%] end-[55%] h-2 w-2 bg-primary/15 particle-1',
+          'top-[12%] end-[68%] h-3 w-3 bg-card/15 particle-3',
+          'top-[78%] end-[35%] h-1.5 w-1.5 bg-accent/25 particle-2',
+          'top-[8%] end-[50%] h-2 w-2 bg-card/20 particle-4',
         ].map((cls, index) => (
           <div key={index} className={`particle absolute rounded-full ${cls}`} />
         ))}
@@ -337,7 +337,7 @@ export function HeroSection() {
 
           <div className="hero-reveal hero-d4 mb-12">
             <CardDeck language={language} />
-            <p className="mt-4 text-center text-xs text-card/50 sm:text-right">
+            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">
               {copy.helper} ✨
             </p>
           </div>
@@ -351,7 +351,7 @@ export function HeroSection() {
       </div>
 
       <div
-        className="scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2"
+        className="scroll-indicator absolute bottom-8 start-1/2 -translate-x-1/2"
         style={{ opacity: heroOpacity }}
       >
         <div className="flex h-11 w-7 items-start justify-center rounded-full border-2 border-card/30 p-1.5">
