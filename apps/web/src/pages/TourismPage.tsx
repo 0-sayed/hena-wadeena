@@ -41,7 +41,8 @@ const TourismPage = () => {
   );
   const { data: allAttractions, isLoading: loadingAll } = useAttractions(undefined, 8);
   const { data: guides, isLoading: loadingGuides } = useGuides(undefined, 6);
-  const publicUsers = usePublicUsers(guides.map((guide) => guide.userId)).data ?? {};
+  const { data: publicUsersData } = usePublicUsers(guides.map((guide) => guide.userId));
+  const publicUsers = useMemo(() => publicUsersData ?? {}, [publicUsersData]);
   const loading = loadingFeatured || loadingAll || loadingGuides;
 
   const handleSearch = (event: FormEvent) => {
@@ -138,10 +139,7 @@ const TourismPage = () => {
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 ps-28 text-lg shadow-lg backdrop-blur-sm"
               />
-              <Button
-                type="submit"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl"
-              >
+              <Button type="submit" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl">
                 ابحث
               </Button>
             </form>
@@ -322,11 +320,15 @@ const TourismPage = () => {
                                     {guideName}
                                   </h3>
                                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                                    {guide.bioAr ?? guide.bioEn ?? 'مرشد معتمد لرحلات الوادي الجديد'}
+                                    {guide.bioAr ??
+                                      guide.bioEn ??
+                                      'مرشد معتمد لرحلات الوادي الجديد'}
                                   </p>
                                   <div className="mt-2 flex items-center gap-1.5 text-accent">
                                     <Star className="h-5 w-5 fill-current" />
-                                    <span className="font-bold">{formatRating(guide.ratingAvg)}</span>
+                                    <span className="font-bold">
+                                      {formatRating(guide.ratingAvg)}
+                                    </span>
                                     <span className="text-sm text-muted-foreground">
                                       ({guide.ratingCount} تقييم)
                                     </span>

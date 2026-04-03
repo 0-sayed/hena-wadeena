@@ -51,7 +51,8 @@ const GuidesPage = () => {
     fetchNextPage,
   } = useGuides(filters, 12);
 
-  const publicUsers = usePublicUsers(guides.map((guide) => guide.userId)).data ?? {};
+  const { data: publicUsersData } = usePublicUsers(guides.map((guide) => guide.userId));
+  const publicUsers = useMemo(() => publicUsersData ?? {}, [publicUsersData]);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((previous) => ({ ...previous, search: value || undefined }));
@@ -225,7 +226,9 @@ const GuidesPage = () => {
                                 <div className="space-y-1">
                                   <h2 className="text-xl font-bold text-foreground">{guideName}</h2>
                                   <p className="line-clamp-2 text-sm text-muted-foreground">
-                                    {guide.bioAr ?? guide.bioEn ?? 'مرشد معتمد لرحلات الوادي الجديد'}
+                                    {guide.bioAr ??
+                                      guide.bioEn ??
+                                      'مرشد معتمد لرحلات الوادي الجديد'}
                                   </p>
                                 </div>
 
@@ -259,7 +262,7 @@ const GuidesPage = () => {
                                     <span className="text-xl font-bold text-primary">
                                       {piastresToEgp(guide.basePrice)}
                                     </span>
-                                    <span className="me-1 text-sm text-muted-foreground">/يوم</span>
+                                    <span className="ms-1 text-sm text-muted-foreground">/يوم</span>
                                   </div>
                                 </div>
 
