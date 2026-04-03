@@ -26,3 +26,20 @@ export const EVENTS = {
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
+
+export interface BookingEventPayload {
+  bookingId: string;
+  packageId: string;
+  guideProfileId: string;
+  guideUserId: string;
+  touristUserId: string;
+  packageTitleAr: string;
+  packageTitleEn: string;
+  totalPrice: string;
+}
+
+export interface BookingCancelledEventPayload extends BookingEventPayload {
+  cancellationReason: string;
+  cancelledByRole: string;
+  cancelledByUserId: string;
+}
