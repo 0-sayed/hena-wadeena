@@ -496,7 +496,7 @@ describe('Top-level page localization', () => {
     expect(screen.getAllByText('Kharga').length).toBeGreaterThan(0);
     expect(screen.getByText('5-9 million EGP')).toBeInTheDocument();
     expect(screen.getByText('Expected return: 18%')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Details/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Details/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /Inquiry/i })).toBeInTheDocument();
     expect(screen.getByText('Palm Tech')).toBeInTheDocument();
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);

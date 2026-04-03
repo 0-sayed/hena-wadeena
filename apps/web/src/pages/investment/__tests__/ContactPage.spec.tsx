@@ -168,7 +168,7 @@ describe('ContactPage', () => {
       expect(mockGetBusinessById).toHaveBeenCalledWith('startup-1');
     });
 
-    const messageField = container.querySelector('#message') as HTMLTextAreaElement | null;
+    const messageField = container.querySelector<HTMLTextAreaElement>('#message');
     expect(messageField).not.toBeNull();
     fireEvent.change(messageField!, {
       target: { value: 'I would like to explore a seed investment.' },

@@ -43,7 +43,7 @@ export class BusinessInquiriesService {
       .where(and(eq(businessDirectories.id, businessId), isNull(businessDirectories.deletedAt)))
       .limit(1);
 
-    if (!business || business.status !== 'active' || business.verificationStatus !== 'verified') {
+    if (business?.status !== 'active' || business.verificationStatus !== 'verified') {
       throw new NotFoundException('Business not found');
     }
 
