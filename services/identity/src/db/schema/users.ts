@@ -21,6 +21,7 @@ export const users = identitySchema.table(
     status: userStatusEnum().default('active').notNull(),
     language: text().default('ar').notNull(),
     balancePiasters: integer('balance_piasters').default(0).notNull(),
+    sessionInvalidatedAt: timestamp('session_invalidated_at', { withTimezone: true }),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

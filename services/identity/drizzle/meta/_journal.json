@@ -99,6 +99,13 @@
       "when": 1775089630101,
       "tag": "20260402002710_lonely_vertigo",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1775205840706,
+      "tag": "20260403084400_equal_purifiers",
+      "breakpoints": true
     }
   ]
 }

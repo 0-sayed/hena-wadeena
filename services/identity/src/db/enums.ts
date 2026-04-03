@@ -51,6 +51,17 @@ export const notificationTypeEnum = identitySchema.enum('notification_type', [
   'system',
 ]);
 
+export const walletLedgerDirectionEnum = identitySchema.enum('wallet_ledger_direction', [
+  'credit',
+  'debit',
+]);
+
+export const walletLedgerKindEnum = identitySchema.enum('wallet_ledger_kind', [
+  'booking_debit',
+  'booking_refund',
+  'booking_payout',
+]);
+
 export const kycStatusEnum = identitySchema.enum('kyc_status', [
   'pending',
   'under_review',
