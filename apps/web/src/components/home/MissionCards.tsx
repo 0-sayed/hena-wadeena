@@ -104,7 +104,7 @@ export function MissionCards() {
                     </p>
                     <div className="flex items-center text-primary font-semibold">
                       استكشف
-                      <ArrowLeft className="h-5 w-5 me-2 group-hover:-translate-x-2 transition-transform duration-300" />
+                      <ArrowLeft className="h-5 w-5 ms-2 group-hover:-translate-x-2 transition-transform duration-300" />
                     </div>
                   </CardContent>
                 </Card>

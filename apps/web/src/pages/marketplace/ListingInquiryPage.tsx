@@ -202,7 +202,7 @@ export default function ListingInquiryPage() {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={submitting || isOwner}>
-                  <Send className="ms-2 h-5 w-5" />
+                  <Send className="h-5 w-5" />
                   {submitting ? 'جارٍ الإرسال...' : 'إرسال الاستفسار'}
                 </Button>
               </form>

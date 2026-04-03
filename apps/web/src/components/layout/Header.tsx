@@ -55,8 +55,7 @@ function buildNavigation(language: 'ar' | 'en'): NavigationItem[] {
           investment: 'الاستثمار',
         };
 
-  const isAccommodationPath = (pathname: string) =>
-    pathname.startsWith('/tourism/accommodation');
+  const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
 
   return [
     {
@@ -175,11 +174,7 @@ function HeaderActionCluster({
 }) {
   return (
     <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm shadow-black/5 supports-[backdrop-filter]:bg-background/70">
-      <LanguageToggle
-        language={language}
-        disabled={disabled}
-        onToggle={onToggleLanguage}
-      />
+      <LanguageToggle language={language} disabled={disabled} onToggle={onToggleLanguage} />
       <ThemeToggle />
     </div>
   );
@@ -222,9 +217,7 @@ export function Header() {
     void setLanguage(nextLanguage)
       .catch(() => {
         toast.error(
-          nextLanguage === 'en'
-            ? 'تعذر التبديل إلى الإنجليزية'
-            : 'تعذر التبديل إلى العربية',
+          nextLanguage === 'en' ? 'تعذر التبديل إلى الإنجليزية' : 'تعذر التبديل إلى العربية',
         );
       })
       .finally(() => {
@@ -348,10 +341,7 @@ export function Header() {
 
                 {profileOpen && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setProfileOpen(false)}
-                    />
+                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
                     <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-in slide-in-from-top-2 rounded-xl border border-border bg-card py-2 shadow-xl duration-200 fade-in">
                       <div className="border-b border-border px-4 py-3">
                         <p className="truncate text-sm font-semibold">{user.full_name}</p>
@@ -398,7 +388,7 @@ export function Header() {
                           <Bell className="h-4 w-4 text-muted-foreground" />
                           الإشعارات
                           {unreadCount > 0 && (
-                            <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            <span className="ms-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
                             </span>
                           )}
@@ -426,7 +416,7 @@ export function Header() {
             <div className="me-2 flex items-center gap-2">
               <Link to="/login">
                 <Button variant="outline" size="sm">
-                  <User className="ms-2 h-4 w-4" />
+                  <User className="me-2 h-4 w-4" />
                   تسجيل الدخول
                 </Button>
               </Link>
@@ -560,7 +550,7 @@ export function Header() {
                       <Bell className="h-5 w-5 text-muted-foreground" />
                       الإشعارات
                       {unreadCount > 0 && (
-                        <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                        <span className="ms-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
                         </span>
                       )}
@@ -581,7 +571,7 @@ export function Header() {
                   <div className="flex flex-col gap-2 border-t border-border pt-4">
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
-                        <User className="ms-2 h-4 w-4" />
+                        <User className="me-2 h-4 w-4" />
                         تسجيل الدخول
                       </Button>
                     </Link>

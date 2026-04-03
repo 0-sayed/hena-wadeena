@@ -107,7 +107,7 @@ const WalletPage = () => {
                           size="lg"
                           className="h-14 px-8 rounded-xl hover:scale-[1.03] transition-transform"
                         >
-                          <Plus className="h-5 w-5 ms-2" />
+                          <Plus className="h-5 w-5 me-2" />
                           شحن المحفظة
                         </Button>
                       </div>
@@ -149,7 +149,7 @@ const WalletPage = () => {
                         onClick={() => void handleTopup()}
                         className="flex-1 h-12 rounded-xl hover:scale-[1.02] transition-transform"
                       >
-                        <CreditCard className="h-5 w-5 ms-2" />
+                        <CreditCard className="h-5 w-5 me-2" />
                         شحن الآن
                       </Button>
                       <Button

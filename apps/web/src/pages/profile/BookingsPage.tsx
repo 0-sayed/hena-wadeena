@@ -132,11 +132,11 @@ const BookingsPage = () => {
       return isGuide ? (
         <div className="flex gap-2 mt-4">
           <Button size="sm" onClick={() => setActionTarget({ id: b.id, action: 'confirm' })}>
-            <CheckCircle className="h-4 w-4 ms-1" />
+            <CheckCircle className="h-4 w-4 me-1" />
             قبول
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(b.id)}>
-            <XCircle className="h-4 w-4 ms-1" />
+            <XCircle className="h-4 w-4 me-1" />
             رفض
           </Button>
         </div>
@@ -147,7 +147,7 @@ const BookingsPage = () => {
           className="mt-4"
           onClick={() => setCancelTarget(b.id)}
         >
-          <XCircle className="h-4 w-4 ms-1" />
+          <XCircle className="h-4 w-4 me-1" />
           إلغاء
         </Button>
       );
@@ -162,7 +162,7 @@ const BookingsPage = () => {
             disabled={!isBookingDay}
             title={!isBookingDay ? 'يمكن بدء الجولة في يوم الحجز فقط' : ''}
           >
-            <Play className="h-4 w-4 ms-1" />
+            <Play className="h-4 w-4 me-1" />
             بدء الجولة
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(b.id)}>
@@ -185,7 +185,7 @@ const BookingsPage = () => {
       return (
         <div className="flex gap-2 mt-4">
           <Button size="sm" onClick={() => setActionTarget({ id: b.id, action: 'complete' })}>
-            <CheckCircle className="h-4 w-4 ms-1" />
+            <CheckCircle className="h-4 w-4 me-1" />
             إكمال الجولة
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(b.id)}>

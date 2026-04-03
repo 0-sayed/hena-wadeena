@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import {
-  ArrowRight,
-  Copy,
-  KeyRound,
-  Mail,
-  Phone,
-  Shield,
-  User,
-  UserCog,
-} from 'lucide-react';
+import { ArrowRight, Copy, KeyRound, Mail, Phone, Shield, User, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -209,9 +200,7 @@ export default function AdminUserDetail() {
               </div>
               <p className="text-sm text-muted-foreground">{user.email}</p>
               {user.displayName && (
-                <p className="text-sm text-muted-foreground">
-                  الاسم الظاهر: {user.displayName}
-                </p>
+                <p className="text-sm text-muted-foreground">الاسم الظاهر: {user.displayName}</p>
               )}
             </div>
           </div>
@@ -248,9 +237,7 @@ export default function AdminUserDetail() {
               <User className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-muted-foreground">الدور الحالي</p>
-                <p className="font-medium text-foreground">
-                  {roleLabels[user.role] || user.role}
-                </p>
+                <p className="font-medium text-foreground">{roleLabels[user.role] || user.role}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-4">
@@ -279,9 +266,7 @@ export default function AdminUserDetail() {
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">حالة KYC</p>
               <p className="font-medium text-foreground">
-                {user.kycStatus
-                  ? kycLabels[user.kycStatus] || user.kycStatus
-                  : 'لا يوجد طلب تحقق'}
+                {user.kycStatus ? kycLabels[user.kycStatus] || user.kycStatus : 'لا يوجد طلب تحقق'}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
@@ -298,15 +283,11 @@ export default function AdminUserDetail() {
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">آخر إرسال KYC</p>
-              <p className="font-medium text-foreground">
-                {formatDateTime(user.kycSubmittedAt)}
-              </p>
+              <p className="font-medium text-foreground">{formatDateTime(user.kycSubmittedAt)}</p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">آخر مراجعة KYC</p>
-              <p className="font-medium text-foreground">
-                {formatDateTime(user.kycReviewedAt)}
-              </p>
+              <p className="font-medium text-foreground">{formatDateTime(user.kycReviewedAt)}</p>
             </div>
           </CardContent>
         </Card>
@@ -342,8 +323,8 @@ export default function AdminUserDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>إعادة تعيين كلمة المرور</AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم إنشاء كلمة مرور عشوائية جديدة لهذا المستخدم وإلغاء جلساته الحالية. اعرض
-              كلمة المرور الجديدة مرة واحدة فقط وشاركها معه بشكل آمن.
+              سيتم إنشاء كلمة مرور عشوائية جديدة لهذا المستخدم وإلغاء جلساته الحالية. اعرض كلمة
+              المرور الجديدة مرة واحدة فقط وشاركها معه بشكل آمن.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -355,9 +336,7 @@ export default function AdminUserDetail() {
               }}
               disabled={resetPasswordMutation.isPending}
             >
-              {resetPasswordMutation.isPending
-                ? 'جارٍ التنفيذ...'
-                : 'تأكيد إعادة التعيين'}
+              {resetPasswordMutation.isPending ? 'جارٍ التنفيذ...' : 'تأكيد إعادة التعيين'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -394,7 +373,7 @@ export default function AdminUserDetail() {
                 void handleCopyPassword();
               }}
             >
-              <Copy className="ms-2 h-4 w-4" />
+              <Copy className="h-4 w-4" />
               نسخ كلمة المرور
             </Button>
             <Button onClick={() => setPasswordDialogOpen(false)}>إغلاق</Button>

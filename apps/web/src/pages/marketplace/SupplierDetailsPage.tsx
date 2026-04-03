@@ -132,8 +132,8 @@ const SupplierDetailsPage = () => {
                     <Table className="table-fixed">
                       <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent">
-                          <TableHead className="px-6 py-4">المنتج</TableHead>
-                          <TableHead className="px-6 py-4">الوحدة</TableHead>
+                          <TableHead className="px-6 py-4 text-start">المنتج</TableHead>
+                          <TableHead className="px-6 py-4 text-start">الوحدة</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

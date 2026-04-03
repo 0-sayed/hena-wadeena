@@ -179,7 +179,7 @@ export default function AdminOverview() {
         <p className="text-xs text-muted-foreground">
           آخر تحديث: {new Date(stats.meta.cachedAt).toLocaleString('ar-EG')}
           {stats.meta.degraded && (
-            <span className="me-2 text-yellow-500">(بعض البيانات غير متاحة)</span>
+            <span className="ms-2 text-yellow-500">(بعض البيانات غير متاحة)</span>
           )}
         </p>
       )}

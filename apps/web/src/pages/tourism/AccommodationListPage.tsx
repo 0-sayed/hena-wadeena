@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { useListings } from '@/hooks/use-listings';
 import { districtLabel, DISTRICTS_WITH_ALL, formatPrice } from '@/lib/format';
@@ -133,7 +139,9 @@ const AccommodationListPage = () => {
                         <h2 className="text-lg font-bold text-foreground">{listing.titleAr}</h2>
                         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                           <MapPin className="h-4 w-4 text-primary" />
-                          <span>{districtLabel(listing.district ?? listing.address ?? 'غير محدد')}</span>
+                          <span>
+                            {districtLabel(listing.district ?? listing.address ?? 'غير محدد')}
+                          </span>
                         </div>
                       </div>
                       <Badge variant="secondary">إقامة</Badge>
@@ -164,7 +172,7 @@ const AccommodationListPage = () => {
                       </div>
                       <Button onClick={() => void navigate(`/tourism/accommodation/${listing.id}`)}>
                         التفاصيل
-                        <ArrowLeft className="me-2 h-4 w-4" />
+                        <ArrowLeft className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>

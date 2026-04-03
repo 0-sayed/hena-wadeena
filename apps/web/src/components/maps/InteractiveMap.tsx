@@ -204,7 +204,7 @@ export function InteractiveMap({
       mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       lastFitSignatureRef.current = locationsSignature;
     }
-  }, [fitBounds, locationsSignature, mapReady, onMarkerClick, popupTrigger]);
+  }, [fitBounds, locations, locationsSignature, mapReady, onMarkerClick, popupTrigger]);
 
   useEffect(() => {
     if (!mapRef.current || !polylinesLayerRef.current) return;

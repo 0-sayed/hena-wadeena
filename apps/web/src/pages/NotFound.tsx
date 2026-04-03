@@ -31,7 +31,7 @@ const NotFound = () => {
                   size="lg"
                   className="h-14 px-8 rounded-xl text-base hover:scale-[1.05] transition-transform"
                 >
-                  <Home className="h-5 w-5 ms-2" />
+                  <Home className="h-5 w-5 me-2" />
                   العودة للرئيسية
                 </Button>
               </Link>
