@@ -43,7 +43,7 @@ const StartupDetailsPage = () => {
         <section className="py-8 md:py-12">
           <div className="container px-4">
             <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
               {pickLocalizedCopy(appLanguage, {
                 ar: 'العودة إلى الاستثمار',
                 en: 'Back to investment',
@@ -111,7 +111,7 @@ const StartupDetailsPage = () => {
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'العودة إلى الاستثمار',
               en: 'Back to investment',
