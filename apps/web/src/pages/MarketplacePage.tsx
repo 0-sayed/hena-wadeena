@@ -11,6 +11,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -437,69 +445,67 @@ const MarketplacePage = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-border bg-muted/30">
-                                <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                                  {pickLocalizedCopy(language, { ar: 'المنتج', en: 'Product' })}
-                                </th>
-                                <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'التصنيف',
-                                    en: 'Category',
-                                  })}
-                                </th>
-                                <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                                  {pickLocalizedCopy(language, { ar: 'السعر', en: 'Price' })}
-                                </th>
-                                <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                                  {pickLocalizedCopy(language, { ar: 'التغير', en: 'Change' })}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {filteredProducts.map((entry, index) => (
-                                <tr
-                                  key={`${entry.commodity.id}-${entry.region}-${entry.priceType}`}
-                                  className={`transition-colors duration-200 hover:bg-muted/20 ${
-                                    index !== filteredProducts.length - 1
-                                      ? 'border-b border-border/50'
-                                      : ''
-                                  }`}
-                                >
-                                  <td className="px-6 py-5">
-                                    <span className="font-semibold text-foreground">
-                                      {pickLocalizedField(language, {
-                                        ar: entry.commodity.nameAr,
-                                        en: entry.commodity.nameEn,
-                                      })}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-5">
-                                    <Badge variant="outline">
-                                      {categoryLabel(entry.commodity.category, language)}
-                                    </Badge>
-                                  </td>
-                                  <td className="px-6 py-5">
-                                    <span className="text-lg font-bold text-foreground">
-                                      {formatPrice(entry.latestPrice)}
-                                    </span>
-                                    <span className="me-1 text-sm text-muted-foreground">
-                                      {pickLocalizedCopy(language, {
-                                        ar: `جنيه/${unitLabel(entry.commodity.unit, language)}`,
-                                        en: `EGP/${unitLabel(entry.commodity.unit, language)}`,
-                                      })}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-5">
-                                    <TrendBadge changePercent={entry.changePercent} />
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                        <Table>
+                          <TableHeader className="bg-muted/30">
+                            <TableRow className="hover:bg-transparent">
+                              <TableHead className="px-6 py-5">
+                                {pickLocalizedCopy(language, { ar: 'المنتج', en: 'Product' })}
+                              </TableHead>
+                              <TableHead className="px-6 py-5">
+                                {pickLocalizedCopy(language, {
+                                  ar: 'التصنيف',
+                                  en: 'Category',
+                                })}
+                              </TableHead>
+                              <TableHead className="px-6 py-5">
+                                {pickLocalizedCopy(language, { ar: 'السعر', en: 'Price' })}
+                              </TableHead>
+                              <TableHead className="px-6 py-5">
+                                {pickLocalizedCopy(language, { ar: 'التغير', en: 'Change' })}
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredProducts.map((entry, index) => (
+                              <TableRow
+                                key={`${entry.commodity.id}-${entry.region}-${entry.priceType}`}
+                                className={
+                                  index === filteredProducts.length - 1
+                                    ? 'border-b-0 hover:bg-muted/20'
+                                    : 'hover:bg-muted/20'
+                                }
+                              >
+                                <TableCell className="px-6 py-5">
+                                  <span className="font-semibold text-foreground">
+                                    {pickLocalizedField(language, {
+                                      ar: entry.commodity.nameAr,
+                                      en: entry.commodity.nameEn,
+                                    })}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="px-6 py-5">
+                                  <Badge variant="outline">
+                                    {categoryLabel(entry.commodity.category, language)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-6 py-5">
+                                  <span className="text-lg font-bold text-foreground">
+                                    {formatPrice(entry.latestPrice)}
+                                  </span>
+                                  <span className="me-1 text-sm text-muted-foreground">
+                                    {pickLocalizedCopy(language, {
+                                      ar: `جنيه/${unitLabel(entry.commodity.unit, language)}`,
+                                      en: `EGP/${unitLabel(entry.commodity.unit, language)}`,
+                                    })}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="px-6 py-5">
+                                  <TrendBadge changePercent={entry.changePercent} />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       )}
                     </CardContent>
                   </Card>

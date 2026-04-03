@@ -3,6 +3,14 @@ import { ArrowLeft, BarChart3 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { SR, FloatingBlob } from '@/components/motion/ScrollReveal';
 import { TableRowSkeleton } from '@/components/motion/Skeleton';
 import { TrendBadge } from '@/components/market/TrendBadge';
@@ -73,56 +81,48 @@ export function PriceSnapshot() {
         <SR direction="scale">
           <Card className="overflow-hidden rounded-2xl border-border/50 shadow-lg">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                        {copy.product}
-                      </th>
-                      <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                        {copy.price}
-                      </th>
-                      <th className="px-6 py-5 text-end text-sm font-semibold text-muted-foreground">
-                        {copy.change}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading
-                      ? Array.from({ length: 4 }).map((_, index) => (
-                          <TableRowSkeleton key={index} cols={3} />
-                        ))
-                      : entries.map((entry, index) => (
-                          <tr
-                            key={entry.commodity.id}
-                            className={`transition-colors duration-200 hover:bg-muted/20 ${index !== entries.length - 1 ? 'border-b border-border/50' : ''}`}
-                          >
-                            <td className="px-6 py-5">
-                              <span className="font-semibold text-foreground">
-                                {pickLocalizedField(language, {
-                                  ar: entry.commodity.nameAr,
-                                  en: entry.commodity.nameEn,
-                                })}
-                              </span>
-                            </td>
-                            <td className="px-6 py-5">
-                              <span className="text-lg font-bold text-foreground">
-                                {formatPrice(entry.latestPrice)}
-                              </span>
-                              <span className="me-1 text-sm text-muted-foreground">
-                                {copy.currencyPrefix}
-                                {unitLabel(entry.commodity.unit, language)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-5">
-                              <TrendBadge changePercent={entry.changePercent} />
-                            </td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="px-6 py-5">{copy.product}</TableHead>
+                    <TableHead className="px-6 py-5">{copy.price}</TableHead>
+                    <TableHead className="px-6 py-5">{copy.change}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading
+                    ? Array.from({ length: 4 }).map((_, index) => (
+                        <TableRowSkeleton key={index} cols={3} />
+                      ))
+                    : entries.map((entry, index) => (
+                        <TableRow
+                          key={entry.commodity.id}
+                          className={index === entries.length - 1 ? 'border-b-0 hover:bg-muted/20' : 'hover:bg-muted/20'}
+                        >
+                          <TableCell className="px-6 py-5">
+                            <span className="font-semibold text-foreground">
+                              {pickLocalizedField(language, {
+                                ar: entry.commodity.nameAr,
+                                en: entry.commodity.nameEn,
+                              })}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-6 py-5">
+                            <span className="text-lg font-bold text-foreground">
+                              {formatPrice(entry.latestPrice)}
+                            </span>
+                            <span className="me-1 text-sm text-muted-foreground">
+                              {copy.currencyPrefix}
+                              {unitLabel(entry.commodity.unit, language)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-6 py-5">
+                            <TrendBadge changePercent={entry.changePercent} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </SR>

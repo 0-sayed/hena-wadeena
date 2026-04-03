@@ -61,6 +61,12 @@ vi.mock('@/hooks/use-price-index', () => ({
   }),
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({
+    language: 'ar',
+  }),
+}));
+
 describe('PriceSnapshot', () => {
   it('uses the same logical alignment for header and body cells', () => {
     render(<PriceSnapshot />);
