@@ -32,7 +32,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { usePackage } from '@/hooks/use-packages';
 import { formatRating, piastresToEgp } from '@/lib/format';
-import { deductWalletBalance, getWalletSnapshot, topUpWallet } from '@/lib/wallet-store';
+import { getWalletSnapshot } from '@/lib/wallet-store';
 
 const GuideBookingPage = () => {
   const navigate = useNavigate();
@@ -47,7 +47,6 @@ const GuideBookingPage = () => {
   const [peopleCount, setPeopleCount] = useState(1);
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [walletLoading, setWalletLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const isProcessingRef = useRef(false);
 
@@ -97,20 +96,6 @@ const GuideBookingPage = () => {
     }
 
     isProcessingRef.current = true;
-    setWalletLoading(true);
-
-    try {
-      await deductWalletBalance(user.id, totalPrice, `حجز باقة سياحية: ${pkg.titleAr}`, {
-        reference_id: pkg.id,
-        reference_type: 'package_booking',
-      });
-    } catch (walletError: unknown) {
-      isProcessingRef.current = false;
-      setWalletLoading(false);
-      toast.error(walletError instanceof Error ? walletError.message : 'تعذر تحديث رصيد المحفظة');
-      setShowConfirm(false);
-      return;
-    }
 
     createBooking.mutate(
       {
@@ -123,33 +108,13 @@ const GuideBookingPage = () => {
       {
         onSuccess: () => {
           isProcessingRef.current = false;
-          setWalletLoading(false);
-          toast.success('تم تأكيد الحجز وخصم قيمة الباقة من المحفظة بنجاح');
+          toast.success('تم إرسال طلب الحجز وسيتم تحديث المحفظة تلقائياً');
           setShowConfirm(false);
           void navigate('/bookings');
         },
         onError: (err) => {
           isProcessingRef.current = false;
-          void topUpWallet(user.id, totalPrice, `استرداد حجز باقة سياحية: ${pkg.titleAr}`, {
-            reference_id: pkg.id,
-            reference_type: 'package_booking_refund',
-          })
-            .then(() => {
-              setWalletLoading(false);
-              toast.error(
-                err instanceof Error
-                  ? `${err.message}. تم استرداد المبلغ للمحفظة.`
-                  : 'فشل إنشاء الحجز. تم استرداد المبلغ للمحفظة.',
-              );
-            })
-            .catch(() => {
-              setWalletLoading(false);
-              toast.error(
-                err instanceof Error
-                  ? `${err.message}. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.`
-                  : 'فشل إنشاء الحجز. تعذر استرداد المبلغ للمحفظة، يرجى التواصل مع الدعم.',
-              );
-            });
+          toast.error(err instanceof Error ? err.message : 'تعذر إنشاء الحجز');
           setShowConfirm(false);
         },
       },
@@ -425,9 +390,9 @@ const GuideBookingPage = () => {
             </Button>
             <Button
               onClick={() => void handleConfirm()}
-              disabled={createBooking.isPending || walletLoading}
+              disabled={createBooking.isPending}
             >
-              {(createBooking.isPending || walletLoading) && (
+              {createBooking.isPending && (
                 <Loader2 className="ms-2 h-4 w-4 animate-spin" />
               )}
               تأكيد الحجز
