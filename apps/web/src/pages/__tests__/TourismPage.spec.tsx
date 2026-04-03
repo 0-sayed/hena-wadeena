@@ -5,9 +5,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import TourismPage from '../TourismPage';
 
 const mockNavigate = vi.fn();
+const mockUseAuth = vi.fn();
 const mockUseAttractions = vi.fn();
 const mockUseGuides = vi.fn();
 const mockUsePublicUsers = vi.fn();
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
@@ -80,13 +85,9 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 vi.mock('@/components/ui/card', () => ({
-  Card: ({
-    children,
-    onClick,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-  }) => <div onClick={onClick}>{children}</div>,
+  Card: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
+    <div onClick={onClick}>{children}</div>
+  ),
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
@@ -120,9 +121,12 @@ vi.mock('@/assets/hero-tourism.jpg', () => ({
 describe('TourismPage', () => {
   beforeEach(() => {
     mockNavigate.mockReset();
+    mockUseAuth.mockReset();
     mockUseAttractions.mockReset();
     mockUseGuides.mockReset();
     mockUsePublicUsers.mockReset();
+
+    mockUseAuth.mockReturnValue({ language: 'ar', user: null });
 
     mockUseAttractions.mockImplementation((filters?: Record<string, unknown>) => ({
       data:

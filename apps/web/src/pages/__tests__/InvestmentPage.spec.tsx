@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import InvestmentPage from '../InvestmentPage';
 
 const mockNavigate = vi.fn();
+const mockUseAuth = vi.fn();
 const mockGetOpportunities = vi.fn();
 const mockGetStartups = vi.fn();
 
@@ -95,10 +96,14 @@ vi.mock('@/components/ui/tabs', () => ({
   TabsTrigger: ({ children }: { children: ReactNode }) => <button>{children}</button>,
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
 vi.mock('@/services/api', () => ({
   investmentAPI: {
     getOpportunities: () => mockGetOpportunities(),
-    getStartups: () => mockGetStartups(),
+    getBusinesses: () => mockGetStartups(),
   },
 }));
 
@@ -109,8 +114,11 @@ vi.mock('@/assets/hero-investment.jpg', () => ({
 describe('InvestmentPage', () => {
   beforeEach(() => {
     mockNavigate.mockReset();
+    mockUseAuth.mockReset();
     mockGetOpportunities.mockReset();
     mockGetStartups.mockReset();
+
+    mockUseAuth.mockReturnValue({ language: 'ar', user: null });
 
     mockGetOpportunities.mockResolvedValue({
       data: [
