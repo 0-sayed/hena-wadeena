@@ -190,6 +190,21 @@ export interface AuthRefreshTokens {
   expires_in: number;
 }
 
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface RequestPasswordResetRequest {
+  email: string;
+}
+
+export interface ConfirmPasswordResetRequest {
+  email: string;
+  otp: string;
+  new_password: string;
+}
+
 export interface KycOnboardingSubmission {
   id: string;
   userId: string;
@@ -283,6 +298,34 @@ export const authAPI = {
         body: JSON.stringify(body),
       }),
     ),
+
+  changePassword: async (body: ChangePasswordRequest) => {
+    const response = await apiFetchWithRefresh<AuthTokensResponse | PendingKycAuthResponse>(
+      '/auth/change-password',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+    return normalizeAuthFlowResponse(response);
+  },
+
+  requestPasswordReset: (body: RequestPasswordResetRequest) =>
+    apiFetch<{ message: string }>('/auth/password-reset/request', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  confirmPasswordReset: async (body: ConfirmPasswordResetRequest) => {
+    const response = await apiFetch<AuthTokensResponse | PendingKycAuthResponse>(
+      '/auth/password-reset/confirm',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+    return normalizeAuthFlowResponse(response);
+  },
 
   logout: (refresh_token?: string) =>
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),

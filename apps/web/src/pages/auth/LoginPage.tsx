@@ -85,6 +85,14 @@ const LoginPage = () => {
                           required
                         />
                       </div>
+                      <div className="text-start">
+                        <Link
+                          to="/password-reset/request"
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          نسيت كلمة المرور؟
+                        </Link>
+                      </div>
                     </div>
                     <Button
                       type="submit"

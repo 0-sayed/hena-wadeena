@@ -76,4 +76,17 @@ describe('LoginPage pending KYC flow', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/kyc/continue');
   });
+
+  it('shows a visible forgot-password action on the login page', () => {
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: /نسيت كلمة المرور/i })).toHaveAttribute(
+      'href',
+      '/password-reset/request',
+    );
+  });
 });
