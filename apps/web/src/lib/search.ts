@@ -17,8 +17,11 @@ export function matchesSearchQuery(
   query: string,
   candidates: Array<string | null | undefined>,
 ): boolean {
-  const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return true;
+  const tokens = normalizeSearchText(query).split(' ').filter(Boolean);
+  if (tokens.length === 0) return true;
 
-  return candidates.some((candidate) => normalizeSearchText(candidate).includes(normalizedQuery));
+  const normalizedCandidates = candidates.map((candidate) => normalizeSearchText(candidate));
+  return tokens.every((token) =>
+    normalizedCandidates.some((candidate) => candidate.includes(token)),
+  );
 }

@@ -43,7 +43,9 @@ export function formatArabicYears(years: number): string {
         ? 'سنتان'
         : category === 'few'
           ? 'سنوات'
-          : 'سنة';
+          : category === 'zero'
+            ? 'سنوات'
+            : 'سنة';
 
   return `${years} ${label}`;
 }
