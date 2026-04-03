@@ -21,11 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
-import {
-  businessesAPI,
-  businessInquiriesAPI,
-  investmentApplicationsAPI,
-} from '@/services/api';
+import { businessesAPI, businessInquiriesAPI, investmentApplicationsAPI } from '@/services/api';
 
 const investorTypes = [
   {
@@ -77,10 +73,13 @@ const ContactPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const { user, isAuthenticated, language } = useAuth();
+  const { user, isAuthenticated, isLoading = false, language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const entity = searchParams.get('entity') === 'startup' ? 'startup' : 'opportunity';
   const isStartupFlow = entity === 'startup';
+  const canAccessInvestmentContact =
+    user?.role === UserRole.INVESTOR || user?.role === UserRole.ADMIN;
+  const postSubmitRedirect = user?.role === UserRole.ADMIN ? '/admin' : '/dashboard/investor';
 
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -125,7 +124,10 @@ const ContactPage = () => {
   const investmentRangeLabel = useMemo(
     () =>
       new Map<string, string>(
-        investmentRanges.map((option) => [option.value, pickLocalizedCopy(appLanguage, option.label)]),
+        investmentRanges.map((option) => [
+          option.value,
+          pickLocalizedCopy(appLanguage, option.label),
+        ]),
       ),
     [appLanguage],
   );
@@ -141,6 +143,33 @@ const ContactPage = () => {
     }));
   }, [user]);
 
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'سجل الدخول أولاً لإرسال الاستفسار',
+          en: 'Sign in first to send your inquiry',
+        }),
+      );
+      void navigate('/login');
+      return;
+    }
+
+    if (user && !canAccessInvestmentContact) {
+      toast.error(
+        pickLocalizedCopy(appLanguage, {
+          ar: 'هذه الميزة متاحة للمستثمرين والمسؤولين فقط',
+          en: 'This feature is available to investors and admins only',
+        }),
+      );
+      void navigate('/investment');
+    }
+  }, [appLanguage, canAccessInvestmentContact, isAuthenticated, isLoading, navigate, user]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -148,7 +177,9 @@ const ContactPage = () => {
       toast.error(
         pickLocalizedCopy(appLanguage, {
           ar: isStartupFlow ? 'الشركة غير متاحة حالياً' : 'الفرصة غير متاحة حالياً',
-          en: isStartupFlow ? 'This startup is not available right now' : 'This opportunity is not available right now',
+          en: isStartupFlow
+            ? 'This startup is not available right now'
+            : 'This opportunity is not available right now',
         }),
       );
       return;
@@ -165,11 +196,11 @@ const ContactPage = () => {
       return;
     }
 
-    if (!['investor', 'merchant'].includes(user?.role ?? '')) {
+    if (!canAccessInvestmentContact) {
       toast.error(
         pickLocalizedCopy(appLanguage, {
-          ar: 'هذه الميزة متاحة للمستثمرين والتجار فقط',
-          en: 'This feature is available to investors and merchants only',
+          ar: 'هذه الميزة متاحة للمستثمرين والمسؤولين فقط',
+          en: 'This feature is available to investors and admins only',
         }),
       );
       return;
@@ -246,7 +277,7 @@ const ContactPage = () => {
             en: 'Your inquiry was sent to the startup owner successfully',
           }),
         );
-        void navigate(user?.role === UserRole.MERCHANT ? '/dashboard/merchant' : '/dashboard/investor');
+        void navigate(postSubmitRedirect);
         return;
       }
 
@@ -263,7 +294,7 @@ const ContactPage = () => {
           en: 'Your inquiry was sent successfully and will appear in the opportunity owner inbox',
         }),
       );
-      void navigate(user?.role === UserRole.MERCHANT ? '/dashboard/merchant' : '/dashboard/investor');
+      void navigate(postSubmitRedirect);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -364,7 +395,11 @@ const ContactPage = () => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="email">
-                      {pickLocalizedCopy(appLanguage, { ar: 'البريد الإلكتروني', en: 'Email address' })} *
+                      {pickLocalizedCopy(appLanguage, {
+                        ar: 'البريد الإلكتروني',
+                        en: 'Email address',
+                      })}{' '}
+                      *
                     </Label>
                     <div className="relative">
                       <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

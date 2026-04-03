@@ -10,7 +10,7 @@ import OpportunityDetailsPage from '../OpportunityDetailsPage';
 const mockNavigate = vi.fn();
 const mockUseAuth = vi.fn();
 const mockGetOpportunities = vi.fn();
-const mockGetStartups = vi.fn();
+const mockGetBusinesses = vi.fn();
 const mockGetOpportunity = vi.fn();
 
 vi.mock('react-router', async () => {
@@ -98,7 +98,7 @@ vi.mock('@/hooks/use-auth', () => ({
 vi.mock('@/services/api', () => ({
   investmentAPI: {
     getOpportunities: (...args: unknown[]) => mockGetOpportunities(...args),
-    getStartups: (...args: unknown[]) => mockGetStartups(...args),
+    getBusinesses: (...args: unknown[]) => mockGetBusinesses(...args),
     getOpportunity: (...args: unknown[]) => mockGetOpportunity(...args),
   },
 }));
@@ -118,7 +118,7 @@ describe('investment role access', () => {
     mockNavigate.mockReset();
     mockUseAuth.mockReset();
     mockGetOpportunities.mockReset();
-    mockGetStartups.mockReset();
+    mockGetBusinesses.mockReset();
     mockGetOpportunity.mockReset();
 
     mockUseAuth.mockReturnValue({
@@ -150,7 +150,7 @@ describe('investment role access', () => {
         },
       ],
     });
-    mockGetStartups.mockResolvedValue({
+    mockGetBusinesses.mockResolvedValue({
       data: [
         {
           id: 'startup-1',
@@ -184,29 +184,29 @@ describe('investment role access', () => {
     });
   });
 
-  it('shows investment contact CTAs for merchants on the listing page', async () => {
+  it('hides investment contact CTAs for merchants on the listing page', async () => {
     renderWithQueryClient(<InvestmentPage />);
 
     await waitFor(() => {
       expect(mockGetOpportunities).toHaveBeenCalled();
-      expect(mockGetStartups).toHaveBeenCalled();
+      expect(mockGetBusinesses).toHaveBeenCalled();
     });
 
     expect(screen.getAllByRole('button', { name: 'Details' })).toHaveLength(2);
-    expect(screen.getByRole('button', { name: 'Inquiry' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Contact' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Inquiry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Contact' })).not.toBeInTheDocument();
   });
 
-  it('shows the opportunity inquiry CTA and merchant-safe document state on the details page', async () => {
+  it('hides the opportunity inquiry CTA and prompts merchants to sign in with an allowed role', async () => {
     renderWithQueryClient(<OpportunityDetailsPage />);
 
     expect(await screen.findByText('Opportunity One')).toBeInTheDocument();
 
     expect(mockGetOpportunity).toHaveBeenCalledWith('opportunity-1');
     expect(
-      screen.getByRole('button', { name: /(?:send investment inquiry|إرسال استفسار استثماري)/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/لا توجد مستندات مرفقة حالياً/)).toBeInTheDocument();
-    expect(screen.queryByText(/عرض المستندات التفصيلية/)).not.toBeInTheDocument();
+      screen.queryByRole('button', { name: /(?:send investment inquiry|إرسال استفسار استثماري)/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText(/كمستثمر أو مسؤول/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/كمستثمر أو تاجر/)).not.toBeInTheDocument();
   });
 });

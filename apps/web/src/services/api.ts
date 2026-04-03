@@ -261,13 +261,10 @@ export const authAPI = {
   },
 
   register: async (body: RegisterRequest) => {
-    const response = await apiFetch<AuthTokensResponse | PendingKycAuthResponse>(
-      '/auth/register',
-      {
-        method: 'POST',
-        body: JSON.stringify(body),
-      },
-    );
+    const response = await apiFetch<AuthTokensResponse | PendingKycAuthResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
     return normalizeAuthFlowResponse(response);
   },
 
@@ -640,6 +637,23 @@ export interface BusinessInquiry {
   updatedAt: string;
 }
 
+export interface CreatedBusinessInquiry {
+  id: string;
+  businessId: string;
+  senderId: string;
+  receiverId: string;
+  contactName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  message: string;
+  replyMessage: string | null;
+  status: 'pending' | 'read' | 'replied';
+  readAt: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateBusinessInquiryRequest {
   contactName: string;
   contactEmail?: string;
@@ -678,7 +692,7 @@ export const businessesAPI = {
 
 export const businessInquiriesAPI = {
   submit: (businessId: string, body: CreateBusinessInquiryRequest) =>
-    apiFetchWithRefresh<BusinessInquiry>(`/businesses/${businessId}/inquiries`, {
+    apiFetchWithRefresh<CreatedBusinessInquiry>(`/businesses/${businessId}/inquiries`, {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -907,7 +921,7 @@ export const investmentAPI = {
 
   getMine: () => apiFetchWithRefresh<Opportunity[]>('/investments/mine'),
 
-  getStartups: () => apiFetchWithRefresh<PaginatedResponse<Startup>>('/businesses'),
+  getBusinesses: () => apiFetchWithRefresh<PaginatedResponse<Startup>>('/businesses'),
 };
 
 export interface InvestmentApplication {

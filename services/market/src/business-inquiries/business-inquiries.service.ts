@@ -1,7 +1,7 @@
 import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
 import type { PaginatedResponse } from '@hena-wadeena/types';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import * as schema from '../db/schema';
@@ -20,11 +20,28 @@ export type BusinessInquiryRecord = BusinessInquiry & {
   businessOwnerId: string;
 };
 
+const inquiryRecordColumns = {
+  id: businessInquiries.id,
+  businessId: businessInquiries.businessId,
+  businessName: businessDirectories.nameAr,
+  businessOwnerId: businessDirectories.ownerId,
+  senderId: businessInquiries.senderId,
+  receiverId: businessInquiries.receiverId,
+  contactName: businessInquiries.contactName,
+  contactEmail: businessInquiries.contactEmail,
+  contactPhone: businessInquiries.contactPhone,
+  message: businessInquiries.message,
+  replyMessage: businessInquiries.replyMessage,
+  status: businessInquiries.status,
+  readAt: businessInquiries.readAt,
+  respondedAt: businessInquiries.respondedAt,
+  createdAt: businessInquiries.createdAt,
+  updatedAt: businessInquiries.updatedAt,
+};
+
 @Injectable()
 export class BusinessInquiriesService {
-  constructor(
-    @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {}
+  constructor(@Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase<typeof schema>) {}
 
   async submit(
     businessId: string,
@@ -71,92 +88,30 @@ export class BusinessInquiriesService {
     ownerId: string,
     query: QueryBusinessInquiriesDto,
   ): Promise<PaginatedResponse<BusinessInquiryRecord>> {
-    const conditions = [eq(businessInquiries.receiverId, ownerId), isNull(businessDirectories.deletedAt)];
+    const conditions = [
+      eq(businessInquiries.receiverId, ownerId),
+      isNull(businessDirectories.deletedAt),
+    ];
     if (query.status !== undefined) {
       conditions.push(eq(businessInquiries.status, query.status));
     }
 
-    const where = andRequired(...conditions);
-    const [results, countResult] = await Promise.all([
-      this.db
-        .select({
-          id: businessInquiries.id,
-          businessId: businessInquiries.businessId,
-          businessName: businessDirectories.nameAr,
-          businessOwnerId: businessDirectories.ownerId,
-          senderId: businessInquiries.senderId,
-          receiverId: businessInquiries.receiverId,
-          contactName: businessInquiries.contactName,
-          contactEmail: businessInquiries.contactEmail,
-          contactPhone: businessInquiries.contactPhone,
-          message: businessInquiries.message,
-          replyMessage: businessInquiries.replyMessage,
-          status: businessInquiries.status,
-          readAt: businessInquiries.readAt,
-          respondedAt: businessInquiries.respondedAt,
-          createdAt: businessInquiries.createdAt,
-          updatedAt: businessInquiries.updatedAt,
-        })
-        .from(businessInquiries)
-        .innerJoin(businessDirectories, eq(businessInquiries.businessId, businessDirectories.id))
-        .where(where)
-        .orderBy(desc(businessInquiries.createdAt))
-        .limit(query.limit)
-        .offset(query.offset),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(businessInquiries)
-        .innerJoin(businessDirectories, eq(businessInquiries.businessId, businessDirectories.id))
-        .where(where),
-    ]);
-
-    return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
+    return this.findInquiries(andRequired(...conditions), query);
   }
 
   async findSent(
     senderId: string,
     query: QueryBusinessInquiriesDto,
   ): Promise<PaginatedResponse<BusinessInquiryRecord>> {
-    const conditions = [eq(businessInquiries.senderId, senderId), isNull(businessDirectories.deletedAt)];
+    const conditions = [
+      eq(businessInquiries.senderId, senderId),
+      isNull(businessDirectories.deletedAt),
+    ];
     if (query.status !== undefined) {
       conditions.push(eq(businessInquiries.status, query.status));
     }
 
-    const where = andRequired(...conditions);
-    const [results, countResult] = await Promise.all([
-      this.db
-        .select({
-          id: businessInquiries.id,
-          businessId: businessInquiries.businessId,
-          businessName: businessDirectories.nameAr,
-          businessOwnerId: businessDirectories.ownerId,
-          senderId: businessInquiries.senderId,
-          receiverId: businessInquiries.receiverId,
-          contactName: businessInquiries.contactName,
-          contactEmail: businessInquiries.contactEmail,
-          contactPhone: businessInquiries.contactPhone,
-          message: businessInquiries.message,
-          replyMessage: businessInquiries.replyMessage,
-          status: businessInquiries.status,
-          readAt: businessInquiries.readAt,
-          respondedAt: businessInquiries.respondedAt,
-          createdAt: businessInquiries.createdAt,
-          updatedAt: businessInquiries.updatedAt,
-        })
-        .from(businessInquiries)
-        .innerJoin(businessDirectories, eq(businessInquiries.businessId, businessDirectories.id))
-        .where(where)
-        .orderBy(desc(businessInquiries.createdAt))
-        .limit(query.limit)
-        .offset(query.offset),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(businessInquiries)
-        .innerJoin(businessDirectories, eq(businessInquiries.businessId, businessDirectories.id))
-        .where(where),
-    ]);
-
-    return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
+    return this.findInquiries(andRequired(...conditions), query);
   }
 
   async markRead(id: string, ownerId: string): Promise<BusinessInquiryRecord> {
@@ -200,36 +155,44 @@ export class BusinessInquiriesService {
     return this.findInquiryForReceiver(id, ownerId);
   }
 
-  private async findInquiryForReceiver(id: string, receiverId: string): Promise<BusinessInquiryRecord> {
-    const [inquiryRecord] = await this.db
-      .select({
-        id: businessInquiries.id,
-        businessId: businessInquiries.businessId,
-        businessName: businessDirectories.nameAr,
-        businessOwnerId: businessDirectories.ownerId,
-        senderId: businessInquiries.senderId,
-        receiverId: businessInquiries.receiverId,
-        contactName: businessInquiries.contactName,
-        contactEmail: businessInquiries.contactEmail,
-        contactPhone: businessInquiries.contactPhone,
-        message: businessInquiries.message,
-        replyMessage: businessInquiries.replyMessage,
-        status: businessInquiries.status,
-        readAt: businessInquiries.readAt,
-        respondedAt: businessInquiries.respondedAt,
-        createdAt: businessInquiries.createdAt,
-        updatedAt: businessInquiries.updatedAt,
-      })
+  private buildInquiryQuery(where: SQL) {
+    return this.db
+      .select(inquiryRecordColumns)
       .from(businessInquiries)
       .innerJoin(businessDirectories, eq(businessInquiries.businessId, businessDirectories.id))
-      .where(
-        and(
-          eq(businessInquiries.id, id),
-          eq(businessInquiries.receiverId, receiverId),
-          isNull(businessDirectories.deletedAt),
-        ),
-      )
-      .limit(1);
+      .where(where);
+  }
+
+  private async findInquiries(
+    where: SQL,
+    query: QueryBusinessInquiriesDto,
+  ): Promise<PaginatedResponse<BusinessInquiryRecord>> {
+    const [results, countResult] = await Promise.all([
+      this.buildInquiryQuery(where)
+        .orderBy(desc(businessInquiries.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(businessInquiries)
+        .innerJoin(businessDirectories, eq(businessInquiries.businessId, businessDirectories.id))
+        .where(where),
+    ]);
+
+    return paginate(results, countResult[0]?.count ?? 0, query.offset, query.limit);
+  }
+
+  private async findInquiryForReceiver(
+    id: string,
+    receiverId: string,
+  ): Promise<BusinessInquiryRecord> {
+    const [inquiryRecord] = await this.buildInquiryQuery(
+      andRequired(
+        eq(businessInquiries.id, id),
+        eq(businessInquiries.receiverId, receiverId),
+        isNull(businessDirectories.deletedAt),
+      ),
+    ).limit(1);
 
     if (!inquiryRecord) {
       throw new NotFoundException('Business inquiry not found');

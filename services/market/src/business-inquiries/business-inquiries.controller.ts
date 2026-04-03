@@ -26,6 +26,7 @@ export class BusinessInquiriesController {
   ) {}
 
   @Post('businesses/:id/inquiries')
+  @Roles(UserRole.INVESTOR, UserRole.ADMIN)
   submit(
     @Param('id', ParseUUIDPipe) businessId: string,
     @CurrentUser() user: JwtPayload,
@@ -35,7 +36,7 @@ export class BusinessInquiriesController {
   }
 
   @Get('business-inquiries/mine/received')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.ADMIN)
+  @Roles(UserRole.INVESTOR, UserRole.ADMIN)
   findReceived(@CurrentUser() user: JwtPayload, @Query() query: QueryBusinessInquiriesDto) {
     return this.businessInquiriesService.findReceived(user.sub, query);
   }
@@ -46,13 +47,13 @@ export class BusinessInquiriesController {
   }
 
   @Patch('business-inquiries/:id/read')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.ADMIN)
+  @Roles(UserRole.INVESTOR, UserRole.ADMIN)
   markRead(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.businessInquiriesService.markRead(id, user.sub);
   }
 
   @Patch('business-inquiries/:id/reply')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.ADMIN)
+  @Roles(UserRole.INVESTOR, UserRole.ADMIN)
   reply(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: JwtPayload,

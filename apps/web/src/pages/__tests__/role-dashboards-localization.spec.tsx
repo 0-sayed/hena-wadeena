@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockNavigate = vi.fn();
@@ -486,6 +486,26 @@ describe('Role dashboard localization', () => {
     expect(screen.getAllByText('Reply by email')).toHaveLength(2);
     expect(screen.getByText('Startup inquiry inbox')).toBeInTheDocument();
     expect(screen.getByText('Sent inquiries')).toBeInTheDocument();
+  });
+
+  it('shows a loading indicator for startup inquiries while businesses are still loading', () => {
+    mockUseMyBusinesses.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    });
+    mockUseBusinessInquiriesReceived.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<InvestorDashboard />);
+
+    const startupInquiriesCard = screen.getByText('Startup inquiries').parentElement;
+
+    expect(startupInquiriesCard).not.toBeNull();
+    expect(within(startupInquiriesCard!).getByText('...')).toBeInTheDocument();
   });
 
   it('renders DriverDashboard in English mode', () => {

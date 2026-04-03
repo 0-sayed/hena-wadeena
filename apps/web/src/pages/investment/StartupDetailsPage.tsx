@@ -1,3 +1,4 @@
+import { UserRole } from '@hena-wadeena/types';
 import { useNavigate, useParams } from 'react-router';
 import { ArrowRight, Building2, Globe, MapPin, Phone, Send, Shield } from 'lucide-react';
 
@@ -12,10 +13,27 @@ import { useBusiness } from '@/hooks/use-businesses';
 import { districtLabel, unitLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 
+function getSafeWebsiteUrl(website: string | null | undefined): string | null {
+  if (!website) {
+    return null;
+  }
+
+  try {
+    const url = new URL(website);
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return website;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 const StartupDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const { data: startup, isLoading, isError } = useBusiness(id);
 
@@ -84,6 +102,9 @@ const StartupDetailsPage = () => {
     startup.descriptionAr ??
     startup.description;
   const isVerified = startup.verificationStatus === 'verified';
+  const canAccessInvestmentContact =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.INVESTOR;
+  const safeWebsiteUrl = getSafeWebsiteUrl(startup.website);
 
   return (
     <Layout>
@@ -137,7 +158,8 @@ const StartupDetailsPage = () => {
                           </div>
                         )}
                         <div>
-                          {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}: {startup.status}
+                          {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}:{' '}
+                          {startup.status}
                         </div>
                       </div>
                     </div>
@@ -256,17 +278,21 @@ const StartupDetailsPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => void navigate(`/investment/contact/${startup.id}?entity=startup`)}
-                  >
-                    <Send className="ml-2 h-5 w-5" />
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'إرسال استفسار',
-                      en: 'Send inquiry',
-                    })}
-                  </Button>
+                  {canAccessInvestmentContact ? (
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={() =>
+                        void navigate(`/investment/contact/${startup.id}?entity=startup`)
+                      }
+                    >
+                      <Send className="ml-2 h-5 w-5" />
+                      {pickLocalizedCopy(appLanguage, {
+                        ar: 'إرسال استفسار',
+                        en: 'Send inquiry',
+                      })}
+                    </Button>
+                  ) : null}
 
                   <div className="space-y-3 text-sm">
                     {startup.phone && (
@@ -295,7 +321,11 @@ const StartupDetailsPage = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => window.open(startup.website!, '_blank', 'noopener,noreferrer')}
+                      onClick={() => {
+                        if (safeWebsiteUrl) {
+                          window.open(safeWebsiteUrl, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
                     >
                       <Globe className="ml-2 h-4 w-4" />
                       {pickLocalizedCopy(appLanguage, {

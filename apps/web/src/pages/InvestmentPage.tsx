@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react';
+import { UserRole } from '@hena-wadeena/types';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
 import { Search, MapPin, TrendingUp, Building2, Send, ArrowLeft, DollarSign } from 'lucide-react';
@@ -58,16 +59,18 @@ function formatInvestmentRange(opportunity: Opportunity, language: 'ar' | 'en') 
 
 const InvestmentPage = () => {
   const navigate = useNavigate();
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const canAccessInvestmentContact =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.INVESTOR;
 
   useEffect(() => {
     Promise.all([
       investmentAPI.getOpportunities().then((r) => setOpportunities(r.data)),
-      investmentAPI.getStartups().then((r) => setStartups(r.data)),
+      investmentAPI.getBusinesses().then((r) => setStartups(r.data)),
     ])
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -129,10 +132,7 @@ const InvestmentPage = () => {
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="h-16 rounded-2xl border-0 bg-card/90 pr-14 pl-28 text-lg shadow-lg backdrop-blur-sm"
               />
-              <Button
-                type="submit"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl"
-              >
+              <Button type="submit" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-xl">
                 {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
               </Button>
             </form>
@@ -177,9 +177,7 @@ const InvestmentPage = () => {
                           <CardContent className="p-7">
                             <div className="mb-5 flex items-start justify-between">
                               <Badge
-                                variant={
-                                  opportunity.status === 'active' ? 'default' : 'secondary'
-                                }
+                                variant={opportunity.status === 'active' ? 'default' : 'secondary'}
                                 className={
                                   opportunity.status === 'active'
                                     ? 'bg-primary px-3 py-1'
@@ -244,18 +242,20 @@ const InvestmentPage = () => {
                                 })}{' '}
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                               </Button>
-                              <Button
-                                className="flex-1 transition-transform hover:scale-[1.02]"
-                                onClick={() =>
-                                  void navigate(`/investment/contact/${opportunity.id}`)
-                                }
-                              >
-                                <Send className="ml-2 h-4 w-4" />
-                                {pickLocalizedCopy(language, {
-                                  ar: 'استفسار',
-                                  en: 'Inquiry',
-                                })}
-                              </Button>
+                              {canAccessInvestmentContact ? (
+                                <Button
+                                  className="flex-1 transition-transform hover:scale-[1.02]"
+                                  onClick={() =>
+                                    void navigate(`/investment/contact/${opportunity.id}`)
+                                  }
+                                >
+                                  <Send className="ml-2 h-4 w-4" />
+                                  {pickLocalizedCopy(language, {
+                                    ar: 'استفسار',
+                                    en: 'Inquiry',
+                                  })}
+                                </Button>
+                              ) : null}
                             </div>
                           </CardContent>
                         </Card>
@@ -330,7 +330,9 @@ const InvestmentPage = () => {
                                 <Button
                                   variant="outline"
                                   className="flex-1 transition-transform hover:scale-[1.02]"
-                                  onClick={() => void navigate(`/investment/startups/${startup.id}`)}
+                                  onClick={() =>
+                                    void navigate(`/investment/startups/${startup.id}`)
+                                  }
                                 >
                                   {pickLocalizedCopy(language, {
                                     ar: 'التفاصيل',
@@ -338,18 +340,22 @@ const InvestmentPage = () => {
                                   })}{' '}
                                   <ArrowLeft className="mr-2 h-4 w-4" />
                                 </Button>
-                                <Button
-                                  className="flex-1 transition-transform hover:scale-[1.02]"
-                                  onClick={() =>
-                                    void navigate(`/investment/contact/${startup.id}?entity=startup`)
-                                  }
-                                >
-                                  <Send className="ml-2 h-4 w-4" />
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'تواصل',
-                                    en: 'Contact',
-                                  })}
-                                </Button>
+                                {canAccessInvestmentContact ? (
+                                  <Button
+                                    className="flex-1 transition-transform hover:scale-[1.02]"
+                                    onClick={() =>
+                                      void navigate(
+                                        `/investment/contact/${startup.id}?entity=startup`,
+                                      )
+                                    }
+                                  >
+                                    <Send className="ml-2 h-4 w-4" />
+                                    {pickLocalizedCopy(language, {
+                                      ar: 'تواصل',
+                                      en: 'Contact',
+                                    })}
+                                  </Button>
+                                ) : null}
                               </div>
                             </CardContent>
                           </Card>

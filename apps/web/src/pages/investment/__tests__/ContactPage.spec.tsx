@@ -115,6 +115,7 @@ describe('ContactPage', () => {
 
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
+      language: 'en',
       user: {
         id: 'investor-1',
         full_name: 'Investor User',
@@ -192,6 +193,44 @@ describe('ContactPage', () => {
     expect(mockSubmitStartupInquiry.mock.calls[0]?.[1]).toMatchObject({
       message: expect.stringContaining('I would like to explore a seed investment.'),
     });
+    expect(mockSubmitOpportunityInquiry).not.toHaveBeenCalled();
+  });
+
+  it('blocks merchants from submitting investment contact requests', async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      language: 'en',
+      user: {
+        id: 'merchant-1',
+        full_name: 'Merchant User',
+        email: 'merchant@example.com',
+        phone: '01000000000',
+        role: 'merchant',
+      },
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <ContactPage />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(mockGetBusinessById).toHaveBeenCalledWith('startup-1');
+    });
+
+    const form = container.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      'This feature is available to investors and admins only',
+    );
+    expect(mockSubmitStartupInquiry).not.toHaveBeenCalled();
     expect(mockSubmitOpportunityInquiry).not.toHaveBeenCalled();
   });
 });

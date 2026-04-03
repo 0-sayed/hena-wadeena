@@ -137,7 +137,7 @@ export default function InvestorDashboard() {
             ar: 'استفسارات الشركات',
             en: 'Startup inquiries',
           })}
-          value={loadingStartupInquiries ? '...' : stats.startupInquiries}
+          value={loadingBusinesses || loadingStartupInquiries ? '...' : stats.startupInquiries}
           icon={Inbox}
           variant="warning"
         />
@@ -178,10 +178,18 @@ export default function InvestorDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفرصة', en: 'Opportunity' })}</TableHead>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الموقع', en: 'Location' })}</TableHead>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاستثمار', en: 'Investment' })}</TableHead>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاهتمامات', en: 'Interest' })}</TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'الفرصة', en: 'Opportunity' })}
+                    </TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'الموقع', en: 'Location' })}
+                    </TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'الاستثمار', en: 'Investment' })}
+                    </TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'الاهتمامات', en: 'Interest' })}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -213,7 +221,12 @@ export default function InvestorDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'صندوق الوارد الاستثماري', en: 'Investment inbox' })}</CardTitle>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'صندوق الوارد الاستثماري',
+                en: 'Investment inbox',
+              })}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {!selectedOpportunity ? (
@@ -385,14 +398,20 @@ export default function InvestorDashboard() {
                     {inquiry.contactEmail && (
                       <Button asChild size="sm" variant="outline">
                         <a href={`mailto:${inquiry.contactEmail}`}>
-                          {pickLocalizedCopy(appLanguage, { ar: 'رد بالبريد', en: 'Reply by email' })}
+                          {pickLocalizedCopy(appLanguage, {
+                            ar: 'رد بالبريد',
+                            en: 'Reply by email',
+                          })}
                         </a>
                       </Button>
                     )}
                     {inquiry.contactPhone && (
                       <Button asChild size="sm" variant="secondary">
                         <a href={`tel:${inquiry.contactPhone}`}>
-                          {pickLocalizedCopy(appLanguage, { ar: 'اتصال مباشر', en: 'Call directly' })}
+                          {pickLocalizedCopy(appLanguage, {
+                            ar: 'اتصال مباشر',
+                            en: 'Call directly',
+                          })}
                         </a>
                       </Button>
                     )}
@@ -438,17 +457,29 @@ export default function InvestorDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفرصة', en: 'Opportunity' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'القيمة المقترحة', en: 'Proposed amount' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التفاصيل', en: 'Details' })}</TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الفرصة', en: 'Opportunity' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'القيمة المقترحة',
+                      en: 'Proposed amount',
+                    })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'التفاصيل', en: 'Details' })}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(myInterests?.data ?? []).map((application) => (
                   <TableRow key={application.id}>
                     <TableCell className="font-medium">
-                      {opportunityTitles.get(application.opportunityId) ?? application.opportunityId}
+                      {opportunityTitles.get(application.opportunityId) ??
+                        application.opportunityId}
                     </TableCell>
                     <TableCell>{applicationStatusLabel(application.status, appLanguage)}</TableCell>
                     <TableCell>
@@ -461,7 +492,10 @@ export default function InvestorDashboard() {
                         to={`/investment/opportunity/${application.opportunityId}`}
                         className="text-primary hover:underline"
                       >
-                        {pickLocalizedCopy(appLanguage, { ar: 'عرض الفرصة', en: 'View opportunity' })}
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'عرض الفرصة',
+                          en: 'View opportunity',
+                        })}
                       </Link>
                     </TableCell>
                   </TableRow>

@@ -147,7 +147,7 @@ jobs:
               if [ ! -f .env ]; then
                 return 0
               fi
-              grep -E "^${key}=" .env | tail -n 1 | cut -d '=' -f 2-
+              grep -E "^${key}=" .env | tail -n 1 | cut -d '=' -f 2- || true
             }
 
             caddy_http_port="${CADDY_HTTP_PORT:-$(read_env CADDY_HTTP_PORT)}"
@@ -167,9 +167,7 @@ jobs:
                 if [ "${holder%%$'\t'*}" != "$expected_container" ]; then
                   unexpected_holder_count=$((unexpected_holder_count + 1))
                 fi
-              done <<EOF
-            $holders
-            EOF
+              done < <(printf '%s\n' "$holders")
 
               if [ "$unexpected_holder_count" -gt 0 ]; then
                 echo "ERROR: Host port ${port} is already published by another Docker container."
