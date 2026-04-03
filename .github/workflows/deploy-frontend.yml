@@ -84,11 +84,11 @@ jobs:
             -e "ssh -i ~/.ssh/id_rsa" \
             dist/ root@158.220.105.104:/var/www/hena-wadeena/
 
-      - name: Reload Nginx
+      - name: Verify frontend is present for Caddy
         run: |
           ssh -i ~/.ssh/id_rsa \
             root@158.220.105.104 \
-            "nginx -t && systemctl reload nginx"
+            "test -f /var/www/hena-wadeena/index.html && docker ps --filter name=hena-wadeena-caddy-1 --format '{{.Status}}' | grep -q ."
 
       - name: Cleanup SSH key
         if: always()

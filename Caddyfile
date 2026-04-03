@@ -1,3 +1,22 @@
+hena-wadeena.online {
+	encode zstd gzip
+
+	@api path /api* /health
+	handle @api {
+		reverse_proxy gateway:80
+	}
+
+	handle {
+		root * /srv/hena-wadeena
+		try_files {path} {path}/ /index.html
+		file_server
+	}
+}
+
+www.hena-wadeena.online {
+	redir https://hena-wadeena.online{uri} permanent
+}
+
 api.hena-wadeena.online {
 	reverse_proxy gateway:80
 }

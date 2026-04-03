@@ -244,7 +244,7 @@ Output:
 - Workflow: `.github/workflows/deploy-frontend.yml`
 - Build: GitHub Actions runner
 - Deployment: rsync to `/var/www/hena-wadeena/`
-- Web server: System Nginx (config in `deployment/nginx/contabo.conf`)
+- Web server: Docker `caddy` service (config in root `Caddyfile`)
 
 ### Environment Variables (Production)
 
