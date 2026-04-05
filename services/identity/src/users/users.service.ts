@@ -379,20 +379,26 @@ export class UsersService {
   }
 
   async getWalletSnapshot(userId: string) {
-    const [user, recentTransactions] = await Promise.all([
-      this.findByIdOrThrow(userId),
-      this.db
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(andRequired(eq(users.id, userId), isNull(users.deletedAt)))
+        .limit(1);
+      if (!user) throw new NotFoundException('User not found');
+
+      const recentTransactions = await tx
         .select()
         .from(walletLedger)
         .where(eq(walletLedger.userId, userId))
         .orderBy(desc(walletLedger.createdAt))
-        .limit(20),
-    ]);
+        .limit(20);
 
-    return {
-      balance: user.balancePiasters,
-      recentTransactions,
-    };
+      return {
+        balance: user.balancePiasters,
+        recentTransactions,
+      };
+    });
   }
 
   async topUp(userId: string, amount: number): Promise<number> {

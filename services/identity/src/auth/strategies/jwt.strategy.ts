@@ -54,10 +54,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if (!payload.iat) {
         throw new UnauthorizedException('Session has been invalidated');
       }
-      // Compare at second precision (iat is seconds) with strict `<` so that
-      // a token issued in the same second as the invalidation still passes.
+      // Compare at second precision (iat is seconds) with `<=` so that
+      // tokens issued in the same second as the invalidation are also rejected.
       const invalidatedAtSeconds = Math.floor(user.sessionInvalidatedAt.getTime() / 1000);
-      if (payload.iat < invalidatedAtSeconds) {
+      if (payload.iat <= invalidatedAtSeconds) {
         throw new UnauthorizedException('Session has been invalidated');
       }
     }

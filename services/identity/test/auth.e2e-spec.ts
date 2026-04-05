@@ -333,8 +333,14 @@ describe('Auth (e2e)', () => {
 
     it('should reset the password and invalidate older sessions', async () => {
       latestResetOtp = null;
-      const oldAccessToken = accessToken;
-      const oldRefreshToken = refreshToken;
+
+      // Get fresh tokens so we're testing session invalidation, not blacklisting from logout
+      const loginRes = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({ email: testEmail, password: 'newpassword456' }) // set by change-password test
+        .expect(200);
+      const preResetAccessToken = loginRes.body.access_token as string;
+      const preResetRefreshToken = loginRes.body.refresh_token as string;
 
       await request(app.getHttpServer())
         .post('/api/v1/auth/password-reset/request')
@@ -353,12 +359,12 @@ describe('Auth (e2e)', () => {
 
       await request(app.getHttpServer())
         .get('/api/v1/auth/me')
-        .set('Authorization', `Bearer ${oldAccessToken}`)
+        .set('Authorization', `Bearer ${preResetAccessToken}`)
         .expect(401);
 
       await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
-        .send({ refresh_token: oldRefreshToken })
+        .send({ refresh_token: preResetRefreshToken })
         .expect(401);
 
       await request(app.getHttpServer())

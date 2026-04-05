@@ -143,7 +143,7 @@ export class NotificationsEventsConsumer implements OnModuleInit {
             bodyAr:
               `الحجز تم إلغاؤه بواسطة ${cancelledByName ?? d.cancelledByRole}. ${body}`.trim(),
             bodyEn:
-              `Booking cancelled by ${cancelledByName ?? d.cancelledByRole}. ${d.cancellationReason}`.trim(),
+              `Booking cancelled by ${cancelledByName ?? d.cancelledByRole}. ${d.cancellationReason ?? ''}`.trim(),
             data: {
               bookingId,
               cancelledBy: cancelledByName ?? d.cancelledByRole,

@@ -44,7 +44,7 @@ export type BookingEventPayload = Record<string, string> & {
 };
 
 export type BookingCancelledEventPayload = BookingEventPayload & {
-  cancellationReason: string;
+  cancellationReason?: string;
   cancelledByRole: string;
   cancelledByUserId: string;
 };
