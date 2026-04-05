@@ -195,7 +195,7 @@
 - [x] ~~`vitest.e2e.config.ts` unconditional `DB_SCHEMA` override — @codoki-pr-intelligence~~ <!-- thread:PRRT_kwDORjaF4M545O6T -->
   - _Reason: Contradicts the intentional fix from PRRT_kwDORjaF4M54upoK (now resolved): the conditional guard was the bug — it prevented `', public'` from being appended when `.env` already sets `DB_SCHEMA`. The unconditional override is consistent with market and map E2E configs and is the correct behavior for test environments._
 
-- [ ] ~~Booking creation proceeds without server-side wallet balance validation — @devin-ai-integration~~ <!-- thread:PRRT_kwDORjaF4M545ZmP -->
+- [x] ~~Booking creation proceeds without server-side wallet balance validation — @devin-ai-integration~~ <!-- thread:PRRT_kwDORjaF4M545ZmP -->
   - _Reason: Fixing properly requires either a synchronous cross-service balance check (guide-booking → identity internal API) or a new BOOKING_WALLET_FAILED event + state-machine cancellation flow. Both are significant new architecture beyond this PR's scope. The client-side `canAfford` guard covers normal user flows; direct API abuse is a separate concern._
   > **apps/web/src/pages/tourism/GuideBookingPage.tsx:88-122**
   >
