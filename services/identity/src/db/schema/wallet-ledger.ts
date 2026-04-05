@@ -19,6 +19,7 @@ export const walletLedger = identitySchema.table(
     amountPiasters: integer('amount_piasters').notNull(),
     kind: walletLedgerKindEnum('kind').notNull(),
     idempotencyKey: text('idempotency_key').notNull(),
+    balanceAfterPiasters: integer('balance_after_piasters'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

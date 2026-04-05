@@ -1,0 +1,1 @@
+ALTER TABLE "identity"."wallet_ledger" ADD COLUMN "balance_after_piasters" integer;

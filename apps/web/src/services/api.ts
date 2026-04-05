@@ -1293,7 +1293,7 @@ export interface Transaction {
   type: string;
   amount: number;
   direction: string;
-  balance_after: number;
+  balance_after: number | null;
   description: string;
   status: string;
   created_at: string;

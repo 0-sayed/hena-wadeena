@@ -113,6 +113,13 @@
       "when": 1775377382895,
       "tag": "20260405082302_wallet-ledger-restrict-user-fk",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1775386930144,
+      "tag": "20260405110210_greedy_chat",
+      "breakpoints": true
     }
   ]
 }

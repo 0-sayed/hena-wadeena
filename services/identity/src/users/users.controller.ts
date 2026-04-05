@@ -90,29 +90,19 @@ export class UsersController {
         user_id: user.sub,
         balance: snapshot.balance,
         currency: 'EGP',
-        recent_transactions: (() => {
-          // Transactions are ordered newest-first; walk forward to derive balance_after.
-          // snapshot.balance is the current balance after all listed transactions.
-          let runningBalance = snapshot.balance;
-          return snapshot.recentTransactions.map((entry) => {
-            const balanceAfter = runningBalance;
-            runningBalance +=
-              entry.direction === 'credit' ? -entry.amountPiasters : entry.amountPiasters;
-            return {
-              id: entry.id,
-              booking_id: entry.bookingId,
-              type: entry.kind,
-              amount: entry.amountPiasters,
-              direction: entry.direction,
-              balance_after: balanceAfter,
-              description: WALLET_TRANSACTION_DESCRIPTIONS[entry.kind],
-              status: 'completed',
-              created_at: entry.createdAt,
-              reference_id: entry.bookingId,
-              reference_type: 'booking',
-            };
-          });
-        })(),
+        recent_transactions: snapshot.recentTransactions.map((entry) => ({
+          id: entry.id,
+          booking_id: entry.bookingId,
+          type: entry.kind,
+          amount: entry.amountPiasters,
+          direction: entry.direction,
+          balance_after: entry.balanceAfterPiasters,
+          description: WALLET_TRANSACTION_DESCRIPTIONS[entry.kind],
+          status: 'completed',
+          created_at: entry.createdAt,
+          reference_id: entry.bookingId,
+          reference_type: 'booking',
+        })),
       },
     };
   }

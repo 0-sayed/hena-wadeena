@@ -495,7 +495,7 @@ export class UsersService {
               )
             : and(eq(users.id, entry.userId), isNull(users.deletedAt)),
         )
-        .returning({ id: users.id });
+        .returning({ id: users.id, balancePiasters: users.balancePiasters });
 
       if (!updatedUser) {
         // Balance is only checked on the debit path — on credit, the update can
@@ -506,6 +506,11 @@ export class UsersService {
             : 'المستخدم غير موجود',
         );
       }
+
+      await tx
+        .update(walletLedger)
+        .set({ balanceAfterPiasters: updatedUser.balancePiasters })
+        .where(eq(walletLedger.id, ledgerEntry.id));
 
       return 'applied' as const;
     });
