@@ -66,9 +66,7 @@ export class UsersController {
       .filter(Boolean);
 
     if ((parsedIds?.length ?? 0) > MAX_PUBLIC_USER_IDS) {
-      throw new BadRequestException(
-        `Too many IDs requested. Maximum is ${MAX_PUBLIC_USER_IDS}.`,
-      );
+      throw new BadRequestException(`Too many IDs requested. Maximum is ${MAX_PUBLIC_USER_IDS}.`);
     }
 
     const publicUsers = await this.usersService.findPublicProfiles(parsedIds ?? []);
@@ -99,9 +97,7 @@ export class UsersController {
           amount: entry.amountPiasters,
           direction: entry.direction,
           balance_after: null,
-          description:
-            WALLET_TRANSACTION_DESCRIPTIONS[entry.kind as keyof typeof WALLET_TRANSACTION_DESCRIPTIONS] ??
-            entry.kind,
+          description: WALLET_TRANSACTION_DESCRIPTIONS[entry.kind],
           status: 'completed',
           created_at: entry.createdAt,
           reference_id: entry.bookingId,

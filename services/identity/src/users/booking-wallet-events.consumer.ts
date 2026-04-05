@@ -22,14 +22,15 @@ export class BookingWalletEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const payload = msg.data as Record<string, string>;
+        const fields = this.parseWalletFields(msg.data, 'touristUserId');
+        if (!fields) return;
         await this.usersService.applyBookingWalletEntry({
-          bookingId: payload.bookingId ?? '',
-          userId: payload.touristUserId ?? '',
-          amountPiasters: Number(payload.totalPrice ?? '0'),
+          bookingId: fields.bookingId,
+          userId: fields.userId,
+          amountPiasters: fields.amountPiasters,
           direction: 'debit',
           kind: 'booking_debit',
-          idempotencyKey: `${EVENTS.BOOKING_REQUESTED}:${payload.bookingId ?? ''}`,
+          idempotencyKey: `${EVENTS.BOOKING_REQUESTED}:${fields.bookingId}`,
         });
       },
     );
@@ -39,15 +40,16 @@ export class BookingWalletEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const payload = msg.data as Record<string, string>;
-        await this.usersService.assertBookingLedgerExists(payload.bookingId ?? '', 'booking_debit');
+        const fields = this.parseWalletFields(msg.data, 'touristUserId');
+        if (!fields) return;
+        await this.usersService.assertBookingLedgerExists(fields.bookingId, 'booking_debit');
         await this.usersService.applyBookingWalletEntry({
-          bookingId: payload.bookingId ?? '',
-          userId: payload.touristUserId ?? '',
-          amountPiasters: Number(payload.totalPrice ?? '0'),
+          bookingId: fields.bookingId,
+          userId: fields.userId,
+          amountPiasters: fields.amountPiasters,
           direction: 'credit',
           kind: 'booking_refund',
-          idempotencyKey: `${EVENTS.BOOKING_CANCELLED}:${payload.bookingId ?? ''}`,
+          idempotencyKey: `${EVENTS.BOOKING_CANCELLED}:${fields.bookingId}`,
         });
       },
     );
@@ -57,19 +59,45 @@ export class BookingWalletEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const payload = msg.data as Record<string, string>;
-        await this.usersService.assertBookingLedgerExists(payload.bookingId ?? '', 'booking_debit');
+        const fields = this.parseWalletFields(msg.data, 'guideUserId');
+        if (!fields) return;
+        await this.usersService.assertBookingLedgerExists(fields.bookingId, 'booking_debit');
         await this.usersService.applyBookingWalletEntry({
-          bookingId: payload.bookingId ?? '',
-          userId: payload.guideUserId ?? '',
-          amountPiasters: Number(payload.totalPrice ?? '0'),
+          bookingId: fields.bookingId,
+          userId: fields.userId,
+          amountPiasters: fields.amountPiasters,
           direction: 'credit',
           kind: 'booking_payout',
-          idempotencyKey: `${EVENTS.BOOKING_COMPLETED}:${payload.bookingId ?? ''}`,
+          idempotencyKey: `${EVENTS.BOOKING_COMPLETED}:${fields.bookingId}`,
         });
       },
     );
 
     this.logger.log('Booking wallet event consumers registered');
+  }
+
+  /**
+   * Validate the wallet-relevant fields from a booking event. Returns null and
+   * logs a warning if any required field is missing or the amount is not a
+   * finite positive integer — we drop the message rather than poisoning the
+   * ledger with empty UUIDs or NaN amounts.
+   */
+  private parseWalletFields(
+    data: Record<string, unknown>,
+    userIdField: 'touristUserId' | 'guideUserId',
+  ): { bookingId: string; userId: string; amountPiasters: number } | null {
+    const bookingId = typeof data.bookingId === 'string' ? data.bookingId : '';
+    const userId = typeof data[userIdField] === 'string' ? (data[userIdField]) : '';
+    const rawTotal = typeof data.totalPrice === 'string' ? data.totalPrice : '';
+    const amountPiasters = Number.parseInt(rawTotal, 10);
+
+    if (!bookingId || !userId || !Number.isFinite(amountPiasters) || amountPiasters <= 0) {
+      this.logger.warn(
+        `Dropping malformed wallet event: bookingId=${bookingId || '<empty>'} ${userIdField}=${userId || '<empty>'} totalPrice=${rawTotal || '<empty>'}`,
+      );
+      return null;
+    }
+
+    return { bookingId, userId, amountPiasters };
   }
 }

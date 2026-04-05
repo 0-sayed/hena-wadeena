@@ -74,7 +74,7 @@ export class NotificationsEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const d = msg.data as unknown as BookingEventPayload;
+        const d = msg.data as BookingEventPayload;
         const [touristName] = await this.getUserNames([d.touristUserId]);
         const packageTitle = d.packageTitleAr || d.packageTitleEn || '';
         const { guideUserId, bookingId } = d;
@@ -85,8 +85,8 @@ export class NotificationsEventsConsumer implements OnModuleInit {
             type: NotificationType.BOOKING_REQUESTED,
             titleAr: 'طلب حجز جديد',
             titleEn: 'New Booking Request',
-            bodyAr: `${touristName ?? 'سائح'} طلب حجز "${packageTitle ?? ''}"`,
-            bodyEn: `${touristName ?? 'A tourist'} requested booking "${packageTitle ?? ''}"`,
+            bodyAr: `${touristName ?? 'سائح'} طلب حجز "${packageTitle}"`,
+            bodyEn: `${touristName ?? 'A tourist'} requested booking "${packageTitle}"`,
             data: { bookingId, path: '/bookings' },
           }),
           this.notificationsService.create({
@@ -94,8 +94,8 @@ export class NotificationsEventsConsumer implements OnModuleInit {
             type: NotificationType.BOOKING_REQUESTED,
             titleAr: 'تم إرسال طلب الحجز',
             titleEn: 'Booking Request Sent',
-            bodyAr: `تم إرسال طلب حجز "${packageTitle ?? ''}" بنجاح`,
-            bodyEn: `Your booking request for "${packageTitle ?? ''}" was sent successfully`,
+            bodyAr: `تم إرسال طلب حجز "${packageTitle}" بنجاح`,
+            bodyEn: `Your booking request for "${packageTitle}" was sent successfully`,
             data: { bookingId, path: '/bookings' },
           }),
         ]);
@@ -107,7 +107,7 @@ export class NotificationsEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const d = msg.data as unknown as BookingEventPayload;
+        const d = msg.data as BookingEventPayload;
         const [guideName] = await this.getUserNames([d.guideUserId]);
         const packageTitle = d.packageTitleAr || d.packageTitleEn || '';
         const { touristUserId, bookingId } = d;
@@ -117,8 +117,8 @@ export class NotificationsEventsConsumer implements OnModuleInit {
           type: NotificationType.BOOKING_CONFIRMED,
           titleAr: 'تم تأكيد الحجز',
           titleEn: 'Booking Confirmed',
-          bodyAr: `${guideName ?? 'المرشد'} أكد حجز "${packageTitle ?? ''}"`,
-          bodyEn: `${guideName ?? 'The guide'} confirmed your booking "${packageTitle ?? ''}"`,
+          bodyAr: `${guideName ?? 'المرشد'} أكد حجز "${packageTitle}"`,
+          bodyEn: `${guideName ?? 'The guide'} confirmed your booking "${packageTitle}"`,
           data: { bookingId, path: '/bookings' },
         });
       },
@@ -129,7 +129,7 @@ export class NotificationsEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const d = msg.data as unknown as BookingCancelledEventPayload;
+        const d = msg.data as BookingCancelledEventPayload;
         const [cancelledByName] = await this.getUserNames([d.cancelledByUserId]);
         const { touristUserId, guideUserId, bookingId } = d;
         const body = d.cancellationReason ? `السبب: ${d.cancellationReason}` : '';
@@ -140,8 +140,10 @@ export class NotificationsEventsConsumer implements OnModuleInit {
             type: NotificationType.BOOKING_CANCELLED,
             titleAr: 'تم إلغاء الحجز',
             titleEn: 'Booking Cancelled',
-            bodyAr: `الحجز تم إلغاؤه بواسطة ${cancelledByName ?? d.cancelledByRole}. ${body}`.trim(),
-            bodyEn: `Booking cancelled by ${cancelledByName ?? d.cancelledByRole}. ${d.cancellationReason ?? ''}`.trim(),
+            bodyAr:
+              `الحجز تم إلغاؤه بواسطة ${cancelledByName ?? d.cancelledByRole}. ${body}`.trim(),
+            bodyEn:
+              `Booking cancelled by ${cancelledByName ?? d.cancelledByRole}. ${d.cancellationReason}`.trim(),
             data: {
               bookingId,
               cancelledBy: cancelledByName ?? d.cancelledByRole,
@@ -198,7 +200,7 @@ export class NotificationsEventsConsumer implements OnModuleInit {
     this.logger.log('Notification event consumers registered');
   }
 
-  private async getUserNames(userIds: string[]): Promise<Array<string | undefined>> {
+  private async getUserNames(userIds: string[]): Promise<(string | undefined)[]> {
     const users = await this.usersService.findPublicProfiles(userIds.filter(Boolean));
     const names = new Map(users.map((user) => [user.id, user.displayName ?? user.fullName]));
     return userIds.map((userId) => names.get(userId));

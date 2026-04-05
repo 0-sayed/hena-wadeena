@@ -84,7 +84,7 @@ const GuideBookingPage = () => {
     setShowConfirm(true);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (isProcessingRef.current) return;
     if (!pkg || !user) return;
 
@@ -388,13 +388,8 @@ const GuideBookingPage = () => {
             >
               تعديل
             </Button>
-            <Button
-              onClick={() => void handleConfirm()}
-              disabled={createBooking.isPending}
-            >
-              {createBooking.isPending && (
-                <Loader2 className="ms-2 h-4 w-4 animate-spin" />
-              )}
+            <Button onClick={() => void handleConfirm()} disabled={createBooking.isPending}>
+              {createBooking.isPending && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
               تأكيد الحجز
             </Button>
           </DialogFooter>

@@ -14,18 +14,21 @@ export class SessionService {
   ) {}
 
   async revokeAllUserSessions(userId: string): Promise<void> {
-    // Revoke all refresh tokens — used by logout, password change, and admin actions
+    // Revoke all refresh tokens — used by logout, password change, and admin actions.
+    // Wrap both writes in a transaction so that refresh-token revocation and
+    // the `sessionInvalidatedAt` marker flip atomically — otherwise a concurrent
+    // refresh could observe one flag set and the other not yet written.
     const revokedAt = new Date();
-    await Promise.all([
-      this.db
+    await this.db.transaction(async (tx) => {
+      await tx
         .update(authTokens)
         .set({ revokedAt })
-        .where(and(eq(authTokens.userId, userId), isNull(authTokens.revokedAt))),
-      this.db
+        .where(and(eq(authTokens.userId, userId), isNull(authTokens.revokedAt)));
+      await tx
         .update(users)
         .set({ sessionInvalidatedAt: revokedAt, updatedAt: revokedAt })
-        .where(eq(users.id, userId)),
-    ]);
+        .where(eq(users.id, userId));
+    });
   }
 
   async blockUser(userId: string): Promise<void> {

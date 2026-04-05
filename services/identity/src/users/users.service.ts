@@ -27,8 +27,7 @@ type AuditEventType = typeof auditEvents.$inferInsert.eventType;
 type WalletLedgerDirection = typeof walletLedger.$inferInsert.direction;
 type WalletLedgerKind = typeof walletLedger.$inferInsert.kind;
 const PG_UNIQUE_VIOLATION = '23505';
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -151,7 +150,9 @@ export class UsersService {
         fullName: data.fullName,
         passwordHash: data.passwordHash,
         role: data.role as typeof users.$inferInsert.role,
-        ...(data.status !== undefined && { status: data.status as typeof users.$inferInsert.status }),
+        ...(data.status !== undefined && {
+          status: data.status as typeof users.$inferInsert.status,
+        }),
       })
       .returning();
     if (!user) throw new InternalServerErrorException('Insert did not return a row');
@@ -491,7 +492,13 @@ export class UsersService {
         .returning({ id: users.id });
 
       if (!updatedUser) {
-        throw new BadRequestException('رصيد المحفظة غير كافٍ أو المستخدم غير موجود');
+        // Balance is only checked on the debit path — on credit, the update can
+        // only miss if the user row is gone/soft-deleted.
+        throw new BadRequestException(
+          entry.direction === 'debit'
+            ? 'رصيد المحفظة غير كافٍ أو المستخدم غير موجود'
+            : 'المستخدم غير موجود',
+        );
       }
 
       return 'applied' as const;

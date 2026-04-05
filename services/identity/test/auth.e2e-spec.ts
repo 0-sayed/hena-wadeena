@@ -1,9 +1,9 @@
-import type { INestApplication } from '@nestjs/common';
 import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
+import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { eq } from 'drizzle-orm';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { and, desc, eq } from 'drizzle-orm';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -31,11 +31,9 @@ describe('Auth (e2e)', () => {
       // Mock email — Resend SDK fails with placeholder API key in tests
       .overrideProvider(EmailService)
       .useValue({
-        sendPasswordResetOtp: vi
-          .fn()
-          .mockImplementation(async (_email: string, otp: string) => {
-            latestResetOtp = otp;
-          }),
+        sendPasswordResetOtp: vi.fn().mockImplementation((_email: string, otp: string) => {
+          latestResetOtp = otp;
+        }),
         sendPasswordChangedConfirmation: vi.fn().mockResolvedValue(undefined),
         sendPasswordResetConfirmation: vi.fn().mockResolvedValue(undefined),
       })
@@ -314,8 +312,9 @@ describe('Auth (e2e)', () => {
       const [record] = await db
         .select()
         .from(otpCodes)
-        .where(eq(otpCodes.target, testEmail))
-        .orderBy(otpCodes.createdAt);
+        .where(and(eq(otpCodes.target, testEmail), eq(otpCodes.purpose, 'reset')))
+        .orderBy(desc(otpCodes.createdAt))
+        .limit(1);
 
       if (!record) {
         throw new Error('Expected OTP record to exist');

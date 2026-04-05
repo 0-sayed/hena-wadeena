@@ -68,7 +68,7 @@ describe('useMyBookings', () => {
     ).toBe(30_000);
   });
 
-  it('disables polling when the user is not authenticated', async () => {
+  it('disables polling when the user is not authenticated', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false });
 
     const { queryClient, wrapper } = createWrapper();

@@ -169,7 +169,7 @@ export class BookingsService {
         guideUserId: guide.userId,
         packageTitleAr: pkg.titleAr,
         packageTitleEn: pkg.titleEn ?? '',
-      }) as unknown as Record<string, string>,
+      }) as Record<string, string>,
     );
 
     return row;
@@ -225,6 +225,29 @@ export class BookingsService {
       }
     }
 
+    // Resolve event context BEFORE mutating state — otherwise a missing guide/
+    // package row would 404 after the status has already been committed, leaving
+    // the caller with a failure response but the transition silently applied
+    // (and no event published to trigger refunds/notifications).
+    let guide: { userId: string } | undefined;
+    let pkg: { titleAr: string; titleEn: string | null } | undefined;
+    if (transitionDef.event) {
+      [guide] = await this.db
+        .select({ userId: guides.userId })
+        .from(guides)
+        .where(eq(guides.id, booking.guideId))
+        .limit(1);
+      [pkg] = await this.db
+        .select({ titleAr: tourPackages.titleAr, titleEn: tourPackages.titleEn })
+        .from(tourPackages)
+        .where(eq(tourPackages.id, booking.packageId))
+        .limit(1);
+
+      if (!guide || !pkg) {
+        throw new NotFoundException('Booking event context not found');
+      }
+    }
+
     const updatePayload: Partial<typeof bookings.$inferInsert> = {
       status: targetStatus as BookingStatus,
       updatedAt: new Date(),
@@ -244,22 +267,7 @@ export class BookingsService {
 
     if (!updated) throw new ConflictException('Booking was modified concurrently, please retry');
 
-    if (transitionDef.event) {
-      const [guide] = await this.db
-        .select({ userId: guides.userId })
-        .from(guides)
-        .where(eq(guides.id, updated.guideId))
-        .limit(1);
-      const [pkg] = await this.db
-        .select({ titleAr: tourPackages.titleAr, titleEn: tourPackages.titleEn })
-        .from(tourPackages)
-        .where(eq(tourPackages.id, updated.packageId))
-        .limit(1);
-
-      if (!guide || !pkg) {
-        throw new NotFoundException('Booking event context not found');
-      }
-
+    if (transitionDef.event && guide && pkg) {
       const payload =
         targetStatus === 'cancelled'
           ? this.buildBookingCancelledEventPayload(
@@ -281,7 +289,7 @@ export class BookingsService {
               packageTitleEn: pkg.titleEn ?? '',
             });
 
-      await this.redisStreams.publish(transitionDef.event, payload as unknown as Record<string, string>);
+      await this.redisStreams.publish(transitionDef.event, payload as Record<string, string>);
     }
 
     return updated;

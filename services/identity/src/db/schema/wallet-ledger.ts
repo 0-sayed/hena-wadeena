@@ -1,14 +1,6 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import {
-  check,
-  index,
-  integer,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { check, index, integer, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { walletLedgerDirectionEnum, walletLedgerKindEnum } from '../enums';
 import { identitySchema } from '../schema';
@@ -21,7 +13,7 @@ export const walletLedger = identitySchema.table(
     id: uuid().primaryKey().$defaultFn(generateId),
     userId: uuid('user_id')
       .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => users.id, { onDelete: 'restrict' }),
     bookingId: uuid('booking_id').notNull(),
     direction: walletLedgerDirectionEnum('direction').notNull(),
     amountPiasters: integer('amount_piasters').notNull(),

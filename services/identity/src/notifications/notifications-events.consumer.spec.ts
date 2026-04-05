@@ -16,7 +16,7 @@ describe('NotificationsEventsConsumer booking compatibility', () => {
   beforeEach(() => {
     handlers.clear();
     mockStreams = {
-      subscribe: vi.fn().mockImplementation(async (stream, _group, _consumer, handler) => {
+      subscribe: vi.fn().mockImplementation((stream, _group, _consumer, handler) => {
         handlers.set(stream as string, handler);
       }),
     };

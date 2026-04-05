@@ -13,9 +13,9 @@ if (!process.env['SERVICE_NAME']) {
 
 // Override DB_SCHEMA to include 'public' for PostGIS type resolution (geography, geometry).
 // Must be set before AppModule is imported so the @Module decorator captures the correct search_path.
-if (!process.env['DB_SCHEMA']) {
-  process.env['DB_SCHEMA'] = 'guide_booking, public';
-}
+// The `.env` above sets DB_SCHEMA=guide_booking, so we unconditionally append `public` here
+// (matching the market/map E2E configs) — a conditional guard would silently drop PostGIS resolution.
+process.env['DB_SCHEMA'] = 'guide_booking, public';
 
 export default defineConfig({
   test: {

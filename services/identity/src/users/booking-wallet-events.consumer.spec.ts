@@ -5,7 +5,7 @@ import { BookingWalletEventsConsumer } from './booking-wallet-events.consumer';
 import type { UsersService } from './users.service';
 
 describe('BookingWalletEventsConsumer', () => {
-  const handlers = new Map<string, (msg: { data: Record<string, string> }) => Promise<void>>();
+  const handlers = new Map<string, (msg: { data: Record<string, unknown> }) => Promise<void>>();
   let consumer: BookingWalletEventsConsumer;
   let mockStreams: { subscribe: ReturnType<typeof vi.fn> };
   let mockUsersService: {
@@ -16,7 +16,7 @@ describe('BookingWalletEventsConsumer', () => {
   beforeEach(() => {
     handlers.clear();
     mockStreams = {
-      subscribe: vi.fn().mockImplementation(async (stream, _group, _consumer, handler) => {
+      subscribe: vi.fn().mockImplementation((stream, _group, _consumer, handler) => {
         handlers.set(stream as string, handler);
       }),
     };
@@ -65,7 +65,10 @@ describe('BookingWalletEventsConsumer', () => {
       },
     });
 
-    expect(mockUsersService.assertBookingLedgerExists).toHaveBeenCalledWith('booking-1', 'booking_debit');
+    expect(mockUsersService.assertBookingLedgerExists).toHaveBeenCalledWith(
+      'booking-1',
+      'booking_debit',
+    );
     expect(mockUsersService.applyBookingWalletEntry).toHaveBeenCalledWith({
       bookingId: 'booking-1',
       userId: 'tourist-1',
@@ -88,7 +91,10 @@ describe('BookingWalletEventsConsumer', () => {
       },
     });
 
-    expect(mockUsersService.assertBookingLedgerExists).toHaveBeenCalledWith('booking-1', 'booking_debit');
+    expect(mockUsersService.assertBookingLedgerExists).toHaveBeenCalledWith(
+      'booking-1',
+      'booking_debit',
+    );
     expect(mockUsersService.applyBookingWalletEntry).toHaveBeenCalledWith({
       bookingId: 'booking-1',
       userId: 'guide-1',
@@ -97,5 +103,34 @@ describe('BookingWalletEventsConsumer', () => {
       kind: 'booking_payout',
       idempotencyKey: 'booking.completed:booking-1',
     });
+  });
+
+  it('drops booking.requested with non-numeric totalPrice (guards NaN)', async () => {
+    await consumer.onModuleInit();
+
+    await handlers.get('booking.requested')?.({
+      data: {
+        bookingId: 'booking-1',
+        touristUserId: 'tourist-1',
+        guideUserId: 'guide-1',
+        totalPrice: 'not-a-number',
+      },
+    });
+
+    expect(mockUsersService.applyBookingWalletEntry).not.toHaveBeenCalled();
+  });
+
+  it('drops booking.requested with missing required fields', async () => {
+    await consumer.onModuleInit();
+
+    await handlers.get('booking.requested')?.({
+      data: {
+        bookingId: 'booking-1',
+        touristUserId: '',
+        totalPrice: '150000',
+      },
+    });
+
+    expect(mockUsersService.applyBookingWalletEntry).not.toHaveBeenCalled();
   });
 });

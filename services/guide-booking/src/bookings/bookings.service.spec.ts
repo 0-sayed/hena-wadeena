@@ -307,9 +307,9 @@ describe('BookingsService', () => {
   describe('transition', () => {
     it('confirm: pending → confirmed, publishes event', async () => {
       mockNextQuery([{ ...mockBooking, status: 'pending' }]);
-      mockNextQuery([{ ...mockBooking, status: 'confirmed' }]);
       mockNextQuery([{ userId: 'guide-user-uuid' }]);
       mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
+      mockNextQuery([{ ...mockBooking, status: 'confirmed' }]);
 
       const result = await service.transition('booking-uuid-1', 'confirmed', {
         sub: 'guide-user-uuid',
@@ -362,9 +362,9 @@ describe('BookingsService', () => {
 
     it('complete: in_progress → completed, publishes event', async () => {
       mockNextQuery([{ ...mockBooking, status: 'in_progress' }]);
-      mockNextQuery([{ ...mockBooking, status: 'completed' }]);
       mockNextQuery([{ userId: 'guide-user-uuid' }]);
       mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
+      mockNextQuery([{ ...mockBooking, status: 'completed' }]);
 
       const result = await service.transition('booking-uuid-1', 'completed', {
         sub: 'guide-user-uuid',
@@ -389,9 +389,9 @@ describe('BookingsService', () => {
 
     it('cancel: sets cancelledAt and cancelReason, publishes event', async () => {
       mockNextQuery([{ ...mockBooking, status: 'pending' }]);
-      mockNextQuery([{ ...mockBooking, status: 'cancelled' }]);
       mockNextQuery([{ userId: 'guide-user-uuid' }]);
       mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
+      mockNextQuery([{ ...mockBooking, status: 'cancelled' }]);
 
       await service.transition(
         'booking-uuid-1',
@@ -501,9 +501,9 @@ describe('BookingsService', () => {
 
     it('tourist CAN cancel pending booking', async () => {
       mockNextQuery([{ ...mockBooking, status: 'pending' }]);
-      mockNextQuery([{ ...mockBooking, status: 'cancelled' }]);
       mockNextQuery([{ userId: 'guide-user-uuid' }]);
       mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
+      mockNextQuery([{ ...mockBooking, status: 'cancelled' }]);
 
       const result = await service.transition(
         'booking-uuid-1',

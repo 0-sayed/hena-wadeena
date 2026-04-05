@@ -50,7 +50,9 @@ function mergeTransactions(
 ): Transaction[] {
   const merged = new Map<string, Transaction>();
 
-  for (const transaction of [...remoteTransactions, ...localTransactions]) {
+  // Process local first so server-authoritative remote rows overwrite
+  // any matching local optimistic entries with the same ID.
+  for (const transaction of [...localTransactions, ...remoteTransactions]) {
     merged.set(transaction.id, transaction);
   }
 
