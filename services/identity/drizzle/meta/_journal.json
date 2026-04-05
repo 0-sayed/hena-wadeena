@@ -103,22 +103,8 @@
     {
       "idx": 14,
       "version": "7",
-      "when": 1775205840706,
-      "tag": "20260403084400_equal_purifiers",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1775377382895,
-      "tag": "20260405082302_wallet-ledger-restrict-user-fk",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1775386930144,
-      "tag": "20260405110210_greedy_chat",
+      "when": 1775390191407,
+      "tag": "20260405115631_wallet-ledger-and-session-invalidation",
       "breakpoints": true
     }
   ]

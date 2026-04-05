@@ -1,6 +1,6 @@
 {
-  "id": "839f9e46-6b58-4e05-a7f8-ead22b27fe9f",
-  "prevId": "4eac1eac-0d33-4646-a86a-ba4939f12d05",
+  "id": "74c9dc44-8e33-4d4e-bfbe-a702f4e3e0c3",
+  "prevId": "5e9d1a83-ad5c-49a8-8ab6-88514e23fcff",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -938,6 +938,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "balance_after_piasters": {
+          "name": "balance_after_piasters",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
