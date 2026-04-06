@@ -123,7 +123,7 @@ vi.mock('@/hooks/use-bookings', () => ({
 }));
 
 vi.mock('@/hooks/use-reviews', () => ({
-  useMyReviewedBookingIds: () => ({ data: new Set<string>() }),
+  useMyReviewedBookingIds: () => ({ data: new Map<string, number>() }),
   useCreateReview: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 

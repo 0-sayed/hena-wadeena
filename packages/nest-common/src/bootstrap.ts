@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 import helmet from 'helmet';
-import { ZodValidationPipe } from 'nestjs-zod';
 
 const DEFAULT_REQUEST_BODY_LIMIT = '10mb';
 
@@ -12,7 +11,6 @@ interface ConfigurableNestApp {
   use(...args: unknown[]): void;
   getHttpAdapter(): { getInstance(): HttpAdapterInstance };
   setGlobalPrefix(prefix: string, options: { exclude: string[] }): void;
-  useGlobalPipes(...pipes: unknown[]): void;
   enableShutdownHooks(): void;
   listen(port: number): Promise<void>;
 }
@@ -53,7 +51,6 @@ export async function configureApp(
   }
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
-  app.useGlobalPipes(new ZodValidationPipe());
   app.enableShutdownHooks();
 
   await app.listen(options.port);

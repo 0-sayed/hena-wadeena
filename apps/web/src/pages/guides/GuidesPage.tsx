@@ -64,9 +64,11 @@ const GuidesPage = () => {
     debouncedSetSearch(nextValue);
   };
 
-  const handleSearch = (event: FormEvent) => {
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSearchInput((previous) => previous.trim());
+    const trimmed = searchInput.trim();
+    setSearchInput(trimmed);
+    setFilters((previous) => ({ ...previous, search: trimmed || undefined }));
   };
 
   const filteredGuides = useMemo(

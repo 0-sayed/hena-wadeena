@@ -334,6 +334,12 @@ describe('Auth (e2e)', () => {
     it('should reset the password and invalidate older sessions', async () => {
       latestResetOtp = null;
 
+      // Mark all existing unused reset OTPs as used to isolate this test
+      await db
+        .update(otpCodes)
+        .set({ usedAt: new Date() })
+        .where(and(eq(otpCodes.target, testEmail), eq(otpCodes.purpose, 'reset')));
+
       // Get fresh tokens so we're testing session invalidation, not blacklisting from logout
       const loginRes = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
@@ -356,6 +362,12 @@ describe('Auth (e2e)', () => {
 
       accessToken = res.body.access_token as string;
       refreshToken = res.body.refresh_token as string;
+
+      // Verify the freshly-issued post-reset token is usable
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
 
       await request(app.getHttpServer())
         .get('/api/v1/auth/me')

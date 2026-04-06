@@ -39,7 +39,7 @@ export class InvestmentApplicationsController {
   // --- EOI routes (under /investments prefix) ---
 
   @Post('investments/:id/interest')
-  @Roles(UserRole.INVESTOR, UserRole.ADMIN)
+  @Roles(UserRole.INVESTOR, UserRole.MERCHANT)
   @UseGuards(KycVerifiedGuard)
   submitInterest(
     @Param('id') opportunityId: string,
