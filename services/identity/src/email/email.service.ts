@@ -34,4 +34,44 @@ export class EmailService {
       throw new Error('Failed to send password reset email');
     }
   }
+
+  async sendPasswordChangedConfirmation(to: string): Promise<void> {
+    const { error } = await this.resend.emails.send({
+      from: this.from,
+      to: [to],
+      subject: 'تم تغيير كلمة المرور - Hena Wadeena',
+      html: `
+        <div dir="rtl" style="font-family: Arial, sans-serif;">
+          <h2>تم تغيير كلمة المرور</h2>
+          <p>تم تحديث كلمة المرور الخاصة بحسابك بنجاح.</p>
+          <p>إذا لم تقم بهذا التغيير، يرجى التواصل مع الدعم فورًا.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      this.logger.error(`Failed to send password change confirmation: ${error.message}`);
+      throw new Error('Failed to send password change confirmation');
+    }
+  }
+
+  async sendPasswordResetConfirmation(to: string): Promise<void> {
+    const { error } = await this.resend.emails.send({
+      from: this.from,
+      to: [to],
+      subject: 'تمت إعادة تعيين كلمة المرور - Hena Wadeena',
+      html: `
+        <div dir="rtl" style="font-family: Arial, sans-serif;">
+          <h2>تمت إعادة تعيين كلمة المرور</h2>
+          <p>تمت إعادة تعيين كلمة المرور الخاصة بحسابك بنجاح.</p>
+          <p>إذا لم تقم بهذا الإجراء، يرجى التواصل مع الدعم فورًا.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      this.logger.error(`Failed to send password reset confirmation: ${error.message}`);
+      throw new Error('Failed to send password reset confirmation');
+    }
+  }
 }

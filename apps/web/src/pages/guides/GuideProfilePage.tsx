@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertCircle, Clock, Shield, Star, Users } from 'lucide-react';
+import { toast } from 'sonner';
+import { AlertCircle, Clock, Shield, Star, ThumbsUp, Users } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty, NvDistrict } from '@hena-wadeena/types';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -11,6 +13,8 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { useGuide, useGuidePackages } from '@/hooks/use-guides';
 import { useCanBook } from '@/hooks/use-bookings';
 import { usePublicUsers } from '@/hooks/use-users';
+import { useGuideReviews, useMarkHelpful } from '@/hooks/use-reviews';
+import { useAuth } from '@/hooks/use-auth';
 import {
   areaLabels,
   formatRating,
@@ -38,6 +42,17 @@ const GuideProfilePage = () => {
   } = useGuidePackages(id);
   const publicUsers = usePublicUsers(guide ? [guide.userId] : []);
   const canBook = useCanBook();
+  const { isAuthenticated, language: appLanguage } = useAuth();
+  const {
+    data: reviews,
+    total: reviewsTotal,
+    isLoading: isLoadingReviews,
+    isFetchingNextPage: isFetchingNextReviews,
+    hasNextPage: hasNextReviews,
+    fetchNextPage: fetchNextReviews,
+  } = useGuideReviews(id);
+  const [pendingHelpfulId, setPendingHelpfulId] = useState<string | null>(null);
+  const markHelpfulMutation = useMarkHelpful();
 
   const guideName = guide ? getGuideName(publicUsers.data?.[guide.userId]) : 'مرشد سياحي';
 
@@ -123,9 +138,7 @@ const GuideProfilePage = () => {
                       <span className="text-2xl font-bold">{formatRating(guide.ratingAvg)}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">{guide.ratingCount} تقييم</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {guide.reviewCount} مراجعة
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">{guide.reviewCount} مراجعة</p>
                     <p className="mt-2 text-lg font-bold text-primary">
                       {piastresToEgp(guide.basePrice)}/يوم
                     </p>
@@ -220,6 +233,90 @@ const GuideProfilePage = () => {
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 fetchNextPage={fetchNextPage}
+              />
+            </div>
+          </SR>
+
+          <SR>
+            <div>
+              <h2 className="mb-4 text-2xl font-bold">تقييمات المسافرين</h2>
+
+              {isLoadingReviews ? (
+                <div className="h-24 w-full animate-pulse rounded-2xl bg-muted" />
+              ) : reviewsTotal === 0 ? (
+                <p className="text-muted-foreground">لا توجد تقييمات بعد</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-5 space-y-3">
+                        {/* Stars */}
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= review.rating
+                                  ? 'fill-yellow-500 text-yellow-500'
+                                  : 'text-muted-foreground'
+                              }`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Comment */}
+                        {review.comment && (
+                          <p className="text-sm text-foreground">{review.comment}</p>
+                        )}
+
+                        {/* Date */}
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleDateString(
+                            appLanguage === 'en' ? 'en-US' : 'ar-EG',
+                          )}
+                        </p>
+
+                        {/* Guide reply */}
+                        {review.guideReply && (
+                          <div className="ms-4 border-s-2 border-primary/30 ps-4">
+                            <p className="text-xs font-semibold text-primary mb-1">رد المرشد</p>
+                            <p className="text-sm text-muted-foreground">{review.guideReply}</p>
+                          </div>
+                        )}
+
+                        {/* Helpful */}
+                        {isAuthenticated && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            disabled={pendingHelpfulId === review.id}
+                            onClick={() => {
+                              setPendingHelpfulId(review.id);
+                              markHelpfulMutation.mutate(
+                                { reviewId: review.id, guideId: id },
+                                {
+                                  onSettled: () => setPendingHelpfulId(null),
+                                  onError: (error) =>
+                                    toast.error(error instanceof Error ? error.message : 'حدث خطأ'),
+                                },
+                              );
+                            }}
+                          >
+                            <ThumbsUp className="me-1 h-3 w-3" />
+                            مفيد ({review.helpfulCount})
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              <LoadMoreButton
+                hasNextPage={hasNextReviews}
+                isFetchingNextPage={isFetchingNextReviews}
+                fetchNextPage={fetchNextReviews}
               />
             </div>
           </SR>

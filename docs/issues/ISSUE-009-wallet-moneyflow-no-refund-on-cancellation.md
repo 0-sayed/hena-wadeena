@@ -2,6 +2,7 @@
 
 ## Status
 - [ ] Open
+- [x] Core booking wallet lifecycle implemented
 
 ## Priority
 🚨 Critical
@@ -10,12 +11,14 @@
 Wallet System — Trip Booking & Cancellation Flow — Financial Transactions
 
 ## Description
-A critical financial logic bug exists in the trip booking and cancellation flow. When a user books a trip, the fare is correctly deducted from their wallet. However, when the trip is subsequently **canceled**, two major failures occur simultaneously:
+The booking wallet lifecycle now has concrete backend handling:
 
-1. **The user's wallet is NOT refunded** — the deducted balance is lost entirely.
-2. **The service provider does NOT receive a credit** — payment is never transferred to them either.
+1. `booking.requested` debits the tourist wallet.
+2. `booking.cancelled` refunds the tourist wallet.
+3. `booking.completed` credits the guide wallet.
+4. Every booking-linked mutation is written to a wallet ledger with a booking reference and idempotency key.
 
-Money is deducted from the user's wallet and disappears into a void. Neither party ends up with the correct balance.
+The issue remains open because the current implementation is still an eventual, cross-service event flow. It does **not** yet provide an escrow/hold model or a cross-service atomic guarantee between booking state changes and wallet mutations.
 
 ## Reproduction Steps
 1. Log in as a user with sufficient wallet balance.
@@ -25,13 +28,12 @@ Money is deducted from the user's wallet and disappears into a void. Neither par
 5. Check user wallet — balance is **not refunded**. ❌
 6. Check service provider wallet/earnings — **no credit received**. ❌
 
-## Current (Broken) Money Flow
+## Current Money Flow
 
 ```
-User Wallet ──[deduct]-──► ???? (lost)
-                              ▲
-                      Cancellation ──► No refund to user
-                                   ──► No credit to service provider
+User Wallet ──[booking.requested debit]──► Balance mutation + ledger row
+Booking Cancelled ───────────────────────► Refund ledger row + balance credit
+Booking Completed ───────────────────────► Guide payout ledger row + balance credit
 ```
 
 ## Expected Money Flow
@@ -49,12 +51,15 @@ Trip Canceled ───────────► Refund back to User Wallet
                         ──► No credit to Service Provider
 ```
 
-> **Note:** Depending on business rules, partial refunds or cancellation fees may apply. These rules need to be defined and documented.
+> **Note:** Depending on business rules, partial refunds or cancellation fees may apply. These rules are still not defined in the current implementation.
 
-## Root Cause (Suspected)
-The cancellation handler in the backend likely does not trigger a wallet transaction reversal or refund. The booking payment may be processed as a direct deduction rather than being held in escrow until the trip is confirmed/completed, making reversal on cancellation absent.
+## Current Gaps
+- No escrow or held-funds state tied to the booking lifecycle.
+- No cross-service atomic transaction spanning guide-booking and identity.
+- Cancellation policy edge cases are still undefined.
+- The implementation is idempotent and auditable, but still eventually consistent across services.
 
-## Required Fix
+## Remaining Fix
 
 ### Backend
 1. **Implement an escrow/hold mechanism** for trip payments:
@@ -62,13 +67,14 @@ The cancellation handler in the backend likely does not trigger a wallet transac
    - On trip completion: release held amount → credit service provider wallet.
    - On cancellation: release held amount → refund user wallet (apply cancellation policy if applicable).
 
-2. **If escrow is not feasible (direct deduction model):**
-   - On cancellation: explicitly trigger a wallet credit transaction back to the user.
-   - Ensure this transaction is atomic — it should not be possible for the cancellation to succeed without the refund also succeeding.
+2. **If the direct deduction model remains:**
+   - Keep the current debit / refund / payout event handlers.
+   - Add an explicit reconciliation strategy for booking events that fail to apply downstream.
+   - Document the eventual consistency tradeoff clearly.
 
 3. **Audit trail:**
-   - Every wallet transaction (deduction, refund, credit) must be logged with a reference to the booking ID.
-   - This enables tracing and dispute resolution.
+   - Keep the booking-linked wallet ledger and idempotency constraints in place.
+   - Expose dispute-resolution and reconciliation tooling if needed.
 
 ### Cancellation Policy (needs business decision)
 The following scenarios should be defined and handled:
@@ -86,9 +92,9 @@ The following scenarios should be defined and handled:
 - This is a **data integrity and financial correctness** issue that must be treated as the highest priority.
 
 ## Acceptance Criteria
-- [ ] When a trip is canceled, the user's wallet is refunded the correct amount
-- [ ] When a trip is completed, the service provider's wallet receives the correct credit
-- [ ] Cancellation refunds are atomic — they cannot partially succeed
-- [ ] Every wallet transaction references the associated booking ID
+- [x] When a trip is canceled, the user's wallet is refunded the correct amount
+- [x] When a trip is completed, the service provider's wallet receives the correct credit
+- [ ] Cancellation refunds are atomic across service boundaries
+- [x] Every wallet transaction references the associated booking ID
 - [ ] Cancellation policy edge cases are defined and handled
-- [ ] No money is "lost" between wallet states in any booking lifecycle scenario
+- [ ] No money is "lost" between wallet states in any booking lifecycle scenario, including downstream delivery failures

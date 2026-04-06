@@ -26,3 +26,25 @@ export const EVENTS = {
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
+
+// Booking event payloads intersect with Record<string, string> because they
+// travel through Redis Streams, where all field values must be strings. The
+// intersection gives them a string index signature so producers can publish
+// them and consumers can narrow raw stream data into them without
+// `as unknown as T` double-casts.
+export type BookingEventPayload = Record<string, string> & {
+  bookingId: string;
+  packageId: string;
+  guideProfileId: string;
+  guideUserId: string;
+  touristUserId: string;
+  packageTitleAr: string;
+  packageTitleEn: string;
+  totalPrice: string;
+};
+
+export type BookingCancelledEventPayload = BookingEventPayload & {
+  cancellationReason?: string;
+  cancelledByRole: string;
+  cancelledByUserId: string;
+};

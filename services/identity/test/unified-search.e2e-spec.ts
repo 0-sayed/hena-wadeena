@@ -7,6 +7,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { users } from '../src/db/schema/users';
+import { walletLedger } from '../src/db/schema/wallet-ledger';
 
 import { type E2eContext } from './e2e-helpers';
 
@@ -83,6 +84,7 @@ describe('Unified Search (e2e)', () => {
 
   beforeEach(async () => {
     await ctx.redis.flushdb();
+    await ctx.db.delete(walletLedger);
     await ctx.db.delete(users);
     mockHttpService.get.mockClear();
     mockHttpService.get.mockReturnValue(

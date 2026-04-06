@@ -5,7 +5,11 @@ import {
   paginate,
 } from '@hena-wadeena/nest-common';
 import { EVENTS } from '@hena-wadeena/types';
-import type { PaginatedResponse } from '@hena-wadeena/types';
+import type {
+  BookingCancelledEventPayload,
+  BookingEventPayload,
+  PaginatedResponse,
+} from '@hena-wadeena/types';
 import {
   BadRequestException,
   ConflictException,
@@ -14,7 +18,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
@@ -43,6 +47,18 @@ interface BookingFilters {
   toDate?: string;
   offset: number;
   limit: number;
+}
+
+const ACTIVE_SLOT_STATUSES: BookingStatus[] = ['pending', 'confirmed', 'in_progress'];
+const PG_UNIQUE_VIOLATION = '23505';
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === PG_UNIQUE_VIOLATION
+  );
 }
 
 @Injectable()
@@ -101,33 +117,60 @@ export class BookingsService {
       throw new BadRequestException(`People count exceeds package maximum of ${pkg.maxPeople}`);
     }
 
+    const [conflictingBooking] = await this.db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.guideId, pkg.guideId),
+          eq(bookings.bookingDate, dto.bookingDate),
+          eq(bookings.startTime, dto.startTime),
+          inArray(bookings.status, ACTIVE_SLOT_STATUSES),
+        ),
+      )
+      .limit(1);
+
+    if (conflictingBooking) {
+      throw new ConflictException('This time slot is already booked');
+    }
+
     const totalPrice = pkg.price * dto.peopleCount;
     const id = generateId();
 
-    const [row] = await this.db
-      .insert(bookings)
-      .values({
-        id,
-        packageId: dto.packageId,
-        guideId: pkg.guideId,
-        touristId,
-        bookingDate: dto.bookingDate,
-        startTime: dto.startTime,
-        peopleCount: dto.peopleCount,
-        totalPrice,
-        status: 'pending',
-        notes: dto.notes ?? null,
-      })
-      .returning();
+    let row: Booking | undefined;
+    try {
+      [row] = await this.db
+        .insert(bookings)
+        .values({
+          id,
+          packageId: dto.packageId,
+          guideId: pkg.guideId,
+          touristId,
+          bookingDate: dto.bookingDate,
+          startTime: dto.startTime,
+          peopleCount: dto.peopleCount,
+          totalPrice,
+          status: 'pending',
+          notes: dto.notes ?? null,
+        })
+        .returning();
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('This time slot is already booked');
+      }
+      throw error;
+    }
 
     if (!row) throw new Error('Insert did not return a row');
 
-    await this.redisStreams.publish(EVENTS.BOOKING_REQUESTED, {
-      bookingId: row.id,
-      touristId,
-      guideId: pkg.guideId,
-      packageId: dto.packageId,
-    });
+    await this.redisStreams.publish(
+      EVENTS.BOOKING_REQUESTED,
+      this.buildBookingEventPayload(row, {
+        guideUserId: guide.userId,
+        packageTitleAr: pkg.titleAr,
+        packageTitleEn: pkg.titleEn ?? '',
+      }) as Record<string, string>,
+    );
 
     return row;
   }
@@ -182,6 +225,34 @@ export class BookingsService {
       }
     }
 
+    // cancel requires a reason
+    if (targetStatus === 'cancelled' && !cancelReason?.trim()) {
+      throw new BadRequestException('cancelReason is required when cancelling a booking');
+    }
+
+    // Resolve event context BEFORE mutating state — otherwise a missing guide/
+    // package row would 404 after the status has already been committed, leaving
+    // the caller with a failure response but the transition silently applied
+    // (and no event published to trigger refunds/notifications).
+    let guide: { userId: string } | undefined;
+    let pkg: { titleAr: string; titleEn: string | null } | undefined;
+    if (transitionDef.event) {
+      [guide] = await this.db
+        .select({ userId: guides.userId })
+        .from(guides)
+        .where(eq(guides.id, booking.guideId))
+        .limit(1);
+      [pkg] = await this.db
+        .select({ titleAr: tourPackages.titleAr, titleEn: tourPackages.titleEn })
+        .from(tourPackages)
+        .where(eq(tourPackages.id, booking.packageId))
+        .limit(1);
+
+      if (!guide || !pkg) {
+        throw new NotFoundException('Booking event context not found');
+      }
+    }
+
     const updatePayload: Partial<typeof bookings.$inferInsert> = {
       status: targetStatus as BookingStatus,
       updatedAt: new Date(),
@@ -201,16 +272,73 @@ export class BookingsService {
 
     if (!updated) throw new ConflictException('Booking was modified concurrently, please retry');
 
-    if (transitionDef.event) {
-      await this.redisStreams.publish(transitionDef.event, {
-        bookingId: updated.id,
-        touristId: updated.touristId,
-        guideId: updated.guideId,
-        packageId: updated.packageId,
-      });
+    if (transitionDef.event && guide && pkg) {
+      const payload =
+        targetStatus === 'cancelled'
+          ? this.buildBookingCancelledEventPayload(
+              updated,
+              {
+                guideUserId: guide.userId,
+                packageTitleAr: pkg.titleAr,
+                packageTitleEn: pkg.titleEn ?? '',
+              },
+              {
+                cancellationReason: cancelReason ?? '',
+                cancelledByRole: caller.role,
+                cancelledByUserId: caller.sub,
+              },
+            )
+          : this.buildBookingEventPayload(updated, {
+              guideUserId: guide.userId,
+              packageTitleAr: pkg.titleAr,
+              packageTitleEn: pkg.titleEn ?? '',
+            });
+
+      await this.redisStreams.publish(transitionDef.event, payload as Record<string, string>);
     }
 
     return updated;
+  }
+
+  private buildBookingEventPayload(
+    booking: Pick<Booking, 'id' | 'packageId' | 'guideId' | 'touristId' | 'totalPrice'>,
+    context: {
+      guideUserId: string;
+      packageTitleAr: string;
+      packageTitleEn: string;
+    },
+  ): BookingEventPayload {
+    return {
+      bookingId: booking.id,
+      packageId: booking.packageId,
+      guideProfileId: booking.guideId,
+      guideUserId: context.guideUserId,
+      touristUserId: booking.touristId,
+      packageTitleAr: context.packageTitleAr,
+      packageTitleEn: context.packageTitleEn,
+      totalPrice: booking.totalPrice.toString(),
+    };
+  }
+
+  private buildBookingCancelledEventPayload(
+    booking: Pick<Booking, 'id' | 'packageId' | 'guideId' | 'touristId' | 'totalPrice'>,
+    context: {
+      guideUserId: string;
+      packageTitleAr: string;
+      packageTitleEn: string;
+    },
+    cancellation: {
+      cancellationReason: string;
+      cancelledByRole: string;
+      cancelledByUserId: string;
+    },
+  ): BookingCancelledEventPayload {
+    return {
+      ...this.buildBookingEventPayload(booking, context),
+      cancellationReason: cancellation.cancellationReason,
+      cancelledByRole: cancellation.cancelledByRole,
+      cancelledByUserId: cancellation.cancelledByUserId,
+    };
   }
 
   async findMyBookings(

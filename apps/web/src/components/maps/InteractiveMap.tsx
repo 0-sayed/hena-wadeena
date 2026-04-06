@@ -246,7 +246,9 @@ export function InteractiveMap({
 
   return (
     <div className="space-y-3">
-      <div ref={mapContainerRef} className={normalizedClassName} dir="ltr" />
+      <div className="isolate">
+        <div ref={mapContainerRef} className={normalizedClassName} dir="ltr" />
+      </div>
       {showGoogleMapsButton ? googleMapsButton : null}
     </div>
   );

@@ -4,6 +4,7 @@ import type { Transaction, Wallet } from '@/services/api';
 const STORAGE_PREFIX = 'hena-wadeena:wallet';
 const DEFAULT_TOP_UP_DESCRIPTION = 'شحن المحفظة';
 const DEFAULT_CURRENCY = 'EGP';
+const LEGACY_BOOKING_REFERENCE_TYPES = new Set(['package_booking', 'package_booking_refund']);
 
 type StoredWalletState = {
   wallet: Wallet;
@@ -31,21 +32,53 @@ function storageKey(userId: string) {
   return `${STORAGE_PREFIX}:${userId}`;
 }
 
+function sanitizeLocalTransactions(transactions: Transaction[]): Transaction[] {
+  return transactions.filter(
+    (transaction) => !LEGACY_BOOKING_REFERENCE_TYPES.has(transaction.reference_type ?? ''),
+  );
+}
+
+function sortTransactions(transactions: Transaction[]): Transaction[] {
+  return [...transactions].sort(
+    (left, right) => Date.parse(right.created_at) - Date.parse(left.created_at),
+  );
+}
+
+function mergeTransactions(
+  remoteTransactions: Transaction[],
+  localTransactions: Transaction[],
+): Transaction[] {
+  const merged = new Map<string, Transaction>();
+
+  // Process local first so server-authoritative remote rows overwrite
+  // any matching local optimistic entries with the same ID.
+  for (const transaction of [...localTransactions, ...remoteTransactions]) {
+    merged.set(transaction.id, transaction);
+  }
+
+  return sortTransactions([...merged.values()]);
+}
+
 function readLocalTransactions(userId: string): Transaction[] {
   const stored = localStorage.getItem(storageKey(userId));
   if (!stored) return [];
   try {
     const parsed = JSON.parse(stored) as { transactions?: Transaction[] };
-    return parsed.transactions ?? [];
+    const sanitizedTransactions = sanitizeLocalTransactions(parsed.transactions ?? []);
+    if (sanitizedTransactions.length !== (parsed.transactions ?? []).length) {
+      writeLocalTransactions(userId, sanitizedTransactions);
+    }
+    return sanitizedTransactions;
   } catch {
     return [];
   }
 }
 
 function writeLocalTransactions(userId: string, transactions: Transaction[]): void {
+  const sanitizedTransactions = sanitizeLocalTransactions(transactions);
   localStorage.setItem(
     storageKey(userId),
-    JSON.stringify({ transactions: transactions.slice(0, 100) }),
+    JSON.stringify({ transactions: sanitizedTransactions.slice(0, 100) }),
   );
 }
 
@@ -88,18 +121,29 @@ export function parseEgpInputToPiasters(value: string): number | null {
 }
 
 export async function getWalletSnapshot(userId: string): Promise<StoredWalletState> {
-  const transactions = readLocalTransactions(userId);
+  const localTransactions = readLocalTransactions(userId);
 
   try {
     const response = await paymentsAPI.getWallet();
     if (response.success) {
-      return buildWalletState(userId, response.data.balance, transactions);
+      const mergedTransactions = mergeTransactions(
+        response.data.recent_transactions ?? [],
+        localTransactions,
+      );
+
+      return {
+        wallet: {
+          ...response.data,
+          recent_transactions: mergedTransactions.slice(0, 10),
+        },
+        transactions: mergedTransactions,
+      };
     }
   } catch {
     // Fall through to default
   }
 
-  return buildWalletState(userId, 0, transactions);
+  return buildWalletState(userId, 0, localTransactions);
 }
 
 export async function topUpWallet(
@@ -130,36 +174,9 @@ export async function topUpWallet(
 
   writeLocalTransactions(userId, updatedTransactions);
 
-  return buildWalletState(userId, newBalance, updatedTransactions);
-}
-
-export async function deductWalletBalance(
-  userId: string,
-  amountPiasters: number,
-  description: string,
-  reference?: { reference_id?: string; reference_type?: string },
-): Promise<StoredWalletState> {
-  if (!Number.isSafeInteger(amountPiasters) || amountPiasters <= 0) {
-    throw new Error('amountPiasters must be a positive integer');
+  try {
+    return await getWalletSnapshot(userId);
+  } catch {
+    return buildWalletState(userId, newBalance, updatedTransactions);
   }
-
-  const response = await paymentsAPI.deduct({
-    amount: amountPiasters,
-    description,
-    reference_id: reference?.reference_id,
-    reference_type: reference?.reference_type,
-  });
-
-  if (!response.success) {
-    throw new Error('رصيد المحفظة غير كافٍ لإتمام العملية');
-  }
-
-  const newBalance = response.data.balance;
-  const transactions = readLocalTransactions(userId);
-  const transaction = buildTransaction('debit', amountPiasters, newBalance, description, reference);
-  const updatedTransactions = [transaction, ...transactions];
-
-  writeLocalTransactions(userId, updatedTransactions);
-
-  return buildWalletState(userId, newBalance, updatedTransactions);
 }

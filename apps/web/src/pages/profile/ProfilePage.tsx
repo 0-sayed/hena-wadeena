@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { User, Mail, Phone, Globe, Edit2, Camera, Shield } from 'lucide-react';
+import { Link } from 'react-router';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -529,6 +530,19 @@ const ProfilePage = () => {
                           ar: 'تعديل الملف الشخصي',
                           en: 'Edit profile',
                         })}
+                      </Button>
+                      <Button
+                        asChild
+                        className="mt-3 h-12 w-full transition-transform hover:scale-[1.01]"
+                        variant="outline"
+                      >
+                        <Link to="/profile/change-password">
+                          <Shield className="ms-2 h-4 w-4" />
+                          {pickLocalizedCopy(appLanguage, {
+                            ar: 'تغيير كلمة المرور',
+                            en: 'Change password',
+                          })}
+                        </Link>
                       </Button>
                     </div>
                   )}

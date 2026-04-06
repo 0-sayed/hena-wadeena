@@ -143,3 +143,4 @@ scripts/seed/*.d.ts.map
 
 # Binary documents
 docs/**/*.pdf
+

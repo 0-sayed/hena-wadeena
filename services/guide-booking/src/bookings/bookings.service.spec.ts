@@ -181,6 +181,7 @@ describe('BookingsService', () => {
       mockNextQuery([mockPackage]);
       mockNextQuery([mockGuide]);
       mockNextQuery([]); // no blocked dates
+      mockNextQuery([]); // no conflicting bookings
       mockNextQuery([mockBooking]);
 
       const result = await service.create(dto, 'tourist-uuid-1');
@@ -196,8 +197,13 @@ describe('BookingsService', () => {
         'booking.requested',
         expect.objectContaining({
           bookingId: 'booking-uuid-1',
-          touristId: 'tourist-uuid-1',
-          guideId: 'guide-uuid-1',
+          touristUserId: 'tourist-uuid-1',
+          guideUserId: 'guide-user-uuid',
+          guideProfileId: 'guide-uuid-1',
+          packageId: 'pkg-uuid-1',
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '10000',
         }),
       );
     });
@@ -238,6 +244,15 @@ describe('BookingsService', () => {
       mockNextQuery([mockGuide]);
       mockNextQuery([]);
       await expect(service.create(dto, 'tourist-uuid-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('same active slot already booked: throws ConflictException', async () => {
+      mockNextQuery([mockPackage]);
+      mockNextQuery([mockGuide]);
+      mockNextQuery([]);
+      mockNextQuery([{ id: 'booking-duplicate' }]);
+
+      await expect(service.create(dto, 'tourist-uuid-1')).rejects.toThrow(ConflictException);
     });
   });
 
@@ -292,6 +307,8 @@ describe('BookingsService', () => {
   describe('transition', () => {
     it('confirm: pending → confirmed, publishes event', async () => {
       mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+      mockNextQuery([{ userId: 'guide-user-uuid' }]);
+      mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
       mockNextQuery([{ ...mockBooking, status: 'confirmed' }]);
 
       const result = await service.transition('booking-uuid-1', 'confirmed', {
@@ -300,7 +317,19 @@ describe('BookingsService', () => {
         guideId: 'guide-uuid-1',
       });
       expect(result.status).toBe('confirmed');
-      expect(mockPublish).toHaveBeenCalledWith('booking.confirmed', expect.any(Object));
+      expect(mockPublish).toHaveBeenCalledWith(
+        'booking.confirmed',
+        expect.objectContaining({
+          bookingId: 'booking-uuid-1',
+          touristUserId: 'tourist-uuid-1',
+          guideUserId: 'guide-user-uuid',
+          guideProfileId: 'guide-uuid-1',
+          packageId: 'pkg-uuid-1',
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '10000',
+        }),
+      );
     });
 
     it('start: confirmed → in_progress on booking date, no event published', async () => {
@@ -333,6 +362,8 @@ describe('BookingsService', () => {
 
     it('complete: in_progress → completed, publishes event', async () => {
       mockNextQuery([{ ...mockBooking, status: 'in_progress' }]);
+      mockNextQuery([{ userId: 'guide-user-uuid' }]);
+      mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
       mockNextQuery([{ ...mockBooking, status: 'completed' }]);
 
       const result = await service.transition('booking-uuid-1', 'completed', {
@@ -341,11 +372,25 @@ describe('BookingsService', () => {
         guideId: 'guide-uuid-1',
       });
       expect(result.status).toBe('completed');
-      expect(mockPublish).toHaveBeenCalledWith('booking.completed', expect.any(Object));
+      expect(mockPublish).toHaveBeenCalledWith(
+        'booking.completed',
+        expect.objectContaining({
+          bookingId: 'booking-uuid-1',
+          touristUserId: 'tourist-uuid-1',
+          guideUserId: 'guide-user-uuid',
+          guideProfileId: 'guide-uuid-1',
+          packageId: 'pkg-uuid-1',
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '10000',
+        }),
+      );
     });
 
     it('cancel: sets cancelledAt and cancelReason, publishes event', async () => {
       mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+      mockNextQuery([{ userId: 'guide-user-uuid' }]);
+      mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
       mockNextQuery([{ ...mockBooking, status: 'cancelled' }]);
 
       await service.transition(
@@ -361,7 +406,46 @@ describe('BookingsService', () => {
           cancelledAt: expect.any(Date),
         }),
       );
-      expect(mockPublish).toHaveBeenCalledWith('booking.cancelled', expect.any(Object));
+      expect(mockPublish).toHaveBeenCalledWith(
+        'booking.cancelled',
+        expect.objectContaining({
+          bookingId: 'booking-uuid-1',
+          touristUserId: 'tourist-uuid-1',
+          guideUserId: 'guide-user-uuid',
+          guideProfileId: 'guide-uuid-1',
+          packageId: 'pkg-uuid-1',
+          packageTitleAr: 'جولة الواحات',
+          packageTitleEn: 'Oasis Tour',
+          totalPrice: '10000',
+          cancellationReason: 'Changed my plans',
+          cancelledByRole: 'tourist',
+          cancelledByUserId: 'tourist-uuid-1',
+        }),
+      );
+    });
+
+    it('cancel without cancelReason: throws BadRequestException', async () => {
+      mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+
+      await expect(
+        service.transition('booking-uuid-1', 'cancelled', {
+          sub: 'tourist-uuid-1',
+          role: 'tourist',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('cancel with empty cancelReason: throws BadRequestException', async () => {
+      mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+
+      await expect(
+        service.transition(
+          'booking-uuid-1',
+          'cancelled',
+          { sub: 'tourist-uuid-1', role: 'tourist' },
+          '   ',
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('invalid transition: throws BadRequestException', async () => {
@@ -441,6 +525,8 @@ describe('BookingsService', () => {
 
     it('tourist CAN cancel pending booking', async () => {
       mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+      mockNextQuery([{ userId: 'guide-user-uuid' }]);
+      mockNextQuery([{ titleAr: 'جولة الواحات', titleEn: 'Oasis Tour' }]);
       mockNextQuery([{ ...mockBooking, status: 'cancelled' }]);
 
       const result = await service.transition(

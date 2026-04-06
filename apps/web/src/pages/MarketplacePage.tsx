@@ -492,7 +492,7 @@ const MarketplacePage = () => {
                                   <span className="text-lg font-bold text-foreground">
                                     {formatPrice(entry.latestPrice)}
                                   </span>
-                                  <span className="me-1 text-sm text-muted-foreground">
+                                  <span className="ms-1 text-sm text-muted-foreground">
                                     {pickLocalizedCopy(language, {
                                       ar: `جنيه/${unitLabel(entry.commodity.unit, language)}`,
                                       en: `EGP/${unitLabel(entry.commodity.unit, language)}`,

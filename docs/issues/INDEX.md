@@ -19,7 +19,7 @@
 | [ISSUE-009](./ISSUE-009-wallet-moneyflow-no-refund-on-cancellation.md) | Wallet: No Refund on Cancellation & No Credit to Provider | Wallet / Money Flow | 🚨 Critical | Open |
 | [ISSUE-010](./ISSUE-010-service-provider-no-rating-system.md) | Service Providers: No Rating & Review System | Ratings & Reviews | 🟡 Medium | Open |
 | [ISSUE-011](./ISSUE-011-bookings-lifecycle-leaks.md) | Bookings: Lifecycle Leaks & Inconsistencies (Umbrella) | Bookings System | 🚨 Critical | Open |
-| [ISSUE-012](./ISSUE-012-no-change-reset-password-feature.md) | Profiles: No Reset / Change Password Feature | All Profiles | 🔴 High | Open |
+| [ISSUE-012](./ISSUE-012-no-change-reset-password-feature.md) | Profiles: No Reset / Change Password Feature | All Profiles | 🔴 High | Resolved |
 
 ---
 
@@ -37,7 +37,7 @@
 - [ISSUE-006](./ISSUE-006-residence-inquiry-copies-instead-of-sending.md) — Residence inquiry: copies instead of sending
 - [ISSUE-007](./ISSUE-007-trips-create-button-visible-to-all-roles.md) — Trips: create button visible to all roles
 - [ISSUE-008](./ISSUE-008-investment-contact-button-visible-to-all-roles.md) — Investment: contact button visible to all roles
-- [ISSUE-012](./ISSUE-012-no-change-reset-password-feature.md) — Profiles: no reset / change password feature
+- [ISSUE-012](./ISSUE-012-no-change-reset-password-feature.md) — Profiles: no reset / change password feature *(resolved in current implementation)*
 
 ### 🟡 Medium
 - [ISSUE-004](./ISSUE-004-merchant-dashboard-ad-form-should-be-modal.md) — Merchant dashboard: ad form should be modal
@@ -77,7 +77,7 @@
 - [ISSUE-011](./ISSUE-011-bookings-lifecycle-leaks.md) — Bookings lifecycle leaks *(umbrella — links to ISSUE-009, ISSUE-010)*
 
 ### All Profiles (Account Settings)
-- [ISSUE-012](./ISSUE-012-no-change-reset-password-feature.md) — No reset / change password feature
+- [ISSUE-012](./ISSUE-012-no-change-reset-password-feature.md) — No reset / change password feature *(resolved in current implementation)*
 
 ---
 
@@ -90,8 +90,8 @@
 - ISSUE-006 — Residence inquiry never reaches listing owner
 - ISSUE-009 — Wallet not updated on trip cancellation
 - ISSUE-010 — No ratings endpoint or data model
-- ISSUE-011 — Booking state machine not enforced
-- ISSUE-012 — Change/reset password endpoints missing
+- ISSUE-011 — Booking lifecycle still depends on eventual downstream side effects
+- ISSUE-012 — Change/reset password endpoints were missing
 
 ### Frontend
 - ISSUE-001 — Free-text inputs must be dropdowns
@@ -101,7 +101,7 @@
 - ISSUE-007 — Create trip button not role-gated
 - ISSUE-008 — Investment contact button not role-gated
 - ISSUE-010 — No rating UI exists
-- ISSUE-012 — No change/reset password UI in profile
+- ISSUE-012 — Change/reset password UI was missing from profile and auth flows
 
 ### Security / RBAC
 - ISSUE-007 — Create trip button exposed to unauthorized roles
@@ -139,4 +139,4 @@ ISSUE-005 (Inquiry 404)
 8. **ISSUE-011** — Formalize booking lifecycle state machine (ongoing/structural).
 9. **ISSUE-010** — Implement rating system (depends on stable booking lifecycle).
 10. **ISSUE-004** — Convert ad form to modal (lowest risk, UI-only).
-11. **ISSUE-012** — Add change/reset password feature to all profiles.
+11. **ISSUE-012** — Verify the shipped change/reset password flow in integrated environments and keep docs aligned.

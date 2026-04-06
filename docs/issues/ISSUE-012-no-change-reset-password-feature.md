@@ -1,7 +1,7 @@
 # ISSUE-012 — Profiles: No Reset / Change Password Feature
 
 ## Status
-- [ ] Open
+- [x] Resolved in current implementation
 
 ## Priority
 🔴 High
@@ -10,7 +10,14 @@
 All User Profiles — Account Settings / Security Section
 
 ## Description
-There is no way for a user to **change their password** from within their profile, and no **"Forgot Password"** / reset flow exists (or if it does, it is not accessible). This is a standard security feature expected in any authenticated application and its absence is a significant gap in account management.
+The application now exposes both authenticated password change and unauthenticated password reset flows in the backend and the web app:
+
+- profile page entry point for change password
+- visible "Forgot Password?" action on the login page
+- password reset request page
+- OTP-based reset confirmation page
+- confirmation emails after successful password change or password reset
+- session invalidation for old access and refresh sessions after password change or reset
 
 ## Affected Roles
 All roles are affected:
@@ -22,9 +29,12 @@ All roles are affected:
 - Admin
 
 ## Current Behavior
-- User navigates to their profile / account settings.
-- There is no "Change Password" button, form, or link anywhere in the UI.
-- If a user forgets their password, there is no self-service recovery path.
+- Users can navigate from the profile page to a dedicated change-password page.
+- The login page exposes a visible password-reset entry point.
+- Password reset is a two-step OTP flow:
+  - `POST /api/v1/auth/password-reset/request`
+  - `POST /api/v1/auth/password-reset/confirm`
+- Successful change/reset sends confirmation email and revokes prior sessions.
 
 ## Expected Behavior
 
@@ -40,9 +50,9 @@ All roles are affected:
 ### Forgot / Reset Password (Unauthenticated User)
 - A "Forgot Password?" link exists on the login page.
 - The user enters their registered email address.
-- A password reset link/OTP is sent to that email.
-- The user clicks the link and is taken to a page to set a new password.
-- The reset link expires after a set time window (e.g., 15–60 minutes).
+- A password reset OTP is sent to that email.
+- The user opens the reset confirmation page and submits email, OTP, and the new password.
+- The OTP expires after the configured time window and cannot be reused.
 
 ---
 
@@ -50,24 +60,24 @@ All roles are affected:
 
 ### Backend
 1. **Change Password endpoint** (authenticated):
-   - `PATCH /api/v1/auth/change-password`
+   - `POST /api/v1/auth/change-password`
    - Body: `{ currentPassword, newPassword }`
    - Validate current password before updating.
    - Hash the new password before storing.
-   - Invalidate existing sessions/tokens on password change (optional but recommended).
+   - Invalidate existing sessions/tokens on password change.
 
 2. **Forgot Password — Request Reset** (unauthenticated):
-   - `POST /api/v1/auth/forgot-password`
+   - `POST /api/v1/auth/password-reset/request`
    - Body: `{ email }`
-   - Generate a signed, time-limited reset token.
-   - Send reset email with a link containing the token.
+   - Generate a time-limited OTP.
+   - Send reset email with the OTP.
    - Always return a generic success response (do not confirm whether the email exists — security best practice).
 
 3. **Forgot Password — Confirm Reset** (unauthenticated):
-   - `POST /api/v1/auth/reset-password`
-   - Body: `{ token, newPassword }`
-   - Validate token (existence, expiry, not already used).
-   - Update password and invalidate the token.
+   - `POST /api/v1/auth/password-reset/confirm`
+   - Body: `{ email, otp, newPassword }`
+   - Validate OTP existence, expiry, and single-use behavior.
+   - Update password, send confirmation email, and invalidate prior sessions.
 
 ### Frontend
 1. Add a **"Change Password"** section to the profile/account settings page (all dashboards).
@@ -77,12 +87,12 @@ All roles are affected:
 
 2. Add a **"Forgot Password?"** link on the login page.
    - Page: email input + submit.
-   - Confirmation screen: "If this email is registered, you will receive a reset link."
+   - Confirmation screen: "If this email is registered, you will receive a reset code."
 
-3. Add a **Reset Password page** (accessed via the email link):
-   - Form: New Password / Confirm New Password.
-   - On success: redirect to login with a success message.
-   - On invalid/expired token: show a clear error with option to request a new link.
+3. Add a **Reset Password confirmation page**:
+   - Form: Email / OTP / New Password / Confirm New Password.
+   - On success: sign the user in with fresh tokens and show a success message.
+   - On invalid/expired OTP: show a clear error with option to request a new code.
 
 ---
 
@@ -96,11 +106,11 @@ All roles are affected:
 ---
 
 ## Acceptance Criteria
-- [ ] Authenticated users can change their password from their profile settings
-- [ ] Incorrect current password returns a clear error message
-- [ ] "Forgot Password?" link is visible on the login page
-- [ ] Password reset email is sent with a valid, time-limited token
-- [ ] Reset token expires correctly and cannot be reused
-- [ ] New password is validated for strength and confirmation match before submission
-- [ ] User receives confirmation (in-app + email) after successfully changing/resetting password
-- [ ] Feature works consistently across all user roles and dashboards
+- [x] Authenticated users can change their password from their profile settings
+- [x] Incorrect current password returns a clear error message
+- [x] "Forgot Password?" link is visible on the login page
+- [x] Password reset email is sent with a valid, time-limited OTP
+- [x] Reset OTP expires correctly and cannot be reused
+- [x] New password is validated for strength and confirmation match before submission
+- [x] User receives confirmation in the web app and by email after successfully changing/resetting password
+- [x] Feature is implemented through the shared auth and profile flows used across roles

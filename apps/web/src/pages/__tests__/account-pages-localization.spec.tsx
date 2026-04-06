@@ -86,13 +86,8 @@ vi.mock('@/components/ui/select', () => ({
 }));
 
 vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({
-    children,
-    open,
-  }: {
-    children: ReactNode;
-    open?: boolean;
-  }) => (open ? <div>{children}</div> : null),
+  Dialog: ({ children, open }: { children: ReactNode; open?: boolean }) =>
+    open ? <div>{children}</div> : null,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -101,7 +96,11 @@ vi.mock('@/components/ui/dialog', () => ({
 }));
 
 vi.mock('@/components/ui/ltr-text', () => ({
-  LtrText: ({ children, as: Tag = 'span', className }: {
+  LtrText: ({
+    children,
+    as: Tag = 'span',
+    className,
+  }: {
     children: ReactNode;
     as?: 'span' | 'p';
     className?: string;
@@ -121,6 +120,11 @@ vi.mock('@/hooks/use-bookings', () => ({
   useStartBooking: () => mockUseStartBooking(),
   useCancelBooking: () => mockUseCancelBooking(),
   useCompleteBooking: () => mockUseCompleteBooking(),
+}));
+
+vi.mock('@/hooks/use-reviews', () => ({
+  useMyReviewedBookingIds: () => ({ data: new Map<string, number>() }),
+  useCreateReview: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('sonner', () => ({

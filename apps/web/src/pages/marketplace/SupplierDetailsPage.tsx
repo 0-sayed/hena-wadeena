@@ -160,7 +160,7 @@ const SupplierDetailsPage = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              <Card className="border-border/50 sticky top-4">
+              <Card className="border-border/50 sticky top-20">
                 <CardHeader>
                   <CardTitle className="text-lg">معلومات التواصل</CardTitle>
                 </CardHeader>

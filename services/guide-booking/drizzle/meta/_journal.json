@@ -64,6 +64,13 @@
       "when": 1775246400000,
       "tag": "20260401120000_fix-guides-enum-values",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775205840781,
+      "tag": "20260403084400_perpetual_skullbuster",
+      "breakpoints": true
     }
   ]
 }

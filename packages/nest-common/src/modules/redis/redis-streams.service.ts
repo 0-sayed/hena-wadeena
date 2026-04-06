@@ -97,7 +97,9 @@ export class RedisStreamsService implements OnModuleDestroy {
           continue;
         }
 
+        let hadMessages = false;
         for (const [streamName, messages] of results as [string, [string, string[]][]][]) {
+          if (messages.length > 0) hadMessages = true;
           const key = `${streamName}:${group}`;
           const handler = this.handlers.get(key);
           if (!handler) continue;
@@ -139,6 +141,13 @@ export class RedisStreamsService implements OnModuleDestroy {
               }
             }),
           );
+        }
+
+        // xreadgroup with a non-'>' ID returns [[stream, []]] immediately (not null)
+        // when there are no pending messages — BLOCK is ignored. Switch to new-message
+        // delivery once the pending queue is drained.
+        if (!readingNew && !hadMessages) {
+          readingNew = true;
         }
       } catch (err) {
         if (this.activeStreams.has(streamKey)) {

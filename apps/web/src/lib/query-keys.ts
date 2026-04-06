@@ -50,6 +50,10 @@ export const queryKeys = {
         ? (['bookings', 'mine', filters] as const)
         : (['bookings', 'mine'] as const),
   },
+  reviews: {
+    guide: (guideId: string) => ['reviews', 'guide', guideId] as const,
+    mine: () => ['reviews', 'mine'] as const,
+  },
   investment: {
     opportunities: (filters?: Record<string, unknown>) =>
       ['investment', 'opportunities', filters] as const,
@@ -72,8 +76,13 @@ export const queryKeys = {
   },
   admin: {
     stats: () => ['admin', 'stats'] as const,
-    users: (filters?: { role?: string; status?: string; search?: string; page?: number; limit?: number }) =>
-      ['admin', 'users', filters] as const,
+    users: (filters?: {
+      role?: string;
+      status?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }) => ['admin', 'users', filters] as const,
     user: (id: string) => ['admin', 'users', id] as const,
     kyc: (filters?: { status?: string; page?: number; limit?: number }) =>
       ['admin', 'kyc', filters] as const,
@@ -81,8 +90,13 @@ export const queryKeys = {
       ['admin', 'moderation', 'listings', filters] as const,
     pendingBusinesses: (filters?: { page?: number; limit?: number }) =>
       ['admin', 'moderation', 'businesses', filters] as const,
-    guides: (filters?: { status?: string; verified?: boolean; search?: string; page?: number; limit?: number }) =>
-      ['admin', 'guides', filters] as const,
+    guides: (filters?: {
+      status?: string;
+      verified?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }) => ['admin', 'guides', filters] as const,
     bookings: (filters?: { status?: string; guideId?: string; page?: number; limit?: number }) =>
       ['admin', 'bookings', filters] as const,
     pendingPois: (filters?: { page?: number; limit?: number }) =>

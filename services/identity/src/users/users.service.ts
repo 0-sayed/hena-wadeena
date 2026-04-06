@@ -20,13 +20,14 @@ import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql } from 'drizzl
 import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { auditEvents, users } from '../db/schema/index';
+import { auditEvents, users, walletLedger } from '../db/schema/index';
 import { SessionService } from '../session/session.service';
 
 type AuditEventType = typeof auditEvents.$inferInsert.eventType;
+type WalletLedgerDirection = typeof walletLedger.$inferInsert.direction;
+type WalletLedgerKind = typeof walletLedger.$inferInsert.kind;
 const PG_UNIQUE_VIOLATION = '23505';
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -149,7 +150,9 @@ export class UsersService {
         fullName: data.fullName,
         passwordHash: data.passwordHash,
         role: data.role as typeof users.$inferInsert.role,
-        ...(data.status !== undefined && { status: data.status as typeof users.$inferInsert.status }),
+        ...(data.status !== undefined && {
+          status: data.status as typeof users.$inferInsert.status,
+        }),
       })
       .returning();
     if (!user) throw new InternalServerErrorException('Insert did not return a row');
@@ -375,6 +378,29 @@ export class UsersService {
     return user.balancePiasters;
   }
 
+  async getWalletSnapshot(userId: string) {
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(andRequired(eq(users.id, userId), isNull(users.deletedAt)))
+        .limit(1);
+      if (!user) throw new NotFoundException('User not found');
+
+      const recentTransactions = await tx
+        .select()
+        .from(walletLedger)
+        .where(eq(walletLedger.userId, userId))
+        .orderBy(desc(walletLedger.createdAt))
+        .limit(20);
+
+      return {
+        balance: user.balancePiasters,
+        recentTransactions,
+      };
+    });
+  }
+
   async topUp(userId: string, amount: number): Promise<number> {
     const [updated] = await this.db
       .update(users)
@@ -405,6 +431,89 @@ export class UsersService {
       throw new BadRequestException('رصيد المحفظة غير كافٍ أو المستخدم غير موجود');
     }
     return updated.balancePiasters;
+  }
+
+  async assertBookingLedgerExists(bookingId: string, kind: WalletLedgerKind): Promise<void> {
+    const [row] = await this.db
+      .select({ id: walletLedger.id })
+      .from(walletLedger)
+      .where(and(eq(walletLedger.bookingId, bookingId), eq(walletLedger.kind, kind)))
+      .limit(1);
+
+    if (!row) {
+      throw new BadRequestException(`Booking wallet lifecycle is incomplete for ${bookingId}`);
+    }
+  }
+
+  async applyBookingWalletEntry(entry: {
+    bookingId: string;
+    userId: string;
+    amountPiasters: number;
+    direction: WalletLedgerDirection;
+    kind: WalletLedgerKind;
+    idempotencyKey: string;
+  }): Promise<'applied' | 'duplicate'> {
+    if (!entry.bookingId || !entry.userId) {
+      throw new BadRequestException('Booking wallet event is missing required identifiers');
+    }
+
+    if (entry.amountPiasters <= 0) {
+      throw new BadRequestException('Booking wallet amount must be positive');
+    }
+
+    return this.db.transaction(async (tx) => {
+      const [ledgerEntry] = await tx
+        .insert(walletLedger)
+        .values({
+          userId: entry.userId,
+          bookingId: entry.bookingId,
+          direction: entry.direction,
+          amountPiasters: entry.amountPiasters,
+          kind: entry.kind,
+          idempotencyKey: entry.idempotencyKey,
+        })
+        .onConflictDoNothing({ target: walletLedger.idempotencyKey })
+        .returning();
+
+      if (!ledgerEntry) {
+        return 'duplicate' as const;
+      }
+
+      const delta = entry.direction === 'credit' ? entry.amountPiasters : -entry.amountPiasters;
+      const [updatedUser] = await tx
+        .update(users)
+        .set({
+          balancePiasters: sql`${users.balancePiasters} + ${delta}`,
+          updatedAt: new Date(),
+        })
+        .where(
+          entry.direction === 'debit'
+            ? and(
+                eq(users.id, entry.userId),
+                isNull(users.deletedAt),
+                gte(users.balancePiasters, entry.amountPiasters),
+              )
+            : and(eq(users.id, entry.userId), isNull(users.deletedAt)),
+        )
+        .returning({ id: users.id, balancePiasters: users.balancePiasters });
+
+      if (!updatedUser) {
+        // Balance is only checked on the debit path — on credit, the update can
+        // only miss if the user row is gone/soft-deleted.
+        throw new BadRequestException(
+          entry.direction === 'debit'
+            ? 'رصيد المحفظة غير كافٍ أو المستخدم غير موجود'
+            : 'المستخدم غير موجود',
+        );
+      }
+
+      await tx
+        .update(walletLedger)
+        .set({ balanceAfterPiasters: updatedUser.balancePiasters })
+        .where(eq(walletLedger.id, ledgerEntry.id));
+
+      return 'applied' as const;
+    });
   }
 
   private async recordAudit(

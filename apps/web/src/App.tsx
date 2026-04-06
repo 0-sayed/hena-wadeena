@@ -18,11 +18,14 @@ import NotFound from './pages/NotFound';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import KycContinuePage from './pages/auth/KycContinuePage';
+import RequestPasswordResetPage from './pages/auth/RequestPasswordResetPage';
+import ConfirmPasswordResetPage from './pages/auth/ConfirmPasswordResetPage';
 
 import ProfilePage from './pages/profile/ProfilePage';
 import WalletPage from './pages/profile/WalletPage';
 import BookingsPage from './pages/profile/BookingsPage';
 import NotificationsPage from './pages/profile/NotificationsPage';
+import ChangePasswordPage from './pages/profile/ChangePasswordPage';
 
 import GuidesPage from './pages/guides/GuidesPage';
 import GuideProfilePage from './pages/guides/GuideProfilePage';
@@ -88,9 +91,12 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/kyc/continue" element={<KycContinuePage />} />
+            <Route path="/password-reset/request" element={<RequestPasswordResetPage />} />
+            <Route path="/password-reset/confirm" element={<ConfirmPasswordResetPage />} />
 
             <Route element={<RequireAuth />}>
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile/change-password" element={<ChangePasswordPage />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />

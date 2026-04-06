@@ -16,5 +16,6 @@ export function useMyBookings(filters?: BookingFilters) {
     queryKey: queryKeys.bookings.mine(filters as Record<string, unknown>),
     queryFn: () => bookingsAPI.getMyBookings(filters),
     enabled: isAuthenticated,
+    refetchInterval: isAuthenticated ? 30_000 : false,
   });
 }

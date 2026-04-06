@@ -65,11 +65,11 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
       string,
       unknown
     >;
-    throw new ApiError(
-      res.status,
-      (error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`,
-      error,
-    );
+    const message =
+      res.status === 429
+        ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
+        : ((error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`);
+    throw new ApiError(res.status, message, error);
   }
 
   const text = await res.text();
@@ -190,6 +190,21 @@ export interface AuthRefreshTokens {
   expires_in: number;
 }
 
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface RequestPasswordResetRequest {
+  email: string;
+}
+
+export interface ConfirmPasswordResetRequest {
+  email: string;
+  otp: string;
+  new_password: string;
+}
+
 export interface KycOnboardingSubmission {
   id: string;
   userId: string;
@@ -283,6 +298,34 @@ export const authAPI = {
         body: JSON.stringify(body),
       }),
     ),
+
+  changePassword: async (body: ChangePasswordRequest) => {
+    const response = await apiFetchWithRefresh<AuthTokensResponse | PendingKycAuthResponse>(
+      '/auth/change-password',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+    return normalizeAuthFlowResponse(response);
+  },
+
+  requestPasswordReset: (body: RequestPasswordResetRequest) =>
+    apiFetch<{ message: string }>('/auth/password-reset/request', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  confirmPasswordReset: async (body: ConfirmPasswordResetRequest) => {
+    const response = await apiFetch<AuthTokensResponse | PendingKycAuthResponse>(
+      '/auth/password-reset/confirm',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+    return normalizeAuthFlowResponse(response);
+  },
 
   logout: (refresh_token?: string) =>
     apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refresh_token }) }),
@@ -1179,20 +1222,6 @@ export interface Booking {
   packageTitleEn?: string | null;
 }
 
-// ── Reviews ────────────────────────────────────────────────────────────────
-// TODO(T18): Replace with real review endpoints when backend is ready
-
-export interface Review {
-  id: string;
-  guide_id: number;
-  tourist_id: string;
-  tourist_name: string;
-  rating: number;
-  comment: string;
-  guide_reply?: string;
-  created_at: string;
-}
-
 export const bookingsAPI = {
   getMyBookings: (params?: { status?: string; offset?: number; limit?: number }) =>
     apiFetchWithRefresh<PaginatedResponse<Booking>>(`/bookings/mine${toQueryString(params)}`),
@@ -1225,14 +1254,41 @@ export const bookingsAPI = {
     apiFetchWithRefresh<Booking>(`/bookings/${id}/complete`, { method: 'PATCH' }),
 };
 
+// ── Reviews ────────────────────────────────────────────────────────────────
+
+export interface Review {
+  id: string;
+  bookingId: string;
+  guideId: string;
+  reviewerId: string;
+  rating: number; // 1–5
+  comment: string | null;
+  guideReply: string | null;
+  helpfulCount: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const reviewsAPI = {
-  getReviews: (guideId: number) =>
-    apiFetch<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
-  createReview: (guideId: number, body: { rating: number; comment: string }) =>
-    apiFetch<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
+  // GET /api/v1/guides/:id/reviews — public, paginated
+  getGuideReviews: (guideId: string, params?: { offset?: number; limit?: number; sort?: string }) =>
+    apiFetch<PaginatedResponse<Review>>(`/guides/${guideId}/reviews${toQueryString(params)}`),
+
+  // POST /api/v1/reviews — auth required, tourist only
+  createReview: (body: { bookingId: string; rating: number; comment?: string }) =>
+    apiFetchWithRefresh<Review>('/reviews', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  // GET /api/v1/reviews/mine — auth required
+  getMyReviews: (params?: { offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Review>>(`/reviews/mine${toQueryString(params)}`),
+
+  // POST /api/v1/reviews/:id/helpful — auth required
+  markHelpful: (reviewId: string) =>
+    apiFetchWithRefresh<Review>(`/reviews/${reviewId}/helpful`, { method: 'POST' }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
@@ -1250,7 +1306,7 @@ export interface Transaction {
   type: string;
   amount: number;
   direction: string;
-  balance_after: number;
+  balance_after: number | null;
   description: string;
   status: string;
   created_at: string;

@@ -24,6 +24,7 @@ const mockUser = {
   deletedAt: null,
   searchVector: null,
   balancePiasters: 0,
+  sessionInvalidatedAt: null,
 };
 
 describe('UsersService', () => {
@@ -206,6 +207,30 @@ describe('UsersService', () => {
     });
   });
 
+  describe('getWalletSnapshot', () => {
+    it('returns balance with recent booking-linked ledger entries', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ ...mockUser, balancePiasters: 5000 }]);
+      mockDb.limit.mockResolvedValueOnce([
+        {
+          id: 'ledger-1',
+          userId: 'test-uuid',
+          bookingId: 'booking-1',
+          direction: 'debit',
+          amountPiasters: 2500,
+          kind: 'booking_debit',
+          idempotencyKey: 'booking.requested:booking-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+
+      const result = await service.getWalletSnapshot('test-uuid');
+
+      expect(result.balance).toBe(5000);
+      expect(result.recentTransactions[0]?.bookingId).toBe('booking-1');
+    });
+  });
+
   describe('topUp', () => {
     it('should add amount to balance and return new balance', async () => {
       mockDb.returning.mockResolvedValueOnce([{ balancePiasters: 3000 }]);
@@ -231,6 +256,57 @@ describe('UsersService', () => {
       mockDb.returning.mockResolvedValueOnce([]);
       const { BadRequestException } = await import('@nestjs/common');
       await expect(service.deduct('test-uuid', 5000)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('assertBookingLedgerExists', () => {
+    it('accepts known booking ledger rows', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ id: 'ledger-1' }]);
+
+      await expect(service.assertBookingLedgerExists('booking-1', 'booking_debit')).resolves.toBeUndefined();
+    });
+
+    it('throws when the prerequisite debit row is missing', async () => {
+      mockDb.limit.mockResolvedValueOnce([]);
+
+      await expect(service.assertBookingLedgerExists('booking-1', 'booking_debit')).rejects.toThrow(
+        'Booking wallet lifecycle is incomplete',
+      );
+    });
+  });
+
+  describe('applyBookingWalletEntry', () => {
+    it('applies a debit ledger entry transactionally', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ id: 'ledger-1' }]).mockResolvedValueOnce([{ id: 'test-uuid' }]);
+
+      const result = await service.applyBookingWalletEntry({
+        bookingId: 'booking-1',
+        userId: 'test-uuid',
+        amountPiasters: 2500,
+        direction: 'debit',
+        kind: 'booking_debit',
+        idempotencyKey: 'booking.requested:booking-1',
+      });
+
+      expect(result).toBe('applied');
+      expect(mockDb.insert).toHaveBeenCalled();
+      expect(mockDb.onConflictDoNothing).toHaveBeenCalled();
+      expect(mockDb.update).toHaveBeenCalled();
+    });
+
+    it('returns duplicate when the idempotency key already exists', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      const result = await service.applyBookingWalletEntry({
+        bookingId: 'booking-1',
+        userId: 'test-uuid',
+        amountPiasters: 2500,
+        direction: 'credit',
+        kind: 'booking_refund',
+        idempotencyKey: 'booking.cancelled:booking-1',
+      });
+
+      expect(result).toBe('duplicate');
     });
   });
 });

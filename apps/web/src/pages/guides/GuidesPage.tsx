@@ -1,4 +1,4 @@
-import { type ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { AlertCircle, Search, Star, Users } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
@@ -64,6 +64,14 @@ const GuidesPage = () => {
     debouncedSetSearch(nextValue);
   };
 
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = searchInput.trim();
+    setSearchInput(trimmed);
+    debouncedSetSearch(trimmed); // cancel any pending debounce with stale untrimmed value
+    setFilters((previous) => ({ ...previous, search: trimmed || undefined }));
+  };
+
   const filteredGuides = useMemo(
     () =>
       guides.filter((guide) => {
@@ -119,15 +127,21 @@ const GuidesPage = () => {
             </p>
           </SR>
           <SR delay={300}>
-            <div className="relative mx-auto max-w-xl">
+            <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
               <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="ابحث بالتخصص أو الوصف..."
                 value={searchInput}
                 onChange={handleSearchChange}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28"
               />
-            </div>
+              <Button
+                type="submit"
+                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
+              >
+                ابحث
+              </Button>
+            </form>
           </SR>
         </PageHero>
 

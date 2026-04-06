@@ -6,11 +6,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import Redis from 'ioredis';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+import { UsersService } from '../../users/users.service';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @Inject(ConfigService) configService: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(UsersService) private readonly usersService: UsersService,
   ) {
     const accessSecret = configService.get<string>('JWT_ACCESS_SECRET');
     if (!accessSecret) {
@@ -38,6 +41,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     if (isBlocked) {
       throw new UnauthorizedException('Account has been suspended');
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.sessionInvalidatedAt) {
+      // Without an iat claim we cannot prove the token was issued after
+      // the invalidation cutoff — reject rather than silently allow.
+      if (!payload.iat) {
+        throw new UnauthorizedException('Session has been invalidated');
+      }
+      // Compare at second precision (iat is seconds) with `<` so that
+      // tokens issued in the same second as the invalidation are accepted.
+      // Using `<` avoids rejecting freshly-issued tokens after password
+      // change/reset where iat == invalidatedAtSeconds (~1s window tradeoff).
+      const invalidatedAtSeconds = Math.floor(user.sessionInvalidatedAt.getTime() / 1000);
+      if (payload.iat < invalidatedAtSeconds) {
+        throw new UnauthorizedException('Session has been invalidated');
+      }
     }
 
     return {

@@ -164,7 +164,7 @@ const InvestmentPage = () => {
                 })}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28"
               />
               <Button
                 type="submit"

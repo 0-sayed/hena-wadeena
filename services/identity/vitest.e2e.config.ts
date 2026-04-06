@@ -8,6 +8,14 @@ import { defineConfig } from 'vitest/config';
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 dotenvConfig({ path: path.resolve(__dirname, '../../.env') });
 
+if (!process.env['SERVICE_NAME']) {
+  process.env['SERVICE_NAME'] = 'identity';
+}
+
+if (!process.env['DB_SCHEMA']) {
+  process.env['DB_SCHEMA'] = 'identity';
+}
+
 export default defineConfig({
   test: {
     globals: true,

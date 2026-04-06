@@ -7,20 +7,28 @@ import { pickLocalizedCopy } from '@/lib/localization';
 
 const quickLinks = [
   {
-    href: '/logistics',
-    label: { ar: 'اللوجستيات والتنقل', en: 'Logistics & mobility' },
+    href: '/tourism',
+    label: { ar: 'السياحة والمجتمع', en: 'Tourism & community' },
+  },
+  {
+    href: '/tourism/accommodation',
+    label: { ar: 'الإقامة', en: 'Accommodation' },
+  },
+  {
+    href: '/guides',
+    label: { ar: 'المرشدين', en: 'Guides' },
   },
   {
     href: '/marketplace',
     label: { ar: 'البورصة والأسعار', en: 'Marketplace & prices' },
   },
   {
-    href: '/investment',
-    label: { ar: 'فرص الاستثمار', en: 'Investment opportunities' },
+    href: '/logistics',
+    label: { ar: 'اللوجستيات والتنقل', en: 'Logistics & mobility' },
   },
   {
-    href: '/tourism',
-    label: { ar: 'السياحة والمجتمع', en: 'Tourism & community' },
+    href: '/investment',
+    label: { ar: 'فرص الاستثمار', en: 'Investment opportunities' },
   },
 ] as const;
 

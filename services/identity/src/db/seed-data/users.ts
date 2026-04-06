@@ -17,7 +17,7 @@ export interface SeedUser {
 const now = new Date();
 
 function avatar(email: string): string {
-  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
+  return `https://api.dicebear.com/9.x/glass/svg?seed=${encodeURIComponent(email)}`;
 }
 
 /** Essential layer: 4 admins + 7 demo role users */
