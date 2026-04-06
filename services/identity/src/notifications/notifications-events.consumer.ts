@@ -78,17 +78,7 @@ export class NotificationsEventsConsumer implements OnModuleInit {
         const [touristName] = await this.getUserNames([d.touristUserId]);
         const packageTitle = d.packageTitleAr || d.packageTitleEn || '';
         const { guideUserId, bookingId } = d;
-        if (!guideUserId) return;
-        await Promise.all([
-          this.notificationsService.create({
-            userId: guideUserId,
-            type: NotificationType.BOOKING_REQUESTED,
-            titleAr: 'طلب حجز جديد',
-            titleEn: 'New Booking Request',
-            bodyAr: `${touristName ?? 'سائح'} طلب حجز "${packageTitle}"`,
-            bodyEn: `${touristName ?? 'A tourist'} requested booking "${packageTitle}"`,
-            data: { bookingId, path: '/bookings' },
-          }),
+        const notifications = [
           this.notificationsService.create({
             userId: d.touristUserId,
             type: NotificationType.BOOKING_REQUESTED,
@@ -98,7 +88,21 @@ export class NotificationsEventsConsumer implements OnModuleInit {
             bodyEn: `Your booking request for "${packageTitle}" was sent successfully`,
             data: { bookingId, path: '/bookings' },
           }),
-        ]);
+        ];
+        if (guideUserId) {
+          notifications.push(
+            this.notificationsService.create({
+              userId: guideUserId,
+              type: NotificationType.BOOKING_REQUESTED,
+              titleAr: 'طلب حجز جديد',
+              titleEn: 'New Booking Request',
+              bodyAr: `${touristName ?? 'سائح'} طلب حجز "${packageTitle}"`,
+              bodyEn: `${touristName ?? 'A tourist'} requested booking "${packageTitle}"`,
+              data: { bookingId, path: '/bookings' },
+            }),
+          );
+        }
+        await Promise.all(notifications);
       },
     );
 
