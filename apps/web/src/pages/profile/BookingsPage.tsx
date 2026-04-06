@@ -10,6 +10,7 @@ import {
   XCircle,
   Play,
   AlertCircle,
+  Star,
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,6 +38,7 @@ import {
   useCancelBooking,
   useCompleteBooking,
 } from '@/hooks/use-bookings';
+import { useMyReviewedBookingIds, useCreateReview } from '@/hooks/use-reviews';
 import { getBookingStatusLabels } from '@/lib/booking-status';
 import { piastresToEgp } from '@/lib/format';
 import { UserRole } from '@hena-wadeena/types';
@@ -147,11 +149,19 @@ const BookingsPage = () => {
     id: string;
     action: BookingAction;
   } | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<{ bookingId: string; guideId: string } | null>(
+    null,
+  );
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewAlreadySubmitted, setReviewAlreadySubmitted] = useState(false);
 
   const confirmMutation = useConfirmBooking();
   const startMutation = useStartBooking();
   const cancelMutation = useCancelBooking();
   const completeMutation = useCompleteBooking();
+  const { data: reviewedBookingIds = new Set<string>() } = useMyReviewedBookingIds();
+  const createReviewMutation = useCreateReview();
 
   const handleAction = () => {
     if (!actionTarget) return;
@@ -194,6 +204,40 @@ const BookingsPage = () => {
         },
         onError: (error) => {
           toast.error(error instanceof Error ? error.message : fallbackErrorMessage);
+        },
+      },
+    );
+  };
+
+  const handleReview = () => {
+    if (!reviewTarget || reviewRating === 0) return;
+
+    createReviewMutation.mutate(
+      {
+        guideId: reviewTarget.guideId,
+        bookingId: reviewTarget.bookingId,
+        rating: reviewRating,
+        comment: reviewComment.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            pickLocalizedCopy(appLanguage, {
+              ar: 'شكراً على تقييمك!',
+              en: 'Thanks for your review!',
+            }),
+          );
+          setReviewTarget(null);
+          setReviewRating(0);
+          setReviewComment('');
+          setReviewAlreadySubmitted(false);
+        },
+        onError: (error) => {
+          if (error instanceof Error && error.message.includes('409')) {
+            setReviewAlreadySubmitted(true);
+          } else {
+            toast.error(error instanceof Error ? error.message : fallbackErrorMessage);
+          }
         },
       },
     );
@@ -299,6 +343,28 @@ const BookingsPage = () => {
             })}
           </Button>
         </div>
+      );
+    }
+
+    if (booking.status === 'completed' && !isGuide) {
+      if (reviewedBookingIds.has(booking.id)) {
+        return (
+          <div className="mt-4 flex items-center gap-1 text-sm text-muted-foreground">
+            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+            {pickLocalizedCopy(appLanguage, { ar: 'تم التقييم', en: 'Reviewed' })}
+          </div>
+        );
+      }
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-4"
+          onClick={() => setReviewTarget({ bookingId: booking.id, guideId: booking.guideId })}
+        >
+          <Star className="ms-1 h-4 w-4" />
+          {pickLocalizedCopy(appLanguage, { ar: 'قيّم تجربتك', en: 'Rate your experience' })}
+        </Button>
       );
     }
 
@@ -569,13 +635,113 @@ const BookingsPage = () => {
             >
               {(confirmMutation.isPending ||
                 startMutation.isPending ||
-                completeMutation.isPending) && (
-                <Loader2 className="ms-2 h-4 w-4 animate-spin" />
-              )}
+                completeMutation.isPending) && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
               {pickLocalizedCopy(appLanguage, {
                 ar: 'تأكيد',
                 en: 'Confirm',
               })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!reviewTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReviewTarget(null);
+            setReviewRating(0);
+            setReviewComment('');
+            setReviewAlreadySubmitted(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" dir={direction}>
+          <DialogHeader>
+            <DialogTitle>
+              {pickLocalizedCopy(appLanguage, { ar: 'قيّم تجربتك', en: 'Rate your experience' })}
+            </DialogTitle>
+            <DialogDescription>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'شاركنا رأيك في هذه الجولة',
+                en: 'Share your thoughts about this tour',
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Star selector */}
+            <div className="flex justify-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setReviewRating(star)}
+                  className="rounded p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Star
+                    className={`h-8 w-8 transition-colors ${
+                      star <= reviewRating
+                        ? 'fill-yellow-500 text-yellow-500'
+                        : 'text-muted-foreground hover:text-yellow-400'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Comment */}
+            <div>
+              <Label htmlFor="review-comment">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'تعليق (اختياري)',
+                  en: 'Comment (optional)',
+                })}
+              </Label>
+              <Textarea
+                id="review-comment"
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder={pickLocalizedCopy(appLanguage, {
+                  ar: 'اكتب تعليقك هنا...',
+                  en: 'Write your comment here...',
+                })}
+                maxLength={1000}
+                rows={3}
+                className="mt-2"
+              />
+            </div>
+
+            {/* 409 inline message */}
+            {reviewAlreadySubmitted && (
+              <p className="text-sm text-destructive">
+                {pickLocalizedCopy(appLanguage, {
+                  ar: 'لقد قيّمت هذا الحجز مسبقاً',
+                  en: "You've already reviewed this booking",
+                })}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setReviewTarget(null);
+                setReviewRating(0);
+                setReviewComment('');
+                setReviewAlreadySubmitted(false);
+              }}
+              disabled={createReviewMutation.isPending}
+            >
+              {pickLocalizedCopy(appLanguage, { ar: 'تراجع', en: 'Back' })}
+            </Button>
+            <Button
+              onClick={handleReview}
+              disabled={reviewRating === 0 || createReviewMutation.isPending}
+            >
+              {createReviewMutation.isPending && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+              {pickLocalizedCopy(appLanguage, { ar: 'إرسال التقييم', en: 'Submit review' })}
             </Button>
           </DialogFooter>
         </DialogContent>
