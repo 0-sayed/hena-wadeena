@@ -1222,20 +1222,6 @@ export interface Booking {
   packageTitleEn?: string | null;
 }
 
-// ── Reviews ────────────────────────────────────────────────────────────────
-// TODO(T18): Replace with real review endpoints when backend is ready
-
-export interface Review {
-  id: string;
-  guide_id: number;
-  tourist_id: string;
-  tourist_name: string;
-  rating: number;
-  comment: string;
-  guide_reply?: string;
-  created_at: string;
-}
-
 export const bookingsAPI = {
   getMyBookings: (params?: { status?: string; offset?: number; limit?: number }) =>
     apiFetchWithRefresh<PaginatedResponse<Booking>>(`/bookings/mine${toQueryString(params)}`),
@@ -1268,14 +1254,41 @@ export const bookingsAPI = {
     apiFetchWithRefresh<Booking>(`/bookings/${id}/complete`, { method: 'PATCH' }),
 };
 
+// ── Reviews ────────────────────────────────────────────────────────────────
+
+export interface Review {
+  id: string;
+  bookingId: string;
+  guideId: string;
+  reviewerId: string;
+  rating: number; // 1–5
+  comment: string | null;
+  guideReply: string | null;
+  helpfulCount: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const reviewsAPI = {
-  getReviews: (guideId: number) =>
-    apiFetch<{ success: boolean; data: Review[] }>(`/guides/${guideId}/reviews`),
-  createReview: (guideId: number, body: { rating: number; comment: string }) =>
-    apiFetch<{ success: boolean; data: Review }>(`/guides/${guideId}/reviews`, {
+  // GET /api/v1/guides/:id/reviews — public, paginated
+  getGuideReviews: (guideId: string, params?: { page?: number; limit?: number; sort?: string }) =>
+    apiFetch<PaginatedResponse<Review>>(`/guides/${guideId}/reviews${toQueryString(params)}`),
+
+  // POST /api/v1/reviews — auth required, tourist only
+  createReview: (body: { bookingId: string; rating: number; comment?: string }) =>
+    apiFetchWithRefresh<Review>('/reviews', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  // GET /api/v1/reviews/mine — auth required
+  getMyReviews: (params?: { page?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<Review>>(`/reviews/mine${toQueryString(params)}`),
+
+  // POST /api/v1/reviews/:id/helpful — auth required
+  markHelpful: (reviewId: string) =>
+    apiFetchWithRefresh<Review>(`/reviews/${reviewId}/helpful`, { method: 'POST' }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
