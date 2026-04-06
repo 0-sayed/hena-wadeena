@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { toast } from 'sonner';
 import { AlertCircle, Clock, Shield, Star, ThumbsUp, Users } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty, NvDistrict } from '@hena-wadeena/types';
 import { Layout } from '@/components/layout/Layout';
@@ -294,7 +295,11 @@ const GuideProfilePage = () => {
                               setPendingHelpfulId(review.id);
                               markHelpfulMutation.mutate(
                                 { reviewId: review.id, guideId: id },
-                                { onSettled: () => setPendingHelpfulId(null) },
+                                {
+                                  onSettled: () => setPendingHelpfulId(null),
+                                  onError: (error) =>
+                                    toast.error(error instanceof Error ? error.message : 'حدث خطأ'),
+                                },
                               );
                             }}
                           >
