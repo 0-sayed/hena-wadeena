@@ -1272,7 +1272,7 @@ export interface Review {
 
 export const reviewsAPI = {
   // GET /api/v1/guides/:id/reviews — public, paginated
-  getGuideReviews: (guideId: string, params?: { page?: number; limit?: number; sort?: string }) =>
+  getGuideReviews: (guideId: string, params?: { offset?: number; limit?: number; sort?: string }) =>
     apiFetch<PaginatedResponse<Review>>(`/guides/${guideId}/reviews${toQueryString(params)}`),
 
   // POST /api/v1/reviews — auth required, tourist only
@@ -1283,7 +1283,7 @@ export const reviewsAPI = {
     }),
 
   // GET /api/v1/reviews/mine — auth required
-  getMyReviews: (params?: { page?: number; limit?: number }) =>
+  getMyReviews: (params?: { offset?: number; limit?: number }) =>
     apiFetchWithRefresh<PaginatedResponse<Review>>(`/reviews/mine${toQueryString(params)}`),
 
   // POST /api/v1/reviews/:id/helpful — auth required
