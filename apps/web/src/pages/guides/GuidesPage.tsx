@@ -68,6 +68,7 @@ const GuidesPage = () => {
     event.preventDefault();
     const trimmed = searchInput.trim();
     setSearchInput(trimmed);
+    debouncedSetSearch(trimmed); // cancel any pending debounce with stale untrimmed value
     setFilters((previous) => ({ ...previous, search: trimmed || undefined }));
   };
 

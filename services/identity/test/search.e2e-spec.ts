@@ -3,6 +3,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { users } from '../src/db/schema/users';
+import { walletLedger } from '../src/db/schema/wallet-ledger';
 
 import { createE2eApp, type E2eContext } from './e2e-helpers';
 
@@ -22,6 +23,7 @@ describe('Identity Internal Search (e2e)', () => {
 
   beforeEach(async () => {
     await ctx.redis.flushdb();
+    await ctx.db.delete(walletLedger);
     await ctx.db.delete(users);
   });
 

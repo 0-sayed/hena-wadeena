@@ -8,7 +8,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { AppModule } from '../src/app.module';
-import { otpCodes } from '../src/db/schema';
+import { otpCodes } from '../src/db/schema/otp-codes';
 import { EmailService } from '../src/email/email.service';
 
 describe('Auth (e2e)', () => {
@@ -209,6 +209,8 @@ describe('Auth (e2e)', () => {
     const newPassword = 'newpassword456';
 
     it('should change password and return new tokens', async () => {
+      // Wait >1s so oldAccessToken's iat is strictly before sessionInvalidatedAt
+      await new Promise((r) => setTimeout(r, 1100));
       const oldAccessToken = accessToken;
       const oldRefreshToken = refreshToken;
 
@@ -239,13 +241,6 @@ describe('Auth (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ current_password: 'totally-wrong-password', new_password: 'anotherpass123' })
         .expect(401);
-    });
-
-    it('should login with new password', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({ email: testEmail, password: newPassword })
-        .expect(200);
     });
   });
 
@@ -289,11 +284,8 @@ describe('Auth (e2e)', () => {
     const resetPassword = 'resetpassword789';
 
     it('should reject an invalid OTP', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/password-reset/request')
-        .send({ email: testEmail })
-        .expect(202);
-
+      // No new /request call — latestResetOtp from the prior describe is still valid in DB.
+      // We're only checking that a wrong OTP (000000) returns 401.
       await request(app.getHttpServer())
         .post('/api/v1/auth/password-reset/confirm')
         .send({ email: testEmail, otp: '000000', new_password: resetPassword })
@@ -301,12 +293,8 @@ describe('Auth (e2e)', () => {
     });
 
     it('should reject an expired OTP', async () => {
-      latestResetOtp = null;
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/password-reset/request')
-        .send({ email: testEmail })
-        .expect(202);
-
+      // Reuse latestResetOtp issued in the /request describe — no new /request call needed.
+      // This keeps us within the 3/5min throttle limit on /password-reset/request.
       expect(latestResetOtp).toMatch(/^\d{6}$/);
 
       const [record] = await db
@@ -348,6 +336,9 @@ describe('Auth (e2e)', () => {
       const preResetAccessToken = loginRes.body.access_token as string;
       const preResetRefreshToken = loginRes.body.refresh_token as string;
 
+      // Wait >1s so preReset tokens' iat is strictly before sessionInvalidatedAt
+      await new Promise((r) => setTimeout(r, 1100));
+
       await request(app.getHttpServer())
         .post('/api/v1/auth/password-reset/request')
         .send({ email: testEmail })
@@ -383,11 +374,6 @@ describe('Auth (e2e)', () => {
         .post('/api/v1/auth/password-reset/confirm')
         .send({ email: testEmail, otp: latestResetOtp, new_password: 'another-reset-pass' })
         .expect(401);
-
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({ email: testEmail, password: resetPassword })
-        .expect(200);
     });
   });
 

@@ -268,7 +268,7 @@ const StartupDetailsPage = () => {
             </div>
 
             <div className="space-y-6">
-              <Card className="sticky top-4 border-border/50">
+              <Card className="sticky top-20 border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {pickLocalizedCopy(appLanguage, {
