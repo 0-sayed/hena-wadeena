@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { AlertCircle, Clock, Shield, Star, ThumbsUp, Users } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty, NvDistrict } from '@hena-wadeena/types';
@@ -40,7 +41,7 @@ const GuideProfilePage = () => {
   } = useGuidePackages(id);
   const publicUsers = usePublicUsers(guide ? [guide.userId] : []);
   const canBook = useCanBook();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, language: appLanguage } = useAuth();
   const {
     data: reviews,
     total: reviewsTotal,
@@ -49,6 +50,7 @@ const GuideProfilePage = () => {
     hasNextPage: hasNextReviews,
     fetchNextPage: fetchNextReviews,
   } = useGuideReviews(id);
+  const [pendingHelpfulId, setPendingHelpfulId] = useState<string | null>(null);
   const markHelpfulMutation = useMarkHelpful();
 
   const guideName = guide ? getGuideName(publicUsers.data?.[guide.userId]) : 'مرشد سياحي';
@@ -268,7 +270,9 @@ const GuideProfilePage = () => {
 
                         {/* Date */}
                         <p className="text-xs text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString('ar-EG')}
+                          {new Date(review.createdAt).toLocaleDateString(
+                            appLanguage === 'en' ? 'en-US' : 'ar-EG',
+                          )}
                         </p>
 
                         {/* Guide reply */}
@@ -285,10 +289,14 @@ const GuideProfilePage = () => {
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-xs text-muted-foreground"
-                            disabled={markHelpfulMutation.isPending}
-                            onClick={() =>
-                              markHelpfulMutation.mutate({ reviewId: review.id, guideId: id })
-                            }
+                            disabled={pendingHelpfulId === review.id}
+                            onClick={() => {
+                              setPendingHelpfulId(review.id);
+                              markHelpfulMutation.mutate(
+                                { reviewId: review.id, guideId: id },
+                                { onSettled: () => setPendingHelpfulId(null) },
+                              );
+                            }}
                           >
                             <ThumbsUp className="me-1 h-3 w-3" />
                             مفيد ({review.helpfulCount})
