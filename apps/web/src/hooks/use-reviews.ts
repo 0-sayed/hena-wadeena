@@ -2,21 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reviewsAPI } from '@/services/api';
 import { queryKeys } from '@/lib/query-keys';
 import { usePaginatedQuery } from './use-paginated-query';
+import { useAuth } from './use-auth';
 
 /**
  * Fetches all of the current user's reviews (up to 200).
  * Returns a Set of bookingIds that have already been reviewed —
  * used by BookingsPage to gate the "Rate" button.
  *
- * On fetch failure, returns an empty Set so all completed bookings
- * show the "Rate" button (safe degradation).
+ * Callers should default to `new Set()` on loading/error for safe degradation:
+ * `const { data: reviewedBookingIds = new Set<string>() } = useMyReviewedBookingIds()`
  */
 export function useMyReviewedBookingIds() {
+  const { isAuthenticated } = useAuth();
+
   return useQuery({
     queryKey: queryKeys.reviews.mine(),
     queryFn: () => reviewsAPI.getMyReviews({ limit: 200 }),
     staleTime: 5 * 60 * 1000,
     select: (data) => new Set(data.data.map((r) => r.bookingId)),
+    enabled: isAuthenticated,
   });
 }
 
