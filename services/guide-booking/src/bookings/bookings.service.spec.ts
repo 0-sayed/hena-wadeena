@@ -424,6 +424,30 @@ describe('BookingsService', () => {
       );
     });
 
+    it('cancel without cancelReason: throws BadRequestException', async () => {
+      mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+
+      await expect(
+        service.transition('booking-uuid-1', 'cancelled', {
+          sub: 'tourist-uuid-1',
+          role: 'tourist',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('cancel with empty cancelReason: throws BadRequestException', async () => {
+      mockNextQuery([{ ...mockBooking, status: 'pending' }]);
+
+      await expect(
+        service.transition(
+          'booking-uuid-1',
+          'cancelled',
+          { sub: 'tourist-uuid-1', role: 'tourist' },
+          '   ',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('invalid transition: throws BadRequestException', async () => {
       mockNextQuery([{ ...mockBooking, status: 'completed' }]);
 

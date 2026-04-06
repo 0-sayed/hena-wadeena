@@ -225,6 +225,11 @@ export class BookingsService {
       }
     }
 
+    // cancel requires a reason
+    if (targetStatus === 'cancelled' && !cancelReason?.trim()) {
+      throw new BadRequestException('cancelReason is required when cancelling a booking');
+    }
+
     // Resolve event context BEFORE mutating state — otherwise a missing guide/
     // package row would 404 after the status has already been committed, leaving
     // the caller with a failure response but the transition silently applied
