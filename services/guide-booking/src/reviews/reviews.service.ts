@@ -299,7 +299,7 @@ export class ReviewsService {
     );
   }
 
-  private buildSort(sort: string): SQL[] {
+  private buildSort(sort = 'created_at|desc'): SQL[] {
     const [field, direction] = sort.split('|');
     if (!field || !(field in SORTABLE_FIELDS)) {
       return [desc(guideReviews.createdAt), desc(guideReviews.id)];

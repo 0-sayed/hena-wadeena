@@ -8,6 +8,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -20,7 +21,7 @@ import { ReviewsService } from './reviews.service';
 
 @Controller('reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(@Inject(ReviewsService) private readonly reviewsService: ReviewsService) {}
 
   // --- Static paths MUST come before /:id ---
 

@@ -20,7 +20,7 @@ class PaginationDto extends createZodDto(paginationSchema) {}
 export class GuidesController {
   constructor(
     @Inject(GuidesService) private readonly guidesService: GuidesService,
-    private readonly reviewsService: ReviewsService,
+    @Inject(ReviewsService) private readonly reviewsService: ReviewsService,
   ) {}
 
   @Public()
