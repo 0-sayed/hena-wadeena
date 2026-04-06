@@ -144,6 +144,3 @@ scripts/seed/*.d.ts.map
 # Binary documents
 docs/**/*.pdf
 
-# Local-only session files
-pr.md
-summary.md
