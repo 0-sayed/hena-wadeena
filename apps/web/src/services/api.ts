@@ -65,11 +65,11 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
       string,
       unknown
     >;
-    throw new ApiError(
-      res.status,
-      (error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`,
-      error,
-    );
+    const message =
+      res.status === 429
+        ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
+        : ((error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`);
+    throw new ApiError(res.status, message, error);
   }
 
   const text = await res.text();
