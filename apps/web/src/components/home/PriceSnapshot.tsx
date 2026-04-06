@@ -97,7 +97,11 @@ export function PriceSnapshot() {
                     : entries.map((entry, index) => (
                         <TableRow
                           key={entry.commodity.id}
-                          className={index === entries.length - 1 ? 'border-b-0 hover:bg-muted/20' : 'hover:bg-muted/20'}
+                          className={
+                            index === entries.length - 1
+                              ? 'border-b-0 hover:bg-muted/20'
+                              : 'hover:bg-muted/20'
+                          }
                         >
                           <TableCell className="px-6 py-5">
                             <span className="font-semibold text-foreground">
@@ -111,7 +115,7 @@ export function PriceSnapshot() {
                             <span className="text-lg font-bold text-foreground">
                               {formatPrice(entry.latestPrice)}
                             </span>
-                            <span className="me-1 text-sm text-muted-foreground">
+                            <span className="ms-1 text-sm text-muted-foreground">
                               {copy.currencyPrefix}
                               {unitLabel(entry.commodity.unit, language)}
                             </span>
