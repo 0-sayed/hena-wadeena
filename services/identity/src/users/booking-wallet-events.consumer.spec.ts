@@ -10,7 +10,6 @@ describe('BookingWalletEventsConsumer', () => {
   let mockStreams: { subscribe: ReturnType<typeof vi.fn> };
   let mockUsersService: {
     applyBookingWalletEntry: ReturnType<typeof vi.fn>;
-    assertBookingLedgerExists: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -22,7 +21,6 @@ describe('BookingWalletEventsConsumer', () => {
     };
     mockUsersService = {
       applyBookingWalletEntry: vi.fn().mockResolvedValue('applied'),
-      assertBookingLedgerExists: vi.fn().mockResolvedValue(undefined),
     };
 
     consumer = new BookingWalletEventsConsumer(
@@ -65,10 +63,6 @@ describe('BookingWalletEventsConsumer', () => {
       },
     });
 
-    expect(mockUsersService.assertBookingLedgerExists).toHaveBeenCalledWith(
-      'booking-1',
-      'booking_debit',
-    );
     expect(mockUsersService.applyBookingWalletEntry).toHaveBeenCalledWith({
       bookingId: 'booking-1',
       userId: 'tourist-1',
@@ -91,10 +85,6 @@ describe('BookingWalletEventsConsumer', () => {
       },
     });
 
-    expect(mockUsersService.assertBookingLedgerExists).toHaveBeenCalledWith(
-      'booking-1',
-      'booking_debit',
-    );
     expect(mockUsersService.applyBookingWalletEntry).toHaveBeenCalledWith({
       bookingId: 'booking-1',
       userId: 'guide-1',

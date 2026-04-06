@@ -42,7 +42,6 @@ export class BookingWalletEventsConsumer implements OnModuleInit {
       async (msg) => {
         const fields = this.parseWalletFields(msg.data, 'touristUserId');
         if (!fields) return;
-        await this.usersService.assertBookingLedgerExists(fields.bookingId, 'booking_debit');
         await this.usersService.applyBookingWalletEntry({
           bookingId: fields.bookingId,
           userId: fields.userId,
@@ -61,7 +60,6 @@ export class BookingWalletEventsConsumer implements OnModuleInit {
       async (msg) => {
         const fields = this.parseWalletFields(msg.data, 'guideUserId');
         if (!fields) return;
-        await this.usersService.assertBookingLedgerExists(fields.bookingId, 'booking_debit');
         await this.usersService.applyBookingWalletEntry({
           bookingId: fields.bookingId,
           userId: fields.userId,
@@ -87,7 +85,7 @@ export class BookingWalletEventsConsumer implements OnModuleInit {
     userIdField: 'touristUserId' | 'guideUserId',
   ): { bookingId: string; userId: string; amountPiasters: number } | null {
     const bookingId = typeof data.bookingId === 'string' ? data.bookingId : '';
-    const userId = typeof data[userIdField] === 'string' ? (data[userIdField]) : '';
+    const userId = typeof data[userIdField] === 'string' ? data[userIdField] : '';
     const rawTotal = typeof data.totalPrice === 'string' ? data.totalPrice : '';
     const amountPiasters = Number.parseInt(rawTotal, 10);
 
