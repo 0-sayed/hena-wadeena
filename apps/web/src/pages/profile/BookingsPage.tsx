@@ -160,7 +160,7 @@ const BookingsPage = () => {
   const startMutation = useStartBooking();
   const cancelMutation = useCancelBooking();
   const completeMutation = useCompleteBooking();
-  const { data: reviewedBookingIds = new Set<string>() } = useMyReviewedBookingIds();
+  const { data: reviewedBookings = new Map<string, number>() } = useMyReviewedBookingIds();
   const createReviewMutation = useCreateReview();
 
   const handleAction = () => {
@@ -347,11 +347,15 @@ const BookingsPage = () => {
     }
 
     if (booking.status === 'completed' && !isGuide) {
-      if (reviewedBookingIds.has(booking.id)) {
+      const existingRating = reviewedBookings.get(booking.id);
+      if (existingRating !== undefined) {
         return (
           <div className="mt-4 flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-            {pickLocalizedCopy(appLanguage, { ar: 'تم التقييم', en: 'Reviewed' })}
+            {pickLocalizedCopy(appLanguage, {
+              ar: `تم التقييم ★${existingRating}`,
+              en: `Reviewed ★${existingRating}`,
+            })}
           </div>
         );
       }

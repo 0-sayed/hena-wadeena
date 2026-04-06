@@ -6,11 +6,11 @@ import { useAuth } from './use-auth';
 
 /**
  * Fetches all of the current user's reviews (up to 200).
- * Returns a Set of bookingIds that have already been reviewed —
- * used by BookingsPage to gate the "Rate" button.
+ * Returns a Map of bookingId → rating for bookings that have already been reviewed —
+ * used by BookingsPage to gate the "Rate" button and display the rating in the badge.
  *
- * Callers should default to `new Set()` on loading/error for safe degradation:
- * `const { data: reviewedBookingIds = new Set<string>() } = useMyReviewedBookingIds()`
+ * Callers should default to `new Map()` on loading/error for safe degradation:
+ * `const { data: reviewedBookings = new Map<string, number>() } = useMyReviewedBookingIds()`
  */
 export function useMyReviewedBookingIds() {
   const { isAuthenticated } = useAuth();
@@ -19,7 +19,7 @@ export function useMyReviewedBookingIds() {
     queryKey: queryKeys.reviews.mine(),
     queryFn: () => reviewsAPI.getMyReviews({ limit: 200 }),
     staleTime: 5 * 60 * 1000,
-    select: (data) => new Set(data.data.map((r) => r.bookingId)),
+    select: (data) => new Map(data.data.map((r) => [r.bookingId, r.rating])),
     enabled: isAuthenticated,
   });
 }
