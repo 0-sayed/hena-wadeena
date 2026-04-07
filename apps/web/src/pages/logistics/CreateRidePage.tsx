@@ -120,7 +120,9 @@ const CreateRidePage = () => {
   };
 
   return (
-    <Layout title="إنشاء رحلة جديدة">
+    <Layout
+      title={pickLocalizedCopy(appLanguage, { ar: 'إنشاء رحلة جديدة', en: 'Create New Ride' })}
+    >
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
           <Button

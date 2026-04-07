@@ -331,7 +331,7 @@ const MarketplacePage = () => {
       });
 
   return (
-    <Layout title="البورصة">
+    <Layout title={pickLocalizedCopy(language, { ar: 'البورصة', en: 'Marketplace' })}>
       <PageTransition>
         <PageHero
           image={heroMarketplace}

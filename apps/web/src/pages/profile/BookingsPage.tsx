@@ -376,7 +376,7 @@ const BookingsPage = () => {
   };
 
   return (
-    <Layout title="حجوزاتي">
+    <Layout title={pickLocalizedCopy(language, { ar: 'حجوزاتي', en: 'My Bookings' })}>
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
