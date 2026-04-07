@@ -71,7 +71,7 @@ export const showcaseBusinesses: SeedBusiness[] = [
     ownerId: USER.MERCHANT_KHALED,
     nameAr: 'شركة الواحة للنقل',
     nameEn: 'Oasis Transport Co.',
-    category: 'نقل',
+    category: 'transport',
     descriptionAr:
       'شركة نقل بري تربط واحات الوادي الجديد بالقاهرة وأسيوط. أسطول من 30 سيارة وحافلة، وخدمات شحن بضائع مبردة ومعتادة. ترحيلة يومية من الخارجة للقاهرة في الساعة السادسة صباحاً.',
     district: 'kharga',
