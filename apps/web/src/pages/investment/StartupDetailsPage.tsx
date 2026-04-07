@@ -39,7 +39,7 @@ const StartupDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الشركة الناشئة">
         <section className="py-8 md:py-12">
           <div className="container px-4">
             <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
@@ -66,7 +66,7 @@ const StartupDetailsPage = () => {
 
   if (isError || !startup) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الشركة الناشئة">
         <section className="py-8 md:py-12">
           <div className="container px-4 text-center">
             <p className="mb-4 text-lg text-muted-foreground">
@@ -107,7 +107,7 @@ const StartupDetailsPage = () => {
   const safeWebsiteUrl = getSafeWebsiteUrl(startup.website);
 
   return (
-    <Layout>
+    <Layout title="تفاصيل الشركة الناشئة">
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">

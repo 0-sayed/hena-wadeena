@@ -376,7 +376,7 @@ const BookingsPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="حجوزاتي">
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />

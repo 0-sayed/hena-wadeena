@@ -125,7 +125,7 @@ const TourismPage = () => {
   );
 
   return (
-    <Layout>
+    <Layout title="السياحة">
       <PageTransition>
         <PageHero
           image={heroTourism}

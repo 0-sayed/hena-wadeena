@@ -330,7 +330,7 @@ const ContactPage = () => {
       });
 
   return (
-    <Layout>
+    <Layout title="التواصل مع المستثمر">
       <section className="py-8 md:py-12">
         <div className="container max-w-2xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6 gap-2">

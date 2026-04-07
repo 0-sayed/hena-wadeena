@@ -43,7 +43,7 @@ export default function ListingInquiryPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="استفسار الإعلان">
         <div className="container space-y-6 px-4 py-10">
           <Skeleton className="h-10 w-32" />
           <Skeleton className="h-96 w-full rounded-2xl" />
@@ -54,7 +54,7 @@ export default function ListingInquiryPage() {
 
   if (!listing) {
     return (
-      <Layout>
+      <Layout title="استفسار الإعلان">
         <div className="container space-y-4 px-4 py-20 text-center">
           <p className="text-lg text-muted-foreground">تعذر تحميل الإعلان المطلوب.</p>
           <Button onClick={() => void navigate('/marketplace')}>العودة إلى السوق</Button>
@@ -104,7 +104,7 @@ export default function ListingInquiryPage() {
   };
 
   return (
-    <Layout>
+    <Layout title="استفسار الإعلان">
       <section className="py-8 md:py-12">
         <div className="container max-w-2xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">

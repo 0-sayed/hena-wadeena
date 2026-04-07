@@ -70,7 +70,7 @@ const RideDetailPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الرحلة">
         <section className="py-8">
           <div className="container max-w-3xl px-4">
             <Skeleton h="h-[300px]" className="mb-6 rounded-xl" />
@@ -83,7 +83,7 @@ const RideDetailPage = () => {
 
   if (isError) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الرحلة">
         <section className="py-20 text-center">
           <p className="text-lg text-muted-foreground">
             {pickLocalizedCopy(appLanguage, {
@@ -101,7 +101,7 @@ const RideDetailPage = () => {
 
   if (!ride) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الرحلة">
         <section className="py-20 text-center">
           <p className="text-lg text-muted-foreground">
             {pickLocalizedCopy(appLanguage, {
@@ -280,7 +280,7 @@ const RideDetailPage = () => {
     cancelRide.isPending || activateRide.isPending || deleteRide.isPending;
 
   return (
-    <Layout>
+    <Layout title="تفاصيل الرحلة">
       <section className="py-8">
         <div className="container max-w-3xl px-4">
           <Button

@@ -120,7 +120,7 @@ export default function ListingInquiriesPage() {
   };
 
   return (
-    <Layout>
+    <Layout title="استفسارات الإعلانات">
       <section className="py-10 md:py-14">
         <div className="container max-w-5xl space-y-6 px-4">
           <div className="flex flex-col gap-4 rounded-3xl border border-border/60 bg-card p-6 shadow-sm md:flex-row md:items-center md:justify-between">

@@ -331,7 +331,7 @@ const MarketplacePage = () => {
       });
 
   return (
-    <Layout>
+    <Layout title="البورصة">
       <PageTransition>
         <PageHero
           image={heroMarketplace}

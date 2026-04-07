@@ -35,6 +35,7 @@ type NavigationItem = {
 
 type HeaderCopy = {
   accountMenu: string;
+  beta: string;
   bookings: string;
   brand: string;
   inquiries: string;
@@ -61,8 +62,9 @@ const CONTROL_BUTTON_CLASS =
 const headerCopy: Record<AppLanguage, HeaderCopy> = {
   ar: {
     accountMenu: 'قائمة الحساب',
+    beta: 'تجريبي',
     bookings: 'حجوزاتي',
-    brand: 'هنا وادينا',
+    brand: 'هُنَا وَادِينَا',
     inquiries: 'استفسارات الإعلانات',
     languageSwitchArabicError: 'تعذر التبديل إلى العربية',
     languageSwitchEnglishError: 'تعذر التبديل إلى الإنجليزية',
@@ -82,6 +84,7 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
   },
   en: {
     accountMenu: 'Account menu',
+    beta: 'Beta',
     bookings: 'My bookings',
     brand: 'Hena Wadeena',
     inquiries: 'Marketplace inquiries',
@@ -304,6 +307,9 @@ export function Header() {
         <Link to="/" className="flex items-center gap-2">
           <img src="/icon-source.png" alt={copy.brand} className="h-9 w-9 rounded-lg" />
           <span className="text-xl font-bold text-foreground">{copy.brand}</span>
+          <span className="self-start mt-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            {copy.beta}
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">

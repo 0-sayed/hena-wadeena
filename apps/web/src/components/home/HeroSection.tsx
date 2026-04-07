@@ -335,11 +335,9 @@ export function HeroSection() {
             {copy.description}
           </p>
 
-          <div className="hero-reveal hero-d4 mb-12">
+          <div className="hero-reveal hero-d4 mb-12 hidden sm:block">
             <CardDeck language={language} />
-            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">
-              {copy.helper} ✨
-            </p>
+            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">{copy.helper} ✨</p>
           </div>
 
           <div className="hero-reveal hero-d5 flex flex-wrap gap-12">

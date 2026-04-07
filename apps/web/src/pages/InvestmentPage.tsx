@@ -118,7 +118,7 @@ const InvestmentPage = () => {
   );
 
   return (
-    <Layout>
+    <Layout title="الاستثمار">
       <PageTransition>
         <PageHero
           image={heroInvestment}
