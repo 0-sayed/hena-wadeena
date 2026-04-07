@@ -200,7 +200,8 @@ jobs:
             echo "==> Configuring Docker to prefer IPv4 for GHCR (Contabo IPv6->Fastly peering is unstable)"
             if ! python3 -c "import json; d=json.load(open('/etc/docker/daemon.json')); exit(0 if d.get('ipv6') is False else 1)" 2>/dev/null; then
               sudo mkdir -p /etc/docker
-              sudo python3 -c $'import json\npath=\"/etc/docker/daemon.json\"\ntry:\n    with open(path) as f:\n        cfg=json.load(f)\nexcept Exception:\n    cfg={}\ncfg[\"ipv6\"]=False\nopen(path,\"w\").write(json.dumps(cfg,indent=2))'
+              existing="$(sudo cat /etc/docker/daemon.json 2>/dev/null || echo '{}')"
+              echo "$existing" | python3 -c $'import json,sys\ntry:\n d=json.loads(sys.stdin.read())\nexcept Exception:\n d={}\nd["ipv6"]=False\nprint(json.dumps(d,indent=2))' | sudo tee /etc/docker/daemon.json >/dev/null
               sudo systemctl restart docker
             fi
 
