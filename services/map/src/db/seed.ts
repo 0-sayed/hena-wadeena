@@ -61,6 +61,7 @@ async function main() {
     .returning({ id: pointsOfInterest.id });
 
   let rideCount = 0;
+  let passengerCount = 0;
 
   if (layer === 'showcase') {
     // 2. Carpool rides — showcase only
@@ -85,11 +86,30 @@ async function main() {
       .onConflictDoNothing()
       .returning({ id: carpoolRidesTable.id });
     rideCount = rideResult.length;
+
+    // 3. Carpool passengers — showcase only
+    const { carpoolPassengers } = await import('./schema/index.js');
+    const { showcaseCarPoolPassengers } = await import('./seed-data/passengers.js');
+    const passengerResult = await db
+      .insert(carpoolPassengers)
+      .values(
+        showcaseCarPoolPassengers.map((p) => ({
+          id: p.id,
+          rideId: p.rideId,
+          userId: p.userId,
+          seats: p.seats,
+          status: p.status,
+          joinedAt: p.joinedAt,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning({ id: carpoolPassengers.id });
+    passengerCount = passengerResult.length;
   }
 
   logSummary('map', layer, {
     pois: poiResult.length,
-    ...(layer === 'showcase' && { rides: rideCount }),
+    ...(layer === 'showcase' && { rides: rideCount, passengers: passengerCount }),
   });
 }
 

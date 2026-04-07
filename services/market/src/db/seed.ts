@@ -4,17 +4,25 @@ import postgres from 'postgres';
 import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils.js';
 
 import {
+  businessCommodities,
   businessDirectories,
   commodities as commoditiesTable,
   commodityPrices,
+  investmentApplications,
   investmentOpportunities,
+  listingInquiries,
   listings,
+  priceSnapshots,
   reviews,
 } from './schema/index.js';
+import { showcaseBusinessCommodities } from './seed-data/business-commodities.js';
 import { showcaseBusinesses } from './seed-data/business-directories.js';
 import { commodities as commodityData, generatePriceSnapshots } from './seed-data/commodities.js';
+import { showcaseInvestmentApplications } from './seed-data/investment-applications.js';
 import { essentialInvestments, showcaseInvestments } from './seed-data/investments.js';
+import { showcaseListingInquiries } from './seed-data/listing-inquiries.js';
 import { essentialListings, showcaseListings } from './seed-data/listings.js';
+import { generatePriceSnapshotData } from './seed-data/price-snapshots.js';
 import { showcaseListingReviews } from './seed-data/reviews.js';
 
 // ── Real image URLs ──────────────────────────────────────────────────────────
@@ -167,6 +175,10 @@ async function main() {
   let businessCount = 0;
   let priceCount = 0;
   let reviewCount = 0;
+  let bizCommodityCount = 0;
+  let inquiryCount = 0;
+  let applicationCount = 0;
+  let priceSnapshotCount = 0;
 
   if (layer === 'showcase') {
     // 4. Business directories — showcase only
@@ -221,6 +233,69 @@ async function main() {
       .onConflictDoNothing()
       .returning({ id: reviews.id });
     reviewCount = reviewResult.length;
+
+    // 7. Business commodities — showcase only
+    const bizCommodityResult = await db
+      .insert(businessCommodities)
+      .values(showcaseBusinessCommodities)
+      .onConflictDoNothing()
+      .returning({ businessId: businessCommodities.businessId });
+    bizCommodityCount = bizCommodityResult.length;
+
+    // 8. Listing inquiries — showcase only
+    const inquiryResult = await db
+      .insert(listingInquiries)
+      .values(
+        showcaseListingInquiries.map((inq) => ({
+          id: inq.id,
+          listingId: inq.listingId,
+          senderId: inq.senderId,
+          receiverId: inq.receiverId,
+          contactName: inq.contactName,
+          contactEmail: inq.contactEmail,
+          contactPhone: inq.contactPhone,
+          message: inq.message,
+          replyMessage: inq.replyMessage,
+          status: inq.status,
+          readAt: inq.readAt,
+          respondedAt: inq.respondedAt,
+          createdAt: inq.createdAt,
+          updatedAt: inq.updatedAt,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning({ id: listingInquiries.id });
+    inquiryCount = inquiryResult.length;
+
+    // 9. Investment applications — showcase only
+    const applicationResult = await db
+      .insert(investmentApplications)
+      .values(
+        showcaseInvestmentApplications.map((app) => ({
+          id: app.id,
+          opportunityId: app.opportunityId,
+          investorId: app.investorId,
+          amountProposed: app.amountProposed,
+          message: app.message,
+          contactEmail: app.contactEmail,
+          contactPhone: app.contactPhone,
+          status: app.status,
+          createdAt: app.createdAt,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning({ id: investmentApplications.id });
+    applicationCount = applicationResult.length;
+
+    // 10. Real-estate price snapshots — showcase only
+    const psData = generatePriceSnapshotData();
+    for (let i = 0; i < psData.length; i += BATCH) {
+      await db
+        .insert(priceSnapshots)
+        .values(psData.slice(i, i + BATCH))
+        .onConflictDoNothing();
+    }
+    priceSnapshotCount = psData.length;
   }
 
   logSummary('market', layer, {
@@ -229,8 +304,12 @@ async function main() {
     investments: investmentResult.length,
     ...(layer === 'showcase' && {
       businesses: businessCount,
-      priceSnapshots: priceCount,
+      commodityPriceSnapshots: priceCount,
       reviews: reviewCount,
+      bizCommodities: bizCommodityCount,
+      inquiries: inquiryCount,
+      applications: applicationCount,
+      realEstatePriceSnapshots: priceSnapshotCount,
     }),
   });
 }

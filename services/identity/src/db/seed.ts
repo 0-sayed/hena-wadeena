@@ -1,3 +1,4 @@
+import { sql as drizzleSql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -44,7 +45,10 @@ async function main() {
   const essentialResult = await db
     .insert(users)
     .values(essentialRows)
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: users.id,
+      set: { avatarUrl: drizzleSql`excluded.avatar_url` },
+    })
     .returning({ id: users.id });
 
   let showcaseCount = 0;
@@ -67,7 +71,10 @@ async function main() {
     const showcaseResult = await db
       .insert(users)
       .values(showcaseRows)
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: users.id,
+        set: { avatarUrl: drizzleSql`excluded.avatar_url` },
+      })
       .returning({ id: users.id });
 
     showcaseCount = showcaseResult.length;
