@@ -197,6 +197,13 @@ jobs:
             check_caddy_host_port "$caddy_http_port"
             check_caddy_host_port "$caddy_https_port"
 
+            echo "==> Configuring Docker to prefer IPv4 for GHCR (Contabo IPv6->Fastly peering is unstable)"
+            if ! python3 -c "import json; d=json.load(open('/etc/docker/daemon.json')); exit(0 if d.get('ipv6') is False else 1)" 2>/dev/null; then
+              sudo mkdir -p /etc/docker
+              sudo python3 -c $'import json\npath=\"/etc/docker/daemon.json\"\ntry:\n    with open(path) as f:\n        cfg=json.load(f)\nexcept Exception:\n    cfg={}\ncfg[\"ipv6\"]=False\nopen(path,\"w\").write(json.dumps(cfg,indent=2))'
+              sudo systemctl restart docker
+            fi
+
             echo "==> Pulling images by SHA and tagging as :latest"
             pull_with_retry() {
               local image="$1"
