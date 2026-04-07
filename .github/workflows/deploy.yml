@@ -101,6 +101,14 @@ jobs:
             set -euo pipefail
             cd /opt/hena-wadeena
 
+            echo "==> Configuring Docker to prefer IPv4 for GHCR (Contabo IPv6->Fastly peering is unstable)"
+            if ! python3 -c "import json; d=json.load(open('/etc/docker/daemon.json')); exit(0 if d.get('ipv6') is False else 1)" 2>/dev/null; then
+              sudo mkdir -p /etc/docker
+              existing="$(sudo cat /etc/docker/daemon.json 2>/dev/null || echo '{}')"
+              echo "$existing" | python3 -c $'import json,sys\ntry:\n d=json.loads(sys.stdin.read())\nexcept Exception:\n d={}\nd["ipv6"]=False\nprint(json.dumps(d,indent=2))' | sudo tee /etc/docker/daemon.json >/dev/null
+              sudo systemctl restart docker
+            fi
+
             echo "==> Logging into GHCR"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
@@ -196,14 +204,6 @@ jobs:
             echo "==> Validating Caddy host ports"
             check_caddy_host_port "$caddy_http_port"
             check_caddy_host_port "$caddy_https_port"
-
-            echo "==> Configuring Docker to prefer IPv4 for GHCR (Contabo IPv6->Fastly peering is unstable)"
-            if ! python3 -c "import json; d=json.load(open('/etc/docker/daemon.json')); exit(0 if d.get('ipv6') is False else 1)" 2>/dev/null; then
-              sudo mkdir -p /etc/docker
-              existing="$(sudo cat /etc/docker/daemon.json 2>/dev/null || echo '{}')"
-              echo "$existing" | python3 -c $'import json,sys\ntry:\n d=json.loads(sys.stdin.read())\nexcept Exception:\n d={}\nd["ipv6"]=False\nprint(json.dumps(d,indent=2))' | sudo tee /etc/docker/daemon.json >/dev/null
-              sudo systemctl restart docker
-            fi
 
             echo "==> Pulling images by SHA and tagging as :latest"
             pull_with_retry() {
