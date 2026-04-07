@@ -15,10 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { kycOnboardingAPI } from '@/services/api';
 import type { KycOnboardingSession, KycOnboardingSubmission } from '@/services/api';
-import {
-  clearKycSessionToken,
-  getKycSessionToken,
-} from '@/services/kyc-session-manager';
+import { clearKycSessionToken, getKycSessionToken } from '@/services/kyc-session-manager';
 
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 const ALLOWED_DOCUMENT_TYPES = new Set([
@@ -165,8 +162,10 @@ export default function KycContinuePage() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container py-16 text-center text-muted-foreground">جاري تحميل حالة التحقق...</div>
+      <Layout title="التحقق من الهوية">
+        <div className="container py-16 text-center text-muted-foreground">
+          جاري تحميل حالة التحقق...
+        </div>
       </Layout>
     );
   }
@@ -176,7 +175,7 @@ export default function KycContinuePage() {
   }
 
   return (
-    <Layout>
+    <Layout title="التحقق من الهوية">
       <PageTransition>
         <section className="relative overflow-hidden py-12 md:py-16">
           <GradientMesh />
@@ -207,7 +206,8 @@ export default function KycContinuePage() {
                   {session.required_documents.map((docType) => {
                     const latestSubmission = getLatestSubmission(session.submissions, docType);
                     const canSubmit =
-                      latestSubmission?.status !== 'approved' && latestSubmission?.status !== 'pending';
+                      latestSubmission?.status !== 'approved' &&
+                      latestSubmission?.status !== 'pending';
 
                     return (
                       <div
@@ -258,7 +258,9 @@ export default function KycContinuePage() {
                           <Button
                             type="button"
                             onClick={() => void handleSubmitDocument(docType)}
-                            disabled={!canSubmit || !selectedFiles[docType] || submittingDocType === docType}
+                            disabled={
+                              !canSubmit || !selectedFiles[docType] || submittingDocType === docType
+                            }
                           >
                             {submittingDocType === docType ? (
                               <>
@@ -297,7 +299,10 @@ export default function KycContinuePage() {
                       <AlertCircle className="h-4 w-4 text-primary" />
                       ماذا يحدث بعد الرفع؟
                     </div>
-                    <p>تظهر المستندات في لوحة الإدارة للمراجعة. سيبقى الحساب معلقًا حتى يتم اعتماد كل المستندات المطلوبة.</p>
+                    <p>
+                      تظهر المستندات في لوحة الإدارة للمراجعة. سيبقى الحساب معلقًا حتى يتم اعتماد كل
+                      المستندات المطلوبة.
+                    </p>
                   </div>
 
                   <div className="flex justify-end">

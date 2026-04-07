@@ -261,7 +261,7 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title={pickLocalizedCopy(language, { ar: 'الملف الشخصي', en: 'Profile' })}>
         <div className="container max-w-2xl space-y-6 py-20">
           <Skeleton h="h-64" className="rounded-2xl" />
           <Skeleton h="h-48" className="rounded-2xl" />
@@ -272,7 +272,7 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <Layout>
+      <Layout title={pickLocalizedCopy(language, { ar: 'الملف الشخصي', en: 'Profile' })}>
         <div className="container max-w-2xl py-20 text-center text-muted-foreground">
           {pickLocalizedCopy(appLanguage, {
             ar: 'لا يمكن تحميل الملف الشخصي حاليًا.',
@@ -284,7 +284,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <Layout>
+    <Layout title={pickLocalizedCopy(language, { ar: 'الملف الشخصي', en: 'Profile' })}>
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />

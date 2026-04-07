@@ -126,7 +126,7 @@ const AccommodationInquiryPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout title="استفسار الإقامة">
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6 gap-2">

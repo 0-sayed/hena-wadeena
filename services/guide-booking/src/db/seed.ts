@@ -6,12 +6,14 @@ import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils
 import {
   attractions,
   bookings,
+  guideAvailability,
   guideReviews,
   guides,
   tourPackageAttractions,
   tourPackages,
 } from './schema/index.js';
 import { essentialAttractions, showcaseAttractions } from './seed-data/attractions.js';
+import { showcaseGuideAvailability } from './seed-data/availability.js';
 import { showcaseBookings } from './seed-data/bookings.js';
 import { essentialGuides, showcaseGuides } from './seed-data/guides.js';
 import {
@@ -254,6 +256,7 @@ async function main() {
 
   let bookingCount = 0;
   let reviewCount = 0;
+  let availabilityCount = 0;
 
   if (layer === 'showcase') {
     // 6. Bookings — showcase only
@@ -296,6 +299,22 @@ async function main() {
       .onConflictDoNothing()
       .returning({ id: guideReviews.id });
     reviewCount = reviewResult.length;
+
+    // 8. Guide availability blocks — showcase only
+    const availabilityResult = await db
+      .insert(guideAvailability)
+      .values(
+        showcaseGuideAvailability.map((av) => ({
+          id: av.id,
+          guideId: av.guideId,
+          date: av.date,
+          isBlocked: av.isBlocked,
+          note: av.note,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning({ id: guideAvailability.id });
+    availabilityCount = availabilityResult.length;
   }
 
   logSummary('guide-booking', layer, {
@@ -306,6 +325,7 @@ async function main() {
     ...(layer === 'showcase' && {
       bookings: bookingCount,
       reviews: reviewCount,
+      availability: availabilityCount,
     }),
   });
 }

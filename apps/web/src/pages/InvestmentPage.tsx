@@ -118,7 +118,7 @@ const InvestmentPage = () => {
   );
 
   return (
-    <Layout>
+    <Layout title={pickLocalizedCopy(language, { ar: 'الاستثمار', en: 'Investment' })}>
       <PageTransition>
         <PageHero
           image={heroInvestment}

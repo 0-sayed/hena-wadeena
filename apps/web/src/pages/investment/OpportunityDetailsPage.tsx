@@ -38,7 +38,7 @@ const OpportunityDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الفرصة الاستثمارية">
         <div className="container py-16 space-y-6">
           <div className="h-10 w-40 animate-pulse rounded-xl bg-muted" />
           <div className="h-80 animate-pulse rounded-2xl bg-muted" />
@@ -50,7 +50,7 @@ const OpportunityDetailsPage = () => {
 
   if (isError || !opportunity) {
     return (
-      <Layout>
+      <Layout title="تفاصيل الفرصة الاستثمارية">
         <div className="container py-20 text-center space-y-4">
           <p className="text-lg text-muted-foreground">تعذر تحميل بيانات الفرصة الاستثمارية.</p>
           <div className="flex justify-center gap-3">
@@ -68,7 +68,7 @@ const OpportunityDetailsPage = () => {
     isAuthenticated && (user?.role === UserRole.INVESTOR || user?.role === UserRole.ADMIN);
 
   return (
-    <Layout>
+    <Layout title="تفاصيل الفرصة الاستثمارية">
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button

@@ -11,7 +11,7 @@ type DashboardShellProps = {
 
 export function DashboardShell({ icon: Icon, title, subtitle, children }: DashboardShellProps) {
   return (
-    <Layout>
+    <Layout title={title}>
       <div className="container py-8 px-4 space-y-6">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">

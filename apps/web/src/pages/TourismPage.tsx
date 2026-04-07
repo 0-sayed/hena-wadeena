@@ -125,7 +125,7 @@ const TourismPage = () => {
   );
 
   return (
-    <Layout>
+    <Layout title={pickLocalizedCopy(language, { ar: 'السياحة', en: 'Tourism' })}>
       <PageTransition>
         <PageHero
           image={heroTourism}
