@@ -7,25 +7,25 @@ export function generatePriceSnapshotData() {
   // Real estate in New Valley is significantly cheaper than Cairo
   const basePrices: Record<string, Record<string, number>> = {
     real_estate: {
-      kharga: 45_000_00, // 450,000 EGP avg apartment
-      dakhla: 38_000_00, // 380,000 EGP
-      farafra: 28_000_00, // 280,000 EGP
-      baris: 22_000_00, // 220,000 EGP
-      balat: 20_000_00, // 200,000 EGP
+      kharga: 450_000_00, // 450,000 EGP avg apartment
+      dakhla: 380_000_00, // 380,000 EGP
+      farafra: 280_000_00, // 280,000 EGP
+      baris: 220_000_00, // 220,000 EGP
+      balat: 200_000_00, // 200,000 EGP
     },
     land: {
-      kharga: 12_000_00, // 120,000 EGP/feddan avg
-      dakhla: 10_000_00,
-      farafra: 7_000_00,
-      baris: 5_000_00,
-      balat: 4_500_00,
+      kharga: 120_000_00, // 120,000 EGP/feddan avg
+      dakhla: 100_000_00,
+      farafra: 70_000_00,
+      baris: 50_000_00,
+      balat: 45_000_00,
     },
     business: {
-      kharga: 80_000_00, // 800,000 EGP avg commercial
-      dakhla: 60_000_00,
-      farafra: 35_000_00,
-      baris: 25_000_00,
-      balat: 22_000_00,
+      kharga: 800_000_00, // 800,000 EGP avg commercial
+      dakhla: 600_000_00,
+      farafra: 350_000_00,
+      baris: 250_000_00,
+      balat: 220_000_00,
     },
   };
 
