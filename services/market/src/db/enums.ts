@@ -89,3 +89,6 @@ export const verificationStatusEnum = marketSchema.enum('verification_status', [
   'rejected',
   'suspended',
 ]);
+
+// Price alerts
+export const alertDirectionEnum = marketSchema.enum('alert_direction', ['above', 'below']);
