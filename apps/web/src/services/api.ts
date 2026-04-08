@@ -1957,6 +1957,12 @@ interface ChatStreamTokenEvent {
   delta: string;
 }
 
+interface ChatStreamStatusEvent {
+  type: 'status';
+  phase: string;
+  message?: string;
+}
+
 interface ChatStreamCompleteEvent {
   type: 'complete';
   message: ChatMessageResponse;
@@ -1967,7 +1973,11 @@ interface ChatStreamErrorEvent {
   message: string;
 }
 
-type ChatStreamEvent = ChatStreamTokenEvent | ChatStreamCompleteEvent | ChatStreamErrorEvent;
+type ChatStreamEvent =
+  | ChatStreamStatusEvent
+  | ChatStreamTokenEvent
+  | ChatStreamCompleteEvent
+  | ChatStreamErrorEvent;
 
 export interface ChatSessionMessage {
   message_id: string;
@@ -2003,6 +2013,7 @@ export interface LegacyChatResponse {
 async function consumeChatStream(
   response: Response,
   handlers: {
+    onStatus?: (phase: string, message?: string) => void;
     onToken: (delta: string) => void;
     onComplete: (message: ChatMessageResponse) => void;
     onError?: (message: string) => void;
@@ -2017,6 +2028,11 @@ async function consumeChatStream(
   let buffer = '';
 
   const handleEvent = (event: ChatStreamEvent) => {
+    if (event.type === 'status') {
+      handlers.onStatus?.(event.phase, event.message);
+      return;
+    }
+
     if (event.type === 'token') {
       handlers.onToken(event.delta);
       return;
@@ -2083,6 +2099,7 @@ export const aiAPI = {
     sessionId: string,
     body: { content: string; language?: string },
     handlers: {
+      onStatus?: (phase: string, message?: string) => void;
       onToken: (delta: string) => void;
       onComplete: (message: ChatMessageResponse) => void;
       onError?: (message: string) => void;

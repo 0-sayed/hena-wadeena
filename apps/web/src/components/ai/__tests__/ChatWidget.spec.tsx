@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UserRole } from '@hena-wadeena/types';
 import { ChatWidget } from '@/components/ai/ChatWidget';
@@ -71,6 +71,10 @@ describe('ChatWidget', () => {
     vi.clearAllMocks();
     mockStreamMessage.mockReset();
     mockUseAuth.mockReturnValue(buildUnauthedContext());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows login CTA and does not call AI APIs when unauthenticated', () => {
@@ -321,6 +325,98 @@ describe('ChatWidget', () => {
 
     expect(screen.getByText('Fallback response')).toBeInTheDocument();
   });
+
+  it('keeps the streaming request alive while the backend sends progress updates', async () => {
+    vi.useFakeTimers();
+
+    mockUseAuth.mockReturnValue({
+      ...buildUnauthedContext(),
+      user: {
+        id: 'user-1',
+        email: 'user-1@example.com',
+        phone: '+2000000000',
+        full_name: 'User One',
+        role: UserRole.TOURIST,
+        status: 'active',
+        language: 'en',
+      },
+      isAuthenticated: true,
+    });
+
+    mockCreateSession.mockResolvedValue({
+      session_id: 'sess-1',
+      user_id: 'user-1',
+      created_at: new Date().toISOString(),
+      language_preference: 'auto',
+      message_count: 0,
+      is_active: true,
+      welcome_message: 'Welcome',
+    });
+
+    mockStreamMessage.mockImplementation(
+      (
+        _sessionId,
+        _body,
+        handlers: {
+          onStatus?: (phase: string, message?: string) => void;
+          onToken: (delta: string) => void;
+          onComplete: (message: unknown) => void;
+        },
+        options?: { signal?: AbortSignal },
+      ) =>
+        new Promise<void>((resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+
+          window.setTimeout(() => {
+            handlers.onStatus?.('accepted', 'Preparing your answer.');
+          }, 55_000);
+          window.setTimeout(() => {
+            handlers.onStatus?.('generating_answer', 'Generating a grounded answer.');
+          }, 95_000);
+          window.setTimeout(() => {
+            handlers.onToken('Assistant ');
+          }, 100_000);
+          window.setTimeout(() => {
+            handlers.onComplete({
+              message_id: 'msg-progress-1',
+              session_id: 'sess-1',
+              role: 'assistant',
+              content: 'Assistant response',
+              language: 'en',
+              created_at: new Date().toISOString(),
+              sources: [],
+              domain_relevant: true,
+              latency_ms: 4200,
+            });
+            resolve();
+          }, 105_000);
+        }),
+    );
+
+    renderWidget();
+    fireEvent.click(screen.getByLabelText('AI assistant'));
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    expect(mockCreateSession).toHaveBeenCalled();
+
+    const input = screen.getByPlaceholderText('Type your question...');
+    fireEvent.change(input, { target: { value: 'Tell me about New Valley' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(105_000);
+    });
+
+    expect(screen.getByText('Assistant response')).toBeInTheDocument();
+
+    expect(
+      screen.queryByText('The assistant is taking longer than expected. Please try again.'),
+    ).not.toBeInTheDocument();
+  }, 10_000);
 
   it('does not retry with the non-stream request after an application-level stream error', async () => {
     mockUseAuth.mockReturnValue({

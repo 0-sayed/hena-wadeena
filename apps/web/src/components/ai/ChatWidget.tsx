@@ -25,7 +25,7 @@ function mapSessionMessages(session: ChatSessionView): Message[] {
 }
 
 export function ChatWidget() {
-  const STREAM_TIMEOUT_MS = 25_000;
+  const STREAM_ACTIVITY_TIMEOUT_MS = 60_000;
   const navigate = useNavigate();
   const { user, isAuthenticated, direction } = useAuth();
 
@@ -169,8 +169,11 @@ export function ChatWidget() {
       }));
     };
 
+    let firstTokenLogged = false;
+
     try {
-      let activeSessionId = sessionId ?? (await bootstrapSession(false, { preserveMessages: true }));
+      let activeSessionId =
+        sessionId ?? (await bootstrapSession(false, { preserveMessages: true }));
       if (!activeSessionId) throw new Error('Unable to create chat session');
 
       const resolveSessionRequest = async <T,>(
@@ -201,22 +204,35 @@ export function ChatWidget() {
       };
 
       const submittedAt = performance.now();
-      let firstTokenLogged = false;
       let timedOut = false;
 
       const streamRequest = async (targetSessionId: string) => {
         const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => {
-          timedOut = true;
-          controller.abort();
-        }, STREAM_TIMEOUT_MS);
+        let timeoutId: number | undefined;
+
+        const resetStreamTimeout = () => {
+          if (timeoutId !== undefined) {
+            window.clearTimeout(timeoutId);
+          }
+
+          timeoutId = window.setTimeout(() => {
+            timedOut = true;
+            controller.abort();
+          }, STREAM_ACTIVITY_TIMEOUT_MS);
+        };
+
+        resetStreamTimeout();
 
         try {
           await aiAPI.streamMessage(
             targetSessionId,
             { content: userText, language: 'auto' },
             {
+              onStatus: () => {
+                resetStreamTimeout();
+              },
               onToken: (delta) => {
+                resetStreamTimeout();
                 if (!firstTokenLogged) {
                   firstTokenLogged = true;
                   window.dispatchEvent(
@@ -231,18 +247,25 @@ export function ChatWidget() {
                 }));
               },
               onComplete: (response) => {
+                if (timeoutId !== undefined) {
+                  window.clearTimeout(timeoutId);
+                }
                 finalizePendingAssistant(response);
               },
             },
             { signal: controller.signal },
           );
         } finally {
-          window.clearTimeout(timeoutId);
+          if (timeoutId !== undefined) {
+            window.clearTimeout(timeoutId);
+          }
         }
       };
 
       try {
-        const resolved = await resolveSessionRequest((targetSessionId) => streamRequest(targetSessionId));
+        const resolved = await resolveSessionRequest((targetSessionId) =>
+          streamRequest(targetSessionId),
+        );
         setSessionId(resolved.activeSessionId);
       } catch (error) {
         if (!firstTokenLogged && !timedOut && shouldRetryWithoutStreaming(error)) {
@@ -255,16 +278,17 @@ export function ChatWidget() {
           throw error;
         }
       }
-
     } catch (error) {
       const content =
         error instanceof DOMException && error.name === 'AbortError'
-          ? 'The assistant is taking longer than expected. Please try again.'
+          ? firstTokenLogged
+            ? 'The assistant stopped responding before the answer was complete. Please try again.'
+            : 'The assistant is taking longer than expected. Please try again.'
           : 'Unable to send your message right now. Please try again.';
 
       updatePendingAssistant((message) => ({
         ...message,
-        content,
+        content: message.content.trim().length > 0 ? `${message.content}\n\n${content}` : content,
         streaming: false,
       }));
     } finally {

@@ -110,6 +110,10 @@ def _serialize_stream_event(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, default=_json_default) + "\n"
 
 
+def _build_status_event(phase: str, message: str) -> str:
+    return _serialize_stream_event({"type": "status", "phase": phase, "message": message})
+
+
 async def process_user_message(
     *,
     session: Session,
@@ -126,7 +130,9 @@ async def process_user_message(
 
     started = time.perf_counter()
     settings = get_settings()
-    language = session_manager.detect_or_prefer_language(session.language or payload.language, payload.content)
+    language = session_manager.detect_or_prefer_language(
+        session.language or payload.language, payload.content
+    )
     user_message = await session_manager.save_message(
         session_id=session_id,
         role=MessageRole.USER,
@@ -276,6 +282,7 @@ async def stream_message(
 
     async def event_stream():
         try:
+            yield _build_status_event("accepted", "Preparing your answer.")
             started = time.perf_counter()
             language = session_manager.detect_or_prefer_language(
                 session.language or payload.language,
@@ -288,8 +295,11 @@ async def stream_message(
                 language=language,
             )
 
+            yield _build_status_event("processing_query", "Understanding your question.")
             processed = await query_processor.process_async(payload.content)
+            yield _build_status_event("retrieving_context", "Searching the knowledge base.")
             candidates = await hybrid_search.search(processed)
+            yield _build_status_event("reranking_context", "Prioritizing the best sources.")
             reranked = await reranker.rerank_async(processed.normalized_text, candidates)
             domain_relevant = is_domain_relevant(reranked, settings.RELEVANCE_THRESHOLD)
             retrieved_refs = _build_retrieved_refs(reranked)
@@ -336,6 +346,7 @@ async def stream_message(
 
             streamed_parts: list[str] = []
             llm_response = None
+            yield _build_status_event("generating_answer", "Generating a grounded answer.")
             async for event in llm_client.stream_async(messages):
                 if event.type == "token":
                     streamed_parts.append(event.delta)
@@ -344,7 +355,9 @@ async def stream_message(
                 llm_response = event.response
 
             final_response = llm_response or await llm_client.complete_async(messages)
-            content = post_process_response(final_response.content or "".join(streamed_parts), language)
+            content = post_process_response(
+                final_response.content or "".join(streamed_parts), language
+            )
             latency_ms = int((time.perf_counter() - started) * 1000)
             assistant_message = await session_manager.save_message(
                 session_id=session_id,
