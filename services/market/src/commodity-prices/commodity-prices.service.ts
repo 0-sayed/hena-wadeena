@@ -586,7 +586,7 @@ export class CommodityPricesService {
         .limit(1),
       this.db.execute<PriceHistoryRow>(sql`
       SELECT
-        date_trunc(${truncUnit}, recorded_at)::date::text AS date,
+        date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at)::date::text AS date,
         ROUND(AVG(price))::text AS avg_price,
         MIN(price)              AS min_price,
         MAX(price)              AS max_price,
@@ -597,8 +597,8 @@ export class CommodityPricesService {
         AND recorded_at >= NOW() - ${sql.raw(`INTERVAL '${interval}'`)}
         ${regionFilter}
         ${priceTypeFilter}
-      GROUP BY date_trunc(${truncUnit}, recorded_at)
-      ORDER BY date_trunc(${truncUnit}, recorded_at) ASC
+      GROUP BY date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at)
+      ORDER BY date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at) ASC
     `),
     ]);
 
