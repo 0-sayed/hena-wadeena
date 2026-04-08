@@ -16,6 +16,7 @@ export { investmentApplications } from './investment-applications';
 export { commodities } from './commodities';
 export { commodityPrices } from './commodity-prices';
 export { businessCommodities } from './business-commodities';
+export { priceAlertSubscriptions } from './price-alert-subscriptions';
 
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';
@@ -27,6 +28,7 @@ import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
 import { listingInquiries } from './listing-inquiries';
 import { listings } from './listings';
+import { priceAlertSubscriptions } from './price-alert-subscriptions';
 import { reviewHelpfulVotes } from './review-helpful-votes';
 import { reviews } from './reviews';
 
@@ -103,4 +105,11 @@ export const businessCommoditiesRelations = relations(businessCommodities, ({ on
 export const businessDirectoriesRelations = relations(businessDirectories, ({ many }) => ({
   businessCommodities: many(businessCommodities),
   inquiries: many(businessInquiries),
+}));
+
+export const priceAlertSubscriptionsRelations = relations(priceAlertSubscriptions, ({ one }) => ({
+  commodity: one(commodities, {
+    fields: [priceAlertSubscriptions.commodityId],
+    references: [commodities.id],
+  }),
 }));
