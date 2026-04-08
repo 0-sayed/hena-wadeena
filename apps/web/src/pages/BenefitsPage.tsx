@@ -68,7 +68,7 @@ export default function BenefitsPage() {
   const [step, setStep] = useState(0);
   const [showResults, setShowResults] = useState(false);
 
-  const { data: allBenefits, isLoading, isError } = useBenefits();
+  const { data: allBenefits, isLoading, isError, refetch } = useBenefits();
   const steps = getSteps(answers);
   const clampedStep = Math.min(step, steps.length - 1);
   const currentStep = steps[clampedStep];
@@ -96,6 +96,10 @@ export default function BenefitsPage() {
     setAnswers(DEFAULT_ANSWERS);
     setStep(0);
     setShowResults(false);
+  }
+
+  function handleRetry() {
+    void refetch();
   }
 
   return (
@@ -136,6 +140,7 @@ export default function BenefitsPage() {
             isError={isError}
             lang={lang}
             onRestart={handleRestart}
+            onRetry={handleRetry}
           />
         )}
       </div>
@@ -417,12 +422,14 @@ function ResultsView({
   isError,
   lang,
   onRestart,
+  onRetry,
 }: {
   matched: BenefitInfo[];
   isLoading: boolean;
   isError: boolean;
   lang: 'ar' | 'en';
   onRestart: () => void;
+  onRetry: () => void;
 }) {
   if (isLoading) {
     return (
@@ -453,7 +460,7 @@ function ResultsView({
           </p>
         </div>
         <div className="text-center">
-          <Button variant="outline" onClick={onRestart}>
+          <Button variant="outline" onClick={onRetry}>
             {pickLocalizedCopy(lang, { ar: 'إعادة المحاولة', en: 'Try again' })}
           </Button>
         </div>
