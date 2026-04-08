@@ -289,9 +289,7 @@ export class CommodityPricesService {
     }
 
     const uniqueCommodityIds = [...new Set(entries.map((e) => e.commodityId))];
-    for (const cid of uniqueCommodityIds) {
-      this.invalidatePriceCache(cid);
-    }
+    this.invalidatePriceCache(uniqueCommodityIds);
 
     // Best-effort enrichment: don't let post-write failures hide committed writes
     this.enrichAndPublishBatch(entries, uniqueCommodityIds);
@@ -588,7 +586,7 @@ export class CommodityPricesService {
         .limit(1),
       this.db.execute<PriceHistoryRow>(sql`
       SELECT
-        date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at)::date::text AS date,
+        date_trunc(${truncUnit}, recorded_at)::date::text AS date,
         ROUND(AVG(price))::text AS avg_price,
         MIN(price)              AS min_price,
         MAX(price)              AS max_price,
@@ -599,8 +597,8 @@ export class CommodityPricesService {
         AND recorded_at >= NOW() - ${sql.raw(`INTERVAL '${interval}'`)}
         ${regionFilter}
         ${priceTypeFilter}
-      GROUP BY date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at)
-      ORDER BY date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at) ASC
+      GROUP BY date_trunc(${truncUnit}, recorded_at)
+      ORDER BY date_trunc(${truncUnit}, recorded_at) ASC
     `),
     ]);
 
@@ -676,15 +674,17 @@ export class CommodityPricesService {
     });
   }
 
-  private invalidatePriceCache(commodityId?: string): void {
+  private invalidatePriceCache(commodityId?: string | string[]): void {
+    const ids =
+      commodityId === undefined ? [] : Array.isArray(commodityId) ? commodityId : [commodityId];
     const ops: Promise<unknown>[] = [
       scanAndDelete(this.redis, 'mkt:price-index:*'),
       this.redis.del('mkt:price-summary'),
     ];
-    // Also evict the commodity detail cache so latestPricesByRegion stays fresh
-    if (commodityId) {
-      ops.push(this.redis.del(`mkt:commodity:${commodityId}`));
-      ops.push(scanAndDelete(this.redis, `mkt:price-history:${commodityId}:*`));
+    // Also evict per-commodity caches so latestPricesByRegion stays fresh
+    for (const id of ids) {
+      ops.push(this.redis.del(`mkt:commodity:${id}`));
+      ops.push(scanAndDelete(this.redis, `mkt:price-history:${id}:*`));
     }
     Promise.all(ops).catch((err: unknown) => {
       this.logger.error('Cache invalidation failed', err);
@@ -692,11 +692,12 @@ export class CommodityPricesService {
   }
 
   private invalidateCommodityCache(id: string): void {
-    // Evict per-commodity detail AND public price caches (name/category/active shown there)
+    // Evict per-commodity detail, public price caches, and price-history (which embeds commodity metadata)
     Promise.all([
       this.redis.del(`mkt:commodity:${id}`),
       scanAndDelete(this.redis, 'mkt:price-index:*'),
       this.redis.del('mkt:price-summary'),
+      scanAndDelete(this.redis, `mkt:price-history:${id}:*`),
     ]).catch((err: unknown) => {
       this.logger.error('Cache invalidation failed', err);
     });
