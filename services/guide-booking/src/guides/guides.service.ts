@@ -203,6 +203,11 @@ export class GuidesService {
         profileImage: dto.profileImage,
         coverImage: dto.coverImage,
         areasOfOperation: dto.areasOfOperation ?? [],
+        etaaLicenseNumber: dto.etaaLicenseNumber,
+        insurancePolicyUrl: dto.insurancePolicyUrl,
+        insuranceValidUntil: dto.insuranceValidUntil,
+        vehiclePlate: dto.vehiclePlate,
+        vehicleType: dto.vehicleType,
       })
       .returning();
 
@@ -502,6 +507,21 @@ export class GuidesService {
     const [row] = await this.db
       .update(guides)
       .set({ active, updatedAt: new Date() })
+      .where(and(eq(guides.id, id), isNull(guides.deletedAt)))
+      .returning();
+
+    if (!row) throw new NotFoundException(`Guide not found: ${id}`);
+    return row;
+  }
+
+  async adminEtaaVerify(id: string, verified: boolean): Promise<Guide> {
+    const [row] = await this.db
+      .update(guides)
+      .set({
+        etaaVerified: verified,
+        etaaVerifiedAt: verified ? new Date() : null,
+        updatedAt: new Date(),
+      })
       .where(and(eq(guides.id, id), isNull(guides.deletedAt)))
       .returning();
 

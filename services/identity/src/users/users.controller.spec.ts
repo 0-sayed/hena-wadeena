@@ -1,7 +1,9 @@
 import type { JwtPayload } from '@hena-wadeena/nest-common';
-import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { RequestMethod } from '@nestjs/common';
+import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { WalletService } from '../wallet/wallet.service';
 
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -9,13 +11,14 @@ import { UsersService } from './users.service';
 describe('UsersController wallet routes', () => {
   let controller: UsersController;
   let mockUsersService: {
-    getBalance: ReturnType<typeof vi.fn>;
-    getWalletSnapshot: ReturnType<typeof vi.fn>;
-    topUp: ReturnType<typeof vi.fn>;
-    deduct: ReturnType<typeof vi.fn>;
     findById: ReturnType<typeof vi.fn>;
     updateProfile: ReturnType<typeof vi.fn>;
     findPublicProfiles: ReturnType<typeof vi.fn>;
+  };
+  let mockWalletService: {
+    getWalletSnapshot: ReturnType<typeof vi.fn>;
+    topUp: ReturnType<typeof vi.fn>;
+    deduct: ReturnType<typeof vi.fn>;
   };
 
   const currentUser: JwtPayload = {
@@ -28,19 +31,23 @@ describe('UsersController wallet routes', () => {
 
   beforeEach(() => {
     mockUsersService = {
-      getBalance: vi.fn().mockResolvedValue(5000),
-      getWalletSnapshot: vi.fn().mockResolvedValue({
-        balance: 5000,
-        recentTransactions: [],
-      }),
-      topUp: vi.fn().mockResolvedValue(7500),
-      deduct: vi.fn().mockResolvedValue(2500),
       findById: vi.fn(),
       updateProfile: vi.fn(),
       findPublicProfiles: vi.fn().mockResolvedValue([]),
     };
+    mockWalletService = {
+      getWalletSnapshot: vi.fn().mockResolvedValue({
+        balancePiasters: 5000,
+        recentTransactions: [],
+      }),
+      topUp: vi.fn().mockResolvedValue(7500),
+      deduct: vi.fn().mockResolvedValue(2500),
+    };
 
-    controller = new UsersController(mockUsersService as unknown as UsersService);
+    controller = new UsersController(
+      mockUsersService as unknown as UsersService,
+      mockWalletService as unknown as WalletService,
+    );
   });
 
   it('declares the wallet top-up route', () => {
@@ -53,7 +60,7 @@ describe('UsersController wallet routes', () => {
   it('returns the current user wallet snapshot', async () => {
     const result = await controller.getWallet(currentUser);
 
-    expect(mockUsersService.getWalletSnapshot).toHaveBeenCalledWith(currentUser.sub);
+    expect(mockWalletService.getWalletSnapshot).toHaveBeenCalledWith(currentUser.sub);
     expect(result).toEqual({
       success: true,
       data: {
@@ -67,9 +74,9 @@ describe('UsersController wallet routes', () => {
   });
 
   it('tops up the current user wallet', async () => {
-    const result = await controller.topUp(currentUser, { amount: 2500 });
+    const result = await controller.topUp(currentUser, { amount: 2500, idempotency_key: 'idem-1' });
 
-    expect(mockUsersService.topUp).toHaveBeenCalledWith(currentUser.sub, 2500);
+    expect(mockWalletService.topUp).toHaveBeenCalledWith(currentUser.sub, 2500, 'idem-1');
     expect(result).toEqual({ success: true, data: { balance: 7500 } });
   });
 });

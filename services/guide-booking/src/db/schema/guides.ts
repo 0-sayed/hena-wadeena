@@ -3,6 +3,7 @@ import { SQL, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
+  date,
   index,
   integer,
   real,
@@ -12,6 +13,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
+import { vehicleTypeEnum } from '../enums';
 import { guideBookingSchema } from '../schema';
 
 import { tsvector } from './types';
@@ -39,6 +41,13 @@ export const guides = guideBookingSchema.table(
       .default(sql`'{}'`),
     licenseNumber: text('license_number').notNull(),
     licenseVerified: boolean('license_verified').default(false).notNull(),
+    etaaLicenseNumber: text('etaa_license_number'),
+    etaaVerified: boolean('etaa_verified').default(false).notNull(),
+    etaaVerifiedAt: timestamp('etaa_verified_at', { withTimezone: true }),
+    insurancePolicyUrl: text('insurance_policy_url'),
+    insuranceValidUntil: date('insurance_valid_until'),
+    vehiclePlate: text('vehicle_plate'),
+    vehicleType: vehicleTypeEnum('vehicle_type'),
     basePrice: integer('base_price').notNull(),
     ratingAvg: real('rating_avg').default(0),
     ratingCount: integer('rating_count').default(0).notNull(),

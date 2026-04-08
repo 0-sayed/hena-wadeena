@@ -60,4 +60,25 @@ describe('queryKeys', () => {
   it('bookings.mine returns stable key', () => {
     expect(queryKeys.bookings.mine()).toEqual(['bookings', 'mine']);
   });
+
+  it('market.priceHistory includes id and params in key', () => {
+    const params = { period: '30d', region: 'kharga' };
+    expect(queryKeys.market.priceHistory('uuid-123', params)).toEqual([
+      'market',
+      'commodities',
+      'uuid-123',
+      'price-history',
+      { period: '30d', region: 'kharga' },
+    ]);
+  });
+
+  it('market.priceHistory with no params includes undefined', () => {
+    expect(queryKeys.market.priceHistory('uuid-123')).toEqual([
+      'market',
+      'commodities',
+      'uuid-123',
+      'price-history',
+      undefined,
+    ]);
+  });
 });

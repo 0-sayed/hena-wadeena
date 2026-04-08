@@ -11,6 +11,9 @@ import { CommodityPricesService } from './commodity-prices.service';
 
 const mockRedisStreams = createMockRedisStreams();
 const mockRedis = createMockRedis();
+const mockPriceAlertsService = {
+  evaluateForCommodity: vi.fn().mockResolvedValue(undefined),
+};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -77,6 +80,7 @@ describe('CommodityPricesService', () => {
     mockRedis.set.mockResolvedValue('OK');
     mockRedis.del.mockResolvedValue(1);
     mockRedis.scan.mockResolvedValue(['0', []]);
+    mockPriceAlertsService.evaluateForCommodity.mockResolvedValue(undefined);
 
     // Direct instantiation bypasses NestJS DI (Vitest uses ESBuild which doesn't
     // emit decorator metadata needed for type-based injection tokens).
@@ -84,6 +88,7 @@ describe('CommodityPricesService', () => {
       mockDb as never,
       mockRedis as never,
       mockRedisStreams as never,
+      mockPriceAlertsService as never,
     );
   });
 
@@ -302,6 +307,16 @@ describe('CommodityPricesService', () => {
 
       expect(result).toEqual(mockPrice);
       expect(mockDb.insert).toHaveBeenCalled();
+
+      // evaluateForCommodity is fire-and-forget; the promise resolves after test assertion
+      // so we just verify the call was made eventually:
+      await vi.waitFor(() => {
+        expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
+          'commodity-uuid-001',
+          1500,
+          expect.any(Date),
+        );
+      });
     });
 
     it('should set recordedBy to adminId', async () => {
@@ -421,6 +436,51 @@ describe('CommodityPricesService', () => {
       );
 
       expect(invalidateSpy).toHaveBeenCalled();
+    });
+
+    it('should call evaluateForCommodity once per unique commodity in the batch', async () => {
+      const entries = [
+        mockPrice,
+        { ...mockPrice, id: 'price-uuid-002', commodityId: 'commodity-uuid-002', price: 2000 },
+      ];
+      mockDb.returning.mockResolvedValueOnce(entries);
+      mockDb.where.mockResolvedValueOnce([
+        { id: 'commodity-uuid-001', nameAr: 'تمور' },
+        { id: 'commodity-uuid-002', nameAr: 'قمح' },
+      ]);
+
+      await service.batchCreatePrices(batchDto as never, 'admin-uuid-001');
+
+      await vi.waitFor(() => {
+        expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledTimes(2);
+      });
+      expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
+        'commodity-uuid-001',
+        expect.any(Number),
+        expect.any(Date),
+      );
+      expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
+        'commodity-uuid-002',
+        expect.any(Number),
+        expect.any(Date),
+      );
+    });
+
+    it('should deduplicate evaluateForCommodity calls for the same commodity', async () => {
+      const entries = [mockPrice, { ...mockPrice, id: 'price-uuid-002', region: 'dakhla' }];
+      mockDb.returning.mockResolvedValueOnce(entries);
+      mockDb.where.mockResolvedValueOnce([{ id: 'commodity-uuid-001', nameAr: 'تمور' }]);
+
+      await service.batchCreatePrices(batchDto as never, 'admin-uuid-001');
+
+      await vi.waitFor(() => {
+        expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledTimes(1);
+      });
+      expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
+        'commodity-uuid-001',
+        expect.any(Number),
+        expect.any(Date),
+      );
     });
   });
 
@@ -744,6 +804,59 @@ describe('CommodityPricesService', () => {
       // The SQL template contains the trunc unit as a string literal
       const sqlString = JSON.stringify(executeSqlArg);
       expect(sqlString).toContain('month');
+    });
+
+    it('should return cached result without hitting DB on cache hit', async () => {
+      const cachedResult = {
+        commodity: { id: 'commodity-uuid-001', nameAr: 'تمور', nameEn: 'Dates', unit: 'kg' },
+        data: [{ date: '2026-01-15', avgPrice: 1500, minPrice: 1400, maxPrice: 1600, sampleCount: 3 }],
+        period: '30d',
+        region: null,
+        priceType: null,
+      };
+      mockRedis.get.mockResolvedValueOnce(JSON.stringify(cachedResult));
+
+      const result = await service.getPriceHistory('commodity-uuid-001', historyQuery as never);
+
+      expect(result).toEqual(cachedResult);
+      expect(mockDb.limit).not.toHaveBeenCalled();
+      expect(mockDb.execute).not.toHaveBeenCalled();
+    });
+
+    it('should query DB and cache result on cache miss', async () => {
+      mockRedis.get.mockResolvedValueOnce(null);
+      mockDb.limit.mockResolvedValueOnce([
+        { id: 'commodity-uuid-001', nameAr: 'تمور', nameEn: 'Dates', unit: 'kg' },
+      ]);
+      mockDb.execute.mockResolvedValueOnce([
+        { date: '2026-01-15', avg_price: '1500', min_price: 1400, max_price: 1600, sample_count: '3' },
+      ]);
+
+      await service.getPriceHistory('commodity-uuid-001', historyQuery as never);
+      await Promise.resolve(); // flush async cache write
+
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        'mkt:price-history:commodity-uuid-001:30d:*:*',
+        expect.any(String),
+        'EX',
+        300,
+      );
+    });
+
+    it('should invalidate price-history cache when a new price is created', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockPrice]);
+      mockDb.limit.mockResolvedValueOnce([{ nameAr: 'تمور' }]);
+
+      await service.createPrice(createPriceDto as never, 'admin-uuid-001');
+      await Promise.resolve(); // flush async invalidation
+
+      expect(mockRedis.scan).toHaveBeenCalledWith(
+        expect.anything(),
+        'MATCH',
+        'mkt:price-history:commodity-uuid-001:*',
+        'COUNT',
+        100,
+      );
     });
   });
 });

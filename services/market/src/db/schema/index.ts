@@ -17,6 +17,8 @@ export { commodities } from './commodities';
 export { commodityPrices } from './commodity-prices';
 export { businessCommodities } from './business-commodities';
 export { benefitInfo } from './benefit-info';
+export { produceListingDetails } from './produce-listing-details';
+export { priceAlertSubscriptions } from './price-alert-subscriptions';
 
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';
@@ -28,14 +30,27 @@ import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
 import { listingInquiries } from './listing-inquiries';
 import { listings } from './listings';
+import { priceAlertSubscriptions } from './price-alert-subscriptions';
+import { produceListingDetails } from './produce-listing-details';
 import { reviewHelpfulVotes } from './review-helpful-votes';
 import { reviews } from './reviews';
 
 // --- Relations ---
 
-export const listingsRelations = relations(listings, ({ many }) => ({
+export const listingsRelations = relations(listings, ({ many, one }) => ({
   reviews: many(reviews),
   inquiries: many(listingInquiries),
+  produceDetails: one(produceListingDetails, {
+    fields: [listings.id],
+    references: [produceListingDetails.listingId],
+  }),
+}));
+
+export const produceListingDetailsRelations = relations(produceListingDetails, ({ one }) => ({
+  listing: one(listings, {
+    fields: [produceListingDetails.listingId],
+    references: [listings.id],
+  }),
 }));
 
 export const listingInquiriesRelations = relations(listingInquiries, ({ one }) => ({
@@ -81,6 +96,7 @@ export const applicationsRelations = relations(investmentApplications, ({ one })
 export const commoditiesRelations = relations(commodities, ({ many }) => ({
   prices: many(commodityPrices),
   businessCommodities: many(businessCommodities),
+  priceAlertSubscriptions: many(priceAlertSubscriptions),
 }));
 
 export const commodityPricesRelations = relations(commodityPrices, ({ one }) => ({
@@ -104,4 +120,11 @@ export const businessCommoditiesRelations = relations(businessCommodities, ({ on
 export const businessDirectoriesRelations = relations(businessDirectories, ({ many }) => ({
   businessCommodities: many(businessCommodities),
   inquiries: many(businessInquiries),
+}));
+
+export const priceAlertSubscriptionsRelations = relations(priceAlertSubscriptions, ({ one }) => ({
+  commodity: one(commodities, {
+    fields: [priceAlertSubscriptions.commodityId],
+    references: [commodities.id],
+  }),
 }));

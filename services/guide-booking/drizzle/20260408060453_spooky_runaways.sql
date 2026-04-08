@@ -1,0 +1,1 @@
+ALTER TABLE "guide_booking"."desert_trips" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;
