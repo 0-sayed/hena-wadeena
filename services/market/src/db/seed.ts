@@ -4,6 +4,7 @@ import postgres from 'postgres';
 import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils.js';
 
 import {
+  benefitInfo,
   businessCommodities,
   businessDirectories,
   commodities as commoditiesTable,
@@ -15,6 +16,7 @@ import {
   priceSnapshots,
   reviews,
 } from './schema/index.js';
+import { benefitInfoData } from './seed-data/benefits.js';
 import { showcaseBusinessCommodities } from './seed-data/business-commodities.js';
 import { showcaseBusinesses } from './seed-data/business-directories.js';
 import { commodities as commodityData, generatePriceSnapshots } from './seed-data/commodities.js';
@@ -298,10 +300,18 @@ async function main() {
     priceSnapshotCount = psData.length;
   }
 
+  // Benefits — always seeded (essential + showcase)
+  const benefitsResult = await db
+    .insert(benefitInfo)
+    .values(benefitInfoData)
+    .onConflictDoNothing()
+    .returning({ id: benefitInfo.id });
+
   logSummary('market', layer, {
     commodities: commodityResult.length,
     listings: listingResult.length,
     investments: investmentResult.length,
+    benefits: benefitsResult.length,
     ...(layer === 'showcase' && {
       businesses: businessCount,
       commodityPriceSnapshots: priceCount,
