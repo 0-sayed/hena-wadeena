@@ -64,12 +64,14 @@ import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
 
 const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
+const AdminListings = lazy(() => import('@/pages/admin/AdminListings'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminUserDetail = lazy(() => import('@/pages/admin/AdminUserDetail'));
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
 const AdminGuides = lazy(() => import('@/pages/admin/AdminGuides'));
 const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 const AdminCrops = lazy(() => import('@/pages/admin/AdminCrops'));
+const AdminAiDocuments = lazy(() => import('@/pages/admin/AdminAiDocuments'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -133,12 +135,14 @@ const App = () => (
               >
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<AdminOverview />} />
+                <Route path="listings" element={<AdminListings />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="users/:id" element={<AdminUserDetail />} />
                 <Route path="moderation" element={<AdminModeration />} />
                 <Route path="guides" element={<AdminGuides />} />
                 <Route path="map" element={<AdminMap />} />
                 <Route path="crops" element={<AdminCrops />} />
+                <Route path="ai" element={<AdminAiDocuments />} />
               </Route>
             </Route>
 

@@ -91,6 +91,7 @@ describe('NotificationsService', () => {
       mockDb.where.mockResolvedValueOnce(undefined);
       await service.markAllRead('user-uuid');
       expect(mockDb.update).toHaveBeenCalled();
+      expect(mockDb.update).toHaveBeenCalledTimes(1);
       expect(mockRedis.del).toHaveBeenCalledWith('notif:unread:user-uuid');
     });
   });

@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     OPENAI_EMBEDDING_DIMENSIONS: int = 1024
     OPENAI_MAX_TOKENS: int = 1024
     OPENAI_TEMPERATURE: float = 0.3
+    OPENAI_TIMEOUT_SECONDS: float = 20.0
 
     JWT_ACCESS_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
@@ -59,6 +60,7 @@ class Settings(BaseSettings):
     SESSION_MAX_MESSAGES: int = 10
     SESSION_TTL_HOURS: int = 168
     TOKEN_BUDGET_HISTORY: int = 2000
+    TOKEN_BUDGET_CONTEXT: int = 2200
 
     MAX_FILE_SIZE_MB: int = 50
     TEMP_DIR: Path = Field(default=Path("./tmp/nakheel"))

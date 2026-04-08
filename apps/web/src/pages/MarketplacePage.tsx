@@ -41,6 +41,7 @@ import { PageTransition } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroMarketplace from '@/assets/hero-marketplace.jpg';
+import { BusinessLogo } from '@/components/business/BusinessLogo';
 import { TrendBadge } from '@/components/market/TrendBadge';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
 import { useBusinesses } from '@/hooks/use-businesses';
@@ -570,17 +571,12 @@ const MarketplacePage = () => {
                           >
                             <CardContent className="p-7">
                               <div className="mb-5 flex items-start gap-4">
-                                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted/40">
-                                  {biz.logoUrl ? (
-                                    <img
-                                      src={biz.logoUrl}
-                                      alt={businessName}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <Building2 className="h-7 w-7 text-muted-foreground" />
-                                  )}
-                                </div>
+                                <BusinessLogo
+                                  src={biz.logoUrl}
+                                  alt={businessName}
+                                  fallbackIcon={Building2}
+                                  className="h-16 w-16 shrink-0"
+                                />
                                 <div className="min-w-0 flex-1">
                                   <div className="mb-1 flex items-center gap-2">
                                     <h3 className="truncate text-lg font-bold text-foreground">

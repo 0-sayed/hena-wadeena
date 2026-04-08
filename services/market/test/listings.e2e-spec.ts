@@ -179,6 +179,17 @@ describe('Listings (e2e)', () => {
         .expect(403);
     });
 
+    it('admin can create a listing → 201', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post('/api/v1/listings')
+        .set('Authorization', adminToken())
+        .send(BASE_PAYLOAD)
+        .expect(201);
+
+      expect(createRes.body.ownerId).toBe(ADMIN_ID);
+      expect(createRes.body.status).toBe('draft');
+    });
+
     it('wrong owner PATCH → 403', async () => {
       const createRes = await request(app.getHttpServer())
         .post('/api/v1/listings')

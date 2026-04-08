@@ -354,6 +354,7 @@ describe('Admin management localization', () => {
     expect(screen.getByText('Admin panel')).toBeInTheDocument();
     expect(screen.getByText('Overview')).toBeInTheDocument();
     expect(screen.getByText('Users')).toBeInTheDocument();
+    expect(screen.getByText('AI knowledge')).toBeInTheDocument();
     expect(screen.getByText('Back to home')).toBeInTheDocument();
     expect(screen.getAllByText('Profile')[0]).toBeInTheDocument();
     expect(screen.getAllByText('Logout')[0]).toBeInTheDocument();

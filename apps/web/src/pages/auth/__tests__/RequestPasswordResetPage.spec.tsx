@@ -55,4 +55,23 @@ describe('RequestPasswordResetPage', () => {
       expect(mockRequestPasswordReset).toHaveBeenCalledWith({ email: 'user@example.com' }),
     );
   });
+
+  it('shows request failures inline inside the form', async () => {
+    mockRequestPasswordReset.mockRejectedValue(new Error('Unable to send reset code'));
+
+    render(
+      <MemoryRouter>
+        <RequestPasswordResetPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'إرسال الرمز' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Unable to send reset code');
+    expect(alert).toHaveFocus();
+  });
 });

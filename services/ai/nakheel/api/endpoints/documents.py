@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, 
 from fastapi.responses import FileResponse
 from loguru import logger
 
-from nakheel.api.deps import AuthenticatedUser, get_current_user, get_indexer, get_mongo, get_qdrant
+from nakheel.api.deps import AuthenticatedUser, get_admin_user, get_indexer, get_mongo, get_qdrant
 from nakheel.core.ingestion.indexer import DocumentIndexer, QueuedPdf
 from nakheel.db.mongo import MongoDatabase
 from nakheel.db.qdrant import QdrantDatabase
@@ -62,7 +62,7 @@ async def inject_documents(
     description: Optional[str] = Form(default=None),
     tags: Optional[str] = Form(default=None),
     language: str = Form(default="auto"),
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Create an asynchronous PDF ingestion batch and return immediately."""
@@ -110,7 +110,7 @@ async def parse_document(
     request: Request,
     file: UploadFile = File(...),
     format: str = Form(default="markdown"),
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Parse a PDF into a temporary Markdown artifact and return a direct download link."""
@@ -128,7 +128,7 @@ async def parse_document(
 @router.get("/parsed/{parse_id}/download")
 async def download_parsed_markdown(
     parse_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Download a staged Markdown parse result before it expires."""
@@ -144,7 +144,7 @@ async def download_parsed_markdown(
 @router.post("/inject-text")
 async def inject_raw_text(
     payload: RawTextInjectRequest,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Index pasted text as a copied document source."""
@@ -161,7 +161,7 @@ async def inject_raw_text(
 @router.get("/batches/{batch_id}", response_model=DocumentBatchResponse)
 async def get_document_batch_status(
     batch_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Return the latest persisted ingestion state for a submitted PDF batch."""
@@ -172,7 +172,7 @@ async def get_document_batch_status(
 @router.delete("/{doc_id}")
 async def delete_document(
     doc_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     mongo: MongoDatabase = Depends(get_mongo),
     qdrant: QdrantDatabase = Depends(get_qdrant),
 ):
@@ -237,7 +237,7 @@ async def list_documents(
     status: str | None = None,
     language: str | None = None,
     tags: str | None = None,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     mongo: MongoDatabase = Depends(get_mongo),
 ):
     """List indexed documents with optional filtering and pagination."""
@@ -267,7 +267,7 @@ async def list_documents(
 @router.get("/{doc_id}/status")
 async def get_document_status(
     doc_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     mongo: MongoDatabase = Depends(get_mongo),
 ):
     """Return the latest persisted ingestion state for a document."""

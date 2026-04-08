@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormErrorAlert } from '@/components/ui/form-feedback';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
@@ -18,9 +19,11 @@ const LoginPage = () => {
   const auth = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     setIsLoading(true);
     try {
       const result = await auth.login({ email: formData.email, password: formData.password });
@@ -33,7 +36,7 @@ const LoginPage = () => {
       const from = (location.state as { from?: Location })?.from?.pathname || '/';
       void navigate(from);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'فشل تسجيل الدخول');
+      setFormError(err instanceof Error ? err.message : 'فشل تسجيل الدخول');
     } finally {
       setIsLoading(false);
     }
@@ -42,31 +45,36 @@ const LoginPage = () => {
   return (
     <Layout title="تسجيل الدخول">
       <PageTransition>
-        <section className="relative py-14 md:py-24 overflow-hidden">
+        <section className="relative overflow-hidden py-14 md:py-24">
           <GradientMesh />
-          <div className="container relative px-4 max-w-md">
+          <div className="container relative max-w-md px-4">
             <SR>
-              <Card className="border-border/50 rounded-2xl shadow-xl overflow-hidden">
-                <CardHeader className="text-center pb-2 pt-10">
-                  <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-5 shadow-lg">
+              <Card className="overflow-hidden rounded-2xl border-border/50 shadow-xl">
+                <CardHeader className="pb-2 pt-10 text-center">
+                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-lg">
                     <LogIn className="h-10 w-10 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
-                  <p className="text-muted-foreground mt-2">أدخل بياناتك للوصول إلى حسابك</p>
+                  <p className="mt-2 text-muted-foreground">أدخل بياناتك للوصول إلى حسابك</p>
                 </CardHeader>
-                <CardContent className="pt-8 pb-10 px-8">
+                <CardContent className="px-8 pb-10 pt-8">
                   <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
                     <div className="space-y-2">
                       <Label htmlFor="email">البريد الإلكتروني</Label>
                       <div className="relative">
-                        <Mail className="absolute end-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Mail className="absolute end-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
                           placeholder="example@email.com"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="pe-12 h-13 rounded-xl text-base"
+                          onChange={(e) => {
+                            setFormData({ ...formData, email: e.target.value });
+                            if (formError) {
+                              setFormError(null);
+                            }
+                          }}
+                          className="h-13 rounded-xl pe-12 text-base"
                           required
                         />
                       </div>
@@ -74,14 +82,19 @@ const LoginPage = () => {
                     <div className="space-y-2">
                       <Label htmlFor="password">كلمة المرور</Label>
                       <div className="relative">
-                        <Lock className="absolute end-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Lock className="absolute end-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           id="password"
                           type="password"
                           placeholder="••••••••"
                           value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          className="pe-12 h-13 rounded-xl text-base"
+                          onChange={(e) => {
+                            setFormData({ ...formData, password: e.target.value });
+                            if (formError) {
+                              setFormError(null);
+                            }
+                          }}
+                          className="h-13 rounded-xl pe-12 text-base"
                           required
                         />
                       </div>
@@ -94,17 +107,18 @@ const LoginPage = () => {
                         </Link>
                       </div>
                     </div>
+                    {formError ? <FormErrorAlert message={formError} /> : null}
                     <Button
                       type="submit"
-                      className="w-full h-14 rounded-xl text-base hover:scale-[1.02] transition-transform"
+                      className="h-14 w-full rounded-xl text-base transition-transform hover:scale-[1.02]"
                       size="lg"
                       disabled={isLoading}
                     >
                       {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
                     </Button>
-                    <p className="text-center text-sm text-muted-foreground pt-2">
+                    <p className="pt-2 text-center text-sm text-muted-foreground">
                       ليس لديك حساب؟{' '}
-                      <Link to="/register" className="text-primary hover:underline font-semibold">
+                      <Link to="/register" className="font-semibold text-primary hover:underline">
                         سجل الآن
                       </Link>
                     </p>

@@ -87,7 +87,7 @@ export class ListingsController {
   // --- Protected: create ---
 
   @Post()
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT)
+  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   create(@Body() dto: CreateListingDto, @CurrentUser() user: JwtPayload) {
     return this.listingsService.create(dto, user.sub);
   }
