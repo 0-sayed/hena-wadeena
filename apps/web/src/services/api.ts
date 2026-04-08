@@ -25,7 +25,7 @@ import type {
   BestTimeOfDay,
   Difficulty,
 } from '@/lib/format';
-import { apiFetchWithRefresh } from './auth-manager';
+import { apiFetchRawWithRefresh, apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -75,26 +75,18 @@ function buildRequestHeaders(options?: RequestInit): Headers {
 
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
-export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+export async function apiFetchRaw(endpoint: string, options?: RequestInit): Promise<Response> {
+  return fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: buildRequestHeaders(options),
   });
+}
+
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await apiFetchRaw(endpoint, options);
 
   if (!res.ok) {
     throw await buildApiError(res);
-  }
-
-  if (!res.ok) {
-    const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
-      string,
-      unknown
-    >;
-    const message =
-      res.status === 429
-        ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
-        : ((error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`);
-    throw new ApiError(res.status, message, error);
   }
 
   const text = await res.text();
@@ -1933,6 +1925,23 @@ export interface ChatMessageResponse {
   latency_ms: number | null;
 }
 
+interface ChatStreamTokenEvent {
+  type: 'token';
+  delta: string;
+}
+
+interface ChatStreamCompleteEvent {
+  type: 'complete';
+  message: ChatMessageResponse;
+}
+
+interface ChatStreamErrorEvent {
+  type: 'error';
+  message: string;
+}
+
+type ChatStreamEvent = ChatStreamTokenEvent | ChatStreamCompleteEvent | ChatStreamErrorEvent;
+
 export interface ChatSessionMessage {
   message_id: string;
   role: 'user' | 'assistant' | 'system';
@@ -1964,6 +1973,64 @@ export interface LegacyChatResponse {
   sources: ChatSource[];
 }
 
+async function consumeChatStream(
+  response: Response,
+  handlers: {
+    onToken: (delta: string) => void;
+    onComplete: (message: ChatMessageResponse) => void;
+    onError?: (message: string) => void;
+  },
+): Promise<void> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Streaming is not supported in this browser.');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const handleEvent = (event: ChatStreamEvent) => {
+    if (event.type === 'token') {
+      handlers.onToken(event.delta);
+      return;
+    }
+
+    if (event.type === 'complete') {
+      handlers.onComplete(event.message);
+      return;
+    }
+
+    handlers.onError?.(event.message);
+    throw new Error(event.message);
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    let newlineIndex = buffer.indexOf('\n');
+    while (newlineIndex >= 0) {
+      const line = buffer.slice(0, newlineIndex).trim();
+      buffer = buffer.slice(newlineIndex + 1);
+
+      if (line) {
+        handleEvent(JSON.parse(line) as ChatStreamEvent);
+      }
+
+      newlineIndex = buffer.indexOf('\n');
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  const trailing = buffer.trim();
+  if (trailing) {
+    handleEvent(JSON.parse(trailing) as ChatStreamEvent);
+  }
+}
+
 export const aiAPI = {
   createSession: (
     body?: { language_preference?: string; metadata?: Record<string, unknown> },
@@ -1984,6 +2051,30 @@ export const aiAPI = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  streamMessage: async (
+    sessionId: string,
+    body: { content: string; language?: string },
+    handlers: {
+      onToken: (delta: string) => void;
+      onComplete: (message: ChatMessageResponse) => void;
+      onError?: (message: string) => void;
+    },
+    options?: { signal?: AbortSignal },
+  ) => {
+    const response = await apiFetchRawWithRefresh(`/chat/sessions/${sessionId}/messages/stream`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { Accept: 'application/x-ndjson' },
+      signal: options?.signal,
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response);
+    }
+
+    await consumeChatStream(response, handlers);
+  },
 
   closeSession: (sessionId: string) =>
     apiFetchWithRefresh<{

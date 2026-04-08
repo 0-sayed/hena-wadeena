@@ -10,6 +10,7 @@ const mockUseAuth = vi.hoisted(() => vi.fn<() => AuthContextValue>());
 const mockCreateSession = vi.hoisted(() => vi.fn());
 const mockGetSession = vi.hoisted(() => vi.fn());
 const mockSendMessage = vi.hoisted(() => vi.fn());
+const mockStreamMessage = vi.hoisted(() => vi.fn());
 const mockCloseSession = vi.hoisted(() => vi.fn());
 const mockLegacyChat = vi.hoisted(() => vi.fn());
 
@@ -34,6 +35,7 @@ vi.mock('@/services/api', () => {
       createSession: mockCreateSession,
       getSession: mockGetSession,
       sendMessage: mockSendMessage,
+      streamMessage: mockStreamMessage,
       closeSession: mockCloseSession,
       chat: mockLegacyChat,
     },
@@ -67,6 +69,7 @@ describe('ChatWidget', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    mockStreamMessage.mockReset();
     mockUseAuth.mockReturnValue(buildUnauthedContext());
   });
 
@@ -193,7 +196,7 @@ describe('ChatWidget', () => {
     expect(mockCreateSession).not.toHaveBeenCalled();
     expect(screen.getByText('Most recent page content')).toBeInTheDocument();
   });
-  it('sends messages through session endpoint and appends assistant reply', async () => {
+  it('streams messages progressively and appends assistant reply', async () => {
     mockUseAuth.mockReturnValue({
       ...buildUnauthedContext(),
       user: {
@@ -218,16 +221,84 @@ describe('ChatWidget', () => {
       welcome_message: 'Welcome',
     });
 
+    mockStreamMessage.mockImplementation(
+      (
+        _sessionId,
+        _body,
+        handlers: { onToken: (delta: string) => void; onComplete: (message: unknown) => void },
+      ) => {
+        handlers.onToken('Assistant ');
+        handlers.onToken('response');
+        handlers.onComplete({
+          message_id: 'msg-1',
+          session_id: 'sess-1',
+          role: 'assistant',
+          content: 'Assistant response',
+          language: 'en',
+          created_at: new Date().toISOString(),
+          sources: [],
+          domain_relevant: true,
+          latency_ms: 42,
+        });
+        return Promise.resolve();
+      },
+    );
+
+    renderWidget();
+    fireEvent.click(screen.getByLabelText('AI assistant'));
+
+    await waitFor(() => {
+      expect(mockCreateSession).toHaveBeenCalled();
+    });
+
+    const input = screen.getByPlaceholderText('Type your question...');
+    fireEvent.change(input, { target: { value: 'Tell me about New Valley' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(mockStreamMessage).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getByText('Assistant response')).toBeInTheDocument();
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the non-stream request when streaming fails before the first token', async () => {
+    mockUseAuth.mockReturnValue({
+      ...buildUnauthedContext(),
+      user: {
+        id: 'user-1',
+        email: 'user-1@example.com',
+        phone: '+2000000000',
+        full_name: 'User One',
+        role: UserRole.TOURIST,
+        status: 'active',
+        language: 'en',
+      },
+      isAuthenticated: true,
+    });
+
+    mockCreateSession.mockResolvedValue({
+      session_id: 'sess-1',
+      user_id: 'user-1',
+      created_at: new Date().toISOString(),
+      language_preference: 'auto',
+      message_count: 0,
+      is_active: true,
+      welcome_message: 'Welcome',
+    });
+
+    mockStreamMessage.mockRejectedValue(new Error('stream failed'));
     mockSendMessage.mockResolvedValue({
-      message_id: 'msg-1',
+      message_id: 'msg-fallback-1',
       session_id: 'sess-1',
       role: 'assistant',
-      content: 'Assistant response',
+      content: 'Fallback response',
       language: 'en',
       created_at: new Date().toISOString(),
       sources: [],
       domain_relevant: true,
-      latency_ms: 42,
+      latency_ms: 55,
     });
 
     renderWidget();
@@ -248,6 +319,6 @@ describe('ChatWidget', () => {
       });
     });
 
-    expect(screen.getByText('Assistant response')).toBeInTheDocument();
+    expect(screen.getByText('Fallback response')).toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import mkdtemp
@@ -148,6 +149,12 @@ class FakeLLM:
 
     async def complete_async(self, messages):
         return self.complete(messages)
+
+    async def stream_async(self, messages):
+        response = self.complete(messages)
+        yield SimpleNamespace(type="token", delta="Grounded ")
+        yield SimpleNamespace(type="token", delta="answer")
+        yield SimpleNamespace(type="done", response=response)
 
 
 class FakeIndexer:
@@ -422,6 +429,24 @@ def test_send_message_endpoint():
     body = response.json()
     assert body["domain_relevant"] is True
     assert body["sources"][0]["chunk_id"] == "chk-1"
+
+
+def test_send_message_stream_endpoint():
+    client = build_test_client()
+    response = client.post(
+        "/api/v1/chat/sessions/sess-1/messages/stream",
+        json={"content": "Tell me about New Valley"},
+        headers=_auth_headers(),
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+
+    events = [json.loads(line) for line in response.text.strip().splitlines()]
+    assert events[0] == {"type": "token", "delta": "Grounded "}
+    assert events[1] == {"type": "token", "delta": "answer"}
+    assert events[-1]["type"] == "complete"
+    assert events[-1]["message"]["content"] == "Grounded answer"
+    assert events[-1]["message"]["domain_relevant"] is True
 
 
 def test_session_owner_enforcement_blocks_other_users():

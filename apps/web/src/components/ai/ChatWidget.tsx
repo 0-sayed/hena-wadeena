@@ -11,6 +11,7 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  streaming?: boolean;
 }
 
 function mapSessionMessages(session: ChatSessionView): Message[] {
@@ -24,6 +25,7 @@ function mapSessionMessages(session: ChatSessionView): Message[] {
 }
 
 export function ChatWidget() {
+  const STREAM_TIMEOUT_MS = 25_000;
   const navigate = useNavigate();
   const { user, isAuthenticated, direction } = useAuth();
 
@@ -131,54 +133,128 @@ export function ChatWidget() {
     if (!input.trim() || loading || !isAuthenticated) return;
 
     const userText = input.trim();
+    const pendingAssistantId = crypto.randomUUID();
     setInput('');
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content: userText }]);
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role: 'user', content: userText },
+      { id: pendingAssistantId, role: 'assistant', content: '', streaming: true },
+    ]);
     setLoading(true);
 
+    const updatePendingAssistant = (updater: (message: Message) => Message) => {
+      setMessages((prev) =>
+        prev.map((message) => (message.id === pendingAssistantId ? updater(message) : message)),
+      );
+    };
+
+    const finalizePendingAssistant = (response: { message_id: string; content: string }) => {
+      updatePendingAssistant((message) => ({
+        ...message,
+        id: response.message_id,
+        content: response.content,
+        streaming: false,
+      }));
+    };
+
     try {
-      let activeSessionId = sessionId;
-      if (!activeSessionId) {
-        activeSessionId = await bootstrapSession(false, { preserveMessages: true });
-      }
-      if (!activeSessionId) {
-        throw new Error('Unable to create chat session');
-      }
+      let activeSessionId = sessionId ?? (await bootstrapSession(false, { preserveMessages: true }));
+      if (!activeSessionId) throw new Error('Unable to create chat session');
 
-      const sendToSession = async (targetSessionId: string) =>
-        aiAPI.sendMessage(targetSessionId, { content: userText, language: 'auto' });
+      const resolveSessionRequest = async <T,>(
+        operation: (targetSessionId: string) => Promise<T>,
+      ): Promise<{ activeSessionId: string; result: T }> => {
+        const targetSessionId = activeSessionId;
+        if (!targetSessionId) {
+          throw new Error('Unable to create chat session');
+        }
 
-      let response;
+        try {
+          return {
+            activeSessionId: targetSessionId,
+            result: await operation(targetSessionId),
+          };
+        } catch (error) {
+          if (error instanceof ApiError && [403, 404, 410].includes(error.status)) {
+            const refreshedSessionId = await bootstrapSession(true, { preserveMessages: true });
+            if (!refreshedSessionId) throw error;
+            activeSessionId = refreshedSessionId;
+            return {
+              activeSessionId: refreshedSessionId,
+              result: await operation(refreshedSessionId),
+            };
+          }
+          throw error;
+        }
+      };
+
+      const submittedAt = performance.now();
+      let firstTokenLogged = false;
+      let timedOut = false;
+
+      const streamRequest = async (targetSessionId: string) => {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, STREAM_TIMEOUT_MS);
+
+        try {
+          await aiAPI.streamMessage(
+            targetSessionId,
+            { content: userText, language: 'auto' },
+            {
+              onToken: (delta) => {
+                if (!firstTokenLogged) {
+                  firstTokenLogged = true;
+                  window.dispatchEvent(
+                    new CustomEvent('ai-chat-ttft', {
+                      detail: { ttftMs: Math.round(performance.now() - submittedAt) },
+                    }),
+                  );
+                }
+                updatePendingAssistant((message) => ({
+                  ...message,
+                  content: `${message.content}${delta}`,
+                }));
+              },
+              onComplete: (response) => {
+                finalizePendingAssistant(response);
+              },
+            },
+            { signal: controller.signal },
+          );
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      };
+
       try {
-        response = await sendToSession(activeSessionId);
+        const resolved = await resolveSessionRequest((targetSessionId) => streamRequest(targetSessionId));
+        setSessionId(resolved.activeSessionId);
       } catch (error) {
-        if (error instanceof ApiError && [403, 404, 410].includes(error.status)) {
-          const refreshedSessionId = await bootstrapSession(true, { preserveMessages: true });
-          if (!refreshedSessionId) throw error;
-          response = await sendToSession(refreshedSessionId);
-          activeSessionId = refreshedSessionId;
+        if (!firstTokenLogged && !timedOut) {
+          const resolved = await resolveSessionRequest((targetSessionId) =>
+            aiAPI.sendMessage(targetSessionId, { content: userText, language: 'auto' }),
+          );
+          setSessionId(resolved.activeSessionId);
+          finalizePendingAssistant(resolved.result);
         } else {
           throw error;
         }
       }
 
-      setSessionId(activeSessionId);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: response.message_id,
-          role: 'assistant',
-          content: response.content,
-        },
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: 'Unable to send your message right now. Please try again.',
-        },
-      ]);
+    } catch (error) {
+      const content =
+        error instanceof DOMException && error.name === 'AbortError'
+          ? 'The assistant is taking longer than expected. Please try again.'
+          : 'Unable to send your message right now. Please try again.';
+
+      updatePendingAssistant((message) => ({
+        ...message,
+        content,
+        streaming: false,
+      }));
     } finally {
       setLoading(false);
     }
@@ -266,34 +342,30 @@ export function ChatWidget() {
                           : 'rounded-ss-none bg-muted'
                       }`}
                     >
-                      {msg.content}
+                      {msg.streaming && msg.content.length === 0 ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <div className="flex gap-1">
+                            <span
+                              className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
+                              style={{ animationDelay: '0ms' }}
+                            />
+                            <span
+                              className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
+                              style={{ animationDelay: '150ms' }}
+                            />
+                            <span
+                              className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
+                              style={{ animationDelay: '300ms' }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium">Nakheel is typing...</span>
+                        </div>
+                      ) : (
+                        msg.content
+                      )}
                     </div>
                   </div>
                 ))}
-
-                {loading ? (
-                  <div className="flex gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/30">
-                      <Bot className="h-4 w-4 text-accent-foreground" />
-                    </div>
-                    <div className="rounded-2xl rounded-ss-none bg-muted px-4 py-3">
-                      <div className="flex gap-1">
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
-                          style={{ animationDelay: '0ms' }}
-                        />
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
-                          style={{ animationDelay: '150ms' }}
-                        />
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
-                          style={{ animationDelay: '300ms' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
                 <div ref={endRef} />
               </div>
 
