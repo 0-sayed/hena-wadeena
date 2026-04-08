@@ -8,9 +8,8 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
 import {
   ListingEditorDialog,
-  emptyListingForm,
-  type ListingFormState,
 } from '@/components/market/ListingEditorDialog';
+import { emptyListingForm, type ListingFormState } from '@/components/market/listing-editor-form';
 import { useListingInquiriesReceived } from '@/hooks/use-listing-inquiries';
 import { useMyBusinesses } from '@/hooks/use-my-businesses';
 import { useMyListings } from '@/hooks/use-my-listings';

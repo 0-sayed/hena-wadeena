@@ -6,9 +6,8 @@ import { toast } from 'sonner';
 
 import {
   ListingEditorDialog,
-  emptyListingForm,
-  type ListingFormState,
 } from '@/components/market/ListingEditorDialog';
+import { emptyListingForm, type ListingFormState } from '@/components/market/listing-editor-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAdminListings } from '@/hooks/use-admin';

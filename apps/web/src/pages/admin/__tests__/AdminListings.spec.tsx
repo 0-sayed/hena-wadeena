@@ -23,6 +23,10 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@/components/market/ListingEditorDialog', () => ({
+  ListingEditorDialog: ({ open }: { open: boolean }) => (open ? <div>listing-dialog</div> : null),
+}));
+
+vi.mock('@/components/market/listing-editor-form', () => ({
   emptyListingForm: {
     titleAr: '',
     description: '',
@@ -31,7 +35,6 @@ vi.mock('@/components/market/ListingEditorDialog', () => ({
     category: 'shopping',
     address: '',
   },
-  ListingEditorDialog: ({ open }: { open: boolean }) => (open ? <div>listing-dialog</div> : null),
 }));
 
 vi.mock('@/components/ui/button', () => ({

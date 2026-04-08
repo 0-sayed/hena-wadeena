@@ -29,7 +29,7 @@ vi.mock('@tanstack/react-query', () => ({
     onSuccess,
     onError,
   }: {
-    mutationFn: (...args: unknown[]) => Promise<unknown> | unknown;
+    mutationFn: (...args: unknown[]) => unknown;
     onSuccess?: (...args: unknown[]) => void;
     onError?: (...args: unknown[]) => void;
   }) => ({

@@ -62,17 +62,26 @@ const RegisterPage = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
-  const focusField = (field: string) => {
-    window.requestAnimationFrame(() => {
-      if (field === 'role') {
-        const currentRoleButton = formData.role
-          ? document.querySelector<HTMLButtonElement>(`[data-role-option="${formData.role}"]`)
-          : document.querySelector<HTMLButtonElement>('[data-role-option]');
-        currentRoleButton?.focus();
-        return;
-      }
+  const getFocusableField = (field: string) => {
+    if (field === 'role') {
+      return formData.role
+        ? document.querySelector<HTMLButtonElement>(`[data-role-option="${formData.role}"]`)
+        : document.querySelector<HTMLButtonElement>('[data-role-option]');
+    }
 
-      document.getElementById(field)?.focus();
+    return document.getElementById(field);
+  };
+
+  const focusField = (field: string) => {
+    const target = getFocusableField(field);
+    target?.focus();
+
+    if (document.activeElement === target) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      getFocusableField(field)?.focus();
     });
   };
 

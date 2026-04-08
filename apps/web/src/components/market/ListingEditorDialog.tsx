@@ -20,6 +20,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { DISTRICTS, districtLabel } from '@/lib/format';
 import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import { type ListingFormState } from './listing-editor-form';
 
 const listingCategories = [
   { value: 'shopping', ar: 'تسوق', en: 'Shopping' },
@@ -27,25 +28,6 @@ const listingCategories = [
   { value: 'healthcare', ar: 'رعاية صحية', en: 'Healthcare' },
   { value: 'education', ar: 'تعليم', en: 'Education' },
 ] as const;
-
-export type ListingFormState = {
-  id?: string;
-  titleAr: string;
-  description: string;
-  priceEgp: string;
-  district: string;
-  category: string;
-  address: string;
-};
-
-export const emptyListingForm: ListingFormState = {
-  titleAr: '',
-  description: '',
-  priceEgp: '',
-  district: DISTRICTS[0]?.id ?? 'kharga',
-  category: 'shopping',
-  address: '',
-};
 
 type ListingEditorDialogProps = {
   appLanguage: AppLanguage;
