@@ -27,3 +27,11 @@ export const passengerStatusEnum = mapSchema.enum('passenger_status', [
   'declined',
   'cancelled',
 ]);
+
+export const siteStatusEnum = mapSchema.enum('site_status', [
+  'open',
+  'closed',
+  'closed_temporarily',
+  'limited_access',
+  'under_restoration',
+]);
