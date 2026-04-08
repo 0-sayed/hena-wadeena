@@ -120,7 +120,7 @@
 - [ ] **T40** Guide Safety + Desert Trip (schema + ETAA + API + overdue cron) · M · ← T27
 - [ ] **T41** Price History Endpoint (no schema, uses existing snapshots) · S · ← T26
 - [ ] **T48** Government Benefits Navigator (benefit_info records + eligibility wizard) · S · ← T29
-- [ ] **T49** Groundwater & Well Cost Monitor (schema + API + solar estimator) · S · ← T26
+- [x] **T49** Groundwater & Well Cost Monitor (schema + API + solar estimator) · S · ← T26
 - [ ] **F15** Employment Board UI · M · ← T36
 - [ ] **F16** Price Alerts + Produce Listings UI · S · ← T37, T38
 - [ ] **F17** Site Status Board UI · S · ← T39
