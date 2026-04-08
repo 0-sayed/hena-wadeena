@@ -1,6 +1,6 @@
 {
-  "id": "8355b197-ff59-485b-8d3d-b10c3d77ba73",
-  "prevId": "93af6d1f-99df-412d-84c8-8bf336f4e0f3",
+  "id": "c8ba5c7f-d71a-4a07-a6f4-3bd12d274077",
+  "prevId": "48f70097-3b37-4f5b-bfbd-4e93c7785ada",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -186,8 +186,8 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"attractions\".\"name_ar\", ''))), 'A') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"attractions\".\"name_en\", '')), 'A') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"attractions\".\"description_ar\", ''))), 'B') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"attractions\".\"description_en\", '')), 'B') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"attractions\".\"history_ar\", ''))), 'B')",
-            "type": "stored"
+            "type": "stored",
+            "as": "setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"attractions\".\"name_ar\", ''))), 'A') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"attractions\".\"name_en\", '')), 'A') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"attractions\".\"description_ar\", ''))), 'B') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"attractions\".\"description_en\", '')), 'B') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"attractions\".\"history_ar\", ''))), 'B')"
           }
         }
       },
@@ -203,9 +203,9 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_location": {
           "name": "idx_attractions_location",
@@ -218,9 +218,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gist",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_type": {
           "name": "idx_attractions_type",
@@ -233,9 +233,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_area": {
           "name": "idx_attractions_area",
@@ -248,9 +248,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_is_active": {
           "name": "idx_attractions_is_active",
@@ -263,9 +263,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_is_featured": {
           "name": "idx_attractions_is_featured",
@@ -278,9 +278,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_created_at": {
           "name": "idx_attractions_created_at",
@@ -293,9 +293,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_attractions_search": {
           "name": "idx_attractions_search",
@@ -308,9 +308,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gin",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -438,9 +438,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_bookings_guide_id": {
           "name": "idx_bookings_guide_id",
@@ -453,9 +453,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_bookings_tourist_id": {
           "name": "idx_bookings_tourist_id",
@@ -468,9 +468,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_bookings_status": {
           "name": "idx_bookings_status",
@@ -483,9 +483,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_bookings_booking_date": {
           "name": "idx_bookings_booking_date",
@@ -498,9 +498,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_bookings_created_at": {
           "name": "idx_bookings_created_at",
@@ -513,9 +513,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "uq_bookings_active_slot": {
           "name": "uq_bookings_active_slot",
@@ -540,40 +540,40 @@
             }
           ],
           "isUnique": true,
-          "where": "\"guide_booking\".\"bookings\".\"status\" IN ('pending', 'confirmed', 'in_progress')",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"guide_booking\".\"bookings\".\"status\" IN ('pending', 'confirmed', 'in_progress')",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "bookings_package_id_tour_packages_id_fk": {
           "name": "bookings_package_id_tour_packages_id_fk",
           "tableFrom": "bookings",
-          "tableTo": "tour_packages",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "package_id"
           ],
+          "tableTo": "tour_packages",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "bookings_guide_id_guides_id_fk": {
           "name": "bookings_guide_id_guides_id_fk",
           "tableFrom": "bookings",
-          "tableTo": "guides",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "guide_id"
           ],
+          "tableTo": "guides",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -645,14 +645,15 @@
         },
         "gps_breadcrumbs": {
           "name": "gps_breadcrumbs",
-          "type": "json",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
-          "default": "'[]'::json"
+          "default": "'[]'::jsonb"
         },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "desert_trip_status",
+          "typeSchema": "guide_booking",
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
@@ -677,9 +678,9 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_desert_trips_status_arrival": {
           "name": "idx_desert_trips_status_arrival",
@@ -698,25 +699,25 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "desert_trips_booking_id_bookings_id_fk": {
           "name": "desert_trips_booking_id_bookings_id_fk",
           "tableFrom": "desert_trips",
-          "tableTo": "bookings",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "booking_id"
           ],
+          "tableTo": "bookings",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -779,9 +780,9 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guide_availability_guide_id": {
           "name": "idx_guide_availability_guide_id",
@@ -794,9 +795,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guide_availability_date": {
           "name": "idx_guide_availability_date",
@@ -809,25 +810,25 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "guide_availability_guide_id_guides_id_fk": {
           "name": "guide_availability_guide_id_guides_id_fk",
           "tableFrom": "guide_availability",
-          "tableTo": "guides",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "guide_id"
           ],
+          "tableTo": "guides",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -871,27 +872,27 @@
         "guide_review_helpful_votes_review_id_guide_reviews_id_fk": {
           "name": "guide_review_helpful_votes_review_id_guide_reviews_id_fk",
           "tableFrom": "guide_review_helpful_votes",
-          "tableTo": "guide_reviews",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "review_id"
           ],
+          "tableTo": "guide_reviews",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "guide_review_helpful_votes_user_review_unique": {
           "name": "guide_review_helpful_votes_user_review_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "user_id",
             "review_id"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -997,9 +998,9 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guide_reviews_guide_id": {
           "name": "idx_guide_reviews_guide_id",
@@ -1012,9 +1013,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guide_reviews_reviewer_id": {
           "name": "idx_guide_reviews_reviewer_id",
@@ -1027,9 +1028,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guide_reviews_rating": {
           "name": "idx_guide_reviews_rating",
@@ -1042,9 +1043,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guide_reviews_created_at": {
           "name": "idx_guide_reviews_created_at",
@@ -1057,25 +1058,25 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "fk_guide_reviews_booking": {
           "name": "fk_guide_reviews_booking",
           "tableFrom": "guide_reviews",
-          "tableTo": "bookings",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "booking_id"
           ],
+          "tableTo": "bookings",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1194,7 +1195,7 @@
         },
         "insurance_valid_until": {
           "name": "insurance_valid_until",
-          "type": "text",
+          "type": "date",
           "primaryKey": false,
           "notNull": false
         },
@@ -1206,7 +1207,8 @@
         },
         "vehicle_type": {
           "name": "vehicle_type",
-          "type": "text",
+          "type": "vehicle_type",
+          "typeSchema": "guide_booking",
           "primaryKey": false,
           "notNull": false
         },
@@ -1263,8 +1265,8 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"guides\".\"bio_ar\", ''))), 'A') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"guides\".\"bio_en\", '')), 'A')",
-            "type": "stored"
+            "type": "stored",
+            "as": "setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"guides\".\"bio_ar\", ''))), 'A') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"guides\".\"bio_en\", '')), 'A')"
           }
         }
       },
@@ -1280,10 +1282,10 @@
             }
           ],
           "isUnique": true,
-          "where": "\"guide_booking\".\"guides\".\"deleted_at\" IS NULL",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"guide_booking\".\"guides\".\"deleted_at\" IS NULL",
+          "concurrently": false
         },
         "uq_guides_license_number": {
           "name": "uq_guides_license_number",
@@ -1296,10 +1298,10 @@
             }
           ],
           "isUnique": true,
-          "where": "\"guide_booking\".\"guides\".\"deleted_at\" IS NULL",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"guide_booking\".\"guides\".\"deleted_at\" IS NULL",
+          "concurrently": false
         },
         "idx_guides_active": {
           "name": "idx_guides_active",
@@ -1312,9 +1314,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guides_created_at": {
           "name": "idx_guides_created_at",
@@ -1327,9 +1329,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_guides_languages": {
           "name": "idx_guides_languages",
@@ -1342,9 +1344,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gin",
-          "with": {}
+          "concurrently": false
         },
         "idx_guides_specialties": {
           "name": "idx_guides_specialties",
@@ -1357,9 +1359,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gin",
-          "with": {}
+          "concurrently": false
         },
         "idx_guides_areas_of_operation": {
           "name": "idx_guides_areas_of_operation",
@@ -1372,9 +1374,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gin",
-          "with": {}
+          "concurrently": false
         },
         "idx_guides_search": {
           "name": "idx_guides_search",
@@ -1387,9 +1389,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gin",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1448,39 +1450,39 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "tour_package_attractions_package_id_tour_packages_id_fk": {
           "name": "tour_package_attractions_package_id_tour_packages_id_fk",
           "tableFrom": "tour_package_attractions",
-          "tableTo": "tour_packages",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "package_id"
           ],
+          "tableTo": "tour_packages",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "tour_package_attractions_attraction_id_attractions_id_fk": {
           "name": "tour_package_attractions_attraction_id_attractions_id_fk",
           "tableFrom": "tour_package_attractions",
-          "tableTo": "attractions",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "attraction_id"
           ],
+          "tableTo": "attractions",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1571,7 +1573,7 @@
         },
         "price_breakdown": {
           "name": "price_breakdown",
-          "type": "json",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -1608,8 +1610,8 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"tour_packages\".\"title_ar\", ''))), 'A') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"tour_packages\".\"title_en\", '')), 'A') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"tour_packages\".\"description\", ''))), 'B')",
-            "type": "stored"
+            "type": "stored",
+            "as": "setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"tour_packages\".\"title_ar\", ''))), 'A') || setweight(to_tsvector('simple', coalesce(\"guide_booking\".\"tour_packages\".\"title_en\", '')), 'A') || setweight(to_tsvector('simple', guide_booking.normalize_arabic(coalesce(\"guide_booking\".\"tour_packages\".\"description\", ''))), 'B')"
           }
         }
       },
@@ -1625,9 +1627,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_tour_packages_status": {
           "name": "idx_tour_packages_status",
@@ -1640,9 +1642,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_tour_packages_created_at": {
           "name": "idx_tour_packages_created_at",
@@ -1655,9 +1657,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "idx_tour_packages_search": {
           "name": "idx_tour_packages_search",
@@ -1670,25 +1672,25 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "gin",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "tour_packages_guide_id_guides_id_fk": {
           "name": "tour_packages_guide_id_guides_id_fk",
           "tableFrom": "tour_packages",
-          "tableTo": "guides",
-          "schemaTo": "guide_booking",
           "columnsFrom": [
             "guide_id"
           ],
+          "tableTo": "guides",
+          "schemaTo": "guide_booking",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1764,6 +1766,17 @@
         "cancelled"
       ]
     },
+    "guide_booking.desert_trip_status": {
+      "name": "desert_trip_status",
+      "schema": "guide_booking",
+      "values": [
+        "pending",
+        "checked_in",
+        "overdue",
+        "alert_sent",
+        "resolved"
+      ]
+    },
     "guide_booking.difficulty": {
       "name": "difficulty",
       "schema": "guide_booking",
@@ -1780,15 +1793,24 @@
         "active",
         "inactive"
       ]
+    },
+    "guide_booking.vehicle_type": {
+      "name": "vehicle_type",
+      "schema": "guide_booking",
+      "values": [
+        "4WD",
+        "minibus",
+        "motorcycle"
+      ]
     }
   },
   "schemas": {
     "guide_booking": "guide_booking"
   },
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
