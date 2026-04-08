@@ -94,6 +94,7 @@ export class DesertTripsService {
       .update(desertTrips)
       .set({
         gpsBreadcrumbs: sql`${desertTrips.gpsBreadcrumbs} || ${JSON.stringify([newCrumb])}::jsonb`,
+        updatedAt: new Date(),
       })
       .where(and(eq(desertTrips.id, trip.id), eq(desertTrips.status, trip.status)))
       .returning();
@@ -116,7 +117,7 @@ export class DesertTripsService {
 
     const [row] = await this.db
       .update(desertTrips)
-      .set({ status: 'checked_in', checkedInAt: new Date() })
+      .set({ status: 'checked_in', checkedInAt: new Date(), updatedAt: new Date() })
       .where(and(eq(desertTrips.id, trip.id), eq(desertTrips.status, trip.status)))
       .returning();
 

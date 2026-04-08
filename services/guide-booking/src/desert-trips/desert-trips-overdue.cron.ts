@@ -31,7 +31,7 @@ export class DesertTripsOverdueCron {
     // alertTriggeredAt is NOT set here; it is only set after successful publish below.
     await this.db
       .update(desertTrips)
-      .set({ status: 'overdue' })
+      .set({ status: 'overdue', updatedAt: new Date() })
       .where(
         and(
           inArray(
@@ -68,7 +68,7 @@ export class DesertTripsOverdueCron {
     // retried by the next cron run (fetchOverdue includes overdue rows without alertTriggeredAt).
     await this.db
       .update(desertTrips)
-      .set({ status: 'alert_sent', alertTriggeredAt: now })
+      .set({ status: 'alert_sent', alertTriggeredAt: now, updatedAt: new Date() })
       .where(and(inArray(desertTrips.id, successfulIds), eq(desertTrips.status, 'overdue')));
   }
 
