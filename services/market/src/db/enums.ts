@@ -89,3 +89,12 @@ export const verificationStatusEnum = marketSchema.enum('verification_status', [
   'rejected',
   'suspended',
 ]);
+
+// Well logs
+export const wellAreaEnum = marketSchema.enum('well_area', [
+  'kharga',
+  'dakhla',
+  'farafra',
+  'baris',
+  'balat',
+]);
