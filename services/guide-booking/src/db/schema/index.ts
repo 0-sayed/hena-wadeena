@@ -11,10 +11,12 @@ export { guideReviews } from './reviews';
 export { guideReviewHelpfulVotes } from './guide-review-helpful-votes';
 export { tourPackages } from './tour-packages';
 export { tourPackageAttractions } from './tour-package-attractions';
+export { desertTrips } from './desert-trips';
 
 // Re-import for relation definitions
 import { attractions } from './attractions';
 import { bookings } from './bookings';
+import { desertTrips } from './desert-trips';
 import { guideAvailability } from './guide-availability';
 import { guides } from './guides';
 import { guideReviews } from './reviews';
@@ -64,6 +66,14 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
     references: [guides.id],
   }),
   review: one(guideReviews),
+  desertTrip: one(desertTrips),
+}));
+
+export const desertTripsRelations = relations(desertTrips, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [desertTrips.bookingId],
+    references: [bookings.id],
+  }),
 }));
 
 export const guideAvailabilityRelations = relations(guideAvailability, ({ one }) => ({
