@@ -121,4 +121,28 @@ describe('ChangePasswordPage', () => {
     expect(mockUpdateUser).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/profile');
   });
+
+  it('shows mismatched-password feedback inline and blocks submission', async () => {
+    render(
+      <MemoryRouter>
+        <ChangePasswordPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('كلمة المرور الحالية'), {
+      target: { value: 'oldpassword123' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+      target: { value: 'newpassword123' },
+    });
+    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+      target: { value: 'different-password' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'تحديث كلمة المرور' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('كلمتا المرور غير متطابقتين');
+    expect(alert).toHaveFocus();
+    expect(mockChangePassword).not.toHaveBeenCalled();
+  });
 });

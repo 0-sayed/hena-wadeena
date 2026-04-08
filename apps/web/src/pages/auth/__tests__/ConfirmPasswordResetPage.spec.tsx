@@ -125,4 +125,31 @@ describe('ConfirmPasswordResetPage', () => {
     expect(mockUpdateUser).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
+
+  it('renders mismatched-password feedback inline before calling the API', async () => {
+    render(
+      <MemoryRouter>
+        <ConfirmPasswordResetPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('رمز OTP'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+      target: { value: 'newpassword123' },
+    });
+    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+      target: { value: 'different-password' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'تأكيد إعادة التعيين' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('كلمتا المرور غير متطابقتين');
+    expect(alert).toHaveFocus();
+    expect(mockConfirmPasswordReset).not.toHaveBeenCalled();
+  });
 });
