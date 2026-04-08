@@ -141,6 +141,8 @@ export class TourPackagesService {
           price: dto.price,
           includes: dto.includes,
           images: dto.images,
+          priceBreakdown: dto.priceBreakdown ?? null,
+          noHiddenFees: dto.noHiddenFees ?? false,
         })
         .returning();
 
