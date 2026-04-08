@@ -116,7 +116,7 @@
 - [ ] **T36** Employment Board (schema + API + state machine + wallet transfer) · L · ← T35, T26
 - [ ] **T37** Price Alerts (schema + API + threshold cron) · M · ← T26
 - [ ] **T38** Produce Listings (schema extension + API) · S · ← T26
-- [ ] **T39** Site Status Board (schema + API) · S · ← T27
+- [x] **T39** Site Status Board (schema + API) · S · ← T27
 - [ ] **T40** Guide Safety + Desert Trip (schema + ETAA + API + overdue cron) · M · ← T27
 - [ ] **T41** Price History Endpoint (no schema, uses existing snapshots) · S · ← T26
 - [ ] **T48** Government Benefits Navigator (benefit_info records + eligibility wizard) · S · ← T29
