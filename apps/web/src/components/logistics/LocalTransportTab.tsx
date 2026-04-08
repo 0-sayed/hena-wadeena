@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { UserRole } from '@hena-wadeena/types';
 import { Bus, ExternalLink, MapPin, Pencil, Phone, Plus, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { BusinessLogo } from '@/components/business/BusinessLogo';
 import { useBusinesses } from '@/hooks/use-businesses';
 import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
@@ -349,17 +350,12 @@ export function LocalTransportTab() {
                   return (
                     <>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted/40">
-                    {company.logoUrl ? (
-                      <img
-                        src={company.logoUrl}
-                        alt={companyName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <Bus className="h-7 w-7 text-muted-foreground" />
-                    )}
-                  </div>
+                  <BusinessLogo
+                    src={company.logoUrl}
+                    alt={companyName}
+                    fallbackIcon={Bus}
+                    className="h-16 w-16 shrink-0"
+                  />
                   <div className="min-w-0 flex-1">
                     <h4 className="text-lg font-bold text-foreground">{companyName}</h4>
                     <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
@@ -584,13 +580,12 @@ export function LocalTransportTab() {
               }}
             />
             {form.logoUrl ? (
-              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border bg-muted/30">
-                <img
-                  src={form.logoUrl}
-                  alt={form.nameAr || 'logo'}
-                  className="h-full w-full object-cover"
-                />
-              </div>
+              <BusinessLogo
+                src={form.logoUrl}
+                alt={form.nameAr || 'logo'}
+                fallbackIcon={Bus}
+                className="h-28 w-28 border bg-muted/30"
+              />
             ) : (
               <p className="text-sm text-muted-foreground">
                 {pickLocalizedCopy(appLanguage, {
