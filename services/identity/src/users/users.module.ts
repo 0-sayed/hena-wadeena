@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 
 import { SessionModule } from '../session/session.module';
+import { WalletModule } from '../wallet/wallet.module';
 
-import { BookingWalletEventsConsumer } from './booking-wallet-events.consumer';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
-  imports: [SessionModule],
+  imports: [SessionModule, WalletModule],
   controllers: [UsersController],
-  providers: [UsersService, BookingWalletEventsConsumer],
+  providers: [UsersService],
   exports: [UsersService],
 })
 export class UsersModule {}

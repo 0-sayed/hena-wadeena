@@ -56,10 +56,12 @@ export const walletLedgerDirectionEnum = identitySchema.enum('wallet_ledger_dire
   'debit',
 ]);
 
-export const walletLedgerKindEnum = identitySchema.enum('wallet_ledger_kind', [
-  'booking_debit',
-  'booking_refund',
-  'booking_payout',
+export const walletLedgerRefTypeEnum = identitySchema.enum('wallet_ledger_ref_type', [
+  'booking',
+  'job',
+  'topup',
+  'refund',
+  'deduction',
 ]);
 
 export const kycStatusEnum = identitySchema.enum('kyc_status', [
