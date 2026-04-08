@@ -216,3 +216,8 @@ export enum VerificationStatus {
   REJECTED = 'rejected',
   SUSPENDED = 'suspended',
 }
+
+export enum AlertDirection {
+  ABOVE = 'above',
+  BELOW = 'below',
+}
