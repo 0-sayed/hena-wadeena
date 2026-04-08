@@ -16,6 +16,7 @@ export { investmentApplications } from './investment-applications';
 export { commodities } from './commodities';
 export { commodityPrices } from './commodity-prices';
 export { businessCommodities } from './business-commodities';
+export { produceListingDetails } from './produce-listing-details';
 export { priceAlertSubscriptions } from './price-alert-subscriptions';
 
 // Re-import for relation definitions
@@ -29,14 +30,26 @@ import { investmentOpportunities } from './investment-opportunities';
 import { listingInquiries } from './listing-inquiries';
 import { listings } from './listings';
 import { priceAlertSubscriptions } from './price-alert-subscriptions';
+import { produceListingDetails } from './produce-listing-details';
 import { reviewHelpfulVotes } from './review-helpful-votes';
 import { reviews } from './reviews';
 
 // --- Relations ---
 
-export const listingsRelations = relations(listings, ({ many }) => ({
+export const listingsRelations = relations(listings, ({ many, one }) => ({
   reviews: many(reviews),
   inquiries: many(listingInquiries),
+  produceDetails: one(produceListingDetails, {
+    fields: [listings.id],
+    references: [produceListingDetails.listingId],
+  }),
+}));
+
+export const produceListingDetailsRelations = relations(produceListingDetails, ({ one }) => ({
+  listing: one(listings, {
+    fields: [produceListingDetails.listingId],
+    references: [listings.id],
+  }),
 }));
 
 export const listingInquiriesRelations = relations(listingInquiries, ({ one }) => ({

@@ -54,6 +54,7 @@ export enum ListingCategory {
   EDUCATION = 'education',
   HEALTHCARE = 'healthcare',
   SHOPPING = 'shopping',
+  AGRICULTURAL_PRODUCE = 'agricultural_produce',
 }
 
 export enum BookingStatus {
