@@ -1877,7 +1877,10 @@ export interface BenefitInfo {
 export const benefitsAPI = {
   list: () => apiFetch<BenefitInfo[]>('/benefits'),
   getBySlug: (slug: string) => apiFetch<BenefitInfo>(`/benefits/${slug}`),
-  update: (slug: string, body: Partial<Omit<BenefitInfo, 'id' | 'slug' | 'updatedAt'>>) =>
+  update: (
+    slug: string,
+    body: Partial<Omit<BenefitInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt'>>,
+  ) =>
     apiFetchWithRefresh<BenefitInfo>(`/benefits/${slug}`, {
       method: 'PUT',
       body: JSON.stringify(body),

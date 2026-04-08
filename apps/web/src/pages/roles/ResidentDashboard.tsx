@@ -35,7 +35,7 @@ export default function ResidentDashboard() {
         en: 'Follow local services and listings in your area',
       })}
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={pickLocalizedCopy(appLanguage, { ar: 'إعلانات حديثة', en: 'Latest listings' })}
           value={isLoading ? '...' : total}

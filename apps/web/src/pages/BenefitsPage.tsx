@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  AlertCircle,
   Building2,
   CheckCircle2,
   ChevronLeft,
@@ -67,7 +68,7 @@ export default function BenefitsPage() {
   const [step, setStep] = useState(0);
   const [showResults, setShowResults] = useState(false);
 
-  const { data: allBenefits, isLoading } = useBenefits();
+  const { data: allBenefits, isLoading, isError } = useBenefits();
   const steps = getSteps(answers);
   const clampedStep = Math.min(step, steps.length - 1);
   const currentStep = steps[clampedStep];
@@ -132,6 +133,7 @@ export default function BenefitsPage() {
           <ResultsView
             matched={matchedBenefits}
             isLoading={isLoading}
+            isError={isError}
             lang={lang}
             onRestart={handleRestart}
           />
@@ -412,11 +414,13 @@ function YesNoStep({
 function ResultsView({
   matched,
   isLoading,
+  isError,
   lang,
   onRestart,
 }: {
   matched: BenefitInfo[];
   isLoading: boolean;
+  isError: boolean;
   lang: 'ar' | 'en';
   onRestart: () => void;
 }) {
@@ -427,6 +431,33 @@ function ResultsView({
           <Skeleton key={i} className="h-48 w-full rounded-xl" />
         ))}
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SR direction="up" className="space-y-6">
+        <div className="text-center">
+          <AlertCircle className="mx-auto mb-3 h-12 w-12 text-destructive" />
+          <h2 className="text-xl font-bold">
+            {pickLocalizedCopy(lang, {
+              ar: 'تعذّر تحميل البيانات',
+              en: 'Could not load benefit data',
+            })}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {pickLocalizedCopy(lang, {
+              ar: 'حدث خطأ أثناء جلب البيانات. يرجى المحاولة مجدداً.',
+              en: 'Something went wrong while fetching benefits. Please try again.',
+            })}
+          </p>
+        </div>
+        <div className="text-center">
+          <Button variant="outline" onClick={onRestart}>
+            {pickLocalizedCopy(lang, { ar: 'إعادة المحاولة', en: 'Try again' })}
+          </Button>
+        </div>
+      </SR>
     );
   }
 
