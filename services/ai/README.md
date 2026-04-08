@@ -86,8 +86,9 @@ OPENAI_API_KEY=sk-your-openai-key-here
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_EMBEDDING_DIMENSIONS=1024
-OPENAI_MAX_TOKENS=1024
+OPENAI_MAX_TOKENS=768
 OPENAI_TEMPERATURE=0.3
+OPENAI_TIMEOUT_SECONDS=60
 
 # JWT Authentication (shared with identity service)
 JWT_ACCESS_SECRET=your-shared-jwt-secret
@@ -121,6 +122,7 @@ SPARSE_WEIGHT=0.3
 SESSION_MAX_MESSAGES=10
 SESSION_TTL_HOURS=168  # 7 days
 TOKEN_BUDGET_HISTORY=2000
+TOKEN_BUDGET_CONTEXT=1600
 
 # File Upload
 MAX_FILE_SIZE_MB=50
@@ -393,8 +395,9 @@ uv run pytest -k "test_chunker"
 
 **Model**: `gpt-4o-mini`
 
-- Max tokens: 1024 (configurable via `OPENAI_MAX_TOKENS`)
+- Max tokens: 768 (configurable via `OPENAI_MAX_TOKENS`)
 - Temperature: 0.3 (low randomness for factual responses)
+- Timeout: 60 seconds (configurable via `OPENAI_TIMEOUT_SECONDS`)
 - Fallback: Returns generic message if API key not configured
 
 ### Embeddings (OpenAI)

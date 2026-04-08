@@ -187,7 +187,9 @@ class FakeIndexer:
     def resolve_parsed_markdown(self, parse_id):
         return self.parsed_files[parse_id]
 
-    async def create_document_batch(self, files, title=None, description=None, tags=None, language_hint="auto"):
+    async def create_document_batch(
+        self, files, title=None, description=None, tags=None, language_hint="auto"
+    ):
         valid_files = [file for file in files if file.filename.lower().endswith(".pdf")]
         invalid_files = [file for file in files if not file.filename.lower().endswith(".pdf")]
         batch = {
@@ -295,7 +297,9 @@ class FakeSessionManager:
             retrieved_chunks=kwargs.get("retrieved_chunks", []),
         )
 
-    async def build_context_window(self, _session_id, current_user_message, exclude_message_id=None):
+    async def build_context_window(
+        self, _session_id, current_user_message, exclude_message_id=None
+    ):
         return [{"role": "user", "content": current_user_message}]
 
     async def get_messages(self, _session_id, page=1, per_page=20):
@@ -442,8 +446,21 @@ def test_send_message_stream_endpoint():
     assert response.headers["content-type"].startswith("application/x-ndjson")
 
     events = [json.loads(line) for line in response.text.strip().splitlines()]
-    assert events[0] == {"type": "token", "delta": "Grounded "}
-    assert events[1] == {"type": "token", "delta": "answer"}
+    assert events[0] == {
+        "type": "status",
+        "phase": "accepted",
+        "message": "Preparing your answer.",
+    }
+    assert [event["phase"] for event in events if event["type"] == "status"] == [
+        "accepted",
+        "processing_query",
+        "retrieving_context",
+        "reranking_context",
+        "generating_answer",
+    ]
+    token_events = [event for event in events if event["type"] == "token"]
+    assert token_events[0] == {"type": "token", "delta": "Grounded "}
+    assert token_events[1] == {"type": "token", "delta": "answer"}
     assert events[-1]["type"] == "complete"
     assert events[-1]["message"]["content"] == "Grounded answer"
     assert events[-1]["message"]["domain_relevant"] is True
