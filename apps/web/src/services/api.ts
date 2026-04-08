@@ -66,7 +66,12 @@ function buildRequestHeaders(options?: RequestInit): Headers {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  if (!isFormData && options?.body !== undefined && options?.body !== null && !headers.has('Content-Type')) {
+  if (
+    !isFormData &&
+    options?.body !== undefined &&
+    options?.body !== null &&
+    !headers.has('Content-Type')
+  ) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -1317,20 +1322,20 @@ export const reviewsAPI = {
   getGuideReviews: (guideId: string, params?: { offset?: number; limit?: number; sort?: string }) =>
     apiFetch<PaginatedResponse<Review>>(`/guides/${guideId}/reviews${toQueryString(params)}`),
 
-  // POST /api/v1/reviews — auth required, tourist only
-  createReview: (body: { bookingId: string; rating: number; comment?: string }) =>
-    apiFetchWithRefresh<Review>('/reviews', {
+  // POST /api/v1/guide-reviews — auth required, tourist only
+  createReview: (body: { bookingId: string; rating: number; comment: string }) =>
+    apiFetchWithRefresh<Review>('/guide-reviews', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
-  // GET /api/v1/reviews/mine — auth required
+  // GET /api/v1/guide-reviews/mine — auth required
   getMyReviews: (params?: { offset?: number; limit?: number }) =>
-    apiFetchWithRefresh<PaginatedResponse<Review>>(`/reviews/mine${toQueryString(params)}`),
+    apiFetchWithRefresh<PaginatedResponse<Review>>(`/guide-reviews/mine${toQueryString(params)}`),
 
-  // POST /api/v1/reviews/:id/helpful — auth required
+  // POST /api/v1/guide-reviews/:id/helpful — auth required
   markHelpful: (reviewId: string) =>
-    apiFetchWithRefresh<Review>(`/reviews/${reviewId}/helpful`, { method: 'POST' }),
+    apiFetchWithRefresh<Review>(`/guide-reviews/${reviewId}/helpful`, { method: 'POST' }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
@@ -2101,8 +2106,7 @@ export const aiKnowledgeAPI = {
     status?: string;
     language?: string;
     tags?: string;
-  }) =>
-    apiFetchWithRefresh<AiKnowledgeDocumentListResponse>(`/documents${toQueryString(params)}`),
+  }) => apiFetchWithRefresh<AiKnowledgeDocumentListResponse>(`/documents${toQueryString(params)}`),
 
   uploadDocuments: (body: AiKnowledgeUploadRequest) =>
     apiFetchWithRefresh<AiKnowledgeBatchResponse>('/documents/inject', {

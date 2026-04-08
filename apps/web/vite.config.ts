@@ -37,8 +37,9 @@ export default defineConfig({
       '/api/v1/guides': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/packages': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/bookings': { target: 'http://localhost:8003', changeOrigin: true },
-      '/api/v1/reviews': { target: 'http://localhost:8003', changeOrigin: true },
+      '/api/v1/guide-reviews': { target: 'http://localhost:8003', changeOrigin: true },
       '/api/v1/attractions': { target: 'http://localhost:8003', changeOrigin: true },
+      '/api/v1/reviews': { target: 'http://localhost:8002', changeOrigin: true },
       // Map service (:8004)
       '/api/v1/map': { target: 'http://localhost:8004', changeOrigin: true },
       '/api/v1/carpool': { target: 'http://localhost:8004', changeOrigin: true },
