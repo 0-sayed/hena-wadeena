@@ -745,5 +745,58 @@ describe('CommodityPricesService', () => {
       const sqlString = JSON.stringify(executeSqlArg);
       expect(sqlString).toContain('month');
     });
+
+    it('should return cached result without hitting DB on cache hit', async () => {
+      const cachedResult = {
+        commodity: { id: 'commodity-uuid-001', nameAr: 'تمور', nameEn: 'Dates', unit: 'kg' },
+        data: [{ date: '2026-01-15', avgPrice: 1500, minPrice: 1400, maxPrice: 1600, sampleCount: 3 }],
+        period: '30d',
+        region: null,
+        priceType: null,
+      };
+      mockRedis.get.mockResolvedValueOnce(JSON.stringify(cachedResult));
+
+      const result = await service.getPriceHistory('commodity-uuid-001', historyQuery as never);
+
+      expect(result).toEqual(cachedResult);
+      expect(mockDb.limit).not.toHaveBeenCalled();
+      expect(mockDb.execute).not.toHaveBeenCalled();
+    });
+
+    it('should query DB and cache result on cache miss', async () => {
+      mockRedis.get.mockResolvedValueOnce(null);
+      mockDb.limit.mockResolvedValueOnce([
+        { id: 'commodity-uuid-001', nameAr: 'تمور', nameEn: 'Dates', unit: 'kg' },
+      ]);
+      mockDb.execute.mockResolvedValueOnce([
+        { date: '2026-01-15', avg_price: '1500', min_price: 1400, max_price: 1600, sample_count: '3' },
+      ]);
+
+      await service.getPriceHistory('commodity-uuid-001', historyQuery as never);
+      await Promise.resolve(); // flush async cache write
+
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        'mkt:price-history:commodity-uuid-001:30d:*:*',
+        expect.any(String),
+        'EX',
+        300,
+      );
+    });
+
+    it('should invalidate price-history cache when a new price is created', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockPrice]);
+      mockDb.limit.mockResolvedValueOnce([{ nameAr: 'تمور' }]);
+
+      await service.createPrice(createPriceDto as never, 'admin-uuid-001');
+      await Promise.resolve(); // flush async invalidation
+
+      expect(mockRedis.scan).toHaveBeenCalledWith(
+        expect.anything(),
+        'MATCH',
+        'mkt:price-history:commodity-uuid-001:*',
+        'COUNT',
+        100,
+      );
+    });
   });
 });
