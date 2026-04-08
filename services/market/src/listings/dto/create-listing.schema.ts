@@ -33,8 +33,6 @@ export const produceDetailsUpdateSchema = z.object({
   contact_whatsapp: z.string().optional(),
 });
 
-export type ProduceDetailsInput = z.infer<typeof produceDetailsSchema>;
-
 const nonProduceCategories = Object.values(ListingCategory).filter(
   (c) => c !== ListingCategory.AGRICULTURAL_PRODUCE,
 ) as [string, ...string[]];

@@ -1,9 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
 
 import { createListingSchema, listingBaseWithProduceSchema } from './create-listing.schema';
-
-export type CreateListingInput = z.infer<typeof createListingSchema>;
 
 // Build the DTO from the concrete object schema (TS2509 requires non-union base).
 // After class creation, replace .schema with the full discriminated-union schema so
