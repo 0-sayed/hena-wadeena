@@ -1,5 +1,6 @@
 import {
   AlertCircle,
+  Bot,
   CheckCircle,
   Clock,
   FileCheck,
@@ -156,6 +157,19 @@ export default function AdminOverview() {
               icon={MapPin}
               href="/admin/map"
               variant={stats.pois.pending > 0 ? 'warning' : 'default'}
+            />
+            <StatCard
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'إدارة معرفة الذكاء الاصطناعي',
+                en: 'AI knowledge management',
+              })}
+              value="RAG"
+              icon={Bot}
+              description={pickLocalizedCopy(appLanguage, {
+                ar: 'تحميل أو حذف ملفات PDF المرجعية للمساعد',
+                en: 'Load or delete the assistant reference PDFs',
+              })}
+              href="/admin/ai"
             />
           </>
         ) : null}

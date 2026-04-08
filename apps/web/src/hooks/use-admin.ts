@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { queryKeys } from '@/lib/query-keys';
 import {
   adminAPI,
+  aiKnowledgeAPI,
+  type AiKnowledgeUploadRequest,
   type AdminBookingFilters,
   type AdminGuideFilters,
   type AdminKycFilters,
@@ -73,6 +75,59 @@ export function useAdminPendingPois(filters?: { page?: number; limit?: number })
   return useQuery({
     queryKey: queryKeys.admin.pendingPois(filters),
     queryFn: () => adminAPI.getPendingPois(filters),
+  });
+}
+
+export function useAdminAiDocuments(filters?: {
+  page?: number;
+  per_page?: number;
+  status?: string;
+  language?: string;
+  tags?: string;
+}) {
+  return useQuery({
+    queryKey: queryKeys.admin.aiDocuments(filters),
+    queryFn: () => aiKnowledgeAPI.listDocuments(filters),
+  });
+}
+
+export function useAdminAiBatch(batchId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.admin.aiBatch(batchId ?? ''),
+    queryFn: () => aiKnowledgeAPI.getBatchStatus(batchId!),
+    enabled: !!batchId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === 'completed' || status === 'completed_with_errors' || status === 'failed'
+        ? false
+        : 1500;
+    },
+  });
+}
+
+export function useUploadAdminAiDocuments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AiKnowledgeUploadRequest) => aiKnowledgeAPI.uploadDocuments(body),
+    onSuccess: () => {
+      toast.success('تم إرسال ملفات PDF إلى قاعدة معرفة الذكاء الاصطناعي');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'فشل رفع ملفات PDF'),
+  });
+}
+
+export function useDeleteAdminAiDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (docId: string) => aiKnowledgeAPI.deleteDocument(docId),
+    onSuccess: () => {
+      toast.success('تم حذف ملف PDF من قاعدة المعرفة');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'فشل حذف ملف PDF'),
   });
 }
 

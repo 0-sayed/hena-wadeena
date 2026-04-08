@@ -70,6 +70,7 @@ const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
 const AdminGuides = lazy(() => import('@/pages/admin/AdminGuides'));
 const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 const AdminCrops = lazy(() => import('@/pages/admin/AdminCrops'));
+const AdminAiDocuments = lazy(() => import('@/pages/admin/AdminAiDocuments'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,6 +140,7 @@ const App = () => (
                 <Route path="guides" element={<AdminGuides />} />
                 <Route path="map" element={<AdminMap />} />
                 <Route path="crops" element={<AdminCrops />} />
+                <Route path="ai" element={<AdminAiDocuments />} />
               </Route>
             </Route>
 

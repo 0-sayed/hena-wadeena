@@ -107,5 +107,13 @@ export const queryKeys = {
       ['admin', 'bookings', filters] as const,
     pendingPois: (filters?: { page?: number; limit?: number }) =>
       ['admin', 'pois', filters] as const,
+    aiDocuments: (filters?: {
+      page?: number;
+      per_page?: number;
+      status?: string;
+      language?: string;
+      tags?: string;
+    }) => ['admin', 'ai', 'documents', filters] as const,
+    aiBatch: (batchId: string) => ['admin', 'ai', 'batches', batchId] as const,
   },
 };

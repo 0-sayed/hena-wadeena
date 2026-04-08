@@ -1,6 +1,7 @@
 import { UserRole } from '@hena-wadeena/types';
 import {
   BarChart3,
+  Bot,
   Home,
   Leaf,
   LogOut,
@@ -50,6 +51,11 @@ const navItems = [
     to: '/admin/crops',
     label: { ar: 'المحاصيل', en: 'Crops' },
     icon: Leaf,
+  },
+  {
+    to: '/admin/ai',
+    label: { ar: 'إدارة الذكاء الاصطناعي', en: 'AI knowledge' },
+    icon: Bot,
   },
 ];
 

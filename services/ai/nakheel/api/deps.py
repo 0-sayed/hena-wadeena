@@ -116,3 +116,13 @@ def get_current_user(
         email=email if isinstance(email, str) else None,
         role=role if isinstance(role, str) else None,
     )
+
+
+def get_admin_user(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    role = current_user.role.lower() if current_user.role else None
+    if role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

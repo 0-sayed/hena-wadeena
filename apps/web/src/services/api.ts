@@ -45,20 +45,45 @@ export class ApiError extends Error {
   }
 }
 
+async function buildApiError(response: Response): Promise<ApiError> {
+  const error = (await response.json().catch(() => ({ message: 'Network error' }))) as Record<
+    string,
+    unknown
+  >;
+  const message =
+    response.status === 429
+      ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
+      : ((error.detail as string) ?? (error.message as string) ?? `API Error ${response.status}`);
+  return new ApiError(response.status, message, error);
+}
+
+function buildRequestHeaders(options?: RequestInit): Headers {
+  const token = localStorage.getItem('access_token');
+  const headers = new Headers(options?.headers);
+  const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData;
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (!isFormData && options?.body !== undefined && options?.body !== null && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  return headers;
+}
+
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
 export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('access_token');
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
-    headers: { ...headers, ...(options?.headers as Record<string, string>) },
+    headers: buildRequestHeaders(options),
   });
+
+  if (!res.ok) {
+    throw await buildApiError(res);
+  }
 
   if (!res.ok) {
     const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
@@ -1688,6 +1713,100 @@ export interface AdminBookingFilters {
   limit?: number;
 }
 
+export interface AiKnowledgeDocument {
+  doc_id: string;
+  batch_id: string | null;
+  filename: string;
+  source_type: string;
+  title: string | null;
+  language: string;
+  total_pages: number;
+  total_chunks: number;
+  file_size_kb: number;
+  uploaded_at: string;
+  indexed_at: string | null;
+  status: string;
+  tags: string[];
+  description: string | null;
+  current_step: string | null;
+  error_detail: string | null;
+}
+
+export interface AiKnowledgeDocumentListResponse {
+  documents: AiKnowledgeDocument[];
+  pagination: {
+    total: number;
+    page: number;
+    per_page: number;
+  };
+}
+
+export interface AiKnowledgeBatchItem {
+  doc_id: string;
+  filename: string;
+  status: string;
+  current_step: string | null;
+  error_detail: string | null;
+  total_pages: number;
+  total_chunks: number;
+  language: string | null;
+  indexed_at: string | null;
+}
+
+export interface AiKnowledgeBatchResponse {
+  batch_id: string;
+  status: string;
+  total_files: number;
+  pending_files: number;
+  processing_files: number;
+  indexed_files: number;
+  failed_files: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  items: AiKnowledgeBatchItem[];
+}
+
+export interface AiKnowledgeDeleteResponse {
+  doc_id: string;
+  deleted: boolean;
+  qdrant_points_deleted: number;
+  mongo_chunks_deleted: number;
+  mongo_document_deleted: boolean;
+  deleted_at: string;
+}
+
+export interface AiKnowledgeUploadRequest {
+  files: File[];
+  title?: string;
+  description?: string;
+  tags?: string[];
+  language?: string;
+}
+
+function buildAiKnowledgeUploadFormData(body: AiKnowledgeUploadRequest): FormData {
+  const formData = new FormData();
+
+  for (const file of body.files) {
+    formData.append('files', file);
+  }
+
+  if (body.title) {
+    formData.append('title', body.title);
+  }
+
+  if (body.description) {
+    formData.append('description', body.description);
+  }
+
+  if (body.tags && body.tags.length > 0) {
+    formData.append('tags', body.tags.join(','));
+  }
+
+  formData.append('language', body.language ?? 'auto');
+  return formData;
+}
+
 export const adminAPI = {
   // Stats
   getStats: () => apiFetchWithRefresh<AdminStatsResponse>('/admin/stats'),
@@ -1883,6 +2002,31 @@ export const aiAPI = {
 };
 
 // ── Benefits ─────────────────────────────────────────────────────────────────
+
+export const aiKnowledgeAPI = {
+  listDocuments: (params?: {
+    page?: number;
+    per_page?: number;
+    status?: string;
+    language?: string;
+    tags?: string;
+  }) =>
+    apiFetchWithRefresh<AiKnowledgeDocumentListResponse>(`/documents${toQueryString(params)}`),
+
+  uploadDocuments: (body: AiKnowledgeUploadRequest) =>
+    apiFetchWithRefresh<AiKnowledgeBatchResponse>('/documents/inject', {
+      method: 'POST',
+      body: buildAiKnowledgeUploadFormData(body),
+    }),
+
+  getBatchStatus: (batchId: string) =>
+    apiFetchWithRefresh<AiKnowledgeBatchResponse>(`/documents/batches/${batchId}`),
+
+  deleteDocument: (docId: string) =>
+    apiFetchWithRefresh<AiKnowledgeDeleteResponse>(`/documents/${docId}`, {
+      method: 'DELETE',
+    }),
+};
 
 export interface BenefitInfo {
   id: string;
