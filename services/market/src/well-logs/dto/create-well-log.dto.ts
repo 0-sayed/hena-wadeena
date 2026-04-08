@@ -9,7 +9,7 @@ const schema = z.object({
   cost_piasters: z.number().int().nonnegative(),
   water_m3_est: z.number().positive().optional(),
   depth_to_water_m: z.number().positive().optional(),
-  logged_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  logged_at: z.iso.date(),
 });
 
 export class CreateWellLogDto extends createZodDto(schema) {}

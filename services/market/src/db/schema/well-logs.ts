@@ -1,6 +1,16 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { NvDistrict } from '@hena-wadeena/types';
-import { date, geometry, index, integer, numeric, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  check,
+  date,
+  geometry,
+  index,
+  integer,
+  numeric,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { wellAreaEnum } from '../enums';
 import { marketSchema } from '../schema';
@@ -24,5 +34,10 @@ export const wellLogs = marketSchema.table(
     index('idx_well_logs_farmer_id').on(t.farmerId),
     index('idx_well_logs_area').on(t.area),
     index('idx_well_logs_logged_at').on(t.loggedAt),
+    check('chk_well_logs_pump_hours_non_neg', sql`${t.pumpHours} >= 0`),
+    check('chk_well_logs_kwh_consumed_non_neg', sql`${t.kwhConsumed} >= 0`),
+    check('chk_well_logs_cost_piasters_non_neg', sql`${t.costPiasters} >= 0`),
+    check('chk_well_logs_water_m3_est_non_neg', sql`${t.waterM3Est} >= 0`),
+    check('chk_well_logs_depth_to_water_m_non_neg', sql`${t.depthToWaterM} >= 0`),
   ],
 );

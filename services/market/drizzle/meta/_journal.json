@@ -85,6 +85,13 @@
       "when": 1775554859306,
       "tag": "20260407094059_amazing_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775627936618,
+      "tag": "20260408055856_add_well_logs_non_neg_checks",
+      "breakpoints": true
     }
   ]
 }

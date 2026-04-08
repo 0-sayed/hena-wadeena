@@ -169,8 +169,9 @@ export class WellLogsService {
     if (months.length < MIN_MONTHS_FOR_ESTIMATE) return null;
 
     const avg_monthly_kwh = months.reduce((s, m) => s + m.total_kwh, 0) / months.length;
-    const avg_monthly_cost_piasters =
-      months.reduce((s, m) => s + m.total_cost_piasters, 0) / months.length;
+    const avg_monthly_cost_piasters = Math.round(
+      months.reduce((s, m) => s + m.total_cost_piasters, 0) / months.length,
+    );
 
     return {
       avg_monthly_kwh,
@@ -179,7 +180,7 @@ export class WellLogsService {
       farmer_net_cost_piasters: FARMER_NET_COST_PIASTERS,
       break_even_months:
         avg_monthly_cost_piasters > 0
-          ? Math.round(FARMER_NET_COST_PIASTERS / avg_monthly_cost_piasters)
+          ? Math.ceil(FARMER_NET_COST_PIASTERS / avg_monthly_cost_piasters)
           : null,
       nrea_url: NREA_URL,
     };

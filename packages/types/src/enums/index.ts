@@ -1,6 +1,7 @@
 export enum UserRole {
   TOURIST = 'tourist',
   RESIDENT = 'resident',
+  FARMER = 'farmer',
   MERCHANT = 'merchant',
   GUIDE = 'guide',
   INVESTOR = 'investor',

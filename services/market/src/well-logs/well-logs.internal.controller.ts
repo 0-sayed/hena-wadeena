@@ -9,7 +9,7 @@ export class WellLogsInternalController {
 
   @Public()
   @UseGuards(InternalGuard)
-  @Get('area-summary')
+  @Get('areas')
   getAreaSummary() {
     return this.wellLogsService.getAreaSummary();
   }
