@@ -14,6 +14,12 @@ export const createGuideSchema = z.object({
   profileImage: z.string().optional(),
   coverImage: z.string().optional(),
   areasOfOperation: z.array(z.enum(attractionAreaEnum.enumValues)).optional(),
+  // ETAA + vehicle (T40)
+  etaaLicenseNumber: z.string().min(1).optional(),
+  insurancePolicyUrl: z.url().optional(),
+  insuranceValidUntil: z.iso.date().optional(),
+  vehiclePlate: z.string().min(1).optional(),
+  vehicleType: z.enum(['4WD', 'minibus', 'motorcycle']).optional(),
 });
 
 export class CreateGuideDto extends createZodDto(createGuideSchema) {}

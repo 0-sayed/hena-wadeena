@@ -141,6 +141,8 @@ export class TourPackagesService {
           price: dto.price,
           includes: dto.includes,
           images: dto.images,
+          priceBreakdown: dto.priceBreakdown ?? null,
+          noHiddenFees: dto.noHiddenFees ?? false,
         })
         .returning();
 
@@ -210,6 +212,8 @@ export class TourPackagesService {
           tp.duration_hours AS "durationHours",
           tp.max_people AS "maxPeople",
           tp.price,
+          tp.price_breakdown AS "priceBreakdown",
+          tp.no_hidden_fees AS "noHiddenFees",
           tp.includes,
           tp.images,
           tp.status,
@@ -276,6 +280,8 @@ export class TourPackagesService {
         tp.duration_hours AS "durationHours",
         tp.max_people AS "maxPeople",
         tp.price,
+        tp.price_breakdown AS "priceBreakdown",
+        tp.no_hidden_fees AS "noHiddenFees",
         tp.includes,
         tp.images,
         tp.status,
@@ -347,6 +353,8 @@ export class TourPackagesService {
           tp.duration_hours AS "durationHours",
           tp.max_people AS "maxPeople",
           tp.price,
+          tp.price_breakdown AS "priceBreakdown",
+          tp.no_hidden_fees AS "noHiddenFees",
           tp.includes,
           tp.images,
           tp.status,

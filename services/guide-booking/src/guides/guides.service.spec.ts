@@ -3,43 +3,11 @@ import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockDb } from '../test/mock-db';
+
 import type { CreateGuideDto } from './dto';
+import { createGuideSchema } from './dto/create-guide.dto';
 import { expandGuideSearchTerms, GuidesService } from './guides.service';
-
-type MockChain = Record<string, ReturnType<typeof vi.fn>> & {
-  then: ReturnType<typeof vi.fn>;
-  execute: ReturnType<typeof vi.fn>;
-};
-
-function createMockDb(): MockChain {
-  const chain = {} as MockChain;
-
-  for (const method of [
-    'select',
-    'from',
-    'where',
-    'orderBy',
-    'limit',
-    'offset',
-    'insert',
-    'values',
-    'returning',
-    'update',
-    'set',
-  ]) {
-    chain[method] = vi.fn().mockReturnValue(chain);
-  }
-
-  chain.then = vi
-    .fn()
-    .mockImplementation((onFulfilled: (v: unknown[]) => unknown) =>
-      Promise.resolve([]).then(onFulfilled),
-    );
-
-  chain.execute = vi.fn().mockResolvedValue([]);
-
-  return chain;
-}
 
 const mockGuide = {
   id: 'guide-uuid-1',
@@ -490,6 +458,111 @@ describe('GuidesService', () => {
       );
 
       await expect(service.adminSetStatus('nonexistent', false)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ─────────────────────────────────────────── create — ETAA fields
+  describe('create — ETAA fields', () => {
+    it('persists etaaLicenseNumber when provided', async () => {
+      const dto: CreateGuideDto = {
+        licenseNumber: 'LIC-002',
+        basePrice: 10000,
+        etaaLicenseNumber: 'ETAA-123',
+        vehicleType: '4WD',
+      };
+      mockDb.returning!.mockResolvedValue([
+        { ...mockGuide, etaaLicenseNumber: 'ETAA-123', vehicleType: '4WD' },
+      ]);
+      mockDb.where!.mockReturnValue(mockDb); // no existing guide
+      // first where returns [] (no duplicate), second where returns []
+      mockDb.then
+        .mockImplementationOnce((r: (v: unknown[]) => unknown) => Promise.resolve([]).then(r)) // userId check
+        .mockImplementationOnce((r: (v: unknown[]) => unknown) => Promise.resolve([]).then(r)); // license check
+
+      const result = await service.create(dto, 'user-uuid-2');
+      expect(result.etaaLicenseNumber).toBe('ETAA-123');
+      expect(result.vehicleType).toBe('4WD');
+    });
+  });
+
+  // ─────────────────────────────────────────── adminEtaaVerify
+  describe('adminEtaaVerify', () => {
+    it('sets etaa_verified=true and etaa_verified_at', async () => {
+      const now = new Date();
+      mockDb.returning!.mockResolvedValue([
+        { ...mockGuide, etaaVerified: true, etaaVerifiedAt: now },
+      ]);
+
+      const result = await service.adminEtaaVerify('guide-uuid-1', true);
+
+      expect(result.etaaVerified).toBe(true);
+      expect(result.etaaVerifiedAt).toEqual(now);
+    });
+
+    it('throws NotFoundException when guide not found', async () => {
+      mockDb.returning!.mockResolvedValue([]);
+
+      await expect(service.adminEtaaVerify('missing-id', true)).rejects.toThrow(NotFoundException);
+    });
+  });
+});
+
+// ─────────────────────────────────────────── createGuideSchema (ETAA + vehicle fields)
+describe('createGuideSchema — ETAA + vehicle fields', () => {
+  const baseValid = {
+    licenseNumber: 'LIC-001',
+    basePrice: 15000,
+  };
+
+  describe('valid inputs', () => {
+    it('accepts all 5 new fields when provided with valid values', () => {
+      const result = createGuideSchema.safeParse({
+        ...baseValid,
+        etaaLicenseNumber: 'ETAA-9999',
+        insurancePolicyUrl: 'https://insurance.example.com/policy/123',
+        insuranceValidUntil: '2027-12-31',
+        vehiclePlate: 'ABC 123',
+        vehicleType: '4WD',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts minibus as vehicleType', () => {
+      const result = createGuideSchema.safeParse({ ...baseValid, vehicleType: 'minibus' });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts motorcycle as vehicleType', () => {
+      const result = createGuideSchema.safeParse({ ...baseValid, vehicleType: 'motorcycle' });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts when all 5 new fields are omitted (all optional)', () => {
+      const result = createGuideSchema.safeParse(baseValid);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('invalid inputs', () => {
+    it('rejects insurancePolicyUrl that is not a URL', () => {
+      const result = createGuideSchema.safeParse({
+        ...baseValid,
+        insurancePolicyUrl: 'not-a-url',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects vehicleType outside the allowed enum', () => {
+      const result = createGuideSchema.safeParse({ ...baseValid, vehicleType: 'truck' });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects insuranceValidUntil that is not an ISO date string', () => {
+      const result = createGuideSchema.safeParse({
+        ...baseValid,
+        insuranceValidUntil: 'not-a-date',
+      });
+      expect(result.success).toBe(false);
     });
   });
 });

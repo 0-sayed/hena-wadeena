@@ -71,6 +71,34 @@
       "when": 1775205840781,
       "tag": "20260403084400_perpetual_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775627220273,
+      "tag": "20260408054700_t40-guide-safety-and-desert-trips",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1775627230274,
+      "tag": "20260408054710_t40-desert-trip-pending-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775628046000,
+      "tag": "20260408060045_t40-widen-overdue-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775628293049,
+      "tag": "20260408060453_spooky_runaways",
+      "breakpoints": true
     }
   ]
 }

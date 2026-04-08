@@ -24,6 +24,7 @@ export const EVENTS = {
   USER_ROLE_CHANGED: 'user.role_changed',
   USER_ACTIVATED: 'user.activated',
   USER_VERIFIED: 'user.verified',
+  DESERT_TRIP_OVERDUE: 'desert_trip.overdue',
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
@@ -58,4 +59,13 @@ export type PriceAlertTriggeredPayload = Record<string, string> & {
   thresholdPrice: string; // piasters
   actualPrice: string; // piasters
   direction: string; // 'above' | 'below'
+};
+
+export type DesertTripOverdueEventPayload = Record<string, string> & {
+  tripId: string;
+  bookingId: string;
+  guideUserId: string;
+  touristUserId: string;
+  emergencyContact: string;
+  destinationName: string;
 };

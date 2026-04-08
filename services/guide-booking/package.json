@@ -26,6 +26,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/throttler": "^6.4.0",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",

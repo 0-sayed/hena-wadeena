@@ -19,6 +19,12 @@ const verifyBodySchema = z.object({
 
 class VerifyBodyDto extends createZodDto(verifyBodySchema) {}
 
+const etaaVerifyBodySchema = z.object({
+  verified: z.boolean(),
+});
+
+class EtaaVerifyBodyDto extends createZodDto(etaaVerifyBodySchema) {}
+
 const setStatusBodySchema = z.object({
   active: z.boolean(),
 });
@@ -38,6 +44,11 @@ export class AdminGuidesController {
   @Patch(':id/verify')
   adminVerify(@Param('id') id: string, @Body() dto: VerifyBodyDto) {
     return this.guidesService.adminVerify(id, dto.verified);
+  }
+
+  @Patch(':id/etaa-verify')
+  adminEtaaVerify(@Param('id') id: string, @Body() dto: EtaaVerifyBodyDto) {
+    return this.guidesService.adminEtaaVerify(id, dto.verified);
   }
 
   @Patch(':id/status')
