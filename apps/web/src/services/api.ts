@@ -1856,3 +1856,30 @@ export const aiAPI = {
       body: JSON.stringify({ message, conversation_id: conversationId }),
     }),
 };
+
+// ── Benefits ─────────────────────────────────────────────────────────────────
+
+export interface BenefitInfo {
+  id: string;
+  slug: string;
+  nameAr: string;
+  nameEn: string;
+  ministryAr: string;
+  documentsAr: string[];
+  officeNameAr: string;
+  officePhone: string;
+  officeAddressAr: string;
+  enrollmentNotesAr: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const benefitsAPI = {
+  list: () => apiFetch<BenefitInfo[]>('/benefits'),
+  getBySlug: (slug: string) => apiFetch<BenefitInfo>(`/benefits/${slug}`),
+  update: (slug: string, body: Partial<Omit<BenefitInfo, 'id' | 'slug' | 'updatedAt'>>) =>
+    apiFetchWithRefresh<BenefitInfo>(`/benefits/${slug}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+};

@@ -53,6 +53,7 @@ import OpportunityDetailsPage from './pages/investment/OpportunityDetailsPage';
 import ContactPage from './pages/investment/ContactPage';
 import StartupDetailsPage from './pages/investment/StartupDetailsPage';
 
+import BenefitsPage from './pages/BenefitsPage';
 import AttractionsPage from './pages/tourism/AttractionsPage';
 import AttractionDetailsPage from './pages/tourism/AttractionDetailsPage';
 import PackagesPage from './pages/tourism/PackagesPage';
@@ -168,6 +169,7 @@ const App = () => (
               </Route>
             </Route>
 
+            <Route path="/benefits" element={<BenefitsPage />} />
             <Route path="/search" element={<SearchResultsPage />} />
 
             <Route path="/tourism" element={<TourismPage />} />

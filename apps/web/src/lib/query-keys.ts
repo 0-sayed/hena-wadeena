@@ -74,6 +74,10 @@ export const queryKeys = {
     sessions: () => ['ai', 'sessions'] as const,
     session: (id: string) => ['ai', 'sessions', id] as const,
   },
+  benefits: {
+    all: () => ['benefits'] as const,
+    detail: (slug: string) => ['benefits', slug] as const,
+  },
   admin: {
     stats: () => ['admin', 'stats'] as const,
     users: (filters?: {
