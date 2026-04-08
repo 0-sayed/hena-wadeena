@@ -17,6 +17,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { BenefitsModule } from './benefits/benefits.module';
 import { BusinessDirectoryModule } from './business-directory/business-directory.module';
 import { BusinessInquiriesModule } from './business-inquiries/business-inquiries.module';
 import { CommodityPricesModule } from './commodity-prices/commodity-prices.module';
@@ -75,6 +76,7 @@ function requireEnv(key: string): string {
     SearchModule,
     StatsModule,
     AdminModule,
+    BenefitsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
