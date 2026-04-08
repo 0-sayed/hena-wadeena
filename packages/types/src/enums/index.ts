@@ -113,6 +113,14 @@ export enum PassengerStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum SiteStatusValue {
+  OPEN = 'open',
+  CLOSED = 'closed',
+  CLOSED_TEMPORARILY = 'closed_temporarily',
+  LIMITED_ACCESS = 'limited_access',
+  UNDER_RESTORATION = 'under_restoration',
+}
+
 export enum OpportunityStatus {
   DRAFT = 'draft',
   REVIEW = 'review',
