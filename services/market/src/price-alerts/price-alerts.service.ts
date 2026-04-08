@@ -109,7 +109,7 @@ export class PriceAlertsService {
     recordedAt: Date,
   ): Promise<void> {
     const [commodity] = await this.db
-      .select({ nameAr: commodities.nameAr })
+      .select({ nameAr: commodities.nameAr, nameEn: commodities.nameEn })
       .from(commodities)
       .where(eq(commodities.id, commodityId))
       .limit(1);
@@ -137,22 +137,22 @@ export class PriceAlertsService {
             ? newPrice >= sub.thresholdPrice
             : newPrice <= sub.thresholdPrice,
         )
-        .map((sub) =>
-          Promise.all([
-            this.redisStreams.publish(EVENTS.PRICE_ALERT_TRIGGERED, {
-              userId: sub.userId,
-              commodityId,
-              commodityNameAr: commodity.nameAr,
-              thresholdPrice: String(sub.thresholdPrice),
-              actualPrice: String(newPrice),
-              direction: sub.direction,
-            } satisfies PriceAlertTriggeredPayload),
-            this.db
-              .update(priceAlertSubscriptions)
-              .set({ lastTriggeredAt: recordedAt })
-              .where(eq(priceAlertSubscriptions.id, sub.id)),
-          ]),
-        ),
+        .map(async (sub) => {
+          await this.redisStreams.publish(EVENTS.PRICE_ALERT_TRIGGERED, {
+            userId: sub.userId,
+            commodityId,
+            commodityNameAr: commodity.nameAr,
+            commodityNameEn: commodity.nameEn,
+            thresholdPrice: String(sub.thresholdPrice),
+            actualPrice: String(newPrice),
+            direction: sub.direction,
+          } satisfies PriceAlertTriggeredPayload);
+
+          await this.db
+            .update(priceAlertSubscriptions)
+            .set({ lastTriggeredAt: recordedAt })
+            .where(eq(priceAlertSubscriptions.id, sub.id));
+        }),
     );
   }
 

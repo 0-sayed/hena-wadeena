@@ -438,16 +438,44 @@ describe('CommodityPricesService', () => {
       expect(invalidateSpy).toHaveBeenCalled();
     });
 
-    it('should call evaluateForCommodity for each batch entry', async () => {
+    it('should call evaluateForCommodity once per unique commodity in the batch', async () => {
+      const entries = [
+        mockPrice,
+        { ...mockPrice, id: 'price-uuid-002', commodityId: 'commodity-uuid-002', price: 2000 },
+      ];
+      mockDb.returning.mockResolvedValueOnce(entries);
+      mockDb.where.mockResolvedValueOnce([
+        { id: 'commodity-uuid-001', nameAr: 'تمور' },
+        { id: 'commodity-uuid-002', nameAr: 'قمح' },
+      ]);
+
+      await service.batchCreatePrices(batchDto as never, 'admin-uuid-001');
+
+      await vi.waitFor(() => {
+        expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledTimes(2);
+      });
+      expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
+        'commodity-uuid-001',
+        expect.any(Number),
+        expect.any(Date),
+      );
+      expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
+        'commodity-uuid-002',
+        expect.any(Number),
+        expect.any(Date),
+      );
+    });
+
+    it('should deduplicate evaluateForCommodity calls for the same commodity', async () => {
       const entries = [mockPrice, { ...mockPrice, id: 'price-uuid-002', region: 'dakhla' }];
       mockDb.returning.mockResolvedValueOnce(entries);
       mockDb.where.mockResolvedValueOnce([{ id: 'commodity-uuid-001', nameAr: 'تمور' }]);
 
       await service.batchCreatePrices(batchDto as never, 'admin-uuid-001');
 
-      await vi.waitFor(() =>
-        { expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledTimes(2); },
-      );
+      await vi.waitFor(() => {
+        expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledTimes(1);
+      });
       expect(mockPriceAlertsService.evaluateForCommodity).toHaveBeenCalledWith(
         'commodity-uuid-001',
         expect.any(Number),

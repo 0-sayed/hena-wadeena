@@ -14,8 +14,8 @@ import {
   Post,
 } from '@nestjs/common';
 
-import type { CreatePriceAlertDto } from './dto/create-price-alert.dto';
-import type { UpdatePriceAlertDto } from './dto/update-price-alert.dto';
+import { CreatePriceAlertDto } from './dto/create-price-alert.dto';
+import { UpdatePriceAlertDto } from './dto/update-price-alert.dto';
 import { PriceAlertsService } from './price-alerts.service';
 
 @Controller('price-alerts')

@@ -54,7 +54,8 @@ export type PriceAlertTriggeredPayload = Record<string, string> & {
   userId: string;
   commodityId: string;
   commodityNameAr: string;
+  commodityNameEn: string;
   thresholdPrice: string; // piasters
-  actualPrice: string;    // piasters
-  direction: string;      // 'above' | 'below'
+  actualPrice: string; // piasters
+  direction: string; // 'above' | 'below'
 };

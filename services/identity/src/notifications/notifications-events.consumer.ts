@@ -1,5 +1,9 @@
 import { RedisStreamsService } from '@hena-wadeena/nest-common';
-import type { BookingCancelledEventPayload, BookingEventPayload } from '@hena-wadeena/types';
+import type {
+  BookingCancelledEventPayload,
+  BookingEventPayload,
+  PriceAlertTriggeredPayload,
+} from '@hena-wadeena/types';
 import { EVENTS, NotificationType, piastresToEgpRaw } from '@hena-wadeena/types';
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
@@ -206,15 +210,15 @@ export class NotificationsEventsConsumer implements OnModuleInit {
       CONSUMER_GROUP,
       CONSUMER_NAME,
       async (msg) => {
-        const d = msg.data as Record<string, string>;
+        const d = msg.data as PriceAlertTriggeredPayload;
         if (!d.userId) return;
         await this.notificationsService.create({
           userId: d.userId,
           type: NotificationType.SYSTEM,
           titleAr: 'تنبيه سعر',
           titleEn: 'Price Alert',
-          bodyAr: `وصل سعر ${d.commodityNameAr ?? 'السلعة'} إلى ${piastresToEgpRaw(Number(d.actualPrice ?? '0'))} جنيه/وحدة (حدك: ${piastresToEgpRaw(Number(d.thresholdPrice ?? '0'))} جنيه)`,
-          bodyEn: `${d.commodityNameAr ?? 'the commodity'} price hit ${piastresToEgpRaw(Number(d.actualPrice ?? '0'))} EGP/unit (your threshold: ${piastresToEgpRaw(Number(d.thresholdPrice ?? '0'))} EGP)`,
+          bodyAr: `وصل سعر ${d.commodityNameAr} إلى ${piastresToEgpRaw(Number(d.actualPrice))} جنيه/وحدة (حدك: ${piastresToEgpRaw(Number(d.thresholdPrice))} جنيه)`,
+          bodyEn: `${d.commodityNameEn} price hit ${piastresToEgpRaw(Number(d.actualPrice))} EGP/unit (your threshold: ${piastresToEgpRaw(Number(d.thresholdPrice))} EGP)`,
           data: {
             commodityId: d.commodityId,
             actualPrice: d.actualPrice,

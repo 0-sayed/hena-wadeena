@@ -82,6 +82,7 @@ export const applicationsRelations = relations(investmentApplications, ({ one })
 export const commoditiesRelations = relations(commodities, ({ many }) => ({
   prices: many(commodityPrices),
   businessCommodities: many(businessCommodities),
+  priceAlertSubscriptions: many(priceAlertSubscriptions),
 }));
 
 export const commodityPricesRelations = relations(commodityPrices, ({ one }) => ({

@@ -295,13 +295,16 @@ export class CommodityPricesService {
     // Best-effort enrichment: don't let post-write failures hide committed writes
     this.enrichAndPublishBatch(entries, uniqueCommodityIds);
 
-    // Best-effort alert evaluation for each entry
+    // Best-effort alert evaluation — one call per unique commodity to prevent concurrent
+    // reads of lastTriggeredAt from allowing duplicate notifications in the same batch.
+    const latestPricePerCommodity = new Map<string, number>();
     for (const entry of entries) {
-      this.priceAlertsService
-        .evaluateForCommodity(entry.commodityId, entry.price, recordedAt)
-        .catch((err: unknown) => {
-          this.logger.error('Price alert evaluation failed (writes already committed)', err);
-        });
+      latestPricePerCommodity.set(entry.commodityId, entry.price);
+    }
+    for (const [cid, price] of latestPricePerCommodity) {
+      this.priceAlertsService.evaluateForCommodity(cid, price, recordedAt).catch((err: unknown) => {
+        this.logger.error('Price alert evaluation failed (writes already committed)', err);
+      });
     }
 
     return entries;
