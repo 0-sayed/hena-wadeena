@@ -16,6 +16,7 @@ export { investmentApplications } from './investment-applications';
 export { commodities } from './commodities';
 export { commodityPrices } from './commodity-prices';
 export { businessCommodities } from './business-commodities';
+export { benefitInfo } from './benefit-info';
 export { produceListingDetails } from './produce-listing-details';
 export { priceAlertSubscriptions } from './price-alert-subscriptions';
 
