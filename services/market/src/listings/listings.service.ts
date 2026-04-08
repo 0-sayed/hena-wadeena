@@ -7,7 +7,7 @@ import {
   generateId,
   paginate,
 } from '@hena-wadeena/nest-common';
-import { EVENTS, slugify } from '@hena-wadeena/types';
+import { EVENTS, ListingCategory, slugify } from '@hena-wadeena/types';
 import type { PaginatedResponse } from '@hena-wadeena/types';
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
@@ -18,6 +18,11 @@ import type { FeatureListingDto } from '../admin/dto/feature-listing.dto';
 import type { QueryAdminListingsDto } from '../admin/dto/query-admin-listings.dto';
 import type { VerifyListingDto } from '../admin/dto/verify-listing.dto';
 import { listings } from '../db/schema/listings';
+import { produceListingDetails } from '../db/schema/produce-listing-details';
+
+import { CreateListingDto } from './dto/create-listing.dto';
+import { ImageUploadDto, NearbyQueryDto, QueryListingsDto } from './dto/query-listings.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
 
 // Exclude searchVector (tsvector generated column) from query results
 const allColumns = getTableColumns(listings);
@@ -25,12 +30,82 @@ const listingColumns = Object.fromEntries(
   Object.entries(allColumns).filter(([key]) => key !== 'searchVector'),
 ) as Omit<typeof allColumns, 'searchVector'>;
 
-import { CreateListingDto } from './dto/create-listing.dto';
-import { ImageUploadDto, NearbyQueryDto, QueryListingsDto } from './dto/query-listings.dto';
-import { UpdateListingDto } from './dto/update-listing.dto';
+const produceDetailsColumns = {
+  commodityType: produceListingDetails.commodityType,
+  quantityKg: produceListingDetails.quantityKg,
+  harvestDate: produceListingDetails.harvestDate,
+  storageType: produceListingDetails.storageType,
+  certifications: produceListingDetails.certifications,
+  preferredBuyer: produceListingDetails.preferredBuyer,
+  contactPhone: produceListingDetails.contactPhone,
+  contactWhatsapp: produceListingDetails.contactWhatsapp,
+};
 
-type Listing = Omit<typeof listings.$inferSelect, 'searchVector'>;
+const listingWithProduceColumns = {
+  ...listingColumns,
+  produceDetails: produceDetailsColumns,
+};
+
+export interface ProduceDetails {
+  commodityType: string;
+  quantityKg: string | null;
+  harvestDate: string | null;
+  storageType: string;
+  certifications: string[];
+  preferredBuyer: string;
+  contactPhone: string | null;
+  contactWhatsapp: string | null;
+}
+
+type ListingWithProduce = Omit<typeof listings.$inferSelect, 'searchVector'> & {
+  produceDetails: ProduceDetails | null;
+};
+
+type Listing = ListingWithProduce;
 type InsertListing = typeof listings.$inferInsert;
+
+function mapListing(row: {
+  produceDetails: {
+    commodityType: string | null;
+    quantityKg: string | null;
+    harvestDate: string | null;
+    storageType: string | null;
+    certifications: string[] | null;
+    preferredBuyer: string | null;
+    contactPhone: string | null;
+    contactWhatsapp: string | null;
+  } | null;
+  [key: string]: unknown;
+}): ListingWithProduce {
+  const { produceDetails, ...rest } = row;
+  return {
+    ...(rest as Omit<ListingWithProduce, 'produceDetails'>),
+    produceDetails:
+      produceDetails?.commodityType == null ? null : (produceDetails as ProduceDetails),
+  };
+}
+
+function mapProduceInput(input: {
+  commodity_type: string;
+  storage_type: string;
+  preferred_buyer: string;
+  quantity_kg?: number;
+  harvest_date?: string;
+  certifications?: string[];
+  contact_phone?: string;
+  contact_whatsapp?: string;
+}) {
+  return {
+    commodityType: input.commodity_type,
+    storageType: input.storage_type,
+    preferredBuyer: input.preferred_buyer,
+    quantityKg: input.quantity_kg != null ? String(input.quantity_kg) : null,
+    harvestDate: input.harvest_date ?? null,
+    certifications: input.certifications ?? [],
+    contactPhone: input.contact_phone ?? null,
+    contactWhatsapp: input.contact_whatsapp ?? null,
+  };
+}
 
 const SORTABLE_FIELDS = {
   created_at: listings.createdAt,
@@ -81,6 +156,16 @@ export class ListingsService {
       );
     }
 
+    if (query.commodity_type) {
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM market.produce_listing_details pld
+          WHERE pld.listing_id = ${listings.id}
+            AND pld.commodity_type = ${query.commodity_type}
+        )`,
+      );
+    }
+
     return andRequired(...conditions);
   }
 
@@ -121,12 +206,13 @@ export class ListingsService {
 
   /** Raw find by id — ignores status, used for ownership checks */
   private async findRaw(id: string): Promise<Listing | null> {
-    const [listing] = await this.db
-      .select(listingColumns)
+    const [row] = await this.db
+      .select(listingWithProduceColumns)
       .from(listings)
+      .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
       .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
       .limit(1);
-    return listing ?? null;
+    return row ? mapListing(row) : null;
   }
 
   // --- Public methods ---
@@ -142,7 +228,6 @@ export class ListingsService {
     const baseTitle = dto.titleEn ?? dto.titleAr;
     let slug = slugify(baseTitle);
 
-    // Ensure slug uniqueness (excluding soft-deleted)
     const existing = await this.db
       .select({ slug: listings.slug })
       .from(listings)
@@ -152,28 +237,60 @@ export class ListingsService {
     }
 
     const id = generateId();
-    const { location: locationInput, category, listingType, transaction, ...rest } = dto;
+    const {
+      location: locationInput,
+      category,
+      listingType,
+      transaction,
+      produce_details: produceInput,
+      ...rest
+    } = dto as unknown as {
+      location?: { lat: number; lng: number };
+      category: ListingCategory;
+      listingType: string;
+      transaction: string;
+      produce_details?: Parameters<typeof mapProduceInput>[0];
+      [key: string]: unknown;
+    };
 
     const locationExpr = locationInput
       ? sql`public.ST_SetSRID(public.ST_MakePoint(${locationInput.lng}, ${locationInput.lat}), 4326)`
       : null;
 
-    const listing = firstOrThrow(
-      await this.db
-        .insert(listings)
-        .values({
-          ...rest,
-          category: category as InsertListing['category'],
-          listingType: listingType as InsertListing['listingType'],
-          transaction: transaction as InsertListing['transaction'],
-          id,
-          ownerId,
-          slug,
-          status: 'draft',
-          location: locationExpr as unknown as InsertListing['location'],
-        })
-        .returning(),
-    );
+    const insertValues: Record<string, unknown> = {
+      ...(rest as Record<string, unknown>),
+      category: category as InsertListing['category'],
+      listingType: listingType as InsertListing['listingType'],
+      transaction: transaction as InsertListing['transaction'],
+      id,
+      ownerId,
+      slug,
+      status: 'draft' as const,
+      location: locationExpr as unknown as InsertListing['location'],
+    };
+
+    let listing: Listing;
+
+    if (category === ListingCategory.AGRICULTURAL_PRODUCE && produceInput) {
+      const produceValues = mapProduceInput(produceInput);
+      await this.db.transaction(async (tx) => {
+        await tx.insert(listings).values(insertValues as InsertListing);
+        await tx.insert(produceListingDetails).values({ listingId: id, ...produceValues });
+      });
+      const created = await this.findRaw(id);
+      if (!created) throw new NotFoundException('Listing not found');
+      listing = created;
+    } else {
+      listing = mapListing({
+        ...firstOrThrow(
+          await this.db
+            .insert(listings)
+            .values(insertValues as InsertListing)
+            .returning(),
+        ),
+        produceDetails: null,
+      });
+    }
 
     this.redisStreams
       .publish(EVENTS.LISTING_CREATED, {
@@ -195,26 +312,29 @@ export class ListingsService {
   }
 
   async findById(id: string, callerId?: string): Promise<Listing | null> {
-    const [listing] = await this.db
-      .select(listingColumns)
+    const [row] = await this.db
+      .select(listingWithProduceColumns)
       .from(listings)
+      .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
       .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
       .limit(1);
 
-    if (!listing) return null;
-    // Owner sees all statuses; public sees only active
+    if (!row) return null;
+    const listing = mapListing(row);
     if (listing.status !== 'active' && listing.ownerId !== callerId) return null;
     return listing;
   }
 
   async findBySlug(slug: string, callerId?: string): Promise<Listing | null> {
-    const [listing] = await this.db
-      .select(listingColumns)
+    const [row] = await this.db
+      .select(listingWithProduceColumns)
       .from(listings)
+      .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
       .where(and(eq(listings.slug, slug), isNull(listings.deletedAt)))
       .limit(1);
 
-    if (!listing) return null;
+    if (!row) return null;
+    const listing = mapListing(row);
     if (listing.status !== 'active' && listing.ownerId !== callerId) return null;
     return listing;
   }
@@ -223,10 +343,11 @@ export class ListingsService {
     const filters = this.buildFilters(query);
     const orderBy = this.buildSort(query.sort);
 
-    const [results, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.db
-        .select(listingColumns)
+        .select(listingWithProduceColumns)
         .from(listings)
+        .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
         .where(filters)
         .orderBy(orderBy)
         .limit(query.limit)
@@ -234,25 +355,28 @@ export class ListingsService {
       this.countListings(filters),
     ]);
 
-    return paginate(results, total, query.offset, query.limit);
+    return paginate(rows.map(mapListing), total, query.offset, query.limit);
   }
 
   async findMine(ownerId: string): Promise<Listing[]> {
-    return this.db
-      .select(listingColumns)
+    const rows = await this.db
+      .select(listingWithProduceColumns)
       .from(listings)
+      .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
       .where(and(eq(listings.ownerId, ownerId), isNull(listings.deletedAt)))
       .orderBy(desc(listings.updatedAt));
+    return rows.map(mapListing);
   }
 
   async findAllAdmin(query: QueryAdminListingsDto): Promise<PaginatedResponse<Listing>> {
     const filters = this.buildAdminFilters(query);
     const orderBy = this.buildSort(query.sort);
 
-    const [results, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.db
-        .select(listingColumns)
+        .select(listingWithProduceColumns)
         .from(listings)
+        .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
         .where(filters)
         .orderBy(orderBy)
         .limit(query.limit)
@@ -260,7 +384,7 @@ export class ListingsService {
       this.countListings(filters),
     ]);
 
-    return paginate(results, total, query.offset, query.limit);
+    return paginate(rows.map(mapListing), total, query.offset, query.limit);
   }
 
   async verify(id: string, dto: VerifyListingDto, adminId: string): Promise<Listing> {
@@ -295,7 +419,9 @@ export class ListingsService {
           this.logger.error(`Failed to publish ${EVENTS.LISTING_VERIFIED}`, err);
         });
 
-      return updated;
+      const approved = await this.findRaw(id);
+      if (!approved) throw new NotFoundException('Listing not found');
+      return approved;
     }
 
     // Reject action
@@ -309,7 +435,9 @@ export class ListingsService {
       .returning();
 
     if (!updated) throw new NotFoundException('Listing not found or not in draft status');
-    return updated;
+    const rejected = await this.findRaw(id);
+    if (!rejected) throw new NotFoundException('Listing not found');
+    return rejected;
   }
 
   async setFeatured(id: string, dto: FeatureListingDto): Promise<Listing> {
@@ -324,7 +452,9 @@ export class ListingsService {
       .returning();
 
     if (!updated) throw new NotFoundException('Listing not found');
-    return updated;
+    const featured = await this.findRaw(id);
+    if (!featured) throw new NotFoundException('Listing not found');
+    return featured;
   }
 
   async findFeatured(query: QueryListingsDto): Promise<PaginatedResponse<Listing>> {
@@ -334,10 +464,11 @@ export class ListingsService {
       eq(listings.isFeatured, true),
     );
 
-    const [results, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.db
-        .select(listingColumns)
+        .select(listingWithProduceColumns)
         .from(listings)
+        .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
         .where(filters)
         .orderBy(desc(listings.createdAt))
         .limit(query.limit)
@@ -345,7 +476,7 @@ export class ListingsService {
       this.countListings(filters),
     ]);
 
-    return paginate(results, total, query.offset, query.limit);
+    return paginate(rows.map(mapListing), total, query.offset, query.limit);
   }
 
   async findNearby(
@@ -369,8 +500,9 @@ export class ListingsService {
 
     const [results, countResult] = await Promise.all([
       this.db
-        .select({ ...listingColumns, distance_km: distanceExpr })
+        .select({ ...listingWithProduceColumns, distance_km: distanceExpr })
         .from(listings)
+        .leftJoin(produceListingDetails, eq(produceListingDetails.listingId, listings.id))
         .where(nearbyFilters)
         .orderBy(distanceExpr)
         .limit(limit)
@@ -382,11 +514,30 @@ export class ListingsService {
     ]);
 
     const total = countResult[0]?.count ?? 0;
-    return paginate(results, total, offset, limit);
+    return paginate(
+      results.map((row) => ({ ...mapListing(row), distance_km: row.distance_km })),
+      total,
+      offset,
+      limit,
+    );
   }
 
   async update(id: string, dto: UpdateListingDto): Promise<Listing> {
-    const { location: locationInput, category, listingType, transaction, ...rest } = dto;
+    const {
+      location: locationInput,
+      category,
+      listingType,
+      transaction: txType,
+      produce_details,
+      ...rest
+    } = dto as {
+      location?: { lat: number; lng: number };
+      category?: string;
+      listingType?: string;
+      transaction?: string;
+      produce_details?: Parameters<typeof mapProduceInput>[0];
+      [key: string]: unknown;
+    };
 
     const locationUpdate = locationInput
       ? {
@@ -400,15 +551,15 @@ export class ListingsService {
       ...(listingType !== undefined && {
         listingType: listingType as InsertListing['listingType'],
       }),
-      ...(transaction !== undefined && {
-        transaction: transaction as InsertListing['transaction'],
+      ...(txType !== undefined && {
+        transaction: txType as InsertListing['transaction'],
       }),
     };
 
     const [updated] = await this.db
       .update(listings)
       .set({
-        ...rest,
+        ...(rest as Record<string, unknown>),
         ...enumFields,
         updatedAt: new Date(),
         ...locationUpdate,
@@ -417,7 +568,21 @@ export class ListingsService {
       .returning();
 
     if (!updated) throw new NotFoundException('Listing not found');
-    return updated;
+
+    if (produce_details) {
+      const mapped = mapProduceInput(produce_details);
+      await this.db
+        .insert(produceListingDetails)
+        .values({ listingId: id, ...mapped })
+        .onConflictDoUpdate({
+          target: produceListingDetails.listingId,
+          set: mapped,
+        });
+    }
+
+    const row = await this.findRaw(id);
+    if (!row) throw new NotFoundException('Listing not found');
+    return row;
   }
 
   async remove(id: string): Promise<void> {

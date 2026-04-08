@@ -36,6 +36,9 @@ interface MockDbChain {
   update: MockFn;
   set: MockFn;
   orderBy: MockFn;
+  leftJoin: MockFn;
+  transaction: MockFn;
+  onConflictDoUpdate: MockFn;
 }
 
 function createMockDb(): MockDbChain {
@@ -51,6 +54,11 @@ function createMockDb(): MockDbChain {
   chain.update = vi.fn().mockReturnValue(chain);
   chain.set = vi.fn().mockReturnValue(chain);
   chain.orderBy = vi.fn().mockReturnValue(chain);
+  chain.leftJoin = vi.fn().mockReturnValue(chain);
+  chain.transaction = vi
+    .fn()
+    .mockImplementation(async (fn: (tx: typeof chain) => Promise<unknown>) => fn(chain));
+  chain.onConflictDoUpdate = vi.fn().mockReturnValue(chain);
   return chain;
 }
 
@@ -95,6 +103,23 @@ const mockListing = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
+  produceDetails: null,
+};
+
+// Raw DB row shape returned by LEFT JOIN queries before mapListing() processing.
+// Non-produce listings have an all-null produceDetails object (not null itself).
+const mockListingRaw = {
+  ...mockListing,
+  produceDetails: {
+    commodityType: null,
+    quantityKg: null,
+    harvestDate: null,
+    storageType: null,
+    certifications: null,
+    preferredBuyer: null,
+    contactPhone: null,
+    contactWhatsapp: null,
+  },
 };
 
 // Minimal valid create DTO
@@ -107,6 +132,39 @@ const createDto = {
   transaction: 'sale',
 };
 
+const mockProduceListing = {
+  ...mockListing,
+  id: 'listing-uuid-produce',
+  category: 'agricultural_produce',
+  produceDetails: {
+    commodityType: 'dates',
+    quantityKg: 2000,
+    harvestDate: '2026-03-15',
+    storageType: 'warehouse',
+    certifications: ['organic'],
+    preferredBuyer: 'wholesaler',
+    contactPhone: null,
+    contactWhatsapp: '+201012345678',
+  },
+};
+
+const createProduceDto = {
+  titleAr: 'تمور الواحة الفاخرة',
+  price: 800,
+  category: 'agricultural_produce',
+  listingType: 'product',
+  transaction: 'sale',
+  produce_details: {
+    commodity_type: 'dates',
+    storage_type: 'warehouse',
+    preferred_buyer: 'wholesaler',
+    quantity_kg: 2000,
+    harvest_date: '2026-03-15',
+    certifications: ['organic'],
+    contact_whatsapp: '+201012345678',
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -116,8 +174,8 @@ describe('ListingsService', () => {
   let mockDb: ReturnType<typeof createMockDb>;
 
   beforeEach(() => {
-    mockDb = createMockDb();
     vi.clearAllMocks();
+    mockDb = createMockDb();
     // Direct instantiation bypasses NestJS DI (Vitest uses ESBuild which doesn't
     // emit decorator metadata needed for type-based injection tokens).
     service = new ListingsService(mockDb as never, mockS3 as never, mockRedisStreams as never);
@@ -210,6 +268,11 @@ describe('ListingsService', () => {
       // base + 4 filters → 4 more conditions
       expect(combined).toBe(base + 4);
     });
+
+    it('should add a condition for commodity_type filter', () => {
+      const base = conditionCount(getFilters());
+      expect(conditionCount(getFilters({ commodity_type: 'dates' }))).toBeGreaterThan(base);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -287,6 +350,35 @@ describe('ListingsService', () => {
       expect(valuesArg.location).not.toEqual({ lat: 25.44, lng: 30.56 });
       expect(valuesArg.location).toBeDefined();
     });
+
+    it('should insert into produce_listing_details when category is agricultural_produce', async () => {
+      // transaction mock executes the callback with the same chain.
+      // create() no longer calls .returning() inside the transaction — it uses findRaw() after.
+      mockDb.limit.mockResolvedValueOnce([mockProduceListing]); // findRaw after transaction
+
+      await service.create(createProduceDto as never, 'owner-uuid-001');
+
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      expect(mockDb.insert).toHaveBeenCalledTimes(2);
+      expect(mockDb.values).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          listingId: expect.any(String),
+          commodityType: 'dates',
+          storageType: 'warehouse',
+          preferredBuyer: 'wholesaler',
+        }),
+      );
+    });
+
+    it('should NOT insert into produce_listing_details when category is not agricultural_produce', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockListing]);
+
+      await service.create(createDto as never, 'owner-uuid-001');
+
+      // transaction is not used for non-produce listings
+      expect(mockDb.insert).toHaveBeenCalledTimes(1);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -295,7 +387,7 @@ describe('ListingsService', () => {
 
   describe('assertOwnership', () => {
     it('should return the listing when caller is the owner', async () => {
-      mockDb.limit.mockResolvedValueOnce([mockListing]);
+      mockDb.limit.mockResolvedValueOnce([mockListingRaw]);
 
       const result = await service.assertOwnership(mockListing.id, mockListing.ownerId);
 
@@ -311,7 +403,7 @@ describe('ListingsService', () => {
     });
 
     it('should throw ForbiddenException when caller is not the owner', async () => {
-      mockDb.limit.mockResolvedValueOnce([mockListing]);
+      mockDb.limit.mockResolvedValueOnce([mockListingRaw]);
 
       await expect(service.assertOwnership(mockListing.id, 'different-user-id')).rejects.toThrow(
         ForbiddenException,
@@ -325,7 +417,7 @@ describe('ListingsService', () => {
 
   describe('findById', () => {
     it('should return an active listing to any caller', async () => {
-      mockDb.limit.mockResolvedValueOnce([mockListing]);
+      mockDb.limit.mockResolvedValueOnce([mockListingRaw]);
 
       const result = await service.findById(mockListing.id);
 
@@ -342,7 +434,7 @@ describe('ListingsService', () => {
 
     it('should return a draft listing to its owner', async () => {
       const draftListing = { ...mockListing, status: 'draft' as const };
-      mockDb.limit.mockResolvedValueOnce([draftListing]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockListingRaw, status: 'draft' as const }]);
 
       const result = await service.findById(draftListing.id, draftListing.ownerId);
 
@@ -351,7 +443,7 @@ describe('ListingsService', () => {
 
     it('should return null for a draft listing when caller is not the owner', async () => {
       const draftListing = { ...mockListing, status: 'draft' as const };
-      mockDb.limit.mockResolvedValueOnce([draftListing]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockListingRaw, status: 'draft' as const }]);
 
       const result = await service.findById(draftListing.id, 'different-user-id');
 
@@ -360,11 +452,40 @@ describe('ListingsService', () => {
 
     it('should return null for a draft listing on unauthenticated (public) access', async () => {
       const draftListing = { ...mockListing, status: 'draft' as const };
-      mockDb.limit.mockResolvedValueOnce([draftListing]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockListingRaw, status: 'draft' as const }]);
 
       const result = await service.findById(draftListing.id);
 
       expect(result).toBeNull();
+    });
+
+    it('should return produceDetails when listing is agricultural_produce', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProduceListing]);
+
+      const result = await service.findById(mockProduceListing.id);
+
+      expect(result?.produceDetails).toEqual(mockProduceListing.produceDetails);
+    });
+
+    it('should return produceDetails as null for non-produce listings', async () => {
+      const withNullProduce = {
+        ...mockListing,
+        produceDetails: {
+          commodityType: null,
+          quantityKg: null,
+          harvestDate: null,
+          storageType: null,
+          certifications: null,
+          preferredBuyer: null,
+          contactPhone: null,
+          contactWhatsapp: null,
+        },
+      };
+      mockDb.limit.mockResolvedValueOnce([withNullProduce]);
+
+      const result = await service.findById(mockListing.id);
+
+      expect(result?.produceDetails).toBeNull();
     });
   });
 
@@ -380,7 +501,7 @@ describe('ListingsService', () => {
     });
 
     it('should return page=1 for offset=0 with limit=20', async () => {
-      mockDb.offset.mockResolvedValueOnce([mockListing]);
+      mockDb.offset.mockResolvedValueOnce([mockListingRaw]);
 
       const result = await service.findAll({ offset: 0, limit: 20 });
 
@@ -398,7 +519,7 @@ describe('ListingsService', () => {
     });
 
     it('should report hasMore=true when more results exist beyond current page', async () => {
-      mockDb.offset.mockResolvedValueOnce([mockListing]);
+      mockDb.offset.mockResolvedValueOnce([mockListingRaw]);
 
       // total=50, offset=0, limit=20 → offset+limit=20 < 50
       const result = await service.findAll({ offset: 0, limit: 20 });
@@ -409,7 +530,7 @@ describe('ListingsService', () => {
 
     it('should report hasMore=false when all results are on the current page', async () => {
       vi.spyOn(service as any, 'countListings').mockResolvedValue(15);
-      mockDb.offset.mockResolvedValueOnce([mockListing]);
+      mockDb.offset.mockResolvedValueOnce([mockListingRaw]);
 
       // total=15, offset=0, limit=20 → offset+limit=20 >= 15
       const result = await service.findAll({ offset: 0, limit: 20 });
@@ -418,7 +539,7 @@ describe('ListingsService', () => {
     });
 
     it('should include result data in the response', async () => {
-      mockDb.offset.mockResolvedValueOnce([mockListing]);
+      mockDb.offset.mockResolvedValueOnce([mockListingRaw]);
 
       const result = await service.findAll({ offset: 0, limit: 20 });
 
@@ -450,7 +571,7 @@ describe('ListingsService', () => {
 
     it('should return listings regardless of status', async () => {
       const draftListing = { ...mockListing, status: 'draft' as const };
-      mockDb.offset.mockResolvedValueOnce([draftListing]);
+      mockDb.offset.mockResolvedValueOnce([{ ...mockListingRaw, status: 'draft' as const }]);
 
       const result = await service.findAllAdmin({ offset: 0, limit: 20 });
 
@@ -488,7 +609,7 @@ describe('ListingsService', () => {
     });
 
     it('should return paginated response', async () => {
-      mockDb.offset.mockResolvedValueOnce([mockListing]);
+      mockDb.offset.mockResolvedValueOnce([mockListingRaw]);
 
       const result = await service.findAllAdmin({ offset: 0, limit: 20 });
 
@@ -512,6 +633,9 @@ describe('ListingsService', () => {
         approvedAt: expect.any(Date),
       };
       mockDb.returning.mockResolvedValueOnce([approvedListing]);
+      mockDb.limit.mockResolvedValueOnce([
+        { ...mockListingRaw, status: 'active', isVerified: true, approvedBy: 'admin-uuid-001' },
+      ]);
 
       const result = await service.verify(mockListing.id, { action: 'approve' }, 'admin-uuid-001');
 
@@ -529,6 +653,7 @@ describe('ListingsService', () => {
     it('should reject a listing without emitting event', async () => {
       const rejectedListing = { ...mockListing, status: 'suspended' as const };
       mockDb.returning.mockResolvedValueOnce([rejectedListing]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockListingRaw, status: 'suspended' }]);
 
       const result = await service.verify(
         mockListing.id,
@@ -568,6 +693,7 @@ describe('ListingsService', () => {
     it('should set isFeatured to true', async () => {
       const featuredListing = { ...mockListing, isFeatured: true };
       mockDb.returning.mockResolvedValueOnce([featuredListing]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockListingRaw, isFeatured: true }]);
 
       const result = await service.setFeatured(mockListing.id, { featured: true });
 
@@ -577,6 +703,7 @@ describe('ListingsService', () => {
     it('should set isFeatured to false', async () => {
       const unfeaturedListing = { ...mockListing, isFeatured: false };
       mockDb.returning.mockResolvedValueOnce([unfeaturedListing]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockListingRaw, isFeatured: false }]);
 
       const result = await service.setFeatured(mockListing.id, { featured: false });
 
@@ -587,6 +714,9 @@ describe('ListingsService', () => {
       const expiryDate = new Date('2026-12-31');
       const featuredListing = { ...mockListing, isFeatured: true, featuredUntil: expiryDate };
       mockDb.returning.mockResolvedValueOnce([featuredListing]);
+      mockDb.limit.mockResolvedValueOnce([
+        { ...mockListingRaw, isFeatured: true, featuredUntil: expiryDate },
+      ]);
 
       const result = await service.setFeatured(mockListing.id, {
         featured: true,
@@ -602,6 +732,41 @@ describe('ListingsService', () => {
       await expect(service.setFeatured('nonexistent-id', { featured: true })).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // update (produce) — upsert produce details
+  // -------------------------------------------------------------------------
+
+  describe('update (produce)', () => {
+    it('should upsert produce_listing_details when produce_details is provided', async () => {
+      const updateDto = {
+        produce_details: {
+          commodity_type: 'olives',
+          storage_type: 'field',
+          preferred_buyer: 'local',
+        },
+      };
+      const updatedListing = { ...mockProduceListing };
+      mockDb.returning.mockResolvedValueOnce([updatedListing]); // listings update
+      mockDb.limit.mockResolvedValueOnce([updatedListing]); // findRaw after upsert
+
+      await service.update(mockProduceListing.id, updateDto as never);
+
+      // insert (for the upsert) was called
+      expect(mockDb.insert).toHaveBeenCalledWith(expect.anything()); // produceListingDetails table
+      expect(mockDb.onConflictDoUpdate).toHaveBeenCalled();
+    });
+
+    it('should NOT touch produce_listing_details when produce_details is absent', async () => {
+      const updateDto = { titleAr: 'عنوان جديد' };
+      mockDb.returning.mockResolvedValueOnce([mockListing]);
+      mockDb.limit.mockResolvedValueOnce([mockListingRaw]);
+
+      await service.update(mockListing.id, updateDto as never);
+
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
   });
 });
