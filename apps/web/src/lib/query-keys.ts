@@ -82,6 +82,15 @@ export const queryKeys = {
   },
   admin: {
     stats: () => ['admin', 'stats'] as const,
+    listingsAll: () => ['admin', 'listings'] as const,
+    listings: (filters?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      is_verified?: boolean;
+      owner_id?: string;
+      sort?: string;
+    }) => [...queryKeys.admin.listingsAll(), filters] as const,
     users: (filters?: {
       role?: string;
       status?: string;

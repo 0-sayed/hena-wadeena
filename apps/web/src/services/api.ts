@@ -1693,6 +1693,15 @@ export interface AdminKycFilters {
   limit?: number;
 }
 
+export interface AdminListingFilters {
+  page?: number;
+  limit?: number;
+  status?: 'draft' | 'active' | 'suspended';
+  is_verified?: boolean;
+  owner_id?: string;
+  sort?: 'created_at|asc' | 'created_at|desc' | 'price|asc' | 'price|desc';
+}
+
 export interface AdminGuideFilters {
   status?: string;
   verified?: boolean;
@@ -1807,6 +1816,19 @@ function buildAiKnowledgeUploadFormData(body: AiKnowledgeUploadRequest): FormDat
 export const adminAPI = {
   // Stats
   getStats: () => apiFetchWithRefresh<AdminStatsResponse>('/admin/stats'),
+
+  // Listings management
+  getListings: (params?: AdminListingFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<Listing>>(
+      `/admin/listings${toQueryString({
+        status: params?.status,
+        is_verified: params?.is_verified,
+        owner_id: params?.owner_id,
+        sort: params?.sort,
+        offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
+        limit: params?.limit,
+      })}`,
+    ),
 
   // Users
   getUsers: (params?: AdminUserFilters) =>

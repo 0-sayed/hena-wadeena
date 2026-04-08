@@ -201,6 +201,8 @@ describe('Admin localization', () => {
     expect(screen.getByText('Total users')).toBeInTheDocument();
     expect(screen.getByText('Pending KYC submissions')).toBeInTheDocument();
     expect(screen.getByText('Pending points of interest')).toBeInTheDocument();
+    expect(screen.getByText('Announcements')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New announcement' })).toBeInTheDocument();
     expect(screen.getByText(/Updated:/)).toBeInTheDocument();
   });
 

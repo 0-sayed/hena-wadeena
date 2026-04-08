@@ -64,6 +64,7 @@ import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
 
 const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
+const AdminListings = lazy(() => import('@/pages/admin/AdminListings'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminUserDetail = lazy(() => import('@/pages/admin/AdminUserDetail'));
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
@@ -134,6 +135,7 @@ const App = () => (
               >
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<AdminOverview />} />
+                <Route path="listings" element={<AdminListings />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="users/:id" element={<AdminUserDetail />} />
                 <Route path="moderation" element={<AdminModeration />} />

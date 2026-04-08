@@ -10,6 +10,7 @@ import {
   type AdminBookingFilters,
   type AdminGuideFilters,
   type AdminKycFilters,
+  type AdminListingFilters,
   type AdminUserFilters,
 } from '@/services/api';
 
@@ -47,6 +48,13 @@ export function useAdminPendingListings(filters?: { page?: number; limit?: numbe
   return useQuery({
     queryKey: queryKeys.admin.pendingListings(filters),
     queryFn: () => adminAPI.getPendingListings(filters),
+  });
+}
+
+export function useAdminListings(filters?: AdminListingFilters) {
+  return useQuery({
+    queryKey: queryKeys.admin.listings(filters),
+    queryFn: () => adminAPI.getListings(filters),
   });
 }
 
