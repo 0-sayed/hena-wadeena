@@ -8,6 +8,7 @@ import { NotificationType, type NotificationListResponse } from '@hena-wadeena/t
 import NotificationsPage from '../NotificationsPage';
 
 let notificationState: NotificationListResponse;
+type NotificationItem = NotificationListResponse['data'][number];
 
 const mockQueryClient = {
   invalidateQueries: vi.fn(),
@@ -202,27 +203,32 @@ describe('NotificationsPage', () => {
     mockGetAll.mockResolvedValue(notificationState);
     mockMarkAllRead.mockResolvedValue({ success: true });
     mockMarkRead.mockResolvedValue({ success: true });
-    mockMarkAllNotificationsAsRead.mockImplementation((value) =>
+    mockMarkAllNotificationsAsRead.mockImplementation((value: NotificationListResponse | undefined) =>
       value
         ? {
             ...value,
-            data: value.data.map((notification) => ({ ...notification, readAt: '2026-04-08T09:10:00.000Z' })),
+            data: value.data.map((notification: NotificationItem) => ({
+              ...notification,
+              readAt: '2026-04-08T09:10:00.000Z',
+            })),
             unreadCount: 0,
           }
         : undefined,
     );
-    mockMarkNotificationAsRead.mockImplementation((value, id) =>
+    mockMarkNotificationAsRead.mockImplementation((value: NotificationListResponse | undefined, id: string) =>
       value
         ? {
             ...value,
-            data: value.data.map((notification) =>
+            data: value.data.map((notification: NotificationItem) =>
               notification.id === id
                 ? { ...notification, readAt: '2026-04-08T09:10:00.000Z' }
                 : notification,
             ),
             unreadCount: Math.max(
               0,
-              value.data.filter((notification) => !notification.readAt && notification.id !== id).length,
+              value.data.filter(
+                (notification: NotificationItem) => !notification.readAt && notification.id !== id,
+              ).length,
             ),
           }
         : undefined,
