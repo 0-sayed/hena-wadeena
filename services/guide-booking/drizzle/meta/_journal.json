@@ -71,6 +71,41 @@
       "when": 1775205840781,
       "tag": "20260403084400_perpetual_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775555002774,
+      "tag": "20260407094322_t40-guide-safety",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1775555013822,
+      "tag": "20260407094333_t40-desert-trip-partial-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775559361180,
+      "tag": "20260407105601_t40-desert-trip-gps-jsonb",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775624008967,
+      "tag": "20260408045328_t40-guide-safety-schema-fixes",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1775624409997,
+      "tag": "20260408050009_t40-narrow-pending-index",
+      "breakpoints": true
     }
   ]
 }

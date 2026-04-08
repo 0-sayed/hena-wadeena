@@ -1,0 +1,2 @@
+ALTER TABLE "guide_booking"."desert_trips" ALTER COLUMN "gps_breadcrumbs" SET DATA TYPE jsonb;--> statement-breakpoint
+ALTER TABLE "guide_booking"."desert_trips" ALTER COLUMN "gps_breadcrumbs" SET DEFAULT '[]'::jsonb;
