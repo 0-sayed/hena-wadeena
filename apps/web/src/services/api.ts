@@ -496,6 +496,27 @@ export interface PriceSummaryResponse {
   }>;
 }
 
+export interface PriceHistoryEntry {
+  date: string;
+  avgPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  sampleCount: number;
+}
+
+export interface PriceHistoryResponse {
+  commodity: {
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    unit: CommodityUnit;
+  };
+  data: PriceHistoryEntry[];
+  period: '7d' | '30d' | '90d' | '1y';
+  region: NvDistrict | null;
+  priceType: PriceType | null;
+}
+
 export interface Commodity {
   id: string;
   nameAr: string;
@@ -604,6 +625,10 @@ export const commoditiesAPI = {
     apiFetchWithRefresh<Commodity>(`/commodities/${id}/deactivate`, {
       method: 'PATCH',
     }),
+  getPriceHistory: (
+    id: string,
+    params?: { period?: '7d' | '30d' | '90d' | '1y'; region?: NvDistrict; price_type?: PriceType },
+  ) => apiFetch<PriceHistoryResponse>(`/commodities/${id}/price-history${toQueryString(params)}`),
 };
 
 export const commodityPricesAPI = {
