@@ -82,6 +82,13 @@
     {
       "idx": 11,
       "version": "7",
+      "when": 1775556136144,
+      "tag": "20260407100216_add_price_alert_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
       "when": 1775626432596,
       "tag": "20260408053352_t38-produce-listing-details",
       "breakpoints": true
