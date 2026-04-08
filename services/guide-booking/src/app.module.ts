@@ -15,6 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import type { StringValue } from 'ms';
 import { ZodValidationPipe } from 'nestjs-zod';
@@ -22,6 +23,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { AttractionsModule } from './attractions/attractions.module';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { BookingsModule } from './bookings/bookings.module';
+import { DesertTripsModule } from './desert-trips/desert-trips.module';
 import { GuidesModule } from './guides/guides.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SearchModule } from './search/search.module';
@@ -78,6 +80,7 @@ function requireEnv(name: string): string {
       },
     ]),
     HealthModule,
+    ScheduleModule.forRoot(),
     AttractionsModule,
     GuidesModule,
     TourPackagesModule,
@@ -85,6 +88,7 @@ function requireEnv(name: string): string {
     ReviewsModule,
     StatsModule,
     SearchModule,
+    DesertTripsModule,
   ],
   providers: [
     JwtStrategy,
