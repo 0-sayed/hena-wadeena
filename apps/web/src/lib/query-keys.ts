@@ -41,6 +41,8 @@ export const queryKeys = {
       ['market', 'business-inquiries', 'sent', filters] as const,
     priceIndex: (filters?: Record<string, unknown>) => ['market', 'price-index', filters] as const,
     priceSummary: () => ['market', 'price-summary'] as const,
+    priceHistory: (id: string, params?: Record<string, unknown>) =>
+      ['market', 'commodities', id, 'price-history', params] as const,
     businesses: (filters?: Record<string, unknown>) => ['market', 'businesses', filters] as const,
     business: (id: string) => ['market', 'businesses', id] as const,
   },
@@ -73,6 +75,10 @@ export const queryKeys = {
   ai: {
     sessions: () => ['ai', 'sessions'] as const,
     session: (id: string) => ['ai', 'sessions', id] as const,
+  },
+  benefits: {
+    all: () => ['benefits'] as const,
+    detail: (slug: string) => ['benefits', slug] as const,
   },
   admin: {
     stats: () => ['admin', 'stats'] as const,

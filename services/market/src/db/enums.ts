@@ -17,6 +17,7 @@ export const listingCategoryEnum = marketSchema.enum('listing_category', [
   'education',
   'healthcare',
   'shopping',
+  'agricultural_produce',
 ]);
 export const listingStatusEnum = marketSchema.enum('listing_status', [
   'draft',
@@ -98,3 +99,6 @@ export const wellAreaEnum = marketSchema.enum('well_area', [
   'baris',
   'balat',
 ]);
+
+// Price alerts
+export const alertDirectionEnum = marketSchema.enum('alert_direction', ['above', 'below']);

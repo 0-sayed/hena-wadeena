@@ -3,47 +3,9 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { GuidesService } from '../guides/guides.service';
+import { createMockDb } from '../test/mock-db';
 
 import { TourPackagesService } from './tour-packages.service';
-
-type MockChain = Record<string, ReturnType<typeof vi.fn>> & {
-  then: ReturnType<typeof vi.fn>;
-  execute: ReturnType<typeof vi.fn>;
-  transaction: ReturnType<typeof vi.fn>;
-};
-
-function createMockDb(): MockChain {
-  const chain = {} as MockChain;
-
-  for (const method of [
-    'select',
-    'from',
-    'where',
-    'orderBy',
-    'limit',
-    'offset',
-    'insert',
-    'values',
-    'returning',
-    'update',
-    'set',
-    'delete',
-  ]) {
-    chain[method] = vi.fn().mockReturnValue(chain);
-  }
-
-  chain.then = vi
-    .fn()
-    .mockImplementation((onFulfilled: (v: unknown[]) => unknown) =>
-      Promise.resolve([]).then(onFulfilled),
-    );
-
-  chain.execute = vi.fn().mockResolvedValue([]);
-
-  chain.transaction = vi.fn().mockImplementation((cb: (tx: MockChain) => unknown) => cb(chain));
-
-  return chain;
-}
 
 const mockPackage = {
   id: 'pkg-uuid-1',
@@ -424,6 +386,39 @@ describe('TourPackagesService', () => {
           contentType: 'image/jpeg',
           key: expect.stringMatching(/^packages\/pkg-uuid-1\/.+-cover\.jpg$/),
         }),
+      );
+    });
+  });
+
+  // ─────────────────────────────────────────── create — transparent pricing
+  describe('create — transparent pricing', () => {
+    it('persists priceBreakdown and noHiddenFees', async () => {
+      const dto = {
+        titleAr: 'جولة تجريبية',
+        durationHours: 4,
+        maxPeople: 8,
+        price: 30000,
+        noHiddenFees: true,
+        priceBreakdown: [
+          { label: 'Transport', amountPiasters: 10000 },
+          { label: 'Entry', amountPiasters: 20000 },
+        ],
+      };
+      mockResolveGuideId.mockResolvedValue('guide-uuid-1');
+      mockDb.returning!.mockResolvedValue([
+        {
+          ...mockPackage,
+          noHiddenFees: true,
+          priceBreakdown: dto.priceBreakdown,
+        },
+      ]);
+
+      const result = await service.create(dto as any, 'user-uuid-1');
+
+      expect(result.noHiddenFees).toBe(true);
+      expect(result.priceBreakdown).toHaveLength(2);
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({ noHiddenFees: true, priceBreakdown: dto.priceBreakdown }),
       );
     });
   });

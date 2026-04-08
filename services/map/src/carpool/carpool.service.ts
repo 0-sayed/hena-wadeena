@@ -13,23 +13,13 @@ import type { SQL } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { carpoolPassengers, carpoolRides } from '../db/schema/index';
+import { isUniqueViolation } from '../utils/db';
 import { distanceTo, makePoint, withinRadius } from '../utils/postgis';
 
 import type { CreateRideDto, JoinRideDto, RideFiltersDto } from './dto';
 
 type Ride = typeof carpoolRides.$inferSelect;
 type Passenger = typeof carpoolPassengers.$inferSelect;
-
-const PG_UNIQUE_VIOLATION = '23505';
-
-function isUniqueViolation(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as { code: string }).code === PG_UNIQUE_VIOLATION
-  );
-}
 
 @Injectable()
 export class CarpoolService {
@@ -329,12 +319,11 @@ export class CarpoolService {
         throw new BadRequestException('Past rides cannot be reactivated');
       }
 
-      await tx.delete(carpoolPassengers).where(
-        and(
-          eq(carpoolPassengers.rideId, rideId),
-          eq(carpoolPassengers.status, 'cancelled'),
-        ),
-      );
+      await tx
+        .delete(carpoolPassengers)
+        .where(
+          and(eq(carpoolPassengers.rideId, rideId), eq(carpoolPassengers.status, 'cancelled')),
+        );
 
       const [reactivated] = await tx
         .update(carpoolRides)

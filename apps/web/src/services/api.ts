@@ -496,6 +496,27 @@ export interface PriceSummaryResponse {
   }>;
 }
 
+export interface PriceHistoryEntry {
+  date: string;
+  avgPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  sampleCount: number;
+}
+
+export interface PriceHistoryResponse {
+  commodity: {
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    unit: CommodityUnit;
+  };
+  data: PriceHistoryEntry[];
+  period: '7d' | '30d' | '90d' | '1y';
+  region: NvDistrict | null;
+  priceType: PriceType | null;
+}
+
 export interface Commodity {
   id: string;
   nameAr: string;
@@ -604,6 +625,10 @@ export const commoditiesAPI = {
     apiFetchWithRefresh<Commodity>(`/commodities/${id}/deactivate`, {
       method: 'PATCH',
     }),
+  getPriceHistory: (
+    id: string,
+    params?: { period?: '7d' | '30d' | '90d' | '1y'; region?: NvDistrict; price_type?: PriceType },
+  ) => apiFetch<PriceHistoryResponse>(`/commodities/${id}/price-history${toQueryString(params)}`),
 };
 
 export const commodityPricesAPI = {
@@ -1854,5 +1879,35 @@ export const aiAPI = {
     apiFetchWithRefresh<{ success: boolean; data: LegacyChatResponse }>('/ai/chat', {
       method: 'POST',
       body: JSON.stringify({ message, conversation_id: conversationId }),
+    }),
+};
+
+// ── Benefits ─────────────────────────────────────────────────────────────────
+
+export interface BenefitInfo {
+  id: string;
+  slug: string;
+  nameAr: string;
+  nameEn: string;
+  ministryAr: string;
+  documentsAr: string[];
+  officeNameAr: string;
+  officePhone: string;
+  officeAddressAr: string;
+  enrollmentNotesAr: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const benefitsAPI = {
+  list: () => apiFetch<BenefitInfo[]>('/benefits'),
+  getBySlug: (slug: string) => apiFetch<BenefitInfo>(`/benefits/${slug}`),
+  update: (
+    slug: string,
+    body: Partial<Omit<BenefitInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt'>>,
+  ) =>
+    apiFetchWithRefresh<BenefitInfo>(`/benefits/${slug}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
     }),
 };

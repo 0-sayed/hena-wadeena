@@ -1,5 +1,5 @@
 import { DRIZZLE_CLIENT, REDIS_CLIENT, RedisStreamsService } from '@hena-wadeena/nest-common';
-import { EVENTS, PaginatedResponse } from '@hena-wadeena/types';
+import { EVENTS, NvDistrict, PaginatedResponse, PriceType } from '@hena-wadeena/types';
 import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SQL, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
@@ -7,6 +7,7 @@ import Redis from 'ioredis';
 
 import { commodities } from '../db/schema/commodities';
 import { commodityPrices } from '../db/schema/commodity-prices';
+import { PriceAlertsService } from '../price-alerts/price-alerts.service';
 import { isForeignKeyViolation, isUniqueViolation } from '../shared/error-helpers';
 import { andRequired, firstOrThrow, paginate } from '../shared/query-helpers';
 import { scanAndDelete } from '../shared/redis-helpers';
@@ -73,6 +74,20 @@ type PriceHistoryRow = Record<string, unknown> & {
   sample_count: string;
 };
 
+export interface PriceHistoryResult {
+  commodity: Pick<Commodity, 'id' | 'nameAr' | 'nameEn' | 'unit'>;
+  data: {
+    date: string;
+    avgPrice: number;
+    minPrice: number;
+    maxPrice: number;
+    sampleCount: number;
+  }[];
+  period: '7d' | '30d' | '90d' | '1y';
+  region: NvDistrict | null;
+  priceType: PriceType | null;
+}
+
 function formatPriceIndexRow(r: PriceIndexRow) {
   const changePiasters = r.previous_price !== null ? r.latest_price - r.previous_price : null;
   const changePercent =
@@ -106,6 +121,7 @@ export class CommodityPricesService {
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
+    @Inject(PriceAlertsService) private readonly priceAlertsService: PriceAlertsService,
   ) {}
 
   // --- Commodity CRUD ---
@@ -231,6 +247,13 @@ export class CommodityPricesService {
       // Best-effort enrichment: don't let a post-write failure hide the committed write
       this.enrichAndPublishPrice(dto.commodityId, dto.region, dto.price, dto.priceType);
 
+      // Best-effort alert evaluation: fire-and-forget, same pattern as enrichAndPublishPrice
+      this.priceAlertsService
+        .evaluateForCommodity(dto.commodityId, dto.price, new Date(dto.recordedAt))
+        .catch((err: unknown) => {
+          this.logger.error('Price alert evaluation failed (write already committed)', err);
+        });
+
       return entry;
     } catch (err) {
       if (isForeignKeyViolation(err)) {
@@ -274,17 +297,23 @@ export class CommodityPricesService {
       throw err;
     }
 
-    this.invalidatePriceCache();
-    // Also evict per-commodity detail caches for all affected commodities
     const uniqueCommodityIds = [...new Set(entries.map((e) => e.commodityId))];
-    for (const cid of uniqueCommodityIds) {
-      this.redis.del(`mkt:commodity:${cid}`).catch((err: unknown) => {
-        this.logger.error('Cache invalidation failed', err);
-      });
-    }
+    this.invalidatePriceCache(uniqueCommodityIds);
 
     // Best-effort enrichment: don't let post-write failures hide committed writes
     this.enrichAndPublishBatch(entries, uniqueCommodityIds);
+
+    // Best-effort alert evaluation — one call per unique commodity to prevent concurrent
+    // reads of lastTriggeredAt from allowing duplicate notifications in the same batch.
+    const latestPricePerCommodity = new Map<string, number>();
+    for (const entry of entries) {
+      latestPricePerCommodity.set(entry.commodityId, entry.price);
+    }
+    for (const [cid, price] of latestPricePerCommodity) {
+      this.priceAlertsService.evaluateForCommodity(cid, price, recordedAt).catch((err: unknown) => {
+        this.logger.error('Price alert evaluation failed (writes already committed)', err);
+      });
+    }
 
     return entries;
   }
@@ -542,25 +571,21 @@ export class CommodityPricesService {
     return result;
   }
 
-  async getPriceHistory(commodityId: string, query: QueryPriceHistoryDto) {
-    const [commodity] = await this.db
-      .select({
-        id: commodities.id,
-        nameAr: commodities.nameAr,
-        nameEn: commodities.nameEn,
-        unit: commodities.unit,
-      })
-      .from(commodities)
-      .where(eq(commodities.id, commodityId))
-      .limit(1);
-
-    if (!commodity) throw new NotFoundException('Commodity not found');
+  async getPriceHistory(
+    commodityId: string,
+    query: QueryPriceHistoryDto,
+  ): Promise<PriceHistoryResult> {
+    const cacheKey = `mkt:price-history:${commodityId}:${query.period}:${query.region ?? '*'}:${query.price_type ?? '*'}`;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as PriceHistoryResult;
+    } catch (err) {
+      this.logger.error('Redis read failed, falling back to DB', err);
+    }
 
     const truncUnit = query.period === '90d' ? 'week' : query.period === '1y' ? 'month' : 'day';
-
     const regionFilter = query.region ? sql`AND region = ${query.region}` : sql``;
     const priceTypeFilter = query.price_type ? sql`AND price_type = ${query.price_type}` : sql``;
-
     const intervalMap: Record<string, string> = {
       '7d': '7 days',
       '30d': '30 days',
@@ -569,7 +594,18 @@ export class CommodityPricesService {
     };
     const interval = intervalMap[query.period] ?? '30 days';
 
-    const rows = await this.db.execute<PriceHistoryRow>(sql`
+    const [[commodity], rows] = await Promise.all([
+      this.db
+        .select({
+          id: commodities.id,
+          nameAr: commodities.nameAr,
+          nameEn: commodities.nameEn,
+          unit: commodities.unit,
+        })
+        .from(commodities)
+        .where(eq(commodities.id, commodityId))
+        .limit(1),
+      this.db.execute<PriceHistoryRow>(sql`
       SELECT
         date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at)::date::text AS date,
         ROUND(AVG(price))::text AS avg_price,
@@ -584,9 +620,12 @@ export class CommodityPricesService {
         ${priceTypeFilter}
       GROUP BY date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at)
       ORDER BY date_trunc(${sql.raw(`'${truncUnit}'`)}, recorded_at) ASC
-    `);
+    `),
+    ]);
 
-    return {
+    if (!commodity) throw new NotFoundException('Commodity not found');
+
+    const result = {
       commodity,
       data: [...rows].map((r) => ({
         date: r.date,
@@ -596,9 +635,15 @@ export class CommodityPricesService {
         sampleCount: Number(r.sample_count),
       })),
       period: query.period,
-      region: query.region ?? null,
-      priceType: query.price_type ?? null,
+      region: (query.region as NvDistrict | undefined) ?? null,
+      priceType: (query.price_type as PriceType | undefined) ?? null,
     };
+
+    this.redis.set(cacheKey, JSON.stringify(result), 'EX', 300).catch((err: unknown) => {
+      this.logger.error('Cache set failed', err);
+    });
+
+    return result;
   }
 
   // --- Cache helpers ---
@@ -650,14 +695,17 @@ export class CommodityPricesService {
     });
   }
 
-  private invalidatePriceCache(commodityId?: string): void {
+  private invalidatePriceCache(commodityId?: string | string[]): void {
+    const ids =
+      commodityId === undefined ? [] : Array.isArray(commodityId) ? commodityId : [commodityId];
     const ops: Promise<unknown>[] = [
       scanAndDelete(this.redis, 'mkt:price-index:*'),
       this.redis.del('mkt:price-summary'),
     ];
-    // Also evict the commodity detail cache so latestPricesByRegion stays fresh
-    if (commodityId) {
-      ops.push(this.redis.del(`mkt:commodity:${commodityId}`));
+    // Also evict per-commodity caches so latestPricesByRegion stays fresh
+    for (const id of ids) {
+      ops.push(this.redis.del(`mkt:commodity:${id}`));
+      ops.push(scanAndDelete(this.redis, `mkt:price-history:${id}:*`));
     }
     Promise.all(ops).catch((err: unknown) => {
       this.logger.error('Cache invalidation failed', err);
@@ -665,11 +713,12 @@ export class CommodityPricesService {
   }
 
   private invalidateCommodityCache(id: string): void {
-    // Evict per-commodity detail AND public price caches (name/category/active shown there)
+    // Evict per-commodity detail, public price caches, and price-history (which embeds commodity metadata)
     Promise.all([
       this.redis.del(`mkt:commodity:${id}`),
       scanAndDelete(this.redis, 'mkt:price-index:*'),
       this.redis.del('mkt:price-summary'),
+      scanAndDelete(this.redis, `mkt:price-history:${id}:*`),
     ]).catch((err: unknown) => {
       this.logger.error('Cache invalidation failed', err);
     });
