@@ -69,6 +69,7 @@ export default function AdminListings() {
   const [saving, setSaving] = useState(false);
   const isSavingRef = useRef(false);
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const isRtl = appLanguage === 'ar';
   const dialogMode = searchParams.get('dialog');
 
   const listingsQuery = useAdminListings({
@@ -143,8 +144,6 @@ export default function AdminListings() {
     setSaving(true);
     try {
       const payload = {
-        listingType: 'business' as const,
-        transaction: 'sale' as const,
         titleAr: listingForm.titleAr.trim(),
         description: listingForm.description.trim() || undefined,
         category: listingForm.category,
@@ -157,7 +156,11 @@ export default function AdminListings() {
       if (listingForm.id) {
         await listingsAPI.update(listingForm.id, payload);
       } else {
-        await listingsAPI.create(payload);
+        await listingsAPI.create({
+          ...payload,
+          listingType: 'business',
+          transaction: 'sale',
+        });
       }
 
       setListingForm(emptyListingForm);
@@ -349,13 +352,13 @@ export default function AdminListings() {
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-4">
               <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>
-                <ChevronRight className="h-4 w-4" />
+                {isRtl ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
               </Button>
               <span className="text-sm text-muted-foreground">
                 {page} / {totalPages}
               </span>
               <Button variant="outline" size="sm" disabled={!hasMore} onClick={() => setPage((value) => value + 1)}>
-                <ChevronLeft className="h-4 w-4" />
+                {isRtl ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </div>
           )}

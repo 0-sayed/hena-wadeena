@@ -96,17 +96,15 @@ export default function ChangePasswordPage() {
                         id="currentPassword"
                         type="password"
                         value={formData.currentPassword}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return {
-                              ...current,
-                              currentPassword: event.target.value,
-                            };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({
+                            ...current,
+                            currentPassword: event.target.value,
+                          }));
+                        }}
                         required
                       />
                     </div>
@@ -116,17 +114,15 @@ export default function ChangePasswordPage() {
                         id="newPassword"
                         type="password"
                         value={formData.newPassword}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return {
-                              ...current,
-                              newPassword: event.target.value,
-                            };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({
+                            ...current,
+                            newPassword: event.target.value,
+                          }));
+                        }}
                         required
                       />
                     </div>
@@ -136,17 +132,15 @@ export default function ChangePasswordPage() {
                         id="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return {
-                              ...current,
-                              confirmPassword: event.target.value,
-                            };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({
+                            ...current,
+                            confirmPassword: event.target.value,
+                          }));
+                        }}
                         required
                       />
                     </div>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import time
 from datetime import date, datetime
@@ -37,6 +38,7 @@ from nakheel.models.session import Session
 
 router = APIRouter(prefix="/chat")
 STREAM_ERROR_MESSAGE = "Unable to send your message right now. Please try again."
+logger = logging.getLogger(__name__)
 
 
 def _map_sources(retrieved_chunks: list[RetrievedChunkRef]) -> list[dict]:
@@ -373,7 +375,8 @@ async def stream_message(
                     ),
                 }
             )
-        except Exception:
+        except Exception as exc:
+            logger.exception("Streaming error: %s", exc)
             yield _serialize_stream_event({"type": "error", "message": STREAM_ERROR_MESSAGE})
 
     return StreamingResponse(

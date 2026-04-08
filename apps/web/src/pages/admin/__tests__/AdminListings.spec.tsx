@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockUseAdminListings = vi.fn();
 const mockInvalidateQueries = vi.fn();
+const mockCreateListing = vi.fn();
 const mockRemoveListing = vi.fn();
+const mockUpdateListing = vi.fn();
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
@@ -23,7 +25,14 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@/components/market/ListingEditorDialog', () => ({
-  ListingEditorDialog: ({ open }: { open: boolean }) => (open ? <div>listing-dialog</div> : null),
+  ListingEditorDialog: ({
+    open,
+    onSave,
+  }: {
+    open: boolean;
+    onSave: () => void;
+  }) =>
+    open ? <button onClick={onSave}>Save listing</button> : null,
 }));
 
 vi.mock('@/components/market/listing-editor-form', () => ({
@@ -99,8 +108,8 @@ vi.mock('@/services/api', async () => {
   return {
     ...(actual as object),
     listingsAPI: {
-      create: vi.fn(),
-      update: vi.fn(),
+      create: (...args: unknown[]) => mockCreateListing(...args),
+      update: (...args: unknown[]) => mockUpdateListing(...args),
       remove: (...args: unknown[]) => mockRemoveListing(...args),
     },
   };
@@ -112,7 +121,9 @@ describe('AdminListings', () => {
   beforeEach(() => {
     mockUseAdminListings.mockReset();
     mockInvalidateQueries.mockReset();
+    mockCreateListing.mockReset();
     mockRemoveListing.mockReset();
+    mockUpdateListing.mockReset();
 
     mockUseAdminListings.mockReturnValue({
       data: {
@@ -165,7 +176,9 @@ describe('AdminListings', () => {
       error: null,
     });
 
+    mockCreateListing.mockResolvedValue(undefined);
     mockRemoveListing.mockResolvedValue(undefined);
+    mockUpdateListing.mockResolvedValue(undefined);
   });
 
   it('renders admin announcements tools and lets admin delete a merchant listing', async () => {
@@ -180,6 +193,74 @@ describe('AdminListings', () => {
 
     await waitFor(() => {
       expect(mockRemoveListing).toHaveBeenCalledWith('listing-1');
+    });
+  });
+
+  it('preserves the listing classification when editing an existing announcement', async () => {
+    mockUseAdminListings.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'listing-1',
+            ownerId: 'merchant-uuid-1',
+            listingType: 'land',
+            transaction: 'rent',
+            titleAr: 'Fresh dates',
+            titleEn: 'Fresh dates',
+            description: 'Dates from Kharga',
+            category: 'shopping',
+            subCategory: null,
+            price: 20000,
+            priceUnit: 'piece',
+            priceRange: null,
+            areaSqm: null,
+            location: null,
+            district: 'kharga',
+            address: 'Main street',
+            images: null,
+            features: null,
+            amenities: null,
+            tags: null,
+            contact: null,
+            openingHours: null,
+            slug: 'fresh-dates',
+            status: 'active',
+            isVerified: true,
+            isFeatured: false,
+            isPublished: true,
+            featuredUntil: null,
+            approvedBy: null,
+            approvedAt: null,
+            ratingAvg: null,
+            reviewCount: 0,
+            viewsCount: 0,
+            createdAt: '2026-04-08T09:00:00.000Z',
+            updatedAt: '2026-04-08T09:00:00.000Z',
+            deletedAt: null,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        hasMore: false,
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(<AdminListings />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save listing' }));
+
+    await waitFor(() => {
+      expect(mockUpdateListing).toHaveBeenCalledWith(
+        'listing-1',
+        expect.not.objectContaining({
+          listingType: expect.anything(),
+          transaction: expect.anything(),
+        }),
+      );
     });
   });
 });

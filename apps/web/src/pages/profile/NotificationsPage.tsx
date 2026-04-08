@@ -109,8 +109,8 @@ const NotificationsPage = () => {
     mutationFn: (id: string) => notificationsAPI.markRead(id),
     onSuccess: (_response, id) => {
       const nextList = markNotificationAsRead(data, id);
-      queryClient.setQueryData<NotificationListResponse>(listQueryKey, nextList);
       if (nextList) {
+        queryClient.setQueryData<NotificationListResponse>(listQueryKey, nextList);
         setUnreadCount(nextList.unreadCount);
       }
       invalidateAll();
@@ -122,8 +122,10 @@ const NotificationsPage = () => {
     mutationFn: () => notificationsAPI.markAllRead(),
     onSuccess: () => {
       const nextList = markAllNotificationsAsRead(data);
-      queryClient.setQueryData<NotificationListResponse>(listQueryKey, nextList);
-      setUnreadCount(0);
+      if (nextList) {
+        queryClient.setQueryData<NotificationListResponse>(listQueryKey, nextList);
+        setUnreadCount(0);
+      }
       invalidateAll();
     },
     onError: () => toast.error('تعذر تحديث الإشعارات'),

@@ -39,4 +39,30 @@ describe('BusinessLogo', () => {
     expect(screen.queryByRole('img', { name: 'Broken company logo' })).not.toBeInTheDocument();
     expect(document.querySelector('svg')).toBeInTheDocument();
   });
+
+  it('immediately renders a replacement logo source after a previous load error', () => {
+    const { rerender } = render(
+      <BusinessLogo
+        src="https://cdn.hena.test/broken-logo.png"
+        alt="Transport company"
+        fallbackIcon={Building2}
+      />,
+    );
+
+    fireEvent.error(screen.getByRole('img', { name: 'Transport company' }));
+    expect(screen.queryByRole('img', { name: 'Transport company' })).not.toBeInTheDocument();
+
+    rerender(
+      <BusinessLogo
+        src="https://cdn.hena.test/fixed-logo.png"
+        alt="Transport company"
+        fallbackIcon={Building2}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Transport company' })).toHaveAttribute(
+      'src',
+      'https://cdn.hena.test/fixed-logo.png',
+    );
+  });
 });

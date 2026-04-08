@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { resolveMediaUrl } from '@/lib/media';
 import { cn } from '@/lib/utils';
@@ -22,11 +22,8 @@ export function BusinessLogo({
   imageClassName,
 }: BusinessLogoProps) {
   const resolvedSrc = resolveMediaUrl(src);
-  const [hasLoadError, setHasLoadError] = useState(false);
-
-  useEffect(() => {
-    setHasLoadError(false);
-  }, [resolvedSrc]);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const hasLoadError = resolvedSrc != null && failedSrc === resolvedSrc;
 
   return (
     <div
@@ -40,7 +37,7 @@ export function BusinessLogo({
           src={resolvedSrc}
           alt={alt}
           className={cn('h-full w-full object-cover', imageClassName)}
-          onError={() => setHasLoadError(true)}
+          onError={() => setFailedSrc(resolvedSrc)}
         />
       ) : (
         <FallbackIcon className={cn('h-7 w-7 text-muted-foreground', iconClassName)} aria-hidden="true" />

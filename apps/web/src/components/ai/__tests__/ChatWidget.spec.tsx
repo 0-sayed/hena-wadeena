@@ -288,7 +288,7 @@ describe('ChatWidget', () => {
       welcome_message: 'Welcome',
     });
 
-    mockStreamMessage.mockRejectedValue(new Error('stream failed'));
+    mockStreamMessage.mockRejectedValue(new TypeError('Failed to fetch'));
     mockSendMessage.mockResolvedValue({
       message_id: 'msg-fallback-1',
       session_id: 'sess-1',
@@ -320,5 +320,52 @@ describe('ChatWidget', () => {
     });
 
     expect(screen.getByText('Fallback response')).toBeInTheDocument();
+  });
+
+  it('does not retry with the non-stream request after an application-level stream error', async () => {
+    mockUseAuth.mockReturnValue({
+      ...buildUnauthedContext(),
+      user: {
+        id: 'user-1',
+        email: 'user-1@example.com',
+        phone: '+2000000000',
+        full_name: 'User One',
+        role: UserRole.TOURIST,
+        status: 'active',
+        language: 'en',
+      },
+      isAuthenticated: true,
+    });
+
+    mockCreateSession.mockResolvedValue({
+      session_id: 'sess-1',
+      user_id: 'user-1',
+      created_at: new Date().toISOString(),
+      language_preference: 'auto',
+      message_count: 0,
+      is_active: true,
+      welcome_message: 'Welcome',
+    });
+
+    mockStreamMessage.mockRejectedValue(new Error('Unable to send your message right now.'));
+
+    renderWidget();
+    fireEvent.click(screen.getByLabelText('AI assistant'));
+
+    await waitFor(() => {
+      expect(mockCreateSession).toHaveBeenCalled();
+    });
+
+    const input = screen.getByPlaceholderText('Type your question...');
+    fireEvent.change(input, { target: { value: 'Tell me about New Valley' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Unable to send your message right now. Please try again.'),
+      ).toBeInTheDocument();
+    });
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
   });
 });

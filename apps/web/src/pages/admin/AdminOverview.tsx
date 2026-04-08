@@ -252,11 +252,11 @@ export default function AdminOverview() {
               })}
             </p>
           </div>
-          <Link to="/admin/listings?dialog=new">
-            <Button>
+          <Button asChild>
+            <Link to="/admin/listings?dialog=new">
               {pickLocalizedCopy(appLanguage, { ar: 'إعلان جديد', en: 'New announcement' })}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </CardHeader>
       </Card>
 

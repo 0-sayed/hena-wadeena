@@ -32,7 +32,6 @@ import {
   useUploadAdminAiDocuments,
 } from '@/hooks/use-admin';
 import { useAuth } from '@/hooks/use-auth';
-import { queryKeys } from '@/lib/query-keys';
 import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import type { AiKnowledgeBatchResponse, AiKnowledgeDocument } from '@/services/api';
 
@@ -160,7 +159,7 @@ export default function AdminAiDocuments() {
     }
 
     if (batch.status === 'completed' || batch.status === 'completed_with_errors') {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.aiDocuments() });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
 
       if (batch.failed_files > 0) {
         toast.error(

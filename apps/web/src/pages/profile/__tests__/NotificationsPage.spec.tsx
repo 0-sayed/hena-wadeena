@@ -15,7 +15,9 @@ const mockQueryClient = {
 };
 const mockGetAll = vi.fn();
 const mockMarkAllRead = vi.fn();
+const mockMarkAllNotificationsAsRead = vi.fn();
 const mockMarkRead = vi.fn();
+const mockMarkNotificationAsRead = vi.fn();
 
 vi.mock('@tanstack/react-query', () => ({
   keepPreviousData: Symbol('keepPreviousData'),
@@ -130,6 +132,11 @@ vi.mock('@/hooks/use-auth', () => ({
   }),
 }));
 
+vi.mock('@/lib/notifications-cache', () => ({
+  markAllNotificationsAsRead: (...args: unknown[]) => mockMarkAllNotificationsAsRead(...args),
+  markNotificationAsRead: (...args: unknown[]) => mockMarkNotificationAsRead(...args),
+}));
+
 vi.mock('@/lib/dates', () => ({
   formatRelativeTime: () => 'just now',
 }));
@@ -188,11 +195,38 @@ describe('NotificationsPage', () => {
     mockQueryClient.setQueryData.mockReset();
     mockGetAll.mockReset();
     mockMarkAllRead.mockReset();
+    mockMarkAllNotificationsAsRead.mockReset();
     mockMarkRead.mockReset();
+    mockMarkNotificationAsRead.mockReset();
 
     mockGetAll.mockResolvedValue(notificationState);
     mockMarkAllRead.mockResolvedValue({ success: true });
     mockMarkRead.mockResolvedValue({ success: true });
+    mockMarkAllNotificationsAsRead.mockImplementation((value) =>
+      value
+        ? {
+            ...value,
+            data: value.data.map((notification) => ({ ...notification, readAt: '2026-04-08T09:10:00.000Z' })),
+            unreadCount: 0,
+          }
+        : undefined,
+    );
+    mockMarkNotificationAsRead.mockImplementation((value, id) =>
+      value
+        ? {
+            ...value,
+            data: value.data.map((notification) =>
+              notification.id === id
+                ? { ...notification, readAt: '2026-04-08T09:10:00.000Z' }
+                : notification,
+            ),
+            unreadCount: Math.max(
+              0,
+              value.data.filter((notification) => !notification.readAt && notification.id !== id).length,
+            ),
+          }
+        : undefined,
+    );
 
     mockQueryClient.setQueryData.mockImplementation((key: unknown, value: unknown) => {
       if (JSON.stringify(key) === JSON.stringify(['notifications', 'list', { page: 1, limit: 20 }])) {
@@ -232,5 +266,30 @@ describe('NotificationsPage', () => {
     expect(screen.getByText('Booking confirmed')).toBeInTheDocument();
     expect(screen.queryByText('2')).not.toBeInTheDocument();
     expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('does not clear the cached list or unread badge when the optimistic mark-all update cannot build a next list', async () => {
+    mockMarkAllNotificationsAsRead.mockReturnValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <NotificationsPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+
+    await waitFor(() => {
+      expect(mockMarkAllRead).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockQueryClient.setQueryData).not.toHaveBeenCalledWith(
+      ['notifications', 'list', { page: 1, limit: 20 }],
+      undefined,
+    );
+    expect(mockQueryClient.setQueryData).not.toHaveBeenCalledWith(
+      ['notifications', 'unreadCount'],
+      { count: 0 },
+    );
   });
 });

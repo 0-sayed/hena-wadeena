@@ -99,14 +99,12 @@ export default function ConfirmPasswordResetPage() {
                         type="email"
                         dir="ltr"
                         value={formData.email}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return { ...current, email: event.target.value };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({ ...current, email: event.target.value }));
+                        }}
                         required
                       />
                     </div>
@@ -120,17 +118,15 @@ export default function ConfirmPasswordResetPage() {
                         dir="ltr"
                         maxLength={6}
                         value={formData.otp}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return {
-                              ...current,
-                              otp: event.target.value.replace(/\D/g, '').slice(0, 6),
-                            };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({
+                            ...current,
+                            otp: event.target.value.replace(/\D/g, '').slice(0, 6),
+                          }));
+                        }}
                         required
                       />
                     </div>
@@ -140,17 +136,15 @@ export default function ConfirmPasswordResetPage() {
                         id="newPassword"
                         type="password"
                         value={formData.newPassword}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return {
-                              ...current,
-                              newPassword: event.target.value,
-                            };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({
+                            ...current,
+                            newPassword: event.target.value,
+                          }));
+                        }}
                         required
                       />
                     </div>
@@ -160,17 +154,15 @@ export default function ConfirmPasswordResetPage() {
                         id="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
-                        onChange={(event) =>
-                          setFormData((current) => {
-                            if (formError) {
-                              setFormError(null);
-                            }
-                            return {
-                              ...current,
-                              confirmPassword: event.target.value,
-                            };
-                          })
-                        }
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
+                          setFormData((current) => ({
+                            ...current,
+                            confirmPassword: event.target.value,
+                          }));
+                        }}
                         required
                       />
                     </div>

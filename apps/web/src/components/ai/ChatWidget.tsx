@@ -129,6 +129,18 @@ export function ChatWidget() {
     await bootstrapSession(true);
   };
 
+  const shouldRetryWithoutStreaming = (error: unknown) => {
+    if (error instanceof TypeError) {
+      return true;
+    }
+
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return true;
+    }
+
+    return error instanceof ApiError && [405, 501].includes(error.status);
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || loading || !isAuthenticated) return;
 
@@ -233,7 +245,7 @@ export function ChatWidget() {
         const resolved = await resolveSessionRequest((targetSessionId) => streamRequest(targetSessionId));
         setSessionId(resolved.activeSessionId);
       } catch (error) {
-        if (!firstTokenLogged && !timedOut) {
+        if (!firstTokenLogged && !timedOut && shouldRetryWithoutStreaming(error)) {
           const resolved = await resolveSessionRequest((targetSessionId) =>
             aiAPI.sendMessage(targetSessionId, { content: userText, language: 'auto' }),
           );

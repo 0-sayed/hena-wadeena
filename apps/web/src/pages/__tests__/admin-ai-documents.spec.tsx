@@ -141,6 +141,31 @@ describe('AdminAiDocuments', () => {
     expect(screen.getByText('No PDFs are loaded yet.')).toBeInTheDocument();
   });
 
+  it('invalidates all AI document query variants when a batch completes', async () => {
+    mockUseAdminAiBatch.mockReturnValue({
+      data: {
+        batch_id: 'batch-1',
+        status: 'completed',
+        total_files: 1,
+        pending_files: 0,
+        processing_files: 0,
+        indexed_files: 1,
+        failed_files: 0,
+        created_at: '2026-04-08T10:00:00.000Z',
+        completed_at: '2026-04-08T10:01:00.000Z',
+        documents: [],
+      },
+    });
+
+    render(<AdminAiDocuments />);
+
+    await waitFor(() => {
+      expect(mockInvalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['admin', 'ai', 'documents'],
+      });
+    });
+  });
+
   it('uploads selected PDF files through the admin hook', async () => {
     const { container } = render(<AdminAiDocuments />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
