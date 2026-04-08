@@ -7,6 +7,7 @@ import Redis from 'ioredis';
 
 import { commodities } from '../db/schema/commodities';
 import { commodityPrices } from '../db/schema/commodity-prices';
+import { PriceAlertsService } from '../price-alerts/price-alerts.service';
 import { isForeignKeyViolation, isUniqueViolation } from '../shared/error-helpers';
 import { andRequired, firstOrThrow, paginate } from '../shared/query-helpers';
 import { scanAndDelete } from '../shared/redis-helpers';
@@ -120,6 +121,7 @@ export class CommodityPricesService {
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(RedisStreamsService) private readonly redisStreams: RedisStreamsService,
+    @Inject(PriceAlertsService) private readonly priceAlertsService: PriceAlertsService,
   ) {}
 
   // --- Commodity CRUD ---
@@ -245,6 +247,13 @@ export class CommodityPricesService {
       // Best-effort enrichment: don't let a post-write failure hide the committed write
       this.enrichAndPublishPrice(dto.commodityId, dto.region, dto.price, dto.priceType);
 
+      // Best-effort alert evaluation: fire-and-forget, same pattern as enrichAndPublishPrice
+      this.priceAlertsService
+        .evaluateForCommodity(dto.commodityId, dto.price, new Date(dto.recordedAt))
+        .catch((err: unknown) => {
+          this.logger.error('Price alert evaluation failed (write already committed)', err);
+        });
+
       return entry;
     } catch (err) {
       if (isForeignKeyViolation(err)) {
@@ -293,6 +302,18 @@ export class CommodityPricesService {
 
     // Best-effort enrichment: don't let post-write failures hide committed writes
     this.enrichAndPublishBatch(entries, uniqueCommodityIds);
+
+    // Best-effort alert evaluation — one call per unique commodity to prevent concurrent
+    // reads of lastTriggeredAt from allowing duplicate notifications in the same batch.
+    const latestPricePerCommodity = new Map<string, number>();
+    for (const entry of entries) {
+      latestPricePerCommodity.set(entry.commodityId, entry.price);
+    }
+    for (const [cid, price] of latestPricePerCommodity) {
+      this.priceAlertsService.evaluateForCommodity(cid, price, recordedAt).catch((err: unknown) => {
+        this.logger.error('Price alert evaluation failed (writes already committed)', err);
+      });
+    }
 
     return entries;
   }

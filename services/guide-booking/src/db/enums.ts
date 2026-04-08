@@ -40,3 +40,17 @@ export const bestTimeOfDayEnum = guideBookingSchema.enum('best_time_of_day', [
 ]);
 
 export const difficultyEnum = guideBookingSchema.enum('difficulty', ['easy', 'moderate', 'hard']);
+
+export const desertTripStatusEnum = guideBookingSchema.enum('desert_trip_status', [
+  'pending',
+  'checked_in',
+  'overdue',
+  'alert_sent',
+  'resolved',
+]);
+
+export const vehicleTypeEnum = guideBookingSchema.enum('vehicle_type', [
+  '4WD',
+  'minibus',
+  'motorcycle',
+]);

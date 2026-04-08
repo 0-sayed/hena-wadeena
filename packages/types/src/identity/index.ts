@@ -2,6 +2,7 @@ import type { UserRole, UserStatus } from '../enums';
 
 export * from './notifications';
 export * from './kyc';
+export * from './wallet';
 
 export interface PublicUser {
   id: string;

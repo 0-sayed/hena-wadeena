@@ -1,6 +1,16 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { SQL, sql } from 'drizzle-orm';
-import { check, index, integer, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  real,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { packageStatusEnum } from '../enums';
 import { guideBookingSchema } from '../schema';
@@ -24,6 +34,8 @@ export const tourPackages = guideBookingSchema.table(
     includes: text().array(),
     images: text().array(),
     status: packageStatusEnum().notNull().default('active'),
+    priceBreakdown: jsonb('price_breakdown').$type<{ label: string; amountPiasters: number }[]>(),
+    noHiddenFees: boolean('no_hidden_fees').default(false).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

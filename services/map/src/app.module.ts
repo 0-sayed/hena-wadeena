@@ -23,6 +23,7 @@ import { validateMapEnv } from './config/env.config';
 import { ModerationModule } from './moderation/moderation.module';
 import { PoisModule } from './pois/pois.module';
 import { SearchModule } from './search/search.module';
+import { SiteStatusModule } from './site-status/site-status.module';
 import { StatsModule } from './stats/stats.module';
 
 @Module({
@@ -58,6 +59,7 @@ import { StatsModule } from './stats/stats.module';
     CarpoolModule,
     StatsModule,
     SearchModule,
+    SiteStatusModule,
     ModerationModule,
   ],
   providers: [

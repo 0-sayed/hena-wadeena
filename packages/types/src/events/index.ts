@@ -17,12 +17,14 @@ export const EVENTS = {
   KB_REBUILD_REQUESTED: 'kb.rebuild.requested',
   BUSINESS_VERIFIED: 'business.verified',
   COMMODITY_PRICE_UPDATED: 'commodity_price.updated',
+  PRICE_ALERT_TRIGGERED: 'price.alert.triggered',
   USER_SUSPENDED: 'user.suspended',
   USER_BANNED: 'user.banned',
   USER_DELETED: 'user.deleted',
   USER_ROLE_CHANGED: 'user.role_changed',
   USER_ACTIVATED: 'user.activated',
   USER_VERIFIED: 'user.verified',
+  DESERT_TRIP_OVERDUE: 'desert_trip.overdue',
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
@@ -47,4 +49,23 @@ export type BookingCancelledEventPayload = BookingEventPayload & {
   cancellationReason?: string;
   cancelledByRole: string;
   cancelledByUserId: string;
+};
+
+export type PriceAlertTriggeredPayload = Record<string, string> & {
+  userId: string;
+  commodityId: string;
+  commodityNameAr: string;
+  commodityNameEn: string;
+  thresholdPrice: string; // piasters
+  actualPrice: string; // piasters
+  direction: string; // 'above' | 'below'
+};
+
+export type DesertTripOverdueEventPayload = Record<string, string> & {
+  tripId: string;
+  bookingId: string;
+  guideUserId: string;
+  touristUserId: string;
+  emergencyContact: string;
+  destinationName: string;
 };

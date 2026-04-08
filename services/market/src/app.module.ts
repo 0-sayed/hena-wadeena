@@ -24,6 +24,7 @@ import { InvestmentApplicationsModule } from './investment-applications/investme
 import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
 import { ListingInquiriesModule } from './listing-inquiries/listing-inquiries.module';
 import { ListingsModule } from './listings/listings.module';
+import { PriceAlertsModule } from './price-alerts/price-alerts.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SearchModule } from './search/search.module';
 import { StatsModule } from './stats/stats.module';
@@ -67,6 +68,7 @@ function requireEnv(key: string): string {
     ListingsModule,
     ListingInquiriesModule,
     CommodityPricesModule,
+    PriceAlertsModule,
     BusinessDirectoryModule,
     BusinessInquiriesModule,
     InvestmentOpportunitiesModule,
