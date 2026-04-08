@@ -1,5 +1,10 @@
 import { createZodDto } from 'nestjs-zod';
 
+import { produceDetailsSchema } from './create-listing.schema';
 import { listingBaseSchema } from './listing-base.schema';
 
-export class UpdateListingDto extends createZodDto(listingBaseSchema.partial()) {}
+const updateListingSchema = listingBaseSchema.partial().extend({
+  produce_details: produceDetailsSchema.optional(),
+});
+
+export class UpdateListingDto extends createZodDto(updateListingSchema) {}
