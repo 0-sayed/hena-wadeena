@@ -54,6 +54,7 @@ export enum ListingCategory {
   EDUCATION = 'education',
   HEALTHCARE = 'healthcare',
   SHOPPING = 'shopping',
+  AGRICULTURAL_PRODUCE = 'agricultural_produce',
 }
 
 export enum BookingStatus {
@@ -111,6 +112,14 @@ export enum PassengerStatus {
   CONFIRMED = 'confirmed',
   DECLINED = 'declined',
   CANCELLED = 'cancelled',
+}
+
+export enum SiteStatusValue {
+  OPEN = 'open',
+  CLOSED = 'closed',
+  CLOSED_TEMPORARILY = 'closed_temporarily',
+  LIMITED_ACCESS = 'limited_access',
+  UNDER_RESTORATION = 'under_restoration',
 }
 
 export enum OpportunityStatus {
@@ -215,4 +224,9 @@ export enum VerificationStatus {
   VERIFIED = 'verified',
   REJECTED = 'rejected',
   SUSPENDED = 'suspended',
+}
+
+export enum AlertDirection {
+  ABOVE = 'above',
+  BELOW = 'below',
 }

@@ -2,6 +2,8 @@ import { ListingCategory, ListingType, TransactionType } from '@hena-wadeena/typ
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
+import { produceDetailsSchema } from './create-listing.schema';
+
 const queryListingsSchema = z
   .object({
     category: z.enum(Object.values(ListingCategory) as [string, ...string[]]).optional(),
@@ -20,6 +22,7 @@ const queryListingsSchema = z
       .enum(['true', 'false'])
       .transform((v) => v === 'true')
       .optional(),
+    commodity_type: produceDetailsSchema.shape.commodity_type.optional(),
     min_rating: z.coerce.number().min(1).max(5).optional(),
     offset: z.coerce.number().int().min(0).default(0),
     limit: z.coerce.number().int().min(1).max(100).default(20),
