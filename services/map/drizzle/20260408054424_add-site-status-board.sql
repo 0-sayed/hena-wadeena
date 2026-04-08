@@ -18,5 +18,7 @@ CREATE TABLE "map"."site_stewards" (
 	"granted_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "map"."site_status_updates" ADD CONSTRAINT "site_status_updates_poi_id_points_of_interest_id_fk" FOREIGN KEY ("poi_id") REFERENCES "map"."points_of_interest"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "map"."site_stewards" ADD CONSTRAINT "site_stewards_poi_id_points_of_interest_id_fk" FOREIGN KEY ("poi_id") REFERENCES "map"."points_of_interest"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_site_status_updates_poi_created" ON "map"."site_status_updates" USING btree ("poi_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE UNIQUE INDEX "uq_site_stewards_poi_user" ON "map"."site_stewards" USING btree ("poi_id","user_id");

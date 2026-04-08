@@ -1,1 +1,0 @@
-ALTER TABLE "map"."site_stewards" ADD CONSTRAINT "site_stewards_poi_id_points_of_interest_id_fk" FOREIGN KEY ("poi_id") REFERENCES "map"."points_of_interest"("id") ON DELETE no action ON UPDATE no action;

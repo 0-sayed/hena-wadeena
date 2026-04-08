@@ -33,22 +33,8 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1775554122012,
-      "tag": "20260407092842_parallel_nebula",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1775558243441,
-      "tag": "20260407103723_warm_thing",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1775558707612,
-      "tag": "20260407104507_boring_mandarin",
+      "when": 1775627064113,
+      "tag": "20260408054424_add-site-status-board",
       "breakpoints": true
     }
   ]
