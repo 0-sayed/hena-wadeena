@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import io
@@ -96,9 +96,15 @@ class RerankerService:
     def rerank(self, query: str, candidates: list[CandidateChunk]) -> list[ScoredChunk]:
         """Score candidates synchronously using the configured reranker or fallback."""
 
-        self._start_background_load()
         if not candidates:
             return []
+        if len(candidates) < self.settings.RERANKER_MIN_CANDIDATES:
+            reranked = [
+                ScoredChunk(chunk=item, score=float(item.retrieval_score))
+                for item in sorted(candidates, key=lambda item: item.retrieval_score, reverse=True)
+            ]
+            return reranked[: self.settings.RERANKER_TOP_K]
+        self._start_background_load()
         if self._model is not None:
             pairs = [(query, item.chunk.text) for item in candidates]
             scores = _run_quietly(self._model.compute_score, pairs, normalize=True)
@@ -112,7 +118,9 @@ class RerankerService:
                 overlap = len(query_terms & chunk_terms)
                 denom = max(1, len(query_terms))
                 scores.append(min(1.0, overlap / denom + item.retrieval_score))
-        reranked = [ScoredChunk(chunk=item, score=float(score)) for item, score in zip(candidates, scores)]
+        reranked = [
+            ScoredChunk(chunk=item, score=float(score)) for item, score in zip(candidates, scores)
+        ]
         reranked.sort(key=lambda item: item.score, reverse=True)
         return reranked[: self.settings.RERANKER_TOP_K]
 
@@ -132,7 +140,9 @@ class RerankerService:
         if self._model is None:
             return {"ok": True, "detail": "using heuristic fallback reranker"}
         try:
-            score = _run_quietly(self._model.compute_score, [("startup check", "startup check")], normalize=True)
+            score = _run_quietly(
+                self._model.compute_score, [("startup check", "startup check")], normalize=True
+            )
         except Exception as exc:
             return {"ok": False, "detail": f"reranker startup check failed: {exc}"}
         if isinstance(score, list):

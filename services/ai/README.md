@@ -109,11 +109,12 @@ CHUNK_MIN_TOKENS=50
 CHUNK_OVERLAP_RATIO=0.20
 
 # Retrieval
-DENSE_TOP_K=20
-SPARSE_TOP_K=20
+DENSE_TOP_K=5
+SPARSE_TOP_K=5
 RRF_K=60
-RRF_TOP_N=10
-RERANKER_TOP_K=5
+RRF_TOP_N=5
+RERANKER_TOP_K=3
+RERANKER_MIN_CANDIDATES=6
 RELEVANCE_THRESHOLD=0.35
 DENSE_WEIGHT=0.7
 SPARSE_WEIGHT=0.3
@@ -123,6 +124,7 @@ SESSION_MAX_MESSAGES=10
 SESSION_TTL_HOURS=168  # 7 days
 TOKEN_BUDGET_HISTORY=2000
 TOKEN_BUDGET_CONTEXT=1600
+QUERY_CACHE_SIZE=128
 
 # File Upload
 MAX_FILE_SIZE_MB=50
@@ -465,10 +467,11 @@ See `scripts/seed_knowledge_base.py` for advanced options (batch size, file filt
 
 | Parameter | Default | Purpose |
 |-----------|---------|---------|
-| `DENSE_TOP_K` | 20 | Dense search recall |
-| `SPARSE_TOP_K` | 20 | Sparse search recall |
-| `RRF_TOP_N` | 10 | Post-fusion candidates |
-| `RERANKER_TOP_K` | 5 | Final context chunks |
+| `DENSE_TOP_K` | 5 | Dense search recall |
+| `SPARSE_TOP_K` | 5 | Sparse search recall |
+| `RRF_TOP_N` | 5 | Post-fusion candidates |
+| `RERANKER_TOP_K` | 3 | Final context chunks |
+| `RERANKER_MIN_CANDIDATES` | 6 | Skip neural reranking for very small candidate sets |
 | `RELEVANCE_THRESHOLD` | 0.35 | Min reranker score |
 | `DENSE_WEIGHT` | 0.7 | Dense priority (semantic) |
 | `SPARSE_WEIGHT` | 0.3 | Sparse priority (keywords) |
@@ -477,6 +480,7 @@ See `scripts/seed_knowledge_base.py` for advanced options (batch size, file filt
 - Increase `DENSE_WEIGHT` for conceptual queries
 - Increase `SPARSE_WEIGHT` for keyword-heavy queries
 - Lower `RELEVANCE_THRESHOLD` if results are too sparse
+- Keep `RERANKER_MIN_CANDIDATES` above `RERANKER_TOP_K` to avoid paying neural rerank cost on tiny corpora
 
 ### Chunking Parameters
 
