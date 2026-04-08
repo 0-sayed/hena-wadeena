@@ -22,7 +22,7 @@ import type { CreateStatusDto } from './dto';
 const latestStatusField = (col: Column) => sql`(
   SELECT ${col} FROM ${siteStatusUpdates}
   WHERE ${siteStatusUpdates.poiId} = ${pointsOfInterest.id}
-  ORDER BY ${siteStatusUpdates.createdAt} DESC LIMIT 1
+  ORDER BY ${siteStatusUpdates.createdAt} DESC, ${siteStatusUpdates.id} DESC LIMIT 1
 )`;
 
 type StatusUpdate = typeof siteStatusUpdates.$inferSelect;
@@ -52,7 +52,7 @@ export class SiteStatusService {
       .select()
       .from(siteStatusUpdates)
       .where(eq(siteStatusUpdates.poiId, poiId))
-      .orderBy(sql`${siteStatusUpdates.createdAt} DESC`)
+      .orderBy(sql`${siteStatusUpdates.createdAt} DESC, ${siteStatusUpdates.id} DESC`)
       .limit(1);
 
     return row ?? null;
