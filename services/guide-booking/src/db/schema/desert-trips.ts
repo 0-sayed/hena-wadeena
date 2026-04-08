@@ -25,6 +25,7 @@ export const desertTrips = guideBookingSchema.table(
       .notNull(),
     status: desertTripStatusEnum().notNull().default('pending'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('uq_desert_trips_booking_id').on(t.bookingId),

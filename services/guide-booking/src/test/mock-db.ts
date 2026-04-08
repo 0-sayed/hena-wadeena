@@ -21,6 +21,7 @@ const CHAIN_METHODS = [
   'delete',
   'inArray',
   'innerJoin',
+  'onConflictDoNothing',
 ] as const;
 
 export function createMockDb(): MockChain {

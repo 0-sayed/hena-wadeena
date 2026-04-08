@@ -3,7 +3,7 @@ import type { DesertTripOverdueEventPayload } from '@hena-wadeena/types';
 import { EVENTS } from '@hena-wadeena/types';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { and, eq, inArray, isNull, lt } from 'drizzle-orm';
+import { and, eq, inArray, isNull, lt, notInArray } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { bookings, desertTrips, guides } from '../db/schema/index';
@@ -27,17 +27,24 @@ export class DesertTripsOverdueCron {
 
     this.logger.warn(`Found ${overdueTrips.length} overdue desert trip(s)`);
 
+    // Mark as overdue — state predicates make this atomic even under concurrent cron instances.
+    // alertTriggeredAt is NOT set here; it is only set after successful publish below.
     await this.db
       .update(desertTrips)
-      .set({ status: 'overdue', alertTriggeredAt: now })
+      .set({ status: 'overdue' })
       .where(
-        inArray(
-          desertTrips.id,
-          overdueTrips.map((t) => t.id),
+        and(
+          inArray(
+            desertTrips.id,
+            overdueTrips.map((t) => t.id),
+          ),
+          eq(desertTrips.status, 'pending'),
+          isNull(desertTrips.alertTriggeredAt),
         ),
       );
 
-    await Promise.all(
+    // Use allSettled so a single Redis failure doesn't block the rest.
+    const results = await Promise.allSettled(
       overdueTrips.map((trip) =>
         this.redisStreams.publish(EVENTS.DESERT_TRIP_OVERDUE, {
           tripId: trip.id,
@@ -50,15 +57,19 @@ export class DesertTripsOverdueCron {
       ),
     );
 
+    const successfulIds = overdueTrips
+      .filter((_, i) => results[i]?.status === 'fulfilled')
+      .map((t) => t.id);
+
+    if (successfulIds.length === 0) return;
+
+    // Only mark alert_sent + stamp alertTriggeredAt for trips that were successfully published.
+    // Trips where publish failed stay in 'overdue' with alertTriggeredAt = null and will be
+    // retried by the next cron run (fetchOverdue includes overdue rows without alertTriggeredAt).
     await this.db
       .update(desertTrips)
-      .set({ status: 'alert_sent' })
-      .where(
-        inArray(
-          desertTrips.id,
-          overdueTrips.map((t) => t.id),
-        ),
-      );
+      .set({ status: 'alert_sent', alertTriggeredAt: now })
+      .where(and(inArray(desertTrips.id, successfulIds), eq(desertTrips.status, 'overdue')));
   }
 
   private fetchOverdue(cutoff: Date) {
@@ -76,9 +87,12 @@ export class DesertTripsOverdueCron {
       .innerJoin(guides, eq(bookings.guideId, guides.id))
       .where(
         and(
-          eq(desertTrips.status, 'pending'),
+          // Include 'overdue' as well so trips that failed to publish on a prior run get retried.
+          inArray(desertTrips.status, ['pending', 'overdue']),
           lt(desertTrips.expectedArrivalAt, cutoff),
           isNull(desertTrips.alertTriggeredAt),
+          // Skip trips whose bookings are no longer active.
+          notInArray(bookings.status, ['cancelled', 'completed']),
         ),
       );
   }

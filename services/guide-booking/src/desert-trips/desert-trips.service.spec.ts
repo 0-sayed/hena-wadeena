@@ -20,6 +20,12 @@ const mockBooking = {
 
 const mockGuide = { id: 'guide-uuid-1', userId: 'guide-user-uuid-1' };
 
+const mockJoinResult = {
+  booking: mockBooking,
+  guideUserId: mockGuide.userId,
+  guideId: mockGuide.id,
+};
+
 const mockTrip = {
   id: 'trip-uuid-1',
   bookingId: 'booking-uuid-1',
@@ -47,14 +53,9 @@ describe('DesertTripsService', () => {
 
   describe('register', () => {
     it('creates a trip plan when guide owns the booking', async () => {
-      mockDb.then
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) => Promise.resolve([]).then(r));
+      mockDb.then.mockImplementationOnce((r: (v: unknown[]) => unknown) =>
+        Promise.resolve([mockJoinResult]).then(r),
+      );
       mockDb.returning!.mockResolvedValue([mockTrip]);
 
       const result = await service.register('booking-uuid-1', 'guide-user-uuid-1', {
@@ -68,13 +69,11 @@ describe('DesertTripsService', () => {
     });
 
     it('throws ForbiddenException when caller is not the guide for this booking', async () => {
-      mockDb.then
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([{ id: 'guide-uuid-99', userId: 'other-user' }]).then(r),
-        );
+      mockDb.then.mockImplementationOnce((r: (v: unknown[]) => unknown) =>
+        Promise.resolve([
+          { booking: mockBooking, guideUserId: 'other-user', guideId: 'guide-uuid-99' },
+        ]).then(r),
+      );
 
       await expect(
         service.register('booking-uuid-1', 'wrong-user', {
@@ -100,16 +99,10 @@ describe('DesertTripsService', () => {
     });
 
     it('throws ConflictException when a trip plan already exists for this booking', async () => {
-      mockDb.then
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockTrip]).then(r),
-        );
+      mockDb.then.mockImplementationOnce((r: (v: unknown[]) => unknown) =>
+        Promise.resolve([mockJoinResult]).then(r),
+      );
+      mockDb.returning!.mockResolvedValue([]);
 
       await expect(
         service.register('booking-uuid-1', 'guide-user-uuid-1', {
@@ -131,10 +124,7 @@ describe('DesertTripsService', () => {
       };
       mockDb.then
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
+          Promise.resolve([mockJoinResult]).then(r),
         )
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
           Promise.resolve([mockTrip]).then(r),
@@ -153,10 +143,7 @@ describe('DesertTripsService', () => {
     it('throws BadRequestException when trip is already checked_in', async () => {
       mockDb.then
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
+          Promise.resolve([mockJoinResult]).then(r),
         )
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
           Promise.resolve([{ ...mockTrip, status: 'checked_in' }]).then(r),
@@ -175,10 +162,7 @@ describe('DesertTripsService', () => {
       const checkedInTrip = { ...mockTrip, status: 'checked_in', checkedInAt: new Date() };
       mockDb.then
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
+          Promise.resolve([mockJoinResult]).then(r),
         )
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
           Promise.resolve([mockTrip]).then(r),
@@ -190,6 +174,20 @@ describe('DesertTripsService', () => {
       expect(result.status).toBe('checked_in');
       expect(result.checkedInAt).toBeDefined();
     });
+
+    it('throws ConflictException when trip is resolved', async () => {
+      mockDb.then
+        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
+          Promise.resolve([mockJoinResult]).then(r),
+        )
+        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
+          Promise.resolve([{ ...mockTrip, status: 'resolved' }]).then(r),
+        );
+
+      await expect(service.checkIn('booking-uuid-1', 'guide-user-uuid-1')).rejects.toThrow(
+        ConflictException,
+      );
+    });
   });
 
   // ── findByBooking ───────────────────────────────────────────────────────────
@@ -198,10 +196,7 @@ describe('DesertTripsService', () => {
     it('returns trip for the guide', async () => {
       mockDb.then
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
+          Promise.resolve([mockJoinResult]).then(r),
         )
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
           Promise.resolve([mockTrip]).then(r),
@@ -235,10 +230,7 @@ describe('DesertTripsService', () => {
     it('throws NotFoundException when no trip exists', async () => {
       mockDb.then
         .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockBooking]).then(r),
-        )
-        .mockImplementationOnce((r: (v: unknown[]) => unknown) =>
-          Promise.resolve([mockGuide]).then(r),
+          Promise.resolve([mockJoinResult]).then(r),
         )
         .mockImplementationOnce((r: (v: unknown[]) => unknown) => Promise.resolve([]).then(r));
 

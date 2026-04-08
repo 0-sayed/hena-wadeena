@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { bookings, desertTrips, guides } from '../db/schema/index';
@@ -23,25 +23,24 @@ export class DesertTripsService {
     bookingId: string,
     userId: string,
   ): Promise<{ booking: typeof bookings.$inferSelect; guideId: string }> {
-    const [booking] = await this.db
-      .select()
+    const [result] = await this.db
+      .select({ booking: bookings, guideUserId: guides.userId, guideId: guides.id })
       .from(bookings)
+      .innerJoin(guides, eq(bookings.guideId, guides.id))
       .where(eq(bookings.id, bookingId))
       .limit(1);
 
-    if (!booking) throw new NotFoundException(`Booking not found: ${bookingId}`);
+    if (!result) throw new NotFoundException(`Booking not found: ${bookingId}`);
 
-    const [guide] = await this.db
-      .select({ id: guides.id, userId: guides.userId })
-      .from(guides)
-      .where(eq(guides.id, booking.guideId))
-      .limit(1);
+    if (result.booking.status === 'cancelled') {
+      throw new BadRequestException('Cannot perform desert trip actions on a cancelled booking');
+    }
 
-    if (guide?.userId !== userId) {
+    if (result.guideUserId !== userId) {
       throw new ForbiddenException('Only the guide for this booking can perform this action');
     }
 
-    return { booking, guideId: guide.id };
+    return { booking: result.booking, guideId: result.guideId };
   }
 
   private async findTrip(bookingId: string): Promise<typeof desertTrips.$inferSelect | undefined> {
@@ -60,9 +59,6 @@ export class DesertTripsService {
   ): Promise<typeof desertTrips.$inferSelect> {
     await this.assertGuideOwnership(bookingId, userId);
 
-    const existing = await this.findTrip(bookingId);
-    if (existing) throw new ConflictException('A desert trip plan already exists for this booking');
-
     const [row] = await this.db
       .insert(desertTrips)
       .values({
@@ -73,9 +69,10 @@ export class DesertTripsService {
         emergencyContact: dto.emergencyContact,
         rangerStationId: dto.rangerStationId ?? null,
       })
+      .onConflictDoNothing({ target: desertTrips.bookingId })
       .returning();
 
-    if (!row) throw new Error('Insert did not return a row');
+    if (!row) throw new ConflictException('A desert trip plan already exists for this booking');
     return row;
   }
 
@@ -98,10 +95,10 @@ export class DesertTripsService {
       .set({
         gpsBreadcrumbs: sql`${desertTrips.gpsBreadcrumbs} || ${JSON.stringify([newCrumb])}::jsonb`,
       })
-      .where(eq(desertTrips.id, trip.id))
+      .where(and(eq(desertTrips.id, trip.id), eq(desertTrips.status, trip.status)))
       .returning();
 
-    if (!row) throw new Error('Update did not return a row');
+    if (!row) throw new NotFoundException('Trip not found or state changed');
     return row;
   }
 
@@ -113,14 +110,17 @@ export class DesertTripsService {
     if (trip.status === 'checked_in') {
       throw new ConflictException('Trip is already checked in');
     }
+    if (trip.status === 'resolved') {
+      throw new ConflictException('Cannot check in a resolved trip');
+    }
 
     const [row] = await this.db
       .update(desertTrips)
       .set({ status: 'checked_in', checkedInAt: new Date() })
-      .where(eq(desertTrips.id, trip.id))
+      .where(and(eq(desertTrips.id, trip.id), eq(desertTrips.status, trip.status)))
       .returning();
 
-    if (!row) throw new Error('Update did not return a row');
+    if (!row) throw new NotFoundException('Trip not found or state changed');
     return row;
   }
 

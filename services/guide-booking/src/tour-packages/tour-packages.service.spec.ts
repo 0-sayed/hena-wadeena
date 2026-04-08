@@ -417,6 +417,9 @@ describe('TourPackagesService', () => {
 
       expect(result.noHiddenFees).toBe(true);
       expect(result.priceBreakdown).toHaveLength(2);
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({ noHiddenFees: true, priceBreakdown: dto.priceBreakdown }),
+      );
     });
   });
 
