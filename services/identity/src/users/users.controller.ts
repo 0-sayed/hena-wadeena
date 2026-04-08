@@ -15,17 +15,19 @@ import {
 } from '@nestjs/common';
 
 import type { users } from '../db/schema/index';
+import { WalletService } from '../wallet/wallet.service';
 
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { DeductDto, TopupDto } from './dto/wallet.dto';
 import { UsersService } from './users.service';
 
 const MAX_PUBLIC_USER_IDS = 100;
-const WALLET_TRANSACTION_DESCRIPTIONS = {
-  booking_debit: 'حجز باقة سياحية',
-  booking_refund: 'استرداد حجز باقة سياحية',
-  booking_payout: 'دفعة إكمال الحجز',
-} as const;
+const WALLET_TRANSACTION_DESCRIPTIONS: Record<string, string> = {
+  booking: 'حجز سياحي',
+  job: 'أجر وظيفة',
+  topup: 'شحن محفظة',
+  refund: 'استرداد',
+};
 
 function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
   void passwordHash;
@@ -34,7 +36,10 @@ function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
 
 @Controller()
 export class UsersController {
-  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
+  constructor(
+    @Inject(UsersService) private readonly usersService: UsersService,
+    @Inject(WalletService) private readonly walletService: WalletService,
+  ) {}
 
   @Get('auth/me')
   async getMe(@CurrentUser() user: JwtPayload) {
@@ -82,26 +87,25 @@ export class UsersController {
 
   @Get('wallet')
   async getWallet(@CurrentUser() user: JwtPayload) {
-    const snapshot = await this.usersService.getWalletSnapshot(user.sub);
+    const snapshot = await this.walletService.getWalletSnapshot(user.sub);
     return {
       success: true,
       data: {
         id: `wallet-${user.sub}`,
         user_id: user.sub,
-        balance: snapshot.balance,
+        balance: snapshot.balancePiasters,
         currency: 'EGP',
         recent_transactions: snapshot.recentTransactions.map((entry) => ({
           id: entry.id,
-          booking_id: entry.bookingId,
-          type: entry.kind,
+          type: entry.refType,
           amount: entry.amountPiasters,
           direction: entry.direction,
           balance_after: entry.balanceAfterPiasters,
-          description: WALLET_TRANSACTION_DESCRIPTIONS[entry.kind],
+          description: WALLET_TRANSACTION_DESCRIPTIONS[entry.refType] ?? entry.refType,
           status: 'completed',
           created_at: entry.createdAt,
-          reference_id: entry.bookingId,
-          reference_type: 'booking',
+          reference_id: entry.refId,
+          reference_type: entry.refType,
         })),
       },
     };
@@ -109,13 +113,13 @@ export class UsersController {
 
   @Post('wallet/topup')
   async topUp(@CurrentUser() user: JwtPayload, @Body() dto: TopupDto) {
-    const balance = await this.usersService.topUp(user.sub, dto.amount);
+    const balance = await this.walletService.topUp(user.sub, dto.amount);
     return { success: true, data: { balance } };
   }
 
   @Post('wallet/deduct')
   async deduct(@CurrentUser() user: JwtPayload, @Body() dto: DeductDto) {
-    const balance = await this.usersService.deduct(user.sub, dto.amount);
+    const balance = await this.walletService.deduct(user.sub, dto.amount);
     return { success: true, data: { balance } };
   }
 
