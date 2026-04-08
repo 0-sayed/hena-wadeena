@@ -25,9 +25,13 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/hooks/use-auth';
 import { formatRelativeTime } from '@/lib/dates';
+import { markAllNotificationsAsRead, markNotificationAsRead } from '@/lib/notifications-cache';
 import { toast } from 'sonner';
-import { NotificationType } from '@hena-wadeena/types';
-import type { Notification } from '@hena-wadeena/types';
+import {
+  NotificationType,
+  type Notification,
+  type NotificationListResponse,
+} from '@hena-wadeena/types';
 
 const PAGE_SIZE = 20;
 
@@ -90,21 +94,38 @@ const NotificationsPage = () => {
   const unreadCount = data?.unreadCount ?? 0;
   const hasMore = data?.hasMore ?? false;
   const totalPages = data?.total ? Math.ceil(data.total / PAGE_SIZE) : 1;
+  const listQueryKey = queryKeys.notifications.list({ page, limit: PAGE_SIZE });
 
   // all() = ['notifications'] — prefix-matches both list queries and unreadCount in one shot
   const invalidateAll = () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
   };
 
+  const setUnreadCount = (count: number) => {
+    queryClient.setQueryData(queryKeys.notifications.unreadCount(), { count });
+  };
+
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationsAPI.markRead(id),
-    onSuccess: invalidateAll,
+    onSuccess: (_response, id) => {
+      const nextList = markNotificationAsRead(data, id);
+      queryClient.setQueryData<NotificationListResponse>(listQueryKey, nextList);
+      if (nextList) {
+        setUnreadCount(nextList.unreadCount);
+      }
+      invalidateAll();
+    },
     onError: () => toast.error('تعذر تحديث الإشعار'),
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: () => notificationsAPI.markAllRead(),
-    onSuccess: invalidateAll,
+    onSuccess: () => {
+      const nextList = markAllNotificationsAsRead(data);
+      queryClient.setQueryData<NotificationListResponse>(listQueryKey, nextList);
+      setUnreadCount(0);
+      invalidateAll();
+    },
     onError: () => toast.error('تعذر تحديث الإشعارات'),
   });
 
