@@ -8,8 +8,27 @@ export const produceDetailsSchema = z.object({
   storage_type: z.enum(['field', 'warehouse', 'cold_storage']),
   preferred_buyer: z.enum(['any', 'wholesaler', 'exporter', 'local']),
   quantity_kg: z.number().positive().optional(),
-  harvest_date: z.string().optional(), // YYYY-MM-DD
+  harvest_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
+    .optional(),
   certifications: z.array(z.enum(['organic', 'gap', 'other'])).default([]),
+  contact_phone: z.string().optional(),
+  contact_whatsapp: z.string().optional(),
+});
+
+// For PATCH updates: same shape without certifications default so omitted optional
+// fields are left as undefined and won't overwrite existing DB values.
+export const produceDetailsUpdateSchema = z.object({
+  commodity_type: z.enum(['dates', 'olives', 'wheat', 'other']),
+  storage_type: z.enum(['field', 'warehouse', 'cold_storage']),
+  preferred_buyer: z.enum(['any', 'wholesaler', 'exporter', 'local']),
+  quantity_kg: z.number().positive().optional(),
+  harvest_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
+    .optional(),
+  certifications: z.array(z.enum(['organic', 'gap', 'other'])).optional(),
   contact_phone: z.string().optional(),
   contact_whatsapp: z.string().optional(),
 });
@@ -34,5 +53,6 @@ export const createListingSchema = z.discriminatedUnion('category', [
   }),
   listingBaseSchema.extend({
     category: z.enum(nonProduceCategories),
+    produce_details: z.undefined(),
   }),
 ]);

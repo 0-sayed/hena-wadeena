@@ -9,7 +9,14 @@ import {
 } from '@hena-wadeena/nest-common';
 import { EVENTS, ListingCategory, slugify } from '@hena-wadeena/types';
 import type { PaginatedResponse } from '@hena-wadeena/types';
-import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
@@ -105,6 +112,22 @@ function mapProduceInput(input: {
     contactPhone: input.contact_phone ?? null,
     contactWhatsapp: input.contact_whatsapp ?? null,
   };
+}
+
+// For PATCH updates: only includes fields that were explicitly provided so that
+// omitted optional fields don't overwrite existing DB values with null/[].
+function mapProduceUpdateSet(input: Parameters<typeof mapProduceInput>[0]) {
+  const out: Record<string, unknown> = {
+    commodityType: input.commodity_type,
+    storageType: input.storage_type,
+    preferredBuyer: input.preferred_buyer,
+  };
+  if (input.quantity_kg !== undefined) out.quantityKg = String(input.quantity_kg);
+  if (input.harvest_date !== undefined) out.harvestDate = input.harvest_date;
+  if (input.certifications !== undefined) out.certifications = input.certifications;
+  if (input.contact_phone !== undefined) out.contactPhone = input.contact_phone;
+  if (input.contact_whatsapp !== undefined) out.contactWhatsapp = input.contact_whatsapp;
+  return out;
 }
 
 const SORTABLE_FIELDS = {
@@ -244,13 +267,12 @@ export class ListingsService {
       transaction,
       produce_details: produceInput,
       ...rest
-    } = dto as unknown as {
+    } = dto as {
       location?: { lat: number; lng: number };
       category: ListingCategory;
       listingType: string;
       transaction: string;
       produce_details?: Parameters<typeof mapProduceInput>[0];
-      [key: string]: unknown;
     };
 
     const locationExpr = locationInput
@@ -556,28 +578,45 @@ export class ListingsService {
       }),
     };
 
-    const [updated] = await this.db
-      .update(listings)
-      .set({
-        ...(rest as Record<string, unknown>),
-        ...enumFields,
-        updatedAt: new Date(),
-        ...locationUpdate,
-      })
-      .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
-      .returning();
-
-    if (!updated) throw new NotFoundException('Listing not found');
+    const setClause = {
+      ...(rest as Record<string, unknown>),
+      ...enumFields,
+      updatedAt: new Date(),
+      ...locationUpdate,
+    };
 
     if (produce_details) {
-      const mapped = mapProduceInput(produce_details);
-      await this.db
-        .insert(produceListingDetails)
-        .values({ listingId: id, ...mapped })
-        .onConflictDoUpdate({
-          target: produceListingDetails.listingId,
-          set: mapped,
-        });
+      const updateSet = mapProduceUpdateSet(produce_details);
+      await this.db.transaction(async (tx) => {
+        const [row] = await tx
+          .update(listings)
+          .set(setClause)
+          .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+          .returning();
+
+        if (!row) throw new NotFoundException('Listing not found');
+        if ((row.category as ListingCategory) !== ListingCategory.AGRICULTURAL_PRODUCE) {
+          throw new BadRequestException(
+            'produce_details is only allowed for agricultural_produce listings',
+          );
+        }
+
+        await tx
+          .insert(produceListingDetails)
+          .values({ listingId: id, ...mapProduceInput(produce_details) })
+          .onConflictDoUpdate({
+            target: produceListingDetails.listingId,
+            set: updateSet,
+          });
+      });
+    } else {
+      const [updated] = await this.db
+        .update(listings)
+        .set(setClause)
+        .where(and(eq(listings.id, id), isNull(listings.deletedAt)))
+        .returning();
+
+      if (!updated) throw new NotFoundException('Listing not found');
     }
 
     const row = await this.findRaw(id);
