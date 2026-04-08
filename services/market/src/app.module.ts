@@ -29,6 +29,7 @@ import { PriceAlertsModule } from './price-alerts/price-alerts.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SearchModule } from './search/search.module';
 import { StatsModule } from './stats/stats.module';
+import { WellLogsModule } from './well-logs/well-logs.module';
 
 /** Fail fast on missing env var in production; allow empty fallback in dev. */
 function requireEnv(key: string): string {
@@ -79,6 +80,7 @@ function requireEnv(key: string): string {
     StatsModule,
     AdminModule,
     BenefitsModule,
+    WellLogsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

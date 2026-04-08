@@ -13,6 +13,7 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 const USER_ROLES = [
   'tourist',
   'resident',
+  'farmer',
   'merchant',
   'guide',
   'investor',

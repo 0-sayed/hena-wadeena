@@ -120,6 +120,13 @@
       "when": 1775627953247,
       "tag": "20260408055913_add-deduction-ref-type",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1775636309626,
+      "tag": "20260408081829_add-farmer-role",
+      "breakpoints": true
     }
   ]
 }

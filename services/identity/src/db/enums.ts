@@ -3,6 +3,7 @@ import { identitySchema } from './schema';
 export const userRoleEnum = identitySchema.enum('user_role', [
   'tourist',
   'resident',
+  'farmer',
   'merchant',
   'guide',
   'investor',

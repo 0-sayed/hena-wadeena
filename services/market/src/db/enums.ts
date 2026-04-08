@@ -91,5 +91,14 @@ export const verificationStatusEnum = marketSchema.enum('verification_status', [
   'suspended',
 ]);
 
+// Well logs
+export const wellAreaEnum = marketSchema.enum('well_area', [
+  'kharga',
+  'dakhla',
+  'farafra',
+  'baris',
+  'balat',
+]);
+
 // Price alerts
 export const alertDirectionEnum = marketSchema.enum('alert_direction', ['above', 'below']);

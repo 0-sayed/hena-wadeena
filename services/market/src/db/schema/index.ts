@@ -19,6 +19,7 @@ export { businessCommodities } from './business-commodities';
 export { benefitInfo } from './benefit-info';
 export { produceListingDetails } from './produce-listing-details';
 export { priceAlertSubscriptions } from './price-alert-subscriptions';
+export { wellLogs } from './well-logs';
 
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';
