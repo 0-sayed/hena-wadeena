@@ -54,6 +54,7 @@ export enum ListingCategory {
   EDUCATION = 'education',
   HEALTHCARE = 'healthcare',
   SHOPPING = 'shopping',
+  AGRICULTURAL_PRODUCE = 'agricultural_produce',
 }
 
 export enum BookingStatus {
@@ -223,4 +224,9 @@ export enum VerificationStatus {
   VERIFIED = 'verified',
   REJECTED = 'rejected',
   SUSPENDED = 'suspended',
+}
+
+export enum AlertDirection {
+  ABOVE = 'above',
+  BELOW = 'below',
 }

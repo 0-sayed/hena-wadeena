@@ -122,6 +122,7 @@ export const listingCategoryLabels: Record<ListingCategory, string> = {
   education: 'تعليم',
   healthcare: 'رعاية صحية',
   shopping: 'تسوق',
+  agricultural_produce: 'منتجات زراعية',
 };
 
 const listingCategoryLabelsEn: Record<ListingCategory, string> = {
@@ -134,6 +135,7 @@ const listingCategoryLabelsEn: Record<ListingCategory, string> = {
   education: 'Education',
   healthcare: 'Healthcare',
   shopping: 'Shopping',
+  agricultural_produce: 'Agricultural Produce',
 };
 
 export function listingCategoryLabel(category: string, language: AppLanguage = 'ar'): string {

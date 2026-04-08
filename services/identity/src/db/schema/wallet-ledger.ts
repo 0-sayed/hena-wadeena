@@ -2,7 +2,7 @@ import { generateId } from '@hena-wadeena/nest-common';
 import { sql } from 'drizzle-orm';
 import { check, index, integer, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
-import { walletLedgerDirectionEnum, walletLedgerKindEnum } from '../enums';
+import { walletLedgerDirectionEnum, walletLedgerRefTypeEnum } from '../enums';
 import { identitySchema } from '../schema';
 
 import { users } from './users';
@@ -14,10 +14,11 @@ export const walletLedger = identitySchema.table(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
-    bookingId: uuid('booking_id').notNull(),
+    refId: uuid('ref_id'),
     direction: walletLedgerDirectionEnum('direction').notNull(),
     amountPiasters: integer('amount_piasters').notNull(),
-    kind: walletLedgerKindEnum('kind').notNull(),
+    refType: walletLedgerRefTypeEnum('ref_type').notNull(),
+    noteAr: text('note_ar'),
     idempotencyKey: text('idempotency_key').notNull(),
     balanceAfterPiasters: integer('balance_after_piasters'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -26,9 +27,8 @@ export const walletLedger = identitySchema.table(
   (t) => [
     uniqueIndex('wallet_ledger_idempotency_key_unique').on(t.idempotencyKey),
     index('idx_wallet_ledger_user_created_at').on(t.userId, t.createdAt.desc()),
-    index('idx_wallet_ledger_booking_id').on(t.bookingId),
-    index('idx_wallet_ledger_kind').on(t.kind),
-    index('idx_wallet_ledger_user_booking').on(t.userId, t.bookingId),
+    index('idx_wallet_ledger_ref_id').on(t.refId),
+    index('idx_wallet_ledger_user_ref').on(t.userId, t.refId),
     check('chk_wallet_ledger_amount_positive', sql`${t.amountPiasters} > 0`),
   ],
 );
