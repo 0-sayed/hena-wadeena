@@ -16,6 +16,7 @@ export { investmentApplications } from './investment-applications';
 export { commodities } from './commodities';
 export { commodityPrices } from './commodity-prices';
 export { businessCommodities } from './business-commodities';
+export { benefitInfo } from './benefit-info';
 
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';
