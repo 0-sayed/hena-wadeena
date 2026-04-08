@@ -64,14 +64,7 @@ export class WalletService {
 
   async topUp(userId: string, amount: number, idempotencyKey: string): Promise<number> {
     return this.db.transaction(async (tx) => {
-      const [updated] = await tx
-        .update(users)
-        .set({ balancePiasters: sql`${users.balancePiasters} + ${amount}`, updatedAt: new Date() })
-        .where(and(eq(users.id, userId), isNull(users.deletedAt)))
-        .returning({ balancePiasters: users.balancePiasters });
-      if (!updated) throw new NotFoundException('User not found');
-
-      await tx
+      const [ledgerRow] = await tx
         .insert(walletLedger)
         .values({
           userId,
@@ -80,9 +73,31 @@ export class WalletService {
           refType: 'topup',
           refId: null,
           idempotencyKey,
-          balanceAfterPiasters: updated.balancePiasters,
         })
-        .onConflictDoNothing({ target: walletLedger.idempotencyKey });
+        .onConflictDoNothing({ target: walletLedger.idempotencyKey })
+        .returning();
+
+      if (!ledgerRow) {
+        const [user] = await tx
+          .select({ balancePiasters: users.balancePiasters })
+          .from(users)
+          .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+          .limit(1);
+        if (!user) throw new NotFoundException('User not found');
+        return user.balancePiasters;
+      }
+
+      const [updated] = await tx
+        .update(users)
+        .set({ balancePiasters: sql`${users.balancePiasters} + ${amount}`, updatedAt: new Date() })
+        .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+        .returning({ balancePiasters: users.balancePiasters });
+      if (!updated) throw new NotFoundException('User not found');
+
+      await tx
+        .update(walletLedger)
+        .set({ balanceAfterPiasters: updated.balancePiasters })
+        .where(eq(walletLedger.id, ledgerRow.id));
 
       return updated.balancePiasters;
     });
@@ -90,6 +105,29 @@ export class WalletService {
 
   async deduct(userId: string, amount: number, idempotencyKey: string): Promise<number> {
     return this.db.transaction(async (tx) => {
+      const [ledgerRow] = await tx
+        .insert(walletLedger)
+        .values({
+          userId,
+          direction: 'debit',
+          amountPiasters: amount,
+          refType: 'deduction',
+          refId: null,
+          idempotencyKey,
+        })
+        .onConflictDoNothing({ target: walletLedger.idempotencyKey })
+        .returning();
+
+      if (!ledgerRow) {
+        const [user] = await tx
+          .select({ balancePiasters: users.balancePiasters })
+          .from(users)
+          .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+          .limit(1);
+        if (!user) throw new NotFoundException('User not found');
+        return user.balancePiasters;
+      }
+
       const [updated] = await tx
         .update(users)
         .set({ balancePiasters: sql`${users.balancePiasters} - ${amount}`, updatedAt: new Date() })
@@ -100,17 +138,9 @@ export class WalletService {
       if (!updated) throw new BadRequestException('رصيد المحفظة غير كافٍ أو المستخدم غير موجود');
 
       await tx
-        .insert(walletLedger)
-        .values({
-          userId,
-          direction: 'debit',
-          amountPiasters: amount,
-          refType: 'deduction',
-          refId: null,
-          idempotencyKey,
-          balanceAfterPiasters: updated.balancePiasters,
-        })
-        .onConflictDoNothing({ target: walletLedger.idempotencyKey });
+        .update(walletLedger)
+        .set({ balanceAfterPiasters: updated.balancePiasters })
+        .where(eq(walletLedger.id, ledgerRow.id));
 
       return updated.balancePiasters;
     });
