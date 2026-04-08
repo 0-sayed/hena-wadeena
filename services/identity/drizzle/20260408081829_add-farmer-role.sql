@@ -1,0 +1,1 @@
+ALTER TYPE "identity"."user_role" ADD VALUE 'farmer' BEFORE 'merchant';
