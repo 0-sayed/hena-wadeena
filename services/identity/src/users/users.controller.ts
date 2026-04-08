@@ -27,6 +27,7 @@ const WALLET_TRANSACTION_DESCRIPTIONS: Record<string, string> = {
   job: 'أجر وظيفة',
   topup: 'شحن محفظة',
   refund: 'استرداد',
+  deduction: 'خصم',
 };
 
 function toPublicUser({ passwordHash, ...safe }: typeof users.$inferSelect) {
@@ -97,7 +98,7 @@ export class UsersController {
         currency: 'EGP',
         recent_transactions: snapshot.recentTransactions.map((entry) => ({
           id: entry.id,
-          type: entry.refType,
+          type: `${entry.refType}_${entry.direction}`,
           amount: entry.amountPiasters,
           direction: entry.direction,
           balance_after: entry.balanceAfterPiasters,
@@ -113,13 +114,13 @@ export class UsersController {
 
   @Post('wallet/topup')
   async topUp(@CurrentUser() user: JwtPayload, @Body() dto: TopupDto) {
-    const balance = await this.walletService.topUp(user.sub, dto.amount);
+    const balance = await this.walletService.topUp(user.sub, dto.amount, dto.idempotency_key);
     return { success: true, data: { balance } };
   }
 
   @Post('wallet/deduct')
   async deduct(@CurrentUser() user: JwtPayload, @Body() dto: DeductDto) {
-    const balance = await this.walletService.deduct(user.sub, dto.amount);
+    const balance = await this.walletService.deduct(user.sub, dto.amount, dto.idempotency_key);
     return { success: true, data: { balance } };
   }
 

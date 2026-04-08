@@ -1,4 +1,4 @@
-import { DRIZZLE_CLIENT, generateId } from '@hena-wadeena/nest-common';
+import { DRIZZLE_CLIENT } from '@hena-wadeena/nest-common';
 import type { WalletRefType, WalletSnapshot } from '@hena-wadeena/types';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
@@ -62,7 +62,7 @@ export class WalletService {
     };
   }
 
-  async topUp(userId: string, amount: number): Promise<number> {
+  async topUp(userId: string, amount: number, idempotencyKey: string): Promise<number> {
     return this.db.transaction(async (tx) => {
       const [updated] = await tx
         .update(users)
@@ -71,21 +71,24 @@ export class WalletService {
         .returning({ balancePiasters: users.balancePiasters });
       if (!updated) throw new NotFoundException('User not found');
 
-      await tx.insert(walletLedger).values({
-        userId,
-        direction: 'credit',
-        amountPiasters: amount,
-        refType: 'topup',
-        refId: null,
-        idempotencyKey: `topup:${generateId()}`,
-        balanceAfterPiasters: updated.balancePiasters,
-      });
+      await tx
+        .insert(walletLedger)
+        .values({
+          userId,
+          direction: 'credit',
+          amountPiasters: amount,
+          refType: 'topup',
+          refId: null,
+          idempotencyKey,
+          balanceAfterPiasters: updated.balancePiasters,
+        })
+        .onConflictDoNothing({ target: walletLedger.idempotencyKey });
 
       return updated.balancePiasters;
     });
   }
 
-  async deduct(userId: string, amount: number): Promise<number> {
+  async deduct(userId: string, amount: number, idempotencyKey: string): Promise<number> {
     return this.db.transaction(async (tx) => {
       const [updated] = await tx
         .update(users)
@@ -96,15 +99,18 @@ export class WalletService {
         .returning({ balancePiasters: users.balancePiasters });
       if (!updated) throw new BadRequestException('رصيد المحفظة غير كافٍ أو المستخدم غير موجود');
 
-      await tx.insert(walletLedger).values({
-        userId,
-        direction: 'debit',
-        amountPiasters: amount,
-        refType: 'refund',
-        refId: null,
-        idempotencyKey: `deduct:${generateId()}`,
-        balanceAfterPiasters: updated.balancePiasters,
-      });
+      await tx
+        .insert(walletLedger)
+        .values({
+          userId,
+          direction: 'debit',
+          amountPiasters: amount,
+          refType: 'deduction',
+          refId: null,
+          idempotencyKey,
+          balanceAfterPiasters: updated.balancePiasters,
+        })
+        .onConflictDoNothing({ target: walletLedger.idempotencyKey });
 
       return updated.balancePiasters;
     });
@@ -181,13 +187,25 @@ export class WalletService {
     refId: string;
     noteAr?: string;
     idempotencyKey: string;
-  }): Promise<{ status: 'applied' | 'duplicate'; fromBalance?: number; toBalance?: number }> {
+  }): Promise<{
+    status: 'applied' | 'duplicate';
+    fromBalancePiasters?: number;
+    toBalancePiasters?: number;
+  }> {
     if (dto.fromUserId === dto.toUserId) {
       throw new BadRequestException('Cannot transfer to self');
     }
 
     return this.db.transaction(async (tx) => {
-      // Idempotency: check if debit row already exists
+      // Lock both rows in ascending ID order to prevent deadlocks under concurrent same-pair transfers.
+      // Lock BEFORE the idempotency check so concurrent identical transfers serialize here,
+      // making the SELECT + INSERT sequence atomic with respect to other transfers between the same pair.
+      const [lockId1, lockId2] = [dto.fromUserId, dto.toUserId].sort();
+      await tx.execute(
+        sql`SELECT id FROM ${users} WHERE ${users.id} IN (${lockId1}, ${lockId2}) ORDER BY ${users.id} ASC FOR UPDATE`,
+      );
+
+      // Idempotency: check if debit row already exists (inside the lock scope)
       const [existing] = await tx
         .select({ id: walletLedger.id })
         .from(walletLedger)
@@ -195,12 +213,6 @@ export class WalletService {
         .limit(1);
 
       if (existing) return { status: 'duplicate' };
-
-      // Lock both rows in ascending ID order to prevent deadlocks under concurrent same-pair transfers
-      const [lockId1, lockId2] = [dto.fromUserId, dto.toUserId].sort();
-      await tx.execute(
-        sql`SELECT id FROM ${users} WHERE ${users.id} IN (${lockId1}, ${lockId2}) ORDER BY ${users.id} ASC FOR UPDATE`,
-      );
 
       // Debit sender (balance check in WHERE — atomic with update)
       const [updatedFrom] = await tx
@@ -259,8 +271,8 @@ export class WalletService {
 
       return {
         status: 'applied',
-        fromBalance: updatedFrom.balancePiasters,
-        toBalance: updatedTo.balancePiasters,
+        fromBalancePiasters: updatedFrom.balancePiasters,
+        toBalancePiasters: updatedTo.balancePiasters,
       };
     });
   }

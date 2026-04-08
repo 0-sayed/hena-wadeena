@@ -28,7 +28,7 @@ export const walletLedger = identitySchema.table(
     uniqueIndex('wallet_ledger_idempotency_key_unique').on(t.idempotencyKey),
     index('idx_wallet_ledger_user_created_at').on(t.userId, t.createdAt.desc()),
     index('idx_wallet_ledger_ref_id').on(t.refId),
-    index('idx_wallet_ledger_ref_type').on(t.refType),
+    index('idx_wallet_ledger_user_ref').on(t.userId, t.refId),
     check('chk_wallet_ledger_amount_positive', sql`${t.amountPiasters} > 0`),
   ],
 );

@@ -121,7 +121,11 @@ describe('WalletService', () => {
       mockDb.returning.mockResolvedValueOnce([]);
 
       const result = await service.transfer(transferDto);
-      expect(result).toEqual({ status: 'applied', fromBalance: 4000, toBalance: 2000 });
+      expect(result).toEqual({
+        status: 'applied',
+        fromBalancePiasters: 4000,
+        toBalancePiasters: 2000,
+      });
     });
 
     it('throws BadRequestException when sender has insufficient balance', async () => {

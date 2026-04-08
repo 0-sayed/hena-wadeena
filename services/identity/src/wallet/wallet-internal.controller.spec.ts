@@ -25,12 +25,16 @@ describe('WalletInternalController', () => {
   it('returns applied response on successful transfer', async () => {
     mockWalletService.transfer.mockResolvedValueOnce({
       status: 'applied',
-      fromBalance: 4000,
-      toBalance: 2000,
+      fromBalancePiasters: 4000,
+      toBalancePiasters: 2000,
     });
 
     const result = await controller.transfer(dto as any);
-    expect(result).toEqual({ status: 'applied', fromBalance: 4000, toBalance: 2000 });
+    expect(result).toEqual({
+      status: 'applied',
+      fromBalancePiasters: 4000,
+      toBalancePiasters: 2000,
+    });
     expect(mockWalletService.transfer).toHaveBeenCalledWith(dto);
   });
 

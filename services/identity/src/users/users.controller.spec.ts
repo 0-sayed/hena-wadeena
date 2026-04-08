@@ -74,9 +74,9 @@ describe('UsersController wallet routes', () => {
   });
 
   it('tops up the current user wallet', async () => {
-    const result = await controller.topUp(currentUser, { amount: 2500 });
+    const result = await controller.topUp(currentUser, { amount: 2500, idempotency_key: 'idem-1' });
 
-    expect(mockWalletService.topUp).toHaveBeenCalledWith(currentUser.sub, 2500);
+    expect(mockWalletService.topUp).toHaveBeenCalledWith(currentUser.sub, 2500, 'idem-1');
     expect(result).toEqual({ success: true, data: { balance: 7500 } });
   });
 });

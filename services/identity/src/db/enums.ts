@@ -61,6 +61,7 @@ export const walletLedgerRefTypeEnum = identitySchema.enum('wallet_ledger_ref_ty
   'job',
   'topup',
   'refund',
+  'deduction',
 ]);
 
 export const kycStatusEnum = identitySchema.enum('kyc_status', [
