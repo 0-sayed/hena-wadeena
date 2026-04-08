@@ -142,7 +142,7 @@ export class PriceAlertsService {
             userId: sub.userId,
             commodityId,
             commodityNameAr: commodity.nameAr,
-            commodityNameEn: commodity.nameEn,
+            commodityNameEn: commodity.nameEn ?? commodity.nameAr,
             thresholdPrice: String(sub.thresholdPrice),
             actualPrice: String(newPrice),
             direction: sub.direction,
