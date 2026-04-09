@@ -53,7 +53,7 @@ const navCards = [
 
 function MobileQuickLinks({ language }: { language: 'ar' | 'en' }) {
   return (
-    <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:hidden">
+    <div className="-mx-4 overflow-x-auto px-4 pb-2 md:hidden">
       <div className="flex snap-x snap-mandatory gap-3 pb-1">
         {navCards.map((item) => {
           const Icon = item.icon;
@@ -372,7 +372,7 @@ export function HeroSection() {
             {copy.description}
           </p>
 
-          <div className="hero-reveal hero-d4 mb-5 sm:hidden">
+          <div className="hero-reveal hero-d4 mb-5 md:hidden">
             <MobileQuickLinks language={language} />
             <p className="mt-3 text-center text-xs text-card/60">{copy.helper}</p>
           </div>

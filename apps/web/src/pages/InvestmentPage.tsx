@@ -156,17 +156,19 @@ const InvestmentPage = () => {
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="mx-auto max-w-xl">
-              <div className="relative flex flex-col gap-3 sm:block">
-                <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
-                <Input
-                  placeholder={pickLocalizedCopy(language, {
-                    ar: 'ابحث عن فرص استثمارية...',
-                    en: 'Search for investment opportunities...',
-                  })}
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
-                />
+              <div className="flex flex-col gap-3 sm:relative">
+                <div className="relative">
+                  <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
+                  <Input
+                    placeholder={pickLocalizedCopy(language, {
+                      ar: 'ابحث عن فرص استثمارية...',
+                      en: 'Search for investment opportunities...',
+                    })}
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
+                  />
+                </div>
                 <Button
                   type="submit"
                   className="w-full rounded-xl sm:absolute sm:start-2 sm:top-1/2 sm:w-auto sm:-translate-y-1/2"
@@ -261,7 +263,7 @@ const InvestmentPage = () => {
                                   {formatInvestmentRange(opportunity, language)}
                                 </span>
                               </div>
-                              <div className="col-span-2 flex items-center gap-2.5 text-sm">
+                              <div className="flex items-center gap-2.5 text-sm sm:col-span-2">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                                   <TrendingUp className="h-5 w-5 text-primary" />
                                 </div>

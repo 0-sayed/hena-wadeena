@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
+import { shouldShowMobileBottomNav } from './mobile-bottom-nav-visibility';
 
 type NavItem = {
   href: string;
@@ -12,23 +13,13 @@ type NavItem = {
   badge?: number;
 };
 
-const HIDDEN_PATH_PREFIXES = [
-  '/admin',
-  '/dashboard',
-  '/kyc',
-  '/login',
-  '/password-reset',
-  '/register',
-  '/reviewer',
-] as const;
-
 export function MobileBottomNav() {
   const { pathname } = useLocation();
   const { user, language } = useAuth();
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
 
-  if (HIDDEN_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (!shouldShowMobileBottomNav(pathname)) {
     return null;
   }
 

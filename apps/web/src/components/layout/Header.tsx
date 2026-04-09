@@ -186,7 +186,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
 
   if (!mounted) {
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground">
+      <div className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground md:h-9 md:w-9">
         <div className="h-5 w-5" />
       </div>
     );
@@ -199,7 +199,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className={`${CONTROL_BUTTON_CLASS} w-9 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
+      className={`${CONTROL_BUTTON_CLASS} w-11 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 md:w-9 [&>svg]:h-5 [&>svg]:w-5`}
       aria-label={label}
       title={label}
     >
