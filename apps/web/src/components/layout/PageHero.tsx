@@ -32,7 +32,7 @@ export function PageHero({ image, alt, children }: PageHeroProps) {
   const parallaxY = scrollY * 0.3;
 
   return (
-    <section className="relative min-h-[50vh] md:min-h-[55vh] flex items-center overflow-hidden">
+    <section className="relative flex min-h-[calc(100svh-4rem)] items-end overflow-hidden sm:min-h-[36rem] md:min-h-[55vh]">
       {/* Parallax Background */}
       <div
         className="absolute inset-0 will-change-transform"
@@ -43,7 +43,7 @@ export function PageHero({ image, alt, children }: PageHeroProps) {
             : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <img src={image} alt={alt} className="w-full h-[130%] object-cover" />
+        <img src={image} alt={alt} className="h-[120%] w-full object-cover sm:h-[130%]" />
         <div className="absolute inset-0 bg-gradient-to-l from-foreground/80 via-foreground/60 to-foreground/35" />
       </div>
 
@@ -60,8 +60,8 @@ export function PageHero({ image, alt, children }: PageHeroProps) {
       </div>
 
       {/* Content */}
-      <div className="container relative z-10 px-4 py-20">
-        <div className="max-w-3xl mx-auto text-center">{children}</div>
+      <div className="container relative z-10 px-4 py-14 sm:py-20">
+        <div className="mx-auto max-w-3xl text-center">{children}</div>
       </div>
     </section>
   );

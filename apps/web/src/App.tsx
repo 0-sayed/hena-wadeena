@@ -54,6 +54,11 @@ import ContactPage from './pages/investment/ContactPage';
 import StartupDetailsPage from './pages/investment/StartupDetailsPage';
 
 import BenefitsPage from './pages/BenefitsPage';
+import JobBoardPage from './pages/jobs/JobBoardPage';
+import JobDetailPage from './pages/jobs/JobDetailPage';
+import PostJobPage from './pages/jobs/PostJobPage';
+import MyPostsPage from './pages/jobs/MyPostsPage';
+import MyApplicationsPage from './pages/jobs/MyApplicationsPage';
 import AttractionsPage from './pages/tourism/AttractionsPage';
 import AttractionDetailsPage from './pages/tourism/AttractionDetailsPage';
 import PackagesPage from './pages/tourism/PackagesPage';
@@ -204,6 +209,17 @@ const App = () => (
             <Route path="/investment/opportunity/:id" element={<OpportunityDetailsPage />} />
             <Route path="/investment/startups/:id" element={<StartupDetailsPage />} />
             <Route path="/investment/contact/:id" element={<ContactPage />} />
+
+            {/* ── Jobs — static routes first, then dynamic ────── */}
+            <Route path="/jobs" element={<JobBoardPage />} />
+            <Route element={<RequireAuth />}>
+              <Route element={<RequireRole roles={[UserRole.MERCHANT, UserRole.FARMER]} />}>
+                <Route path="/jobs/post" element={<PostJobPage />} />
+                <Route path="/jobs/my-posts" element={<MyPostsPage />} />
+              </Route>
+              <Route path="/jobs/my-applications" element={<MyApplicationsPage />} />
+            </Route>
+            <Route path="/jobs/:id" element={<JobDetailPage />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

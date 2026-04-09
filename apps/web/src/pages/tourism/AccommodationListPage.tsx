@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, ArrowRight, GraduationCap, Home, MapPin, Search } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -48,26 +49,28 @@ const AccommodationListPage = () => {
 
   return (
     <Layout title="أماكن الإقامة">
-      <section className="bg-gradient-to-bl from-primary/10 via-accent/5 to-background py-12 md:py-16">
-        <div className="container px-4">
-          <Button variant="ghost" onClick={() => void navigate('/tourism')} className="mb-4">
+      <PageHero image="/images/seed/AO6BYTEnlMo.jpg" alt="شقة سكنية للإقامة">
+        <div className="mb-6 flex justify-center">
+          <Button
+            variant="ghost"
+            onClick={() => void navigate('/tourism')}
+            className="text-card hover:bg-card/10 hover:text-card"
+          >
             <ArrowRight className="h-4 w-4" />
             العودة إلى السياحة
           </Button>
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
-              <GraduationCap className="h-4 w-4" />
-              سكن طلابي وإقامات قصيرة
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              تصفح السكن المتاح
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              اعثر على شقق ووحدات إقامة مناسبة للطلاب والزوار مع تفاصيل الموقع والتواصل المباشر.
-            </p>
-          </div>
         </div>
-      </section>
+        <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-2 text-sm font-semibold text-card mb-4">
+          <GraduationCap className="h-4 w-4" />
+          سكن طلابي وإقامات قصيرة
+        </div>
+        <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
+          تصفح السكن المتاح
+        </h1>
+        <p className="text-lg text-card/90 md:text-xl">
+          اعثر على شقق ووحدات إقامة مناسبة للطلاب والزوار مع تفاصيل الموقع والتواصل المباشر.
+        </p>
+      </PageHero>
 
       <section className="py-10">
         <div className="container px-4 space-y-6">

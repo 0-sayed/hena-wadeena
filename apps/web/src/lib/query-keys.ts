@@ -125,4 +125,13 @@ export const queryKeys = {
     }) => ['admin', 'ai', 'documents', filters] as const,
     aiBatch: (batchId: string) => ['admin', 'ai', 'batches', batchId] as const,
   },
+  jobs: {
+    all: (filters?: Record<string, unknown>) => ['jobs', filters] as const,
+    detail: (id: string) => ['jobs', id] as const,
+    applications: (jobId: string) => ['jobs', jobId, 'applications'] as const,
+    myApplications: () => ['jobs', 'my-applications'] as const,
+    myPosts: () => ['jobs', 'my-posts'] as const,
+    reviews: () => ['jobs', 'reviews'] as const,
+    userReviews: (userId: string) => ['jobs', 'reviews', userId] as const,
+  },
 };

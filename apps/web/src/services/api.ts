@@ -24,7 +24,12 @@ import type {
   BestSeason,
   BestTimeOfDay,
   Difficulty,
+  JobCategory,
+  JobStatus,
+  ApplicationStatus,
+  CompensationType,
 } from '@/lib/format';
+import { toQueryString } from '@/lib/query-string';
 import { apiFetchRawWithRefresh, apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -96,17 +101,6 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
 
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
-}
-
-/** Build ?key=value&... from object, skipping undefined values */
-function toQueryString(params?: object): string {
-  if (!params) return '';
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null);
-  if (entries.length === 0) return '';
-  return (
-    '?' +
-    entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&')
-  );
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -2188,4 +2182,103 @@ export const benefitsAPI = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+};
+
+// ── Employment Board ────────────────────────────────────────────────────────
+
+export type ReviewDirection = 'worker_rates_poster' | 'poster_rates_worker';
+
+export interface JobPost {
+  id: string;
+  posterId: string;
+  title: string;
+  descriptionAr: string;
+  descriptionEn: string | null;
+  category: JobCategory;
+  area: string;
+  compensation: number; // piasters
+  compensationType: CompensationType;
+  slots: number;
+  status: JobStatus;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+}
+
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  applicantId: string;
+  noteAr: string | null;
+  status: ApplicationStatus;
+  appliedAt: string;
+  resolvedAt: string | null;
+}
+
+export interface JobReview {
+  id: string;
+  jobId: string;
+  applicationId: string;
+  reviewerId: string;
+  revieweeId: string;
+  direction: ReviewDirection;
+  rating: number; // 1–5
+  comment: string | null;
+  createdAt: string;
+}
+
+export const jobsAPI = {
+  getAll: (params?: {
+    category?: string;
+    area?: string;
+    compensationType?: string;
+    offset?: number;
+    limit?: number;
+  }) => apiFetch<PaginatedResponse<JobPost>>(`/jobs${toQueryString(params)}`),
+
+  getById: (id: string) => apiFetch<JobPost>(`/jobs/${id}`),
+
+  create: (body: {
+    title: string;
+    descriptionAr: string;
+    descriptionEn?: string;
+    category: JobCategory;
+    area: string;
+    compensation: number;
+    compensationType: CompensationType;
+    slots?: number;
+    startsAt?: string;
+    endsAt?: string;
+  }) => apiFetchWithRefresh<JobPost>('/jobs', { method: 'POST', body: JSON.stringify(body) }),
+
+  apply: (jobId: string, body: { noteAr?: string }) =>
+    apiFetchWithRefresh<JobApplication>(`/jobs/${jobId}/apply`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getApplications: (jobId: string) =>
+    apiFetchWithRefresh<PaginatedResponse<JobApplication>>(`/jobs/${jobId}/applications`),
+
+  updateApplication: (jobId: string, appId: string, body: { status: ApplicationStatus }) =>
+    apiFetchWithRefresh<JobApplication>(`/jobs/${jobId}/applications/${appId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  withdrawApplication: (jobId: string, appId: string) =>
+    apiFetchWithRefresh<void>(`/jobs/${jobId}/applications/${appId}`, { method: 'DELETE' }),
+
+  submitReview: (jobId: string, appId: string, body: { rating: number; comment?: string }) =>
+    apiFetchWithRefresh<JobReview>(`/jobs/${jobId}/applications/${appId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getUserReviews: (userId: string) => apiFetch<JobReview[]>(`/users/${userId}/job-reviews`),
+
+  getMyApplications: () =>
+    apiFetchWithRefresh<PaginatedResponse<JobApplication>>('/jobs/my-applications'),
+
+  getMyPosts: () => apiFetchWithRefresh<PaginatedResponse<JobPost>>('/jobs/my-posts'),
 };

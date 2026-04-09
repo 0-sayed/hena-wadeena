@@ -23,6 +23,7 @@ import { BusinessInquiriesModule } from './business-inquiries/business-inquiries
 import { CommodityPricesModule } from './commodity-prices/commodity-prices.module';
 import { InvestmentApplicationsModule } from './investment-applications/investment-applications.module';
 import { InvestmentOpportunitiesModule } from './investment-opportunities/investment-opportunities.module';
+import { JobsModule } from './jobs/jobs.module';
 import { ListingInquiriesModule } from './listing-inquiries/listing-inquiries.module';
 import { ListingsModule } from './listings/listings.module';
 import { PriceAlertsModule } from './price-alerts/price-alerts.module';
@@ -67,6 +68,7 @@ function requireEnv(key: string): string {
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     HealthModule,
     AuthModule,
+    JobsModule,
     ListingsModule,
     ListingInquiriesModule,
     CommodityPricesModule,

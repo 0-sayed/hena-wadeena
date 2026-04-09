@@ -1,7 +1,7 @@
 ﻿import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { Building2, CheckCircle, Clock, Inbox, Package2, Store } from 'lucide-react';
+import { Briefcase, Building2, CheckCircle, Clock, Inbox, Package2, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
@@ -14,6 +14,7 @@ import { useListingInquiriesReceived } from '@/hooks/use-listing-inquiries';
 import { useMyBusinesses } from '@/hooks/use-my-businesses';
 import { useMyListings } from '@/hooks/use-my-listings';
 import { useAuth } from '@/hooks/use-auth';
+import { useMyPosts } from '@/hooks/use-jobs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,6 +77,8 @@ export default function MerchantDashboard() {
     isLoading: loadingInquiries,
     isError: inquiriesError,
   } = useListingInquiriesReceived({ limit: 5 });
+  const { data: myPostsData, isLoading: loadingMyPosts } = useMyPosts(true);
+  const openJobsCount = (myPostsData?.data ?? []).filter((j) => j.status === 'open').length;
   const [listingForm, setListingForm] = useState<ListingFormState>(emptyListingForm);
   const [isListingDialogOpen, setIsListingDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -237,7 +240,7 @@ export default function MerchantDashboard() {
         en: 'Manage your business activity, listings, and incoming inquiries',
       })}
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard
           label={pickLocalizedCopy(appLanguage, { ar: 'الأنشطة التجارية', en: 'Businesses' })}
           value={loadingBusinesses ? '...' : stats.totalBusinesses}
@@ -264,17 +267,27 @@ export default function MerchantDashboard() {
           icon={Package2}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'استفسارات واردة', en: 'Incoming inquiries' })}
+          label={pickLocalizedCopy(appLanguage, {
+            ar: 'استفسارات واردة',
+            en: 'Incoming inquiries',
+          })}
           value={loadingInquiries ? '...' : stats.receivedInquiries}
           icon={Inbox}
           variant="warning"
+        />
+        <StatCard
+          label={pickLocalizedCopy(appLanguage, { ar: 'وظائف مفتوحة', en: 'Open jobs' })}
+          value={loadingMyPosts ? '...' : openJobsCount}
+          icon={Briefcase}
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'أنشطتي التجارية', en: 'My businesses' })}</CardTitle>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, { ar: 'أنشطتي التجارية', en: 'My businesses' })}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loadingBusinesses ? (
@@ -301,23 +314,37 @@ export default function MerchantDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'النشاط', en: 'Business' })}</TableHead>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التصنيف', en: 'Category' })}</TableHead>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</TableHead>
-                    <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'النشاط', en: 'Business' })}
+                    </TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'التصنيف', en: 'Category' })}
+                    </TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}
+                    </TableHead>
+                    <TableHead>
+                      {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {businesses.map((business) => {
-                    const status = verificationLabels[business.verificationStatus] ?? verificationLabels.pending;
+                    const status =
+                      verificationLabels[business.verificationStatus] ?? verificationLabels.pending;
 
                     return (
                       <TableRow key={business.id}>
                         <TableCell className="font-medium">
-                          {pickLocalizedField(appLanguage, { ar: business.nameAr, en: business.nameEn })}
+                          {pickLocalizedField(appLanguage, {
+                            ar: business.nameAr,
+                            en: business.nameEn,
+                          })}
                         </TableCell>
                         <TableCell>{business.category}</TableCell>
-                        <TableCell>{districtLabel(business.district ?? '', appLanguage) || '-'}</TableCell>
+                        <TableCell>
+                          {districtLabel(business.district ?? '', appLanguage) || '-'}
+                        </TableCell>
                         <TableCell>
                           <span className="rounded-full bg-muted px-3 py-1 text-xs">
                             {pickLocalizedCopy(appLanguage, status)}
@@ -356,6 +383,34 @@ export default function MerchantDashboard() {
             </Button>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, { ar: 'لوحة التوظيف', en: 'Employment board' })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'انشر وظائف وأدر الطلبات مباشرة من هنا.',
+                en: 'Post jobs and manage applications.',
+              })}
+            </p>
+            <div className="flex gap-2">
+              <Button asChild size="sm">
+                <Link to="/jobs/post">
+                  {pickLocalizedCopy(appLanguage, { ar: 'نشر وظيفة', en: 'Post a job' })}
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/jobs/my-posts">
+                  {pickLocalizedCopy(appLanguage, { ar: 'وظائفي', en: 'My posts' })}
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <ListingEditorDialog
@@ -373,7 +428,12 @@ export default function MerchantDashboard() {
       <Card>
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'صندوق وارد الاستفسارات', en: 'Inquiry inbox' })}</CardTitle>
+            <CardTitle>
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'صندوق وارد الاستفسارات',
+                en: 'Inquiry inbox',
+              })}
+            </CardTitle>
             <CardDescription>
               {pickLocalizedCopy(appLanguage, {
                 ar: 'آخر الرسائل التي وصلت على إعلاناتك مع الوصول السريع لصفحة المتابعة.',
@@ -383,7 +443,10 @@ export default function MerchantDashboard() {
           </div>
           <Button asChild variant="outline">
             <Link to="/marketplace/inquiries?tab=received">
-              {pickLocalizedCopy(appLanguage, { ar: 'إدارة كل الاستفسارات', en: 'Manage all inquiries' })}
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'إدارة كل الاستفسارات',
+                en: 'Manage all inquiries',
+              })}
             </Link>
           </Button>
         </CardHeader>
@@ -429,7 +492,8 @@ export default function MerchantDashboard() {
                       </div>
                       <p className="font-semibold text-foreground">{inquiry.listingTitle}</p>
                       <p className="text-sm text-muted-foreground">
-                        {pickLocalizedCopy(appLanguage, { ar: 'من:', en: 'From:' })} {inquiry.contactName}
+                        {pickLocalizedCopy(appLanguage, { ar: 'من:', en: 'From:' })}{' '}
+                        {inquiry.contactName}
                         {inquiry.contactEmail ? ` • ${inquiry.contactEmail}` : ''}
                       </p>
                     </div>
@@ -448,7 +512,10 @@ export default function MerchantDashboard() {
                   {inquiry.replyMessage && (
                     <div className="mt-3 rounded-xl bg-primary/5 p-3 text-sm text-muted-foreground">
                       <p className="mb-1 font-medium text-foreground">
-                        {pickLocalizedCopy(appLanguage, { ar: 'آخر رد محفوظ', en: 'Latest saved reply' })}
+                        {pickLocalizedCopy(appLanguage, {
+                          ar: 'آخر رد محفوظ',
+                          en: 'Latest saved reply',
+                        })}
                       </p>
                       <p className="whitespace-pre-line">{inquiry.replyMessage}</p>
                     </div>
@@ -484,7 +551,9 @@ export default function MerchantDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'إعلاناتي الحالية', en: 'Current listings' })}</CardTitle>
+          <CardTitle>
+            {pickLocalizedCopy(appLanguage, { ar: 'إعلاناتي الحالية', en: 'Current listings' })}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loadingListings ? (
@@ -495,26 +564,44 @@ export default function MerchantDashboard() {
             </div>
           ) : listings.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, { ar: 'لا توجد إعلانات حاليًا.', en: 'No listings right now.' })}
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'لا توجد إعلانات حاليًا.',
+                en: 'No listings right now.',
+              })}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإعلان', en: 'Listing' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}</TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الإعلان', en: 'Listing' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {listings.map((listing) => (
                   <TableRow key={listing.id}>
                     <TableCell className="font-medium">
-                      {pickLocalizedField(appLanguage, { ar: listing.titleAr, en: listing.titleEn })}
+                      {pickLocalizedField(appLanguage, {
+                        ar: listing.titleAr,
+                        en: listing.titleEn,
+                      })}
                     </TableCell>
-                    <TableCell>{districtLabel(listing.district ?? '', appLanguage) || '-'}</TableCell>
+                    <TableCell>
+                      {districtLabel(listing.district ?? '', appLanguage) || '-'}
+                    </TableCell>
                     <TableCell>{formatAmountWithCurrency(listing.price, appLanguage)}</TableCell>
                     <TableCell>{listingStatusLabel(listing.status, appLanguage)}</TableCell>
                     <TableCell>

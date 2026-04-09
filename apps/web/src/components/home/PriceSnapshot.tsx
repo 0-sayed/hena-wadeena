@@ -46,7 +46,7 @@ export function PriceSnapshot() {
         };
 
   return (
-    <section className="relative overflow-hidden bg-muted/30 py-24">
+    <section className="relative overflow-hidden bg-muted/30 py-16 sm:py-20 md:py-24">
       <FloatingBlob
         className="top-1/2 end-0 translate-x-1/2 -translate-y-1/2"
         color="chart-3"
@@ -57,20 +57,22 @@ export function PriceSnapshot() {
       <div className="container relative mx-auto px-4">
         <SR
           direction="up"
-          className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+          className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between"
         >
-          <div>
+          <div className="max-w-2xl">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-chart-3/20 bg-chart-3/10 px-4 py-2">
               <BarChart3 className="h-4 w-4 text-chart-3" />
               <span className="text-sm font-semibold text-chart-3">{copy.badge}</span>
             </div>
-            <h2 className="mb-2 text-4xl font-bold text-foreground md:text-5xl">{copy.title}</h2>
-            <p className="text-lg text-muted-foreground">{copy.description}</p>
+            <h2 className="mb-2 text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
+              {copy.title}
+            </h2>
+            <p className="text-base text-muted-foreground sm:text-lg">{copy.description}</p>
           </div>
-          <Link to="/marketplace">
+          <Link to="/marketplace" className="w-full md:w-auto">
             <Button
               variant="outline"
-              className="btn-press gap-2 transition-all duration-300 hover:scale-[1.03]"
+              className="btn-press w-full gap-2 transition-all duration-300 hover:scale-[1.03] md:w-auto"
             >
               {copy.viewAll}
               <ArrowLeft className="h-4 w-4" />
@@ -81,12 +83,12 @@ export function PriceSnapshot() {
         <SR direction="scale">
           <Card className="overflow-hidden rounded-2xl border-border/50 shadow-lg">
             <CardContent className="p-0">
-              <Table>
+              <Table className="min-w-[34rem] sm:min-w-0">
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="px-6 py-5">{copy.product}</TableHead>
-                    <TableHead className="px-6 py-5">{copy.price}</TableHead>
-                    <TableHead className="px-6 py-5">{copy.change}</TableHead>
+                    <TableHead className="px-4 py-4 sm:px-6 sm:py-5">{copy.product}</TableHead>
+                    <TableHead className="px-4 py-4 sm:px-6 sm:py-5">{copy.price}</TableHead>
+                    <TableHead className="px-4 py-4 sm:px-6 sm:py-5">{copy.change}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -103,7 +105,7 @@ export function PriceSnapshot() {
                               : 'hover:bg-muted/20'
                           }
                         >
-                          <TableCell className="px-6 py-5">
+                          <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                             <span className="font-semibold text-foreground">
                               {pickLocalizedField(language, {
                                 ar: entry.commodity.nameAr,
@@ -111,7 +113,7 @@ export function PriceSnapshot() {
                               })}
                             </span>
                           </TableCell>
-                          <TableCell className="px-6 py-5">
+                          <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                             <span className="text-lg font-bold text-foreground">
                               {formatPrice(entry.latestPrice)}
                             </span>
@@ -120,7 +122,7 @@ export function PriceSnapshot() {
                               {unitLabel(entry.commodity.unit, language)}
                             </span>
                           </TableCell>
-                          <TableCell className="px-6 py-5">
+                          <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                             <TrendBadge changePercent={entry.changePercent} />
                           </TableCell>
                         </TableRow>
