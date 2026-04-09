@@ -1,8 +1,12 @@
+import asyncio
 from types import SimpleNamespace
 
+from nakheel.config import Settings
 from nakheel.core.generation.domain_guard import is_domain_relevant, localized_refusal
+from nakheel.core.retrieval.hybrid_search import HybridSearchService
+from nakheel.core.retrieval.query_processor import QueryProcessor, ProcessedQuery
 from nakheel.core.retrieval.rrf_fusion import fuse_ranked_results
-from nakheel.core.retrieval.reranker import ScoredChunk
+from nakheel.core.retrieval.reranker import RerankerService, ScoredChunk
 
 
 def make_point(point_id: str):
@@ -36,3 +40,92 @@ def test_rrf_fusion_rejects_negative_k():
 
 def test_localized_refusal_defaults_to_english():
     assert localized_refusal("unknown").startswith("Sorry")
+
+
+def test_reranker_skips_neural_scoring_for_small_candidate_sets():
+    settings = Settings(RERANKER_TOP_K=2, RERANKER_MIN_CANDIDATES=4)
+    reranker = RerankerService(settings)
+    candidates = [
+        SimpleNamespace(chunk=SimpleNamespace(text="first"), retrieval_score=0.4),
+        SimpleNamespace(chunk=SimpleNamespace(text="second"), retrieval_score=0.9),
+        SimpleNamespace(chunk=SimpleNamespace(text="third"), retrieval_score=0.6),
+    ]
+
+    reranked = reranker.rerank("new valley", candidates)
+
+    assert [item.chunk.chunk.text for item in reranked] == ["second", "third"]
+    assert [item.score for item in reranked] == [0.9, 0.6]
+
+
+def test_hybrid_search_uses_qdrant_payload_without_mongo_roundtrip():
+    settings = Settings(DENSE_TOP_K=2, SPARSE_TOP_K=2, RRF_TOP_N=2)
+
+    class FakeQdrant:
+        async def dense_search_async(self, _vector, _limit):
+            return [
+                SimpleNamespace(
+                    id="point-1",
+                    payload={
+                        "chunk_id": "chk-1",
+                        "doc_id": "doc-1",
+                        "chunk_index": 0,
+                        "section_title": "Intro",
+                        "parent_section": None,
+                        "text": "New Valley overview",
+                        "language": "en",
+                        "page_numbers": [1],
+                        "token_count": 3,
+                    },
+                    score=0.8,
+                )
+            ]
+
+        async def sparse_search_async(self, _vector, _limit):
+            return []
+
+    class FakeMongo:
+        def collection(self, _name):
+            raise AssertionError("Mongo should not be queried when Qdrant payload is complete")
+
+    service = HybridSearchService(settings, FakeQdrant(), FakeMongo())
+    query = ProcessedQuery(
+        original_text="New Valley",
+        normalized_text="New Valley",
+        dense_vector=[0.1],
+        sparse_vector={1: 0.2},
+        language=SimpleNamespace(code="en"),
+    )
+
+    results = asyncio.run(service.search(query))
+
+    assert len(results) == 1
+    assert results[0].chunk.chunk_id == "chk-1"
+    assert results[0].chunk.text == "New Valley overview"
+
+
+def test_query_processor_caches_repeated_queries():
+    calls = {"dense": 0, "sparse": 0}
+
+    class FakeDenseEmbedder:
+        settings = SimpleNamespace(QUERY_CACHE_SIZE=16)
+
+        async def embed_query_async(self, query: str):
+            calls["dense"] += 1
+            return [float(len(query))]
+
+        def embed_query(self, query: str):
+            calls["dense"] += 1
+            return [float(len(query))]
+
+    class FakeSparseEmbedder:
+        def transform_query(self, query: str):
+            calls["sparse"] += 1
+            return {len(query): 1.0}
+
+    processor = QueryProcessor(FakeDenseEmbedder(), FakeSparseEmbedder())
+
+    first = asyncio.run(processor.process_async(" New Valley "))
+    second = asyncio.run(processor.process_async("New Valley"))
+
+    assert first.normalized_text == second.normalized_text
+    assert calls == {"dense": 1, "sparse": 1}
