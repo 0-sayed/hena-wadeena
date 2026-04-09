@@ -168,7 +168,7 @@ export default function AdminOverview() {
               icon={Bot}
               description={pickLocalizedCopy(appLanguage, {
                 ar: 'تحميل أو حذف ملفات PDF المرجعية للمساعد',
-                en: 'Load or delete the assistant reference PDFs',
+                en: 'Compose curated RAG sections and manage reference PDFs',
               })}
               href="/admin/ai"
             />

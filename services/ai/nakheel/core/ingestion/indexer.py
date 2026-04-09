@@ -35,6 +35,7 @@ from nakheel.models.document import (
 )
 from nakheel.utils.ids import new_id
 from nakheel.utils.language import detect_language
+from nakheel.utils.slug import slugify
 from nakheel.utils.text_cleaning import clean_text
 
 
@@ -291,7 +292,7 @@ class DocumentIndexer:
             started=started,
         )
 
-    async def inject_bootstrap_text(
+    async def inject_curated_text(
         self,
         slug: str,
         content: str,
@@ -300,29 +301,15 @@ class DocumentIndexer:
         tags: list[str],
         language_hint: str = "auto",
     ) -> dict:
-        """Index a curated startup document exactly once per stable slug."""
+        """Index or replace a curated text document addressed by a stable slug."""
 
         cleaned = clean_text(content)
         if not cleaned:
             raise BadRequestError("Content cannot be empty")
-        filename = f"{slug}.md"
-        existing_indexed = await self.mongo.collection("documents").find_one(
-            {
-                "filename": filename,
-                "source_type": DocumentSourceType.BOOTSTRAP.value,
-                "status": DocumentStatus.INDEXED.value,
-            },
-            {"_id": 0, "doc_id": 1, "indexed_at": 1},
-        )
-        if existing_indexed:
-            return {
-                "doc_id": existing_indexed["doc_id"],
-                "status": DocumentStatus.INDEXED.value,
-                "filename": filename,
-                "skipped": True,
-                "indexed_at": existing_indexed.get("indexed_at"),
-            }
-
+        normalized_slug = slugify(slug)
+        if not normalized_slug:
+            raise BadRequestError("Slug cannot be empty")
+        filename = f"{normalized_slug}.md"
         await self._delete_documents_by_filename(filename=filename, source_type=DocumentSourceType.BOOTSTRAP)
 
         doc_id = new_id("doc")
@@ -352,7 +339,7 @@ class DocumentIndexer:
             total_pages=1,
             started=started,
         )
-        result["skipped"] = False
+        result["slug"] = normalized_slug
         return result
 
     async def parse_only(self, filename: str, file_bytes: bytes) -> dict:

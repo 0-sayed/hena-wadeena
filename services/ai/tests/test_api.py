@@ -162,6 +162,7 @@ class FakeIndexer:
         self.batches = {}
         self.parsed_root = Path(mkdtemp(prefix="nakheel-parsed-"))
         self.parsed_files = {}
+        self.curated_entries = []
 
     async def parse_only(self, filename, file_bytes):
         parse_id = "parsed-1"
@@ -244,6 +245,17 @@ class FakeIndexer:
 
     async def inject_raw_text(self, **_kwargs):
         return {"doc_id": "doc-text-1", "status": "indexed", "filename": "copied_doc"}
+
+    async def inject_curated_text(self, **kwargs):
+        self.curated_entries.append(kwargs)
+        return {
+            "doc_id": f"doc-curated-{len(self.curated_entries)}",
+            "status": "indexed",
+            "filename": f"{kwargs['slug']}.md",
+            "indexed_at": datetime.now(UTC),
+            "total_chunks": 1,
+            "slug": kwargs["slug"],
+        }
 
 
 class FakeSessionManager:
@@ -499,6 +511,50 @@ def test_inject_raw_text_endpoint():
     )
     assert response.status_code == 200
     assert response.json()["doc_id"] == "doc-text-1"
+
+
+def test_compose_curated_text_endpoint_uses_fallback_sections():
+    client = build_test_client()
+    response = client.post(
+        "/api/v1/documents/curated/compose",
+        json={
+            "text": "Intro about New Valley.\n\nGeography and administration\n\nThe governorate spans a wide desert area.",
+            "language": "ar",
+        },
+        headers=_auth_headers(role="admin"),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["strategy"] == "fallback"
+    assert len(body["entries"]) >= 1
+    assert body["entries"][0]["slug"]
+
+
+def test_feed_curated_text_endpoint():
+    client = build_test_client()
+    response = client.post(
+        "/api/v1/documents/curated/feed",
+        json={
+            "entries": [
+                {
+                    "slug": "geography",
+                    "title": "Geography",
+                    "description": "Governorate geography",
+                    "content": "The governorate spans a wide desert area.",
+                    "tags": ["geography"],
+                    "language": "ar",
+                }
+            ]
+        },
+        headers=_auth_headers(role="admin"),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["indexed_entries"] == 1
+    assert body["failed_entries"] == 0
+    assert body["items"][0]["filename"] == "geography.md"
 
 
 def test_parse_document_returns_download_url_and_downloads_markdown():

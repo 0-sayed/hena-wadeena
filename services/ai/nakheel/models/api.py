@@ -160,3 +160,44 @@ class RawTextInjectRequest(BaseModel):
     description: str | None = None
     tags: list[str] = Field(default_factory=list)
     language: str = "auto"
+
+
+class CuratedKnowledgeComposeRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=300000)
+    language: str = "ar"
+
+
+class CuratedKnowledgeEntry(BaseModel):
+    slug: str = Field(min_length=1, max_length=160)
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=500)
+    content: str = Field(min_length=1, max_length=50000)
+    tags: list[str] = Field(default_factory=list, max_length=8)
+    language: str = "ar"
+
+
+class CuratedKnowledgeComposeResponse(BaseModel):
+    strategy: str
+    entries: list[CuratedKnowledgeEntry] = Field(default_factory=list)
+
+
+class CuratedKnowledgeFeedRequest(BaseModel):
+    entries: list[CuratedKnowledgeEntry] = Field(default_factory=list, min_length=1, max_length=100)
+
+
+class CuratedKnowledgeFeedItemResponse(BaseModel):
+    slug: str
+    title: str
+    status: str
+    filename: str | None = None
+    doc_id: str | None = None
+    indexed_at: datetime | None = None
+    total_chunks: int = 0
+    error_detail: str | None = None
+
+
+class CuratedKnowledgeFeedResponse(BaseModel):
+    total_entries: int
+    indexed_entries: int
+    failed_entries: int
+    items: list[CuratedKnowledgeFeedItemResponse] = Field(default_factory=list)

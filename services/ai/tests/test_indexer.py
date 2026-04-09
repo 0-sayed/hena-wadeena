@@ -307,7 +307,7 @@ async def test_inject_raw_text_uses_uuid_compatible_qdrant_point_ids():
 
 
 @pytest.mark.asyncio
-async def test_inject_bootstrap_text_skips_existing_indexed_document():
+async def test_inject_curated_text_replaces_existing_indexed_document():
     indexer, mongo, qdrant = build_indexer()
     await indexer._create_document_record(
         doc_id="doc-existing",
@@ -321,22 +321,27 @@ async def test_inject_bootstrap_text_skips_existing_indexed_document():
         status=DocumentStatus.INDEXED,
         current_step="indexed",
     )
+    mongo.collection("documents").documents["doc-existing"]["qdrant_ids"] = ["11111111-1111-1111-1111-111111111111"]
+    mongo.collection("chunks").chunks.append({"doc_id": "doc-existing", "chunk_id": "old-chunk"})
 
-    result = await indexer.inject_bootstrap_text(
+    result = await indexer.inject_curated_text(
         slug="new-valley-2026",
-        content="Already indexed bootstrap content.",
+        content="Fresh curated content.",
         title="Existing",
         description=None,
         tags=["bootstrap"],
         language_hint="auto",
     )
 
-    assert result["skipped"] is True
-    assert qdrant.upserted == []
+    assert result["status"] == "indexed"
+    assert result["slug"] == "new-valley-2026"
+    assert "doc-existing" not in mongo.collection("documents").documents
+    assert all(chunk["doc_id"] != "doc-existing" for chunk in mongo.collection("chunks").chunks)
+    assert qdrant.deleted == [["11111111-1111-1111-1111-111111111111"]]
 
 
 @pytest.mark.asyncio
-async def test_inject_bootstrap_text_cleans_failed_copy_before_retry():
+async def test_inject_curated_text_cleans_failed_copy_before_retry():
     indexer, mongo, qdrant = build_indexer()
     await indexer._create_document_record(
         doc_id="doc-failed",
@@ -354,19 +359,37 @@ async def test_inject_bootstrap_text_cleans_failed_copy_before_retry():
     mongo.collection("documents").documents["doc-failed"]["qdrant_ids"] = ["11111111-1111-1111-1111-111111111111"]
     mongo.collection("chunks").chunks.append({"doc_id": "doc-failed", "chunk_id": "old-chunk"})
 
-    result = await indexer.inject_bootstrap_text(
+    result = await indexer.inject_curated_text(
         slug="new-valley-2026",
-        content="Fresh bootstrap content.",
+        content="Fresh curated content.",
         title="Fresh",
         description="Curated",
         tags=["bootstrap"],
         language_hint="auto",
     )
 
-    assert result["skipped"] is False
+    assert result["status"] == "indexed"
     assert "doc-failed" not in mongo.collection("documents").documents
     assert mongo.collection("chunks").chunks[0]["doc_id"] != "doc-failed"
     assert qdrant.deleted == [["11111111-1111-1111-1111-111111111111"]]
+
+
+@pytest.mark.asyncio
+async def test_inject_curated_text_normalizes_slug():
+    indexer, mongo, qdrant = build_indexer()
+
+    result = await indexer.inject_curated_text(
+        slug=" New Valley 2026 ",
+        content="Curated content for slug normalization.",
+        title="New Valley 2026",
+        description=None,
+        tags=["curated"],
+        language_hint="auto",
+    )
+
+    assert result["filename"] == "new-valley-2026.md"
+    assert result["slug"] == "new-valley-2026"
+    assert qdrant.upserted[0].payload["doc_filename"] == "new-valley-2026.md"
 
 
 @pytest.mark.asyncio

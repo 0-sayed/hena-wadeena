@@ -67,10 +67,6 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 50
     TEMP_DIR: Path = Field(default=Path("./tmp/nakheel"))
     PARSED_FILE_TTL_HOURS: int = 2
-    BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP: bool = False
-    BOOTSTRAP_KNOWLEDGE_BASE_FILE: Path = Field(
-        default=Path("./nakheel/bootstrap/datasets/new_valley_2026.json")
-    )
 
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 30
     RATE_LIMIT_INJECT_PER_HOUR: int = 10

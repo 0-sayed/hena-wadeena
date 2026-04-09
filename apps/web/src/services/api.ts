@@ -1790,6 +1790,47 @@ export interface AiKnowledgeUploadRequest {
   language?: string;
 }
 
+export interface AiCuratedKnowledgeEntry {
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  tags: string[];
+  language: string;
+}
+
+export interface AiCuratedKnowledgeComposeRequest {
+  text: string;
+  language?: string;
+}
+
+export interface AiCuratedKnowledgeComposeResponse {
+  strategy: string;
+  entries: AiCuratedKnowledgeEntry[];
+}
+
+export interface AiCuratedKnowledgeFeedRequest {
+  entries: AiCuratedKnowledgeEntry[];
+}
+
+export interface AiCuratedKnowledgeFeedItem {
+  slug: string;
+  title: string;
+  status: string;
+  filename: string | null;
+  doc_id: string | null;
+  indexed_at: string | null;
+  total_chunks: number;
+  error_detail: string | null;
+}
+
+export interface AiCuratedKnowledgeFeedResponse {
+  total_entries: number;
+  indexed_entries: number;
+  failed_entries: number;
+  items: AiCuratedKnowledgeFeedItem[];
+}
+
 function buildAiKnowledgeUploadFormData(body: AiKnowledgeUploadRequest): FormData {
   const formData = new FormData();
 
@@ -2159,6 +2200,18 @@ export const aiKnowledgeAPI = {
   deleteDocument: (docId: string) =>
     apiFetchWithRefresh<AiKnowledgeDeleteResponse>(`/documents/${docId}`, {
       method: 'DELETE',
+    }),
+
+  composeCuratedText: (body: AiCuratedKnowledgeComposeRequest) =>
+    apiFetchWithRefresh<AiCuratedKnowledgeComposeResponse>('/documents/curated/compose', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  feedCuratedText: (body: AiCuratedKnowledgeFeedRequest) =>
+    apiFetchWithRefresh<AiCuratedKnowledgeFeedResponse>('/documents/curated/feed', {
+      method: 'POST',
+      body: JSON.stringify(body),
     }),
 };
 
