@@ -77,6 +77,9 @@ jobs:
     needs: [build-images]
     environment: production
     timeout-minutes: 12
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Validate required deploy secrets
         run: |
@@ -96,7 +99,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS,SEED_PASSWORD,CADDY_HTTP_PORT,CADDY_HTTPS_PORT
+          envs: GHCR_TOKEN,GHCR_LOGIN_USER,GHCR_REGISTRY_OWNER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS,SEED_PASSWORD,CADDY_HTTP_PORT,CADDY_HTTPS_PORT
           script: |
             set -euo pipefail
             cd /opt/hena-wadeena
@@ -110,7 +113,7 @@ jobs:
             fi
 
             echo "==> Logging into GHCR"
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_LOGIN_USER" --password-stdin
 
             echo "==> Fixing file permissions (containers may run as root)"
             docker run --rm -v "$(pwd):/fix-perms" alpine:3.21 chown -R "$(id -u):$(id -g)" /fix-perms
@@ -220,9 +223,9 @@ jobs:
               done
             }
             for svc in identity market guide-booking map ai gateway; do
-              pull_with_retry "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA"
-              docker tag "ghcr.io/$GHCR_USER/hena-wadeena/$svc:$DEPLOY_SHA" \
-                "ghcr.io/$GHCR_USER/hena-wadeena/$svc:latest"
+              pull_with_retry "ghcr.io/$GHCR_REGISTRY_OWNER/hena-wadeena/$svc:$DEPLOY_SHA"
+              docker tag "ghcr.io/$GHCR_REGISTRY_OWNER/hena-wadeena/$svc:$DEPLOY_SHA" \
+                "ghcr.io/$GHCR_REGISTRY_OWNER/hena-wadeena/$svc:latest"
             done
 
             echo "==> Running migrations (sequential - shared drizzle tracking table)"
@@ -264,8 +267,9 @@ jobs:
 
             echo "==> Deploy complete"
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
-          GHCR_USER: ${{ github.repository_owner }}
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_LOGIN_USER: ${{ github.actor }}
+          GHCR_REGISTRY_OWNER: ${{ github.repository_owner }}
           DEPLOY_SHA: ${{ github.sha }}
           MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
           MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
