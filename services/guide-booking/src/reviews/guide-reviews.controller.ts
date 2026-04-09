@@ -19,11 +19,9 @@ import {
 import { CreateReviewDto, QueryReviewsDto, ReplyReviewDto, UpdateReviewDto } from './dto';
 import { ReviewsService } from './reviews.service';
 
-@Controller('reviews')
-export class ReviewsController {
+@Controller('guide-reviews')
+export class GuideReviewsController {
   constructor(@Inject(ReviewsService) private readonly reviewsService: ReviewsService) {}
-
-  // --- Static paths MUST come before /:id ---
 
   @Get('mine')
   findMine(@CurrentUser() user: JwtPayload, @Query() query: QueryReviewsDto) {

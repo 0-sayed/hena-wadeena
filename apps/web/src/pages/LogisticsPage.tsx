@@ -343,10 +343,10 @@ const LogisticsPage = () => {
           <div className="container px-4">
             <Tabs defaultValue="explore-map" className="w-full">
               <SR>
-                <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-3 mb-10 h-12 rounded-xl">
+                <TabsList className="mx-auto mb-8 grid h-auto w-full max-w-3xl grid-cols-3 rounded-2xl p-1 sm:mb-10 sm:h-12 sm:rounded-xl">
                   <TabsTrigger
                     value="explore-map"
-                    className="rounded-lg text-sm font-semibold gap-2"
+                    className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
                   >
                     <MapIcon className="h-4 w-4" />
                     {pickLocalizedCopy(appLanguage, {
@@ -354,7 +354,10 @@ const LogisticsPage = () => {
                       en: 'Explore the map',
                     })}
                   </TabsTrigger>
-                  <TabsTrigger value="carpool" className="rounded-lg text-sm font-semibold gap-2">
+                  <TabsTrigger
+                    value="carpool"
+                    className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
+                  >
                     <Car className="h-4 w-4" />
                     {pickLocalizedCopy(appLanguage, {
                       ar: 'مشاركة الرحلات',
@@ -363,7 +366,7 @@ const LogisticsPage = () => {
                   </TabsTrigger>
                   <TabsTrigger
                     value="local-transport"
-                    className="rounded-lg text-sm font-semibold gap-2"
+                    className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
                   >
                     <Bus className="h-4 w-4" />
                     {pickLocalizedCopy(appLanguage, {
@@ -378,7 +381,7 @@ const LogisticsPage = () => {
               <TabsContent value="explore-map" className="space-y-6">
                 {/* Filters */}
                 <SR>
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <div className="relative flex-1 min-w-[200px]">
                       <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -390,7 +393,12 @@ const LogisticsPage = () => {
                         className="search-input-with-icon-md"
                       />
                     </div>
-                    <Button variant="outline" size="sm" onClick={handleNearMe}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={handleNearMe}
+                    >
                       <LocateFixed className="h-4 w-4 ms-1" />
                       {pickLocalizedCopy(appLanguage, {
                         ar: 'بالقرب مني',
@@ -398,7 +406,12 @@ const LogisticsPage = () => {
                       })}
                     </Button>
                     {geoFilter && (
-                      <Button variant="ghost" size="sm" onClick={() => setGeoFilter(undefined)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={() => setGeoFilter(undefined)}
+                      >
                         {pickLocalizedCopy(appLanguage, {
                           ar: 'إلغاء الموقع',
                           en: 'Clear location',
@@ -409,6 +422,7 @@ const LogisticsPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() =>
                           toast.info(
                             pickLocalizedCopy(appLanguage, {
@@ -778,7 +792,9 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <SheetTitle className="text-2xl leading-tight">{poiName}</SheetTitle>
-              {secondaryName ? <p className="text-sm text-muted-foreground">{secondaryName}</p> : null}
+              {secondaryName ? (
+                <p className="text-sm text-muted-foreground">{secondaryName}</p>
+              ) : null}
             </div>
             <Badge
               style={{ backgroundColor: getCategoryColor(poi.category) }}
@@ -789,7 +805,9 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
           </div>
         </SheetHeader>
 
-        {poi.description ? <p className="text-sm leading-7 text-foreground/80">{poi.description}</p> : null}
+        {poi.description ? (
+          <p className="text-sm leading-7 text-foreground/80">{poi.description}</p>
+        ) : null}
 
         {poi.ratingAvg ? (
           <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-amber-800">

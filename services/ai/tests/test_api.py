@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import mkdtemp
@@ -149,6 +150,12 @@ class FakeLLM:
     async def complete_async(self, messages):
         return self.complete(messages)
 
+    async def stream_async(self, messages):
+        response = self.complete(messages)
+        yield SimpleNamespace(type="token", delta="Grounded ")
+        yield SimpleNamespace(type="token", delta="answer")
+        yield SimpleNamespace(type="done", response=response)
+
 
 class FakeIndexer:
     def __init__(self):
@@ -180,7 +187,9 @@ class FakeIndexer:
     def resolve_parsed_markdown(self, parse_id):
         return self.parsed_files[parse_id]
 
-    async def create_document_batch(self, files, title=None, description=None, tags=None, language_hint="auto"):
+    async def create_document_batch(
+        self, files, title=None, description=None, tags=None, language_hint="auto"
+    ):
         valid_files = [file for file in files if file.filename.lower().endswith(".pdf")]
         invalid_files = [file for file in files if not file.filename.lower().endswith(".pdf")]
         batch = {
@@ -288,7 +297,9 @@ class FakeSessionManager:
             retrieved_chunks=kwargs.get("retrieved_chunks", []),
         )
 
-    async def build_context_window(self, _session_id, current_user_message, exclude_message_id=None):
+    async def build_context_window(
+        self, _session_id, current_user_message, exclude_message_id=None
+    ):
         return [{"role": "user", "content": current_user_message}]
 
     async def get_messages(self, _session_id, page=1, per_page=20):
@@ -344,9 +355,9 @@ class FakePromptBuilder:
         return f"{context}\n{question}"
 
 
-def _auth_headers(user_id: str = "user-1") -> dict[str, str]:
+def _auth_headers(user_id: str = "user-1", role: str = "tourist") -> dict[str, str]:
     token = jwt.encode(
-        {"sub": user_id, "email": f"{user_id}@example.com", "role": "tourist"},
+        {"sub": user_id, "email": f"{user_id}@example.com", "role": role},
         JWT_SECRET,
         algorithm=JWT_ALGO,
     )
@@ -393,6 +404,12 @@ def test_documents_require_jwt():
     assert response.status_code == 401
 
 
+def test_documents_require_admin_role():
+    client = build_test_client()
+    response = client.get("/api/v1/documents", headers=_auth_headers(role="tourist"))
+    assert response.status_code == 403
+
+
 def test_create_session_endpoint_and_force_new():
     client = build_test_client()
 
@@ -416,6 +433,37 @@ def test_send_message_endpoint():
     body = response.json()
     assert body["domain_relevant"] is True
     assert body["sources"][0]["chunk_id"] == "chk-1"
+
+
+def test_send_message_stream_endpoint():
+    client = build_test_client()
+    response = client.post(
+        "/api/v1/chat/sessions/sess-1/messages/stream",
+        json={"content": "Tell me about New Valley"},
+        headers=_auth_headers(),
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+
+    events = [json.loads(line) for line in response.text.strip().splitlines()]
+    assert events[0] == {
+        "type": "status",
+        "phase": "accepted",
+        "message": "Preparing your answer.",
+    }
+    assert [event["phase"] for event in events if event["type"] == "status"] == [
+        "accepted",
+        "processing_query",
+        "retrieving_context",
+        "reranking_context",
+        "generating_answer",
+    ]
+    token_events = [event for event in events if event["type"] == "token"]
+    assert token_events[0] == {"type": "token", "delta": "Grounded "}
+    assert token_events[1] == {"type": "token", "delta": "answer"}
+    assert events[-1]["type"] == "complete"
+    assert events[-1]["message"]["content"] == "Grounded answer"
+    assert events[-1]["message"]["domain_relevant"] is True
 
 
 def test_session_owner_enforcement_blocks_other_users():
@@ -447,7 +495,7 @@ def test_inject_raw_text_endpoint():
     response = client.post(
         "/api/v1/documents/inject-text",
         json={"content": "Copied text about New Valley"},
-        headers=_auth_headers(),
+        headers=_auth_headers(role="admin"),
     )
     assert response.status_code == 200
     assert response.json()["doc_id"] == "doc-text-1"
@@ -459,14 +507,17 @@ def test_parse_document_returns_download_url_and_downloads_markdown():
         "/api/v1/documents/parse",
         files=[("file", ("sample.pdf", b"%PDF-1.4 sample", "application/pdf"))],
         data={"format": "markdown"},
-        headers=_auth_headers(),
+        headers=_auth_headers(role="admin"),
     )
     assert response.status_code == 200
     body = response.json()
     assert body["parse_id"] == "parsed-1"
     assert body["download_url"].endswith("/api/v1/documents/parsed/parsed-1/download")
 
-    download_response = client.get("/api/v1/documents/parsed/parsed-1/download", headers=_auth_headers())
+    download_response = client.get(
+        "/api/v1/documents/parsed/parsed-1/download",
+        headers=_auth_headers(role="admin"),
+    )
     assert download_response.status_code == 200
     assert download_response.text == "# Parsed"
 
@@ -480,7 +531,7 @@ def test_inject_documents_creates_batch():
             ("files", ("second.pdf", b"%PDF-1.4 second", "application/pdf")),
         ],
         data={"language": "auto"},
-        headers=_auth_headers(),
+        headers=_auth_headers(role="admin"),
     )
     assert response.status_code == 202
     body = response.json()
@@ -495,9 +546,9 @@ def test_get_document_batch_status_endpoint():
         "/api/v1/documents/inject",
         files=[("files", ("first.pdf", b"%PDF-1.4 first", "application/pdf"))],
         data={"language": "auto"},
-        headers=_auth_headers(),
+        headers=_auth_headers(role="admin"),
     )
-    response = client.get("/api/v1/documents/batches/batch-1", headers=_auth_headers())
+    response = client.get("/api/v1/documents/batches/batch-1", headers=_auth_headers(role="admin"))
     assert response.status_code == 200
     body = response.json()
     assert body["batch_id"] == "batch-1"
@@ -506,7 +557,7 @@ def test_get_document_batch_status_endpoint():
 
 def test_list_documents_is_objectid_safe():
     client = build_test_client()
-    response = client.get("/api/v1/documents", headers=_auth_headers())
+    response = client.get("/api/v1/documents", headers=_auth_headers(role="admin"))
     assert response.status_code == 200
     body = response.json()
     assert body["documents"][0]["doc_id"] == "doc-listed-1"
@@ -522,7 +573,7 @@ def test_inject_documents_allows_mixed_valid_and_invalid_files():
             ("files", ("notes.txt", b"hello", "text/plain")),
         ],
         data={"language": "auto"},
-        headers=_auth_headers(),
+        headers=_auth_headers(role="admin"),
     )
     assert response.status_code == 202
     body = response.json()

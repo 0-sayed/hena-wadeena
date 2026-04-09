@@ -71,7 +71,7 @@ describe('RegisterPage pending KYC flow', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /التالي/i }));
-    fireEvent.click(screen.getByText('مرشد سياحي'));
+    fireEvent.click(screen.getByRole('button', { name: /مرشد سياحي/i }));
     fireEvent.click(screen.getByRole('button', { name: /إنشاء الحساب/i }));
 
     await waitFor(() => {
@@ -84,5 +84,23 @@ describe('RegisterPage pending KYC flow', () => {
     });
 
     expect(mockNavigate).toHaveBeenCalledWith('/kyc/continue');
+  });
+
+  it('shows inline field errors with accessible associations on invalid step-one input', async () => {
+    render(
+      <MemoryRouter>
+        <RegisterPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /التالي/i }));
+
+    const emailInput = screen.getByLabelText('البريد الإلكتروني *');
+    const emailError = await screen.findByText('البريد الإلكتروني مطلوب');
+
+    expect(screen.getByLabelText('الاسم الكامل *')).toHaveFocus();
+    expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+    expect(emailInput).toHaveAttribute('aria-describedby', 'email-error');
+    expect(emailError).toHaveAttribute('id', 'email-error');
   });
 });

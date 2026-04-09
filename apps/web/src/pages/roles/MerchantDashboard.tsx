@@ -6,6 +6,10 @@ import { toast } from 'sonner';
 
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
+import {
+  ListingEditorDialog,
+} from '@/components/market/ListingEditorDialog';
+import { emptyListingForm, type ListingFormState } from '@/components/market/listing-editor-form';
 import { useListingInquiriesReceived } from '@/hooks/use-listing-inquiries';
 import { useMyBusinesses } from '@/hooks/use-my-businesses';
 import { useMyListings } from '@/hooks/use-my-listings';
@@ -13,22 +17,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useMyPosts } from '@/hooks/use-jobs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -38,8 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { DISTRICTS, districtLabel, formatPrice } from '@/lib/format';
+import { districtLabel, formatPrice } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 import { listingsAPI } from '@/services/api';
@@ -64,32 +51,6 @@ const listingStatusLabels: Record<string, { ar: string; en: string }> = {
   pending: { ar: 'قيد المراجعة', en: 'Pending' },
   sold: { ar: 'تم البيع', en: 'Sold' },
   rented: { ar: 'تم التأجير', en: 'Rented' },
-};
-
-const listingCategories = [
-  { value: 'shopping', ar: 'تسوق', en: 'Shopping' },
-  { value: 'service', ar: 'خدمات', en: 'Services' },
-  { value: 'healthcare', ar: 'رعاية صحية', en: 'Healthcare' },
-  { value: 'education', ar: 'تعليم', en: 'Education' },
-];
-
-type ListingFormState = {
-  id?: string;
-  titleAr: string;
-  description: string;
-  priceEgp: string;
-  district: string;
-  category: string;
-  address: string;
-};
-
-const emptyListingForm: ListingFormState = {
-  titleAr: '',
-  description: '',
-  priceEgp: '',
-  district: DISTRICTS[0]?.id ?? 'kharga',
-  category: 'shopping',
-  address: '',
 };
 
 function formatAmountWithCurrency(value: number, language: AppLanguage): string {
@@ -452,137 +413,17 @@ export default function MerchantDashboard() {
         </Card>
       </div>
 
-      <Dialog open={isListingDialogOpen} onOpenChange={setIsListingDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {listingForm.id
-                ? pickLocalizedCopy(appLanguage, { ar: 'تعديل إعلان', en: 'Edit listing' })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'إضافة إعلان جديد',
-                    en: 'Add a new listing',
-                  })}
-            </DialogTitle>
-            <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'أضف منتجاً أو خدمة مع السعر والموقع، ثم احفظ التغييرات لإظهارها في قائمتك.',
-                en: 'Add a product or service with pricing and location, then save to update your listings.',
-              })}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="listingTitle">
-                {pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}
-              </Label>
-              <Input
-                id="listingTitle"
-                value={listingForm.titleAr}
-                onChange={(event) =>
-                  setListingForm((prev) => ({ ...prev, titleAr: event.target.value }))
-                }
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="listingPrice">
-                  {pickLocalizedCopy(appLanguage, { ar: 'السعر (جنيه)', en: 'Price (EGP)' })}
-                </Label>
-                <Input
-                  id="listingPrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={listingForm.priceEgp}
-                  onChange={(event) =>
-                    setListingForm((prev) => ({ ...prev, priceEgp: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{pickLocalizedCopy(appLanguage, { ar: 'التصنيف', en: 'Category' })}</Label>
-                <Select
-                  value={listingForm.category}
-                  onValueChange={(value) =>
-                    setListingForm((prev) => ({ ...prev, category: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {listingCategories.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {pickLocalizedCopy(appLanguage, category)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</Label>
-                <Select
-                  value={listingForm.district}
-                  onValueChange={(value) =>
-                    setListingForm((prev) => ({ ...prev, district: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DISTRICTS.map((district) => (
-                      <SelectItem key={district.id} value={district.id}>
-                        {districtLabel(district.id, appLanguage)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="listingAddress">
-                  {pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Address' })}
-                </Label>
-                <Input
-                  id="listingAddress"
-                  value={listingForm.address}
-                  onChange={(event) =>
-                    setListingForm((prev) => ({ ...prev, address: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="listingDescription">
-                {pickLocalizedCopy(appLanguage, { ar: 'الوصف', en: 'Description' })}
-              </Label>
-              <Textarea
-                id="listingDescription"
-                rows={4}
-                value={listingForm.description}
-                onChange={(event) =>
-                  setListingForm((prev) => ({ ...prev, description: event.target.value }))
-                }
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={() => void handleSaveListing()} disabled={saving}>
-                {saving
-                  ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
-                  : listingForm.id
-                    ? pickLocalizedCopy(appLanguage, { ar: 'تحديث الإعلان', en: 'Update listing' })
-                    : pickLocalizedCopy(appLanguage, { ar: 'إضافة الإعلان', en: 'Add listing' })}
-              </Button>
-              <Button variant="outline" onClick={() => setIsListingDialogOpen(false)}>
-                {pickLocalizedCopy(appLanguage, { ar: 'إغلاق', en: 'Close' })}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ListingEditorDialog
+        appLanguage={appLanguage}
+        form={listingForm}
+        open={isListingDialogOpen}
+        saving={saving}
+        onFormChange={setListingForm}
+        onOpenChange={setIsListingDialogOpen}
+        onSave={() => {
+          void handleSaveListing();
+        }}
+      />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

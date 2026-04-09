@@ -8,6 +8,7 @@ import { PageTransition, GradientMesh } from '@/components/motion/PageTransition
 import { SR } from '@/components/motion/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormErrorAlert } from '@/components/ui/form-feedback';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
@@ -31,15 +32,17 @@ export default function ChangePasswordPage() {
     confirmPassword: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('كلمتا المرور غير متطابقتين');
+      setFormError('كلمتا المرور غير متطابقتين');
       return;
     }
 
+    setFormError(null);
     setIsSubmitting(true);
     try {
       const response = await authAPI.changePassword({
@@ -61,7 +64,7 @@ export default function ChangePasswordPage() {
       toast.success('تم تغيير كلمة المرور بنجاح');
       void navigate('/profile');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'تعذر تغيير كلمة المرور');
+      setFormError(error instanceof Error ? error.message : 'تعذر تغيير كلمة المرور');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,34 +73,38 @@ export default function ChangePasswordPage() {
   return (
     <Layout title="تغيير كلمة المرور">
       <PageTransition>
-        <section className="relative py-14 md:py-20 overflow-hidden">
+        <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
-          <div className="container relative px-4 max-w-md">
+          <div className="container relative max-w-md px-4">
             <SR>
-              <Card className="border-border/50 rounded-2xl shadow-xl overflow-hidden">
-                <CardHeader className="text-center pb-2 pt-10">
-                  <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-5 shadow-lg">
+              <Card className="overflow-hidden rounded-2xl border-border/50 shadow-xl">
+                <CardHeader className="pb-2 pt-10 text-center">
+                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-lg">
                     <KeyRound className="h-10 w-10 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">تغيير كلمة المرور</CardTitle>
-                  <p className="text-muted-foreground mt-2">
+                  <p className="mt-2 text-muted-foreground">
                     أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة
                   </p>
                 </CardHeader>
-                <CardContent className="pt-8 pb-10 px-8">
+                <CardContent className="px-8 pb-10 pt-8">
                   <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
+                    {formError ? <FormErrorAlert message={formError} /> : null}
                     <div className="space-y-2">
                       <Label htmlFor="currentPassword">كلمة المرور الحالية</Label>
                       <Input
                         id="currentPassword"
                         type="password"
                         value={formData.currentPassword}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
                           setFormData((current) => ({
                             ...current,
                             currentPassword: event.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         required
                       />
                     </div>
@@ -107,12 +114,15 @@ export default function ChangePasswordPage() {
                         id="newPassword"
                         type="password"
                         value={formData.newPassword}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
                           setFormData((current) => ({
                             ...current,
                             newPassword: event.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         required
                       />
                     </div>
@@ -122,16 +132,23 @@ export default function ChangePasswordPage() {
                         id="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          if (formError) {
+                            setFormError(null);
+                          }
                           setFormData((current) => ({
                             ...current,
                             confirmPassword: event.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full h-14 rounded-xl text-base" disabled={isSubmitting}>
+                    <Button
+                      type="submit"
+                      className="h-14 w-full rounded-xl text-base"
+                      disabled={isSubmitting}
+                    >
                       {isSubmitting ? 'جارٍ التحديث...' : 'تحديث كلمة المرور'}
                     </Button>
                   </form>

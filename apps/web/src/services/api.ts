@@ -30,7 +30,7 @@ import type {
   CompensationType,
 } from '@/lib/format';
 import { toQueryString } from '@/lib/query-string';
-import { apiFetchWithRefresh } from './auth-manager';
+import { apiFetchRawWithRefresh, apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -50,31 +50,53 @@ export class ApiError extends Error {
   }
 }
 
+async function buildApiError(response: Response): Promise<ApiError> {
+  const error = (await response.json().catch(() => ({ message: 'Network error' }))) as Record<
+    string,
+    unknown
+  >;
+  const message =
+    response.status === 429
+      ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
+      : ((error.detail as string) ?? (error.message as string) ?? `API Error ${response.status}`);
+  return new ApiError(response.status, message, error);
+}
+
+function buildRequestHeaders(options?: RequestInit): Headers {
+  const token = localStorage.getItem('access_token');
+  const headers = new Headers(options?.headers);
+  const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData;
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (
+    !isFormData &&
+    options?.body !== undefined &&
+    options?.body !== null &&
+    !headers.has('Content-Type')
+  ) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  return headers;
+}
+
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
-export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('access_token');
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+export async function apiFetchRaw(endpoint: string, options?: RequestInit): Promise<Response> {
+  return fetch(`${BASE_URL}${endpoint}`, {
     ...options,
-    headers: { ...headers, ...(options?.headers as Record<string, string>) },
+    headers: buildRequestHeaders(options),
   });
+}
+
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await apiFetchRaw(endpoint, options);
 
   if (!res.ok) {
-    const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
-      string,
-      unknown
-    >;
-    const message =
-      res.status === 429
-        ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
-        : ((error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`);
-    throw new ApiError(res.status, message, error);
+    throw await buildApiError(res);
   }
 
   const text = await res.text();
@@ -1294,20 +1316,20 @@ export const reviewsAPI = {
   getGuideReviews: (guideId: string, params?: { offset?: number; limit?: number; sort?: string }) =>
     apiFetch<PaginatedResponse<Review>>(`/guides/${guideId}/reviews${toQueryString(params)}`),
 
-  // POST /api/v1/reviews — auth required, tourist only
-  createReview: (body: { bookingId: string; rating: number; comment?: string }) =>
-    apiFetchWithRefresh<Review>('/reviews', {
+  // POST /api/v1/guide-reviews — auth required, tourist only
+  createReview: (body: { bookingId: string; rating: number; comment: string }) =>
+    apiFetchWithRefresh<Review>('/guide-reviews', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
-  // GET /api/v1/reviews/mine — auth required
+  // GET /api/v1/guide-reviews/mine — auth required
   getMyReviews: (params?: { offset?: number; limit?: number }) =>
-    apiFetchWithRefresh<PaginatedResponse<Review>>(`/reviews/mine${toQueryString(params)}`),
+    apiFetchWithRefresh<PaginatedResponse<Review>>(`/guide-reviews/mine${toQueryString(params)}`),
 
-  // POST /api/v1/reviews/:id/helpful — auth required
+  // POST /api/v1/guide-reviews/:id/helpful — auth required
   markHelpful: (reviewId: string) =>
-    apiFetchWithRefresh<Review>(`/reviews/${reviewId}/helpful`, { method: 'POST' }),
+    apiFetchWithRefresh<Review>(`/guide-reviews/${reviewId}/helpful`, { method: 'POST' }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
@@ -1665,6 +1687,15 @@ export interface AdminKycFilters {
   limit?: number;
 }
 
+export interface AdminListingFilters {
+  page?: number;
+  limit?: number;
+  status?: 'draft' | 'active' | 'suspended';
+  is_verified?: boolean;
+  owner_id?: string;
+  sort?: 'created_at|asc' | 'created_at|desc' | 'price|asc' | 'price|desc';
+}
+
 export interface AdminGuideFilters {
   status?: string;
   verified?: boolean;
@@ -1682,9 +1713,116 @@ export interface AdminBookingFilters {
   limit?: number;
 }
 
+export interface AiKnowledgeDocument {
+  doc_id: string;
+  batch_id: string | null;
+  filename: string;
+  source_type: string;
+  title: string | null;
+  language: string;
+  total_pages: number;
+  total_chunks: number;
+  file_size_kb: number;
+  uploaded_at: string;
+  indexed_at: string | null;
+  status: string;
+  tags: string[];
+  description: string | null;
+  current_step: string | null;
+  error_detail: string | null;
+}
+
+export interface AiKnowledgeDocumentListResponse {
+  documents: AiKnowledgeDocument[];
+  pagination: {
+    total: number;
+    page: number;
+    per_page: number;
+  };
+}
+
+export interface AiKnowledgeBatchItem {
+  doc_id: string;
+  filename: string;
+  status: string;
+  current_step: string | null;
+  error_detail: string | null;
+  total_pages: number;
+  total_chunks: number;
+  language: string | null;
+  indexed_at: string | null;
+}
+
+export interface AiKnowledgeBatchResponse {
+  batch_id: string;
+  status: string;
+  total_files: number;
+  pending_files: number;
+  processing_files: number;
+  indexed_files: number;
+  failed_files: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  items: AiKnowledgeBatchItem[];
+}
+
+export interface AiKnowledgeDeleteResponse {
+  doc_id: string;
+  deleted: boolean;
+  qdrant_points_deleted: number;
+  mongo_chunks_deleted: number;
+  mongo_document_deleted: boolean;
+  deleted_at: string;
+}
+
+export interface AiKnowledgeUploadRequest {
+  files: File[];
+  title?: string;
+  description?: string;
+  tags?: string[];
+  language?: string;
+}
+
+function buildAiKnowledgeUploadFormData(body: AiKnowledgeUploadRequest): FormData {
+  const formData = new FormData();
+
+  for (const file of body.files) {
+    formData.append('files', file);
+  }
+
+  if (body.title) {
+    formData.append('title', body.title);
+  }
+
+  if (body.description) {
+    formData.append('description', body.description);
+  }
+
+  if (body.tags && body.tags.length > 0) {
+    formData.append('tags', body.tags.join(','));
+  }
+
+  formData.append('language', body.language ?? 'auto');
+  return formData;
+}
+
 export const adminAPI = {
   // Stats
   getStats: () => apiFetchWithRefresh<AdminStatsResponse>('/admin/stats'),
+
+  // Listings management
+  getListings: (params?: AdminListingFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<Listing>>(
+      `/admin/listings${toQueryString({
+        status: params?.status,
+        is_verified: params?.is_verified,
+        owner_id: params?.owner_id,
+        sort: params?.sort,
+        offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
+        limit: params?.limit,
+      })}`,
+    ),
 
   // Users
   getUsers: (params?: AdminUserFilters) =>
@@ -1808,6 +1946,33 @@ export interface ChatMessageResponse {
   latency_ms: number | null;
 }
 
+interface ChatStreamTokenEvent {
+  type: 'token';
+  delta: string;
+}
+
+interface ChatStreamStatusEvent {
+  type: 'status';
+  phase: string;
+  message?: string;
+}
+
+interface ChatStreamCompleteEvent {
+  type: 'complete';
+  message: ChatMessageResponse;
+}
+
+interface ChatStreamErrorEvent {
+  type: 'error';
+  message: string;
+}
+
+type ChatStreamEvent =
+  | ChatStreamStatusEvent
+  | ChatStreamTokenEvent
+  | ChatStreamCompleteEvent
+  | ChatStreamErrorEvent;
+
 export interface ChatSessionMessage {
   message_id: string;
   role: 'user' | 'assistant' | 'system';
@@ -1839,6 +2004,70 @@ export interface LegacyChatResponse {
   sources: ChatSource[];
 }
 
+async function consumeChatStream(
+  response: Response,
+  handlers: {
+    onStatus?: (phase: string, message?: string) => void;
+    onToken: (delta: string) => void;
+    onComplete: (message: ChatMessageResponse) => void;
+    onError?: (message: string) => void;
+  },
+): Promise<void> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Streaming is not supported in this browser.');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const handleEvent = (event: ChatStreamEvent) => {
+    if (event.type === 'status') {
+      handlers.onStatus?.(event.phase, event.message);
+      return;
+    }
+
+    if (event.type === 'token') {
+      handlers.onToken(event.delta);
+      return;
+    }
+
+    if (event.type === 'complete') {
+      handlers.onComplete(event.message);
+      return;
+    }
+
+    handlers.onError?.(event.message);
+    throw new Error(event.message);
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    let newlineIndex = buffer.indexOf('\n');
+    while (newlineIndex >= 0) {
+      const line = buffer.slice(0, newlineIndex).trim();
+      buffer = buffer.slice(newlineIndex + 1);
+
+      if (line) {
+        handleEvent(JSON.parse(line) as ChatStreamEvent);
+      }
+
+      newlineIndex = buffer.indexOf('\n');
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  const trailing = buffer.trim();
+  if (trailing) {
+    handleEvent(JSON.parse(trailing) as ChatStreamEvent);
+  }
+}
+
 export const aiAPI = {
   createSession: (
     body?: { language_preference?: string; metadata?: Record<string, unknown> },
@@ -1860,6 +2089,31 @@ export const aiAPI = {
       body: JSON.stringify(body),
     }),
 
+  streamMessage: async (
+    sessionId: string,
+    body: { content: string; language?: string },
+    handlers: {
+      onStatus?: (phase: string, message?: string) => void;
+      onToken: (delta: string) => void;
+      onComplete: (message: ChatMessageResponse) => void;
+      onError?: (message: string) => void;
+    },
+    options?: { signal?: AbortSignal },
+  ) => {
+    const response = await apiFetchRawWithRefresh(`/chat/sessions/${sessionId}/messages/stream`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { Accept: 'application/x-ndjson' },
+      signal: options?.signal,
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response);
+    }
+
+    await consumeChatStream(response, handlers);
+  },
+
   closeSession: (sessionId: string) =>
     apiFetchWithRefresh<{
       session_id: string;
@@ -1877,6 +2131,30 @@ export const aiAPI = {
 };
 
 // ── Benefits ─────────────────────────────────────────────────────────────────
+
+export const aiKnowledgeAPI = {
+  listDocuments: (params?: {
+    page?: number;
+    per_page?: number;
+    status?: string;
+    language?: string;
+    tags?: string;
+  }) => apiFetchWithRefresh<AiKnowledgeDocumentListResponse>(`/documents${toQueryString(params)}`),
+
+  uploadDocuments: (body: AiKnowledgeUploadRequest) =>
+    apiFetchWithRefresh<AiKnowledgeBatchResponse>('/documents/inject', {
+      method: 'POST',
+      body: buildAiKnowledgeUploadFormData(body),
+    }),
+
+  getBatchStatus: (batchId: string) =>
+    apiFetchWithRefresh<AiKnowledgeBatchResponse>(`/documents/batches/${batchId}`),
+
+  deleteDocument: (docId: string) =>
+    apiFetchWithRefresh<AiKnowledgeDeleteResponse>(`/documents/${docId}`, {
+      method: 'DELETE',
+    }),
+};
 
 export interface BenefitInfo {
   id: string;

@@ -1,15 +1,18 @@
 import {
   AlertCircle,
+  Bot,
   CheckCircle,
   Clock,
   FileCheck,
   MapPin,
+  Megaphone,
   ShoppingBag,
   TrendingUp,
   Users,
 } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
@@ -106,7 +109,6 @@ export default function AdminOverview() {
         </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {isLoading ? (
           <>
@@ -157,11 +159,23 @@ export default function AdminOverview() {
               href="/admin/map"
               variant={stats.pois.pending > 0 ? 'warning' : 'default'}
             />
+            <StatCard
+              title={pickLocalizedCopy(appLanguage, {
+                ar: 'إدارة معرفة الذكاء الاصطناعي',
+                en: 'AI knowledge management',
+              })}
+              value="RAG"
+              icon={Bot}
+              description={pickLocalizedCopy(appLanguage, {
+                ar: 'تحميل أو حذف ملفات PDF المرجعية للمساعد',
+                en: 'Load or delete the assistant reference PDFs',
+              })}
+              href="/admin/ai"
+            />
           </>
         ) : null}
       </div>
 
-      {/* Secondary Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {isLoading ? (
           <>
@@ -224,7 +238,28 @@ export default function AdminOverview() {
         ) : null}
       </div>
 
-      {/* Meta info */}
+      <Card>
+        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-primary" />
+              {pickLocalizedCopy(appLanguage, { ar: 'إدارة الإعلانات', en: 'Announcements' })}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'أنشئ إعلاناً جديداً أو انتقل إلى صفحة الإدارة لتعديل أي إعلان وحذفه.',
+                en: 'Create a new listing or jump to the management page to edit and delete any announcement.',
+              })}
+            </p>
+          </div>
+          <Button asChild>
+            <Link to="/admin/listings?dialog=new">
+              {pickLocalizedCopy(appLanguage, { ar: 'إعلان جديد', en: 'New announcement' })}
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
+
       {stats?.meta && (
         <p className="text-xs text-muted-foreground">
           {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث:', en: 'Updated:' })}{' '}

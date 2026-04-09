@@ -89,4 +89,26 @@ describe('LoginPage pending KYC flow', () => {
       '/password-reset/request',
     );
   });
+
+  it('renders login failures inline and moves focus to the alert', async () => {
+    mockLogin.mockRejectedValue(new Error('Invalid credentials'));
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور'), {
+      target: { value: 'wrong-password' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /تسجيل الدخول/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Invalid credentials');
+    expect(alert).toHaveFocus();
+  });
 });

@@ -82,6 +82,15 @@ export const queryKeys = {
   },
   admin: {
     stats: () => ['admin', 'stats'] as const,
+    listingsAll: () => ['admin', 'listings'] as const,
+    listings: (filters?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      is_verified?: boolean;
+      owner_id?: string;
+      sort?: string;
+    }) => [...queryKeys.admin.listingsAll(), filters] as const,
     users: (filters?: {
       role?: string;
       status?: string;
@@ -107,6 +116,14 @@ export const queryKeys = {
       ['admin', 'bookings', filters] as const,
     pendingPois: (filters?: { page?: number; limit?: number }) =>
       ['admin', 'pois', filters] as const,
+    aiDocuments: (filters?: {
+      page?: number;
+      per_page?: number;
+      status?: string;
+      language?: string;
+      tags?: string;
+    }) => ['admin', 'ai', 'documents', filters] as const,
+    aiBatch: (batchId: string) => ['admin', 'ai', 'batches', batchId] as const,
   },
   jobs: {
     all: (filters?: Record<string, unknown>) => ['jobs', filters] as const,

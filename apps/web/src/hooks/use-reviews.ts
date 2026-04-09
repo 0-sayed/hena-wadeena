@@ -58,7 +58,7 @@ export function useCreateReview() {
       guideId: string;
       bookingId: string;
       rating: number;
-      comment?: string;
+      comment: string;
     }) => reviewsAPI.createReview(body),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mine() });

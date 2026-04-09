@@ -57,7 +57,7 @@ type HeaderCopy = {
 };
 
 const CONTROL_BUTTON_CLASS =
-  'flex h-9 min-w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50';
+  'flex h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 md:h-9 md:min-w-9';
 
 const headerCopy: Record<AppLanguage, HeaderCopy> = {
   ar: {
@@ -194,7 +194,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
 
   if (!mounted) {
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground">
+      <div className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground md:h-9 md:w-9">
         <div className="h-5 w-5" />
       </div>
     );
@@ -207,7 +207,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className={`${CONTROL_BUTTON_CLASS} w-9 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 [&>svg]:h-5 [&>svg]:w-5`}
+      className={`${CONTROL_BUTTON_CLASS} w-11 shrink-0 hover:text-amber-500 dark:hover:text-amber-400 md:w-9 [&>svg]:h-5 [&>svg]:w-5`}
       aria-label={label}
       title={label}
     >
@@ -233,7 +233,7 @@ function LanguageToggle({
       type="button"
       onClick={onToggle}
       disabled={disabled}
-      className={`${CONTROL_BUTTON_CLASS} w-12 gap-1 px-2 text-[11px] font-bold uppercase tracking-[0.18em]`}
+      className={`${CONTROL_BUTTON_CLASS} w-[3.125rem] gap-1 px-1.5 text-[10px] font-bold uppercase tracking-[0.16em] sm:w-12 sm:px-2 sm:text-[11px] sm:tracking-[0.18em]`}
       aria-label={title}
       title={title}
       dir="ltr"
@@ -254,7 +254,7 @@ function HeaderActionCluster({
   onToggleLanguage: () => void;
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm">
+    <div className="flex items-center gap-0.5 rounded-full border border-border/60 bg-background/80 p-0.5 shadow-sm sm:gap-1 sm:p-1">
       <LanguageToggle language={language} disabled={disabled} onToggle={onToggleLanguage} />
       <ThemeToggle language={language} />
     </div>
@@ -311,11 +311,17 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/icon-source.png" alt={copy.brand} className="h-9 w-9 rounded-lg" />
-          <span className="text-xl font-bold text-foreground">{copy.brand}</span>
-          <span className="self-start mt-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+      <div className="container flex h-16 items-center justify-between gap-2 px-3 sm:px-4">
+        <Link to="/" className="flex min-w-0 items-center gap-2 overflow-hidden">
+          <img
+            src="/icon-source.png"
+            alt={copy.brand}
+            className="h-8 w-8 rounded-lg sm:h-9 sm:w-9"
+          />
+          <span className="truncate text-base font-bold text-foreground sm:text-xl">
+            {copy.brand}
+          </span>
+          <span className="mt-1 hidden self-start rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 sm:inline-flex">
             {copy.beta}
           </span>
         </Link>
@@ -520,7 +526,7 @@ export function Header() {
           )}
         </div>
 
-        <div className="flex items-center gap-1 lg:hidden">
+        <div className="flex items-center gap-0.5 lg:hidden">
           <Link to="/search" aria-label={copy.search}>
             <Button
               variant="ghost"
@@ -564,7 +570,10 @@ export function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side={direction === 'rtl' ? 'right' : 'left'} className="w-80">
+            <SheetContent
+              side={direction === 'rtl' ? 'right' : 'left'}
+              className="w-[85vw] max-w-[22rem]"
+            >
               <div className="mt-8 flex flex-col gap-6">
                 {user && (
                   <div className="flex items-center gap-3 rounded-xl border border-primary/10 bg-primary/5 p-4">
@@ -605,7 +614,7 @@ export function Header() {
                       key={item.key}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`rounded-lg px-4 py-3 text-base font-medium transition-colors ${
+                      className={`rounded-lg px-4 py-3.5 text-base font-medium transition-colors ${
                         isActive(item)
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'

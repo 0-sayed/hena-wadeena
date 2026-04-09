@@ -92,6 +92,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@hena-wadeena/types': path.resolve(__dirname, '../../packages/types/src/index.ts'),
       },
     },
     build: {

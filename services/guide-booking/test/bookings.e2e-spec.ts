@@ -338,7 +338,7 @@ describe('Booking Lifecycle (e2e)', () => {
       if (!booking) throw new Error('seed failed');
 
       const res = await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.touristToken())
         .send({
           bookingId: booking.id,
