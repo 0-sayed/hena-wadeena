@@ -32,24 +32,26 @@ export function FeaturedSection() {
         };
 
   return (
-    <section className="py-24">
+    <section className="py-16 sm:py-20 md:py-24">
       <div className="container px-4">
         <SR
           direction="up"
-          className="mb-14 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+          className="mb-10 flex flex-col gap-5 md:mb-14 md:flex-row md:items-end md:justify-between"
         >
-          <div>
+          <div className="max-w-2xl">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-4 py-2">
               <MapPin className="h-4 w-4 text-accent" />
               <span className="text-sm font-semibold text-accent">{copy.badge}</span>
             </div>
-            <h2 className="mb-2 text-4xl font-bold text-foreground md:text-5xl">{copy.title}</h2>
-            <p className="text-lg text-muted-foreground">{copy.description}</p>
+            <h2 className="mb-2 text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
+              {copy.title}
+            </h2>
+            <p className="text-base text-muted-foreground sm:text-lg">{copy.description}</p>
           </div>
-          <Link to="/tourism">
+          <Link to="/tourism" className="w-full md:w-auto">
             <Button
               variant="outline"
-              className="btn-press gap-2 transition-all duration-300 hover:scale-[1.03]"
+              className="btn-press w-full gap-2 transition-all duration-300 hover:scale-[1.03] md:w-auto"
             >
               {copy.viewAll}
               <ArrowLeft className="h-4 w-4" />
@@ -60,7 +62,7 @@ export function FeaturedSection() {
         {isLoading ? (
           <CardGridSkeleton count={3} />
         ) : (
-          <SR stagger className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
+          <SR stagger className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-7 xl:grid-cols-3">
             {featuredAttractions.map((attraction) => {
               const attractionName = pickLocalizedField(language, {
                 ar: attraction.nameAr,
@@ -86,8 +88,8 @@ export function FeaturedSection() {
                       </Badge>
                       <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                     </div>
-                    <CardContent className="p-6">
-                      <h3 className="mb-2 text-lg font-bold text-foreground transition-colors duration-300 group-hover:text-primary">
+                    <CardContent className="p-5 sm:p-6">
+                      <h3 className="mb-2 text-base font-bold text-foreground transition-colors duration-300 group-hover:text-primary sm:text-lg">
                         {attractionName}
                       </h3>
                       <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">

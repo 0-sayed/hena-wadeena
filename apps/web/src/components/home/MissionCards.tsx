@@ -94,7 +94,7 @@ export function MissionCards() {
         };
 
   return (
-    <section className="relative overflow-hidden bg-muted/30 py-24">
+    <section className="relative overflow-hidden bg-muted/30 py-16 sm:py-20 md:py-24">
       <FloatingBlob
         className="start-0 top-0 -translate-x-1/2 -translate-y-1/2"
         color="primary"
@@ -109,24 +109,27 @@ export function MissionCards() {
       />
 
       <div className="container relative px-4">
-        <SR direction="up" className="mb-16 text-center">
+        <SR direction="up" className="mb-12 text-center sm:mb-16">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
             <span className="text-sm font-semibold text-primary">{copy.badge}</span>
           </div>
-          <h2 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">{copy.title}</h2>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">{copy.description}</p>
+          <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
+            {copy.title}
+          </h2>
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
+            {copy.description}
+          </p>
         </SR>
 
-        <SR stagger className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
+        <SR stagger className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-7">
           {missions.map((mission) => {
             const Icon = mission.icon;
             return (
               <Link key={mission.id} to={mission.href}>
                 <Card className="group h-full overflow-hidden rounded-2xl border-border/50 transition-all duration-400 hover-lift hover:border-primary/40 hover:shadow-xl">
-                  <CardContent className="flex h-full flex-col p-8">
+                  <CardContent className="flex h-full flex-col p-6 sm:p-8">
                     <div
-                      className={`icon-hover mb-6 inline-flex items-center justify-center rounded-2xl bg-gradient-to-br ${mission.gradient} shadow-lg`}
-                      style={{ width: 72, height: 72 }}
+                      className={`icon-hover mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${mission.gradient} shadow-lg sm:h-[72px] sm:w-[72px]`}
                     >
                       <Icon className="h-9 w-9 text-primary-foreground" strokeWidth={1.8} />
                     </div>
