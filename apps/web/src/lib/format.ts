@@ -71,7 +71,7 @@ export function formatArabicSeats(slots: number): string {
     return 'مقعدان';
   }
 
-  const label = category === 'few' ? 'مقاعد' : 'مقعد';
+  const label = category === 'few' || category === 'zero' ? 'مقاعد' : 'مقعد';
   return `${slots} ${label}`;
 }
 

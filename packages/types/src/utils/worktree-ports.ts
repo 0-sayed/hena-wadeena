@@ -66,10 +66,10 @@ export function resolveLocalServiceUrl({
   env: EnvMap;
 }): string {
   const parsedExplicitPort = parsePort(explicitPort);
+  const derivedWorktreePort = deriveWorktreePort(defaultPort, env);
   const localPortOverride =
-    parsedExplicitPort !== null && parsedExplicitPort !== defaultPort
-      ? parsedExplicitPort
-      : deriveWorktreePort(defaultPort, env) ?? parsedExplicitPort;
+    derivedWorktreePort ??
+    (parsedExplicitPort !== null && parsedExplicitPort !== defaultPort ? parsedExplicitPort : null);
   if (localPortOverride !== null) {
     return `http://localhost:${localPortOverride}`;
   }

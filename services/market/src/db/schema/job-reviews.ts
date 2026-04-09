@@ -1,3 +1,4 @@
+import { generateId } from '@hena-wadeena/nest-common';
 import { sql } from 'drizzle-orm';
 import { check, index, integer, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
@@ -10,7 +11,7 @@ import { jobPosts } from './job-posts';
 export const jobReviews = marketSchema.table(
   'job_reviews',
   {
-    id: uuid().primaryKey(),
+    id: uuid().primaryKey().$defaultFn(generateId),
     jobId: uuid('job_id')
       .notNull()
       .references(() => jobPosts.id, { onDelete: 'cascade' }),

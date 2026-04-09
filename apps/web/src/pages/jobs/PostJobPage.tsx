@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCreateJobMutation } from '@/hooks/use-jobs';
 import { JOB_CATEGORY_OPTIONS, COMPENSATION_TYPE_OPTIONS, DISTRICTS } from '@/lib/format';
 import type { JobCategory, CompensationType } from '@/lib/format';
+import { parseCompensationToPiasters, parseSlots } from '@/pages/jobs/job-form.utils';
 
 type FormState = {
   title: string;
@@ -64,13 +65,13 @@ export default function PostJobPage() {
       toast.error('الوصف بالعربية مطلوب');
       return;
     }
-    const compensationEgp = parseFloat(form.compensationEgp);
-    if (isNaN(compensationEgp) || compensationEgp < 0) {
+    const compensation = parseCompensationToPiasters(form.compensationEgp);
+    if (compensation === null) {
       toast.error('أدخل قيمة تعويض صحيحة');
       return;
     }
-    const slots = parseInt(form.slots, 10);
-    if (isNaN(slots) || slots < 1) {
+    const slots = parseSlots(form.slots);
+    if (slots === null) {
       toast.error('عدد المقاعد يجب أن يكون 1 على الأقل');
       return;
     }
@@ -82,7 +83,7 @@ export default function PostJobPage() {
         descriptionEn: form.descriptionEn.trim() || undefined,
         category: form.category,
         area: form.area,
-        compensation: Math.round(compensationEgp * 100),
+        compensation,
         compensationType: form.compensationType,
         slots,
         startsAt: form.startsAt || undefined,

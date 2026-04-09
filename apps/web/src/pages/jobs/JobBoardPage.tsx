@@ -13,6 +13,7 @@ import {
 import { Skeleton } from '@/components/motion/Skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useJobs } from '@/hooks/use-jobs';
+import { normalizePageParam } from '@/pages/jobs/job-form.utils';
 import {
   formatArabicSeats,
   formatPrice,
@@ -77,7 +78,7 @@ export default function JobBoardPage() {
   const category = searchParams.get('category') ?? undefined;
   const area = searchParams.get('area') ?? undefined;
   const compensationType = searchParams.get('compensationType') ?? undefined;
-  const page = Number(searchParams.get('page') ?? '0');
+  const page = normalizePageParam(searchParams.get('page'));
 
   const { data, isLoading, isError, refetch } = useJobs({
     category,

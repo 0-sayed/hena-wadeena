@@ -116,7 +116,7 @@ export default function MerchantDashboard() {
     isLoading: loadingInquiries,
     isError: inquiriesError,
   } = useListingInquiriesReceived({ limit: 5 });
-  const { data: myPostsData } = useMyPosts(true);
+  const { data: myPostsData, isLoading: loadingMyPosts } = useMyPosts(true);
   const openJobsCount = (myPostsData?.data ?? []).filter((j) => j.status === 'open').length;
   const [listingForm, setListingForm] = useState<ListingFormState>(emptyListingForm);
   const [isListingDialogOpen, setIsListingDialogOpen] = useState(false);
@@ -316,7 +316,7 @@ export default function MerchantDashboard() {
         />
         <StatCard
           label={pickLocalizedCopy(appLanguage, { ar: 'وظائف مفتوحة', en: 'Open jobs' })}
-          value={openJobsCount}
+          value={loadingMyPosts ? '...' : openJobsCount}
           icon={Briefcase}
         />
       </div>

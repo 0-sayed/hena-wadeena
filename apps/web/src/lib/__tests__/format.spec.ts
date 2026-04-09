@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  formatArabicSeats,
   formatArabicYears,
   formatPrice,
   districtLabel,
@@ -46,6 +47,12 @@ describe('formatArabicYears', () => {
 
   it('uses the singular form again for values above ten', () => {
     expect(formatArabicYears(11)).toBe('11 سنة');
+  });
+});
+
+describe('formatArabicSeats', () => {
+  it('uses the plural form for zero seats', () => {
+    expect(formatArabicSeats(0)).toBe('0 مقاعد');
   });
 });
 

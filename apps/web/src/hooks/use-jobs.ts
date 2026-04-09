@@ -105,6 +105,7 @@ export function useWithdrawApplicationMutation(jobId: string) {
     mutationFn: (appId: string) => jobsAPI.withdrawApplication(jobId, appId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.myApplications() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(jobId) });
     },
   });
 }

@@ -128,4 +128,122 @@ describe('JobsService', () => {
     expect(review.direction).toBe('poster_rates_worker');
     expect(posterReviews.some((item) => item.id === review.id)).toBe(true);
   });
+
+  it('keeps multi-slot jobs open until enough applications are completed', async () => {
+    const created = await service.create(
+      {
+        title: 'عمال فرز وتعبئة',
+        descriptionAr: 'مطلوب عاملان لفرز وتعبئة المحصول.',
+        category: 'agriculture',
+        area: 'kharga',
+        compensation: 80000,
+        compensationType: 'daily',
+        slots: 2,
+      },
+      JOB_DEMO_USERS.merchant,
+    );
+
+    const firstApplication = await service.apply(created.id, JOB_DEMO_USERS.student, {});
+    const secondApplication = await service.apply(created.id, JOB_DEMO_USERS.resident, {});
+
+    await service.updateApplicationStatus(created.id, firstApplication.id, JOB_DEMO_USERS.merchant, {
+      status: 'accepted',
+    });
+    await service.updateApplicationStatus(created.id, firstApplication.id, JOB_DEMO_USERS.merchant, {
+      status: 'in_progress',
+    });
+    await service.updateApplicationStatus(created.id, firstApplication.id, JOB_DEMO_USERS.merchant, {
+      status: 'completed',
+    });
+
+    expect((await service.findById(created.id)).status).toBe('open');
+
+    await service.updateApplicationStatus(
+      created.id,
+      secondApplication.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'accepted',
+      },
+    );
+    await service.updateApplicationStatus(
+      created.id,
+      secondApplication.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'in_progress',
+      },
+    );
+
+    expect((await service.findById(created.id)).status).toBe('in_progress');
+
+    await service.updateApplicationStatus(
+      created.id,
+      secondApplication.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'completed',
+      },
+    );
+
+    expect((await service.findById(created.id)).status).toBe('completed');
+  });
+
+  it('only sets resolvedAt for terminal application states', async () => {
+    const created = await service.create(
+      {
+        title: 'عامل خدمة عملاء',
+        descriptionAr: 'وظيفة خدمة عملاء موسمية.',
+        category: 'tourism',
+        area: 'dakhla',
+        compensation: 60000,
+        compensationType: 'fixed',
+        slots: 1,
+      },
+      JOB_DEMO_USERS.merchant,
+    );
+
+    const acceptedFlow = await service.apply(created.id, JOB_DEMO_USERS.student, {});
+    const rejectedFlow = await service.apply(created.id, JOB_DEMO_USERS.resident, {});
+
+    const accepted = await service.updateApplicationStatus(
+      created.id,
+      acceptedFlow.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'accepted',
+      },
+    );
+    expect(accepted.resolvedAt).toBeNull();
+
+    const inProgress = await service.updateApplicationStatus(
+      created.id,
+      acceptedFlow.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'in_progress',
+      },
+    );
+    expect(inProgress.resolvedAt).toBeNull();
+
+    const completed = await service.updateApplicationStatus(
+      created.id,
+      acceptedFlow.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'completed',
+      },
+    );
+    const rejected = await service.updateApplicationStatus(
+      created.id,
+      rejectedFlow.id,
+      JOB_DEMO_USERS.merchant,
+      {
+        status: 'rejected',
+      },
+    );
+
+    expect(completed.resolvedAt).not.toBeNull();
+    expect(rejected.resolvedAt).not.toBeNull();
+  });
 });

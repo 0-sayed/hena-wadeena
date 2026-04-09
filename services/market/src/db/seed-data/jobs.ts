@@ -217,7 +217,7 @@ export const essentialJobApplications: SeedJobApplication[] = [
     applicantId: JOB_DEMO_USERS.student,
     noteAr: 'لدي خبرة سابقة في متابعة المعدات والتحميل.',
     status: 'completed',
-    appliedAt: '2026-04-08T09:30:00.000Z',
+    appliedAt: '2026-04-09T08:15:00.000Z',
     resolvedAt: '2026-04-12T16:00:00.000Z',
   },
   {

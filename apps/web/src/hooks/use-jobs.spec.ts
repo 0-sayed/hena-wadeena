@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 
+const { invalidateQueries } = vi.hoisted(() => ({
+  invalidateQueries: vi.fn(),
+}));
+
 vi.mock('@/services/api', () => ({
   jobsAPI: {
     getAll: vi.fn().mockResolvedValue({ data: [], total: 0 }),
     getById: vi.fn().mockResolvedValue(null),
     getMyApplications: vi.fn().mockResolvedValue({ data: [], total: 0 }),
     create: vi.fn().mockResolvedValue({}),
+    withdrawApplication: vi.fn().mockResolvedValue({}),
   },
 }));
 
@@ -30,10 +35,16 @@ vi.mock('@tanstack/react-query', () => ({
     capturedOptions = options;
     return { mutate: vi.fn(), isPending: false };
   }),
-  useQueryClient: vi.fn().mockReturnValue({ invalidateQueries: vi.fn() }),
+  useQueryClient: vi.fn().mockReturnValue({ invalidateQueries }),
 }));
 
-import { useJobs, useJob, useMyApplications, useCreateJobMutation } from './use-jobs';
+import {
+  useJobs,
+  useJob,
+  useMyApplications,
+  useCreateJobMutation,
+  useWithdrawApplicationMutation,
+} from './use-jobs';
 
 describe('useJobs', () => {
   it('passes filters to queryKey', () => {
@@ -75,5 +86,23 @@ describe('useCreateJobMutation', () => {
   it('exposes mutate function', () => {
     const result = useCreateJobMutation();
     expect(result.mutate).toBeDefined();
+  });
+});
+
+describe('useWithdrawApplicationMutation', () => {
+  it('invalidates both my applications and the job detail cache', () => {
+    invalidateQueries.mockClear();
+
+    useWithdrawApplicationMutation('job-1');
+    const onSuccess = capturedOptions.onSuccess as (() => void) | undefined;
+
+    onSuccess?.();
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['jobs', 'my-applications'],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['jobs', 'job-1'],
+    });
   });
 });

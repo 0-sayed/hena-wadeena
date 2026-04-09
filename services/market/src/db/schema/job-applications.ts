@@ -1,5 +1,5 @@
 import { generateId } from '@hena-wadeena/nest-common';
-import { index, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 import { jobApplicationStatusEnum } from '../enums';
 import { marketSchema } from '../schema';
@@ -21,6 +21,7 @@ export const jobApplications = marketSchema.table(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
+    unique('job_applications_applicant_job_unique').on(t.applicantId, t.jobId),
     index('idx_job_applications_job_id').on(t.jobId),
     index('idx_job_applications_applicant_id').on(t.applicantId),
     index('idx_job_applications_status').on(t.status),

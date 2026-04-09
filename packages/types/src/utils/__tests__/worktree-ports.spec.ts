@@ -56,4 +56,15 @@ describe('worktree port utilities', () => {
       }),
     ).toBe('https://market.internal');
   });
+
+  it('prefers an explicit service URL over a matching explicit port when no worktree remap exists', () => {
+    expect(
+      resolveLocalServiceUrl({
+        defaultPort: 8002,
+        explicitPort: '8002',
+        explicitUrl: 'http://market:8002',
+        env: {},
+      }),
+    ).toBe('http://market:8002');
+  });
 });

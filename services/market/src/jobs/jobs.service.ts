@@ -22,6 +22,10 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+function isTerminalStatus(status: JobApplicationRecord['status']): boolean {
+  return status === 'rejected' || status === 'completed' || status === 'withdrawn';
+}
+
 @Injectable()
 export class JobsService {
   private readonly jobs: JobPostRecord[] = seedJobs();
@@ -150,14 +154,8 @@ export class JobsService {
     }
 
     app.status = next;
-    app.resolvedAt = nowIso();
-
-    if (next === 'in_progress') {
-      job.status = 'in_progress';
-    }
-    if (next === 'completed') {
-      job.status = 'completed';
-    }
+    app.resolvedAt = isTerminalStatus(next) ? nowIso() : null;
+    this.syncJobStatus(job);
 
     return app;
   }
@@ -273,5 +271,28 @@ export class JobsService {
       return next === 'completed';
     }
     return false;
+  }
+
+  private syncJobStatus(job: JobPostRecord): void {
+    const jobApplications = this.applications.filter((application) => application.jobId === job.id);
+    const hasAcceptedOrInProgress = jobApplications.some(
+      (application) => application.status === 'accepted' || application.status === 'in_progress',
+    );
+    const hasInProgress = jobApplications.some((application) => application.status === 'in_progress');
+    const completedCount = jobApplications.filter(
+      (application) => application.status === 'completed',
+    ).length;
+
+    if (completedCount >= job.slots && !hasAcceptedOrInProgress) {
+      job.status = 'completed';
+      return;
+    }
+
+    if (hasInProgress) {
+      job.status = 'in_progress';
+      return;
+    }
+
+    job.status = 'open';
   }
 }
