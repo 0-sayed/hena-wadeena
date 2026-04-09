@@ -60,6 +60,21 @@ export function formatArabicYears(years: number): string {
   return `${years} ${label}`;
 }
 
+export function formatArabicSeats(slots: number): string {
+  const absSlots = Math.abs(slots);
+  const category = new Intl.PluralRules('ar').select(absSlots);
+
+  if (absSlots === 1) {
+    return 'مقعد واحد';
+  }
+  if (absSlots === 2) {
+    return 'مقعدان';
+  }
+
+  const label = category === 'few' ? 'مقاعد' : 'مقعد';
+  return `${slots} ${label}`;
+}
+
 // ── Enum → Arabic label maps ────────────────────────────────────────────────
 
 /** District enum value → Arabic display name */
@@ -336,3 +351,93 @@ export function specialtyLabel(value: string, language: AppLanguage = 'ar'): str
   const labels = language === 'en' ? specialtyLabelsEn : specialtyLabels;
   return labels[value] ?? value;
 }
+
+// ── Job Board label maps ────────────────────────────────────────────────────
+
+export type JobCategory =
+  | 'agriculture'
+  | 'tourism'
+  | 'skilled_trade'
+  | 'domestic'
+  | 'logistics'
+  | 'handicraft';
+export type JobStatus = 'open' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
+export type ApplicationStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn'
+  | 'in_progress'
+  | 'completed';
+export type CompensationType = 'fixed' | 'daily' | 'per_kg' | 'negotiable';
+
+const jobCategoryLabels: Record<JobCategory, string> = {
+  agriculture: 'زراعة',
+  tourism: 'سياحة',
+  skilled_trade: 'حرفة',
+  domestic: 'خدمات منزلية',
+  logistics: 'لوجستيات',
+  handicraft: 'صناعة يدوية',
+};
+
+export function jobCategoryLabel(category: string): string {
+  return jobCategoryLabels[category as JobCategory] ?? category;
+}
+
+/** Select options for category — form use (no "all" entry) */
+export const JOB_CATEGORY_OPTIONS: { id: JobCategory; label: string }[] = Object.entries(
+  jobCategoryLabels,
+).map(([id, label]) => ({ id: id as JobCategory, label }));
+
+/** Select options for category filter — first entry is "all" */
+export const JOB_CATEGORY_OPTIONS_WITH_ALL: { id: JobCategory | undefined; label: string }[] = [
+  { id: undefined, label: 'الكل' },
+  ...JOB_CATEGORY_OPTIONS,
+];
+
+const jobStatusLabels: Record<JobStatus, string> = {
+  open: 'مفتوح',
+  in_progress: 'جارٍ',
+  completed: 'مكتمل',
+  cancelled: 'ملغي',
+  expired: 'منتهي',
+};
+
+export function jobStatusLabel(status: string): string {
+  return jobStatusLabels[status as JobStatus] ?? status;
+}
+
+const applicationStatusLabels: Record<ApplicationStatus, string> = {
+  pending: 'قيد الانتظار',
+  accepted: 'مقبول',
+  rejected: 'مرفوض',
+  withdrawn: 'منسحب',
+  in_progress: 'جارٍ',
+  completed: 'مكتمل',
+};
+
+export function applicationStatusLabel(status: string): string {
+  return applicationStatusLabels[status as ApplicationStatus] ?? status;
+}
+
+const compensationTypeLabels: Record<CompensationType, string> = {
+  fixed: 'مبلغ ثابت',
+  daily: 'يومي',
+  per_kg: 'بالكيلو',
+  negotiable: 'قابل للتفاوض',
+};
+
+export function compensationTypeLabel(type: string): string {
+  return compensationTypeLabels[type as CompensationType] ?? type;
+}
+
+/** Select options for compensation type — form use (no "all" entry) */
+export const COMPENSATION_TYPE_OPTIONS: { id: CompensationType; label: string }[] = Object.entries(
+  compensationTypeLabels,
+).map(([id, label]) => ({ id: id as CompensationType, label }));
+
+/** Select options for compensation type filter — first entry is "all" */
+export const COMPENSATION_TYPE_OPTIONS_WITH_ALL: {
+  id: CompensationType | undefined;
+  label: string;
+}[] = [{ id: undefined, label: 'الكل' }, ...COMPENSATION_TYPE_OPTIONS];

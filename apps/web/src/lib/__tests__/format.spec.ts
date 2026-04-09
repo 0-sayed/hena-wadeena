@@ -5,6 +5,10 @@ import {
   districtLabel,
   categoryLabel,
   unitLabel,
+  jobCategoryLabel,
+  jobStatusLabel,
+  applicationStatusLabel,
+  compensationTypeLabel,
 } from '../format';
 
 describe('formatPrice', () => {
@@ -85,4 +89,39 @@ describe('unitLabel', () => {
   it('returns input for unknown unit', () => {
     expect(unitLabel('unknown')).toBe('unknown');
   });
+});
+
+describe('jobCategoryLabel', () => {
+  it('maps agriculture', () => expect(jobCategoryLabel('agriculture')).toBe('زراعة'));
+  it('maps tourism', () => expect(jobCategoryLabel('tourism')).toBe('سياحة'));
+  it('maps skilled_trade', () => expect(jobCategoryLabel('skilled_trade')).toBe('حرفة'));
+  it('maps domestic', () => expect(jobCategoryLabel('domestic')).toBe('خدمات منزلية'));
+  it('maps logistics', () => expect(jobCategoryLabel('logistics')).toBe('لوجستيات'));
+  it('maps handicraft', () => expect(jobCategoryLabel('handicraft')).toBe('صناعة يدوية'));
+  it('returns input for unknown', () => expect(jobCategoryLabel('unknown')).toBe('unknown'));
+});
+
+describe('jobStatusLabel', () => {
+  it('maps open', () => expect(jobStatusLabel('open')).toBe('مفتوح'));
+  it('maps in_progress', () => expect(jobStatusLabel('in_progress')).toBe('جارٍ'));
+  it('maps completed', () => expect(jobStatusLabel('completed')).toBe('مكتمل'));
+  it('maps cancelled', () => expect(jobStatusLabel('cancelled')).toBe('ملغي'));
+  it('maps expired', () => expect(jobStatusLabel('expired')).toBe('منتهي'));
+  it('returns input for unknown', () => expect(jobStatusLabel('unknown')).toBe('unknown'));
+});
+
+describe('applicationStatusLabel', () => {
+  it('maps pending', () => expect(applicationStatusLabel('pending')).toBe('قيد الانتظار'));
+  it('maps accepted', () => expect(applicationStatusLabel('accepted')).toBe('مقبول'));
+  it('maps rejected', () => expect(applicationStatusLabel('rejected')).toBe('مرفوض'));
+  it('maps withdrawn', () => expect(applicationStatusLabel('withdrawn')).toBe('منسحب'));
+  it('maps in_progress', () => expect(applicationStatusLabel('in_progress')).toBe('جارٍ'));
+  it('maps completed', () => expect(applicationStatusLabel('completed')).toBe('مكتمل'));
+});
+
+describe('compensationTypeLabel', () => {
+  it('maps fixed', () => expect(compensationTypeLabel('fixed')).toBe('مبلغ ثابت'));
+  it('maps daily', () => expect(compensationTypeLabel('daily')).toBe('يومي'));
+  it('maps per_kg', () => expect(compensationTypeLabel('per_kg')).toBe('بالكيلو'));
+  it('maps negotiable', () => expect(compensationTypeLabel('negotiable')).toBe('قابل للتفاوض'));
 });

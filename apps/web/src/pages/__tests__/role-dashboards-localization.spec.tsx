@@ -17,6 +17,7 @@ const mockUseMyRides = vi.fn();
 const mockUseCancelRide = vi.fn();
 const mockUseActivateRide = vi.fn();
 const mockUseDeleteRide = vi.fn();
+const mockUseMyPosts = vi.fn();
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
@@ -58,13 +59,7 @@ vi.mock('@/components/dashboard/DashboardShell', () => ({
 }));
 
 vi.mock('@/components/dashboard/StatCard', () => ({
-  StatCard: ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string | number;
-  }) => (
+  StatCard: ({ label, value }: { label: string; value: string | number }) => (
     <div>
       <span>{label}</span>
       <span>{value}</span>
@@ -132,7 +127,9 @@ vi.mock('@/components/ui/label', () => ({
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: { children: ReactNode; asChild?: boolean }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: ReactNode; asChild?: boolean }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock('@/components/ui/textarea', () => ({
@@ -228,6 +225,10 @@ vi.mock('@/hooks/use-map', () => ({
   useDeleteRide: () => mockUseDeleteRide(),
 }));
 
+vi.mock('@/hooks/use-jobs', () => ({
+  useMyPosts: () => mockUseMyPosts(),
+}));
+
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -285,6 +286,7 @@ describe('Role dashboard localization', () => {
     mockUseCancelRide.mockReset();
     mockUseActivateRide.mockReset();
     mockUseDeleteRide.mockReset();
+    mockUseMyPosts.mockReset();
 
     mockUseGuideProfile.mockReturnValue({
       data: null,
@@ -455,6 +457,7 @@ describe('Role dashboard localization', () => {
     mockUseCancelRide.mockReturnValue({ isPending: false, mutate: vi.fn() });
     mockUseActivateRide.mockReturnValue({ isPending: false, mutate: vi.fn() });
     mockUseDeleteRide.mockReturnValue({ isPending: false, mutate: vi.fn() });
+    mockUseMyPosts.mockReturnValue({ data: { data: [] }, isLoading: false });
   });
 
   it('renders GuideDashboard in English mode', () => {
