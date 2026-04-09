@@ -76,7 +76,8 @@ export default defineConfig(({ mode }) => {
         '/api/v1/guides': { target: guideBookingUrl, changeOrigin: true },
         '/api/v1/packages': { target: guideBookingUrl, changeOrigin: true },
         '/api/v1/bookings': { target: guideBookingUrl, changeOrigin: true },
-        '/api/v1/reviews': { target: guideBookingUrl, changeOrigin: true },
+        '/api/v1/reviews': { target: marketUrl, changeOrigin: true },
+        '/api/v1/guide-reviews': { target: guideBookingUrl, changeOrigin: true },
         '/api/v1/attractions': { target: guideBookingUrl, changeOrigin: true },
         // Map service
         '/api/v1/map': { target: mapUrl, changeOrigin: true },

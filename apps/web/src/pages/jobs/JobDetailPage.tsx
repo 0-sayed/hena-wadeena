@@ -33,7 +33,9 @@ export default function JobDetailPage() {
   const posterProfiles = usePublicUsers(job ? [job.posterId] : []);
   const { data: myAppsData } = useMyApplications(isAuthenticated);
 
-  const myApplication = myAppsData?.data?.find((app) => app.jobId === id);
+  const myApplication = myAppsData?.data?.find(
+    (app) => app.jobId === id && app.status !== 'withdrawn',
+  );
   const isPoster = user?.id === job?.posterId;
 
   const applyMutation = useApplyMutation(id ?? '');

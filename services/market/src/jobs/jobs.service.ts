@@ -33,6 +33,7 @@ export class JobsService {
   private readonly reviews: JobReviewRecord[] = [];
 
   async findAll(query: QueryJobsDto): Promise<PaginatedResponse<JobPostRecord>> {
+    await Promise.resolve();
     const filtered = this.jobs
       .filter((job) => (query.category ? job.category === query.category : true))
       .filter((job) => (query.area ? job.area === query.area : true))
@@ -48,21 +49,23 @@ export class JobsService {
   }
 
   async findById(id: string): Promise<JobPostRecord> {
+    await Promise.resolve();
     return this.requireJob(id);
   }
 
   async create(dto: CreateJobDto, posterId: string): Promise<JobPostRecord> {
+    await Promise.resolve();
     const created: JobPostRecord = {
       id: generateId(),
       posterId,
       title: dto.title.trim(),
       descriptionAr: dto.descriptionAr.trim(),
-      descriptionEn: dto.descriptionEn?.trim() || null,
+      descriptionEn: dto.descriptionEn?.trim() ?? null,
       category: dto.category,
       area: dto.area,
       compensation: dto.compensation,
       compensationType: dto.compensationType,
-      slots: dto.slots ?? 1,
+      slots: dto.slots,
       status: 'open',
       startsAt: dto.startsAt ?? null,
       endsAt: dto.endsAt ?? null,
@@ -74,22 +77,25 @@ export class JobsService {
   }
 
   async findMyPosts(posterId: string): Promise<PaginatedResponse<JobPostRecord>> {
+    await Promise.resolve();
     const jobs = this.jobs
       .filter((job) => job.posterId === posterId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-    return paginate(jobs, jobs.length, 0, jobs.length || 20);
+    return paginate(jobs, jobs.length, 0, jobs.length > 0 ? jobs.length : 20);
   }
 
   async findMyApplications(applicantId: string): Promise<PaginatedResponse<JobApplicationRecord>> {
+    await Promise.resolve();
     const apps = this.applications
       .filter((app) => app.applicantId === applicantId)
       .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt));
 
-    return paginate(apps, apps.length, 0, apps.length || 20);
+    return paginate(apps, apps.length, 0, apps.length > 0 ? apps.length : 20);
   }
 
   async apply(jobId: string, applicantId: string, dto: ApplyJobDto): Promise<JobApplicationRecord> {
+    await Promise.resolve();
     const job = this.requireJob(jobId);
 
     if (job.posterId === applicantId) {
@@ -110,7 +116,7 @@ export class JobsService {
       id: generateId(),
       jobId,
       applicantId,
-      noteAr: dto.noteAr?.trim() || null,
+      noteAr: dto.noteAr?.trim() ?? null,
       status: 'pending',
       appliedAt: nowIso(),
       resolvedAt: null,
@@ -125,6 +131,7 @@ export class JobsService {
     requesterId: string,
     requesterRole?: string,
   ): Promise<PaginatedResponse<JobApplicationRecord>> {
+    await Promise.resolve();
     const job = this.requireJob(jobId);
     this.assertPosterOrAdmin(job, requesterId, requesterRole);
 
@@ -132,7 +139,7 @@ export class JobsService {
       .filter((app) => app.jobId === jobId)
       .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt));
 
-    return paginate(apps, apps.length, 0, apps.length || 20);
+    return paginate(apps, apps.length, 0, apps.length > 0 ? apps.length : 20);
   }
 
   async updateApplicationStatus(
@@ -142,6 +149,7 @@ export class JobsService {
     dto: UpdateJobApplicationDto,
     requesterRole?: string,
   ): Promise<JobApplicationRecord> {
+    await Promise.resolve();
     const job = this.requireJob(jobId);
     this.assertPosterOrAdmin(job, requesterId, requesterRole);
 
@@ -165,6 +173,7 @@ export class JobsService {
     appId: string,
     applicantId: string,
   ): Promise<{ success: true }> {
+    await Promise.resolve();
     const app = this.requireApplication(jobId, appId);
 
     if (app.applicantId !== applicantId) {
@@ -185,6 +194,7 @@ export class JobsService {
     reviewerId: string,
     dto: CreateJobReviewDto,
   ): Promise<JobReviewRecord> {
+    await Promise.resolve();
     const job = this.requireJob(jobId);
     const app = this.requireApplication(jobId, appId);
 
@@ -220,7 +230,7 @@ export class JobsService {
       revieweeId,
       direction,
       rating: dto.rating,
-      comment: dto.comment?.trim() || null,
+      comment: dto.comment?.trim() ?? null,
       createdAt: nowIso(),
     };
 
@@ -229,6 +239,7 @@ export class JobsService {
   }
 
   async findUserReviews(userId: string): Promise<JobReviewRecord[]> {
+    await Promise.resolve();
     return this.reviews
       .filter((review) => review.reviewerId === userId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));

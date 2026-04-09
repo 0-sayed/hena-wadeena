@@ -7,7 +7,6 @@ import {
   Delete,
   Get,
   Inject,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -51,11 +50,7 @@ export class JobsController {
   @Get('jobs/:id')
   @Public()
   async findById(@Param('id') id: string) {
-    const job = await this.jobsService.findById(id);
-    if (!job) {
-      throw new NotFoundException('Job not found');
-    }
-    return job;
+    return this.jobsService.findById(id);
   }
 
   @Post('jobs')
