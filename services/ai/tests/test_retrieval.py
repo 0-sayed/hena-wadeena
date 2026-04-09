@@ -46,15 +46,46 @@ def test_reranker_skips_neural_scoring_for_small_candidate_sets():
     settings = Settings(RERANKER_TOP_K=2, RERANKER_MIN_CANDIDATES=4)
     reranker = RerankerService(settings)
     candidates = [
-        SimpleNamespace(chunk=SimpleNamespace(text="first"), retrieval_score=0.4),
-        SimpleNamespace(chunk=SimpleNamespace(text="second"), retrieval_score=0.9),
-        SimpleNamespace(chunk=SimpleNamespace(text="third"), retrieval_score=0.6),
+        SimpleNamespace(chunk=SimpleNamespace(text="معلومات عامة"), retrieval_score=0.017),
+        SimpleNamespace(
+            chunk=SimpleNamespace(text="محافظة الوادي الجديد من أكبر محافظات مصر"),
+            retrieval_score=0.016,
+        ),
+        SimpleNamespace(
+            chunk=SimpleNamespace(text="الزراعة في الوادي الجديد تعتمد على المياه الجوفية"),
+            retrieval_score=0.015,
+        ),
     ]
 
-    reranked = reranker.rerank("new valley", candidates)
+    reranked = reranker.rerank("محافظة الوادي الجديد", candidates)
 
-    assert [item.chunk.chunk.text for item in reranked] == ["second", "third"]
-    assert [item.score for item in reranked] == [0.9, 0.6]
+    assert [item.chunk.chunk.text for item in reranked] == [
+        "محافظة الوادي الجديد من أكبر محافظات مصر",
+        "الزراعة في الوادي الجديد تعتمد على المياه الجوفية",
+    ]
+    assert reranked[0].score > 0.35
+    assert reranked[1].score > 0.35
+    assert is_domain_relevant(reranked, 0.35)
+
+
+def test_reranker_skip_keeps_out_of_domain_queries_below_threshold():
+    settings = Settings(RERANKER_TOP_K=2, RERANKER_MIN_CANDIDATES=4)
+    reranker = RerankerService(settings)
+    candidates = [
+        SimpleNamespace(
+            chunk=SimpleNamespace(text="محافظة الوادي الجديد من أكبر محافظات مصر"),
+            retrieval_score=0.016,
+        ),
+        SimpleNamespace(
+            chunk=SimpleNamespace(text="الزراعة في الوادي الجديد تعتمد على المياه الجوفية"),
+            retrieval_score=0.015,
+        ),
+    ]
+
+    reranked = reranker.rerank("كرة القدم الأوروبية", candidates)
+
+    assert reranked[0].score < 0.35
+    assert not is_domain_relevant(reranked, 0.35)
 
 
 def test_hybrid_search_uses_qdrant_payload_without_mongo_roundtrip():
