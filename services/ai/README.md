@@ -119,6 +119,10 @@ RELEVANCE_THRESHOLD=0.35
 DENSE_WEIGHT=0.7
 SPARSE_WEIGHT=0.3
 
+# Optional startup bootstrap for curated RAG docs
+BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP=false
+BOOTSTRAP_KNOWLEDGE_BASE_FILE=./nakheel/bootstrap/datasets/new_valley_2026.json
+
 # Session Management
 SESSION_MAX_MESSAGES=10
 SESSION_TTL_HOURS=168  # 7 days
@@ -460,6 +464,14 @@ uv run python scripts/seed_knowledge_base.py \
 ```
 
 See `scripts/seed_knowledge_base.py` for advanced options (batch size, file filters, etc.).
+
+## Startup Bootstrap Dataset
+
+The service can auto-seed a curated JSON dataset on boot without requiring an admin JWT.
+
+- Source file: `nakheel/bootstrap/datasets/new_valley_2026.json`
+- Toggle with `BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP=true`
+- The loader is idempotent per document slug, so already indexed bootstrap documents are skipped on later restarts.
 
 ## Performance Tuning
 

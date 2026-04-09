@@ -82,10 +82,10 @@ async def inject_documents(
     )
 
     if batch["pending_files"] > 0:
-        batch_tasks = getattr(request.app.state, "document_batch_tasks", None)
+        batch_tasks = getattr(request.app.state, "background_tasks", None)
         if batch_tasks is None:
             batch_tasks = set()
-            request.app.state.document_batch_tasks = batch_tasks
+            request.app.state.background_tasks = batch_tasks
 
         task = asyncio.create_task(indexer.process_document_batch(batch["batch_id"]))
         batch_tasks.add(task)

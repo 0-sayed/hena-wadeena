@@ -90,6 +90,8 @@ services:
     environment:
       ENVIRONMENT: development
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-changeme}@mongodb:27017/${MONGODB_DB_NAME:-nakheel_db}?authSource=admin
+      BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP: ${BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP:-false}
+      BOOTSTRAP_KNOWLEDGE_BASE_FILE: ${BOOTSTRAP_KNOWLEDGE_BASE_FILE:-./nakheel/bootstrap/datasets/new_valley_2026.json}
 
   gateway:
     ports:

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from nakheel.api.router import api_router
+from nakheel.bootstrap.knowledge_base import bootstrap_knowledge_base
 from nakheel.config import get_settings
 from nakheel.core.generation.llm_client import LLMClient
 from nakheel.core.generation.prompt_builder import PromptBuilder
@@ -35,6 +36,29 @@ class StartupCheck:
 
     ok: bool
     detail: str
+
+
+def _track_background_task(app: FastAPI, task: asyncio.Task, label: str) -> None:
+    """Track background tasks so they can be cancelled cleanly on shutdown."""
+
+    tracked_tasks = getattr(app.state, "background_tasks", None)
+    if tracked_tasks is None:
+        tracked_tasks = set()
+        app.state.background_tasks = tracked_tasks
+    tracked_tasks.add(task)
+
+    def _on_task_done(done_task: asyncio.Task) -> None:
+        tracked_tasks.discard(done_task)
+        if done_task.cancelled():
+            logger.info("{} cancelled", label)
+            return
+        task_exception = done_task.exception()
+        if task_exception is not None:
+            logger.opt(exception=task_exception).error("{} failed", label)
+            return
+        logger.info("{} finished: {}", label, done_task.result())
+
+    task.add_done_callback(_on_task_done)
 
 
 async def _bounded_check(name: str, check_coro: asyncio.Future) -> dict[str, str | bool]:
@@ -135,13 +159,17 @@ async def lifespan(app: FastAPI):
     app.state.prompt_builder = prompt_builder
     app.state.session_manager = session_manager
     app.state.startup_checks = startup_checks
-    app.state.document_batch_tasks = set()
+    app.state.background_tasks = set()
+
+    if settings.BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP:
+        bootstrap_task = asyncio.create_task(bootstrap_knowledge_base(settings=settings, indexer=indexer))
+        _track_background_task(app, bootstrap_task, "Knowledge base bootstrap")
 
     logger.info("Nakheel app started with validated dependencies")
     try:
         yield
     finally:
-        batch_tasks = list(getattr(app.state, "document_batch_tasks", set()))
+        batch_tasks = list(getattr(app.state, "background_tasks", set()))
         for task in batch_tasks:
             task.cancel()
         if batch_tasks:
