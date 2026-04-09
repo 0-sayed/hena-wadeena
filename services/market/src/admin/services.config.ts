@@ -1,3 +1,5 @@
+import { resolveLocalServiceUrl } from '@hena-wadeena/types';
+
 export interface AdminServiceConfig {
   name: string;
   url: string;
@@ -8,19 +10,34 @@ export interface AdminServiceConfig {
 export const ADMIN_SERVICES: AdminServiceConfig[] = [
   {
     name: 'identity',
-    url: process.env.IDENTITY_SERVICE_URL ?? 'http://localhost:8001',
+    url: resolveLocalServiceUrl({
+      defaultPort: 8001,
+      explicitPort: process.env.IDENTITY_PORT,
+      explicitUrl: process.env.IDENTITY_SERVICE_URL,
+      env: process.env,
+    }),
     statsPath: '/api/v1/internal/stats',
     moderationPath: '/api/v1/internal/moderation',
   },
   {
     name: 'guide-booking',
-    url: process.env.GUIDE_BOOKING_SERVICE_URL ?? 'http://localhost:8003',
+    url: resolveLocalServiceUrl({
+      defaultPort: 8003,
+      explicitPort: process.env.GUIDE_BOOKING_PORT,
+      explicitUrl: process.env.GUIDE_BOOKING_SERVICE_URL,
+      env: process.env,
+    }),
     statsPath: '/api/v1/internal/stats',
     moderationPath: null,
   },
   {
     name: 'map',
-    url: process.env.MAP_SERVICE_URL ?? 'http://localhost:8004',
+    url: resolveLocalServiceUrl({
+      defaultPort: 8004,
+      explicitPort: process.env.MAP_PORT,
+      explicitUrl: process.env.MAP_SERVICE_URL,
+      env: process.env,
+    }),
     statsPath: '/api/v1/internal/stats',
     moderationPath: '/api/v1/internal/moderation',
   },

@@ -117,6 +117,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           marketplace: 'Marketplace',
           logistics: 'Logistics',
           investment: 'Investment',
+          jobs: 'Jobs',
         }
       : {
           home: 'الرئيسية',
@@ -126,6 +127,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           marketplace: 'البورصة',
           logistics: 'اللوجستيات',
           investment: 'الاستثمار',
+          jobs: 'وظائف',
         };
 
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
@@ -174,6 +176,12 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       href: '/investment',
       label: labels.investment,
       matcher: (pathname) => pathname.startsWith('/investment'),
+    },
+    {
+      key: 'jobs',
+      href: '/jobs',
+      label: labels.jobs,
+      matcher: (pathname) => pathname.startsWith('/jobs'),
     },
   ];
 }

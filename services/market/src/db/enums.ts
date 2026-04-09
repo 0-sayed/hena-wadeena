@@ -37,6 +37,41 @@ export const businessInquiryStatusEnum = marketSchema.enum('business_inquiry_sta
   'replied',
 ]);
 
+// Employment board
+export const jobCategoryEnum = marketSchema.enum('job_category', [
+  'agriculture',
+  'tourism',
+  'skilled_trade',
+  'domestic',
+  'logistics',
+  'handicraft',
+]);
+export const jobStatusEnum = marketSchema.enum('job_status', [
+  'open',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'expired',
+]);
+export const jobApplicationStatusEnum = marketSchema.enum('job_application_status', [
+  'pending',
+  'accepted',
+  'rejected',
+  'withdrawn',
+  'in_progress',
+  'completed',
+]);
+export const compensationTypeEnum = marketSchema.enum('compensation_type', [
+  'fixed',
+  'daily',
+  'per_kg',
+  'negotiable',
+]);
+export const reviewDirectionEnum = marketSchema.enum('review_direction', [
+  'worker_rates_poster',
+  'poster_rates_worker',
+]);
+
 // Investment enums
 export const investmentSectorEnum = marketSchema.enum('investment_sector', [
   'agriculture',
