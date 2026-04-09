@@ -140,6 +140,7 @@ jobs:
             upsert_env "MONGODB_URI" "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@mongodb:27017/nakheel_db?authSource=admin"
             upsert_env "JWT_ACCESS_SECRET" "$JWT_ACCESS_SECRET"
             upsert_env "OPENAI_API_KEY" "$OPENAI_API_KEY"
+            upsert_env "BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP" "true"
             if [ -n "${CORS_ORIGINS:-}" ]; then
               upsert_env "CORS_ORIGINS" "$CORS_ORIGINS"
             fi

@@ -42,6 +42,61 @@ class RecordingCollection:
         doc.update(update["$set"])
         return None
 
+    async def find_one(self, filters, projection=None):
+        for payload in self.documents.values():
+            if _matches(payload, filters):
+                return _project(payload, projection)
+        return None
+
+    def find(self, filters, projection=None):
+        if self.chunks:
+            matches = [_project(chunk, projection) for chunk in self.chunks if _matches(chunk, filters)]
+        else:
+            matches = [_project(doc, projection) for doc in self.documents.values() if _matches(doc, filters)]
+        return FakeCursor(matches)
+
+    async def delete_many(self, filters):
+        deleted_count = 0
+        retained = []
+        for chunk in self.chunks:
+            if _matches(chunk, filters):
+                deleted_count += 1
+            else:
+                retained.append(chunk)
+        self.chunks = retained
+        return SimpleNamespace(deleted_count=deleted_count)
+
+    async def delete_one(self, filters):
+        for doc_id, payload in list(self.documents.items()):
+            if _matches(payload, filters):
+                del self.documents[doc_id]
+                return SimpleNamespace(deleted_count=1)
+        return SimpleNamespace(deleted_count=0)
+
+
+class FakeCursor:
+    def __init__(self, items):
+        self.items = items
+
+    async def to_list(self, length=None):
+        return list(self.items if length is None else self.items[:length])
+
+
+def _matches(payload: dict, filters: dict) -> bool:
+    for key, value in filters.items():
+        if payload.get(key) != value:
+            return False
+    return True
+
+
+def _project(payload: dict, projection):
+    if not projection:
+        return dict(payload)
+    include_keys = [key for key, enabled in projection.items() if enabled and key != "_id"]
+    if not include_keys:
+        return dict(payload)
+    return {key: payload.get(key) for key in include_keys}
+
 
 class FakeMongo:
     def __init__(self, fail_on_chunk_insert: bool = False, fail_on_audit: bool = False):
@@ -249,6 +304,69 @@ async def test_inject_raw_text_uses_uuid_compatible_qdrant_point_ids():
     assert qdrant.upserted[0].id == stored_qdrant_id
     assert qdrant.upserted[0].payload["chunk_id"] == "chk-1"
     assert qdrant.upserted[0].payload["text"] == "New Valley Governorate information for testing."
+
+
+@pytest.mark.asyncio
+async def test_inject_bootstrap_text_skips_existing_indexed_document():
+    indexer, mongo, qdrant = build_indexer()
+    await indexer._create_document_record(
+        doc_id="doc-existing",
+        batch_id=None,
+        filename="new-valley-2026.md",
+        source_type=DocumentSourceType.BOOTSTRAP,
+        title="Existing",
+        description=None,
+        tags=["bootstrap"],
+        file_size_kb=1.0,
+        status=DocumentStatus.INDEXED,
+        current_step="indexed",
+    )
+
+    result = await indexer.inject_bootstrap_text(
+        slug="new-valley-2026",
+        content="Already indexed bootstrap content.",
+        title="Existing",
+        description=None,
+        tags=["bootstrap"],
+        language_hint="auto",
+    )
+
+    assert result["skipped"] is True
+    assert qdrant.upserted == []
+
+
+@pytest.mark.asyncio
+async def test_inject_bootstrap_text_cleans_failed_copy_before_retry():
+    indexer, mongo, qdrant = build_indexer()
+    await indexer._create_document_record(
+        doc_id="doc-failed",
+        batch_id=None,
+        filename="new-valley-2026.md",
+        source_type=DocumentSourceType.BOOTSTRAP,
+        title="Failed",
+        description=None,
+        tags=["bootstrap"],
+        file_size_kb=1.0,
+        status=DocumentStatus.FAILED,
+        current_step="failed",
+        error_detail="old failure",
+    )
+    mongo.collection("documents").documents["doc-failed"]["qdrant_ids"] = ["11111111-1111-1111-1111-111111111111"]
+    mongo.collection("chunks").chunks.append({"doc_id": "doc-failed", "chunk_id": "old-chunk"})
+
+    result = await indexer.inject_bootstrap_text(
+        slug="new-valley-2026",
+        content="Fresh bootstrap content.",
+        title="Fresh",
+        description="Curated",
+        tags=["bootstrap"],
+        language_hint="auto",
+    )
+
+    assert result["skipped"] is False
+    assert "doc-failed" not in mongo.collection("documents").documents
+    assert mongo.collection("chunks").chunks[0]["doc_id"] != "doc-failed"
+    assert qdrant.deleted == [["11111111-1111-1111-1111-111111111111"]]
 
 
 @pytest.mark.asyncio

@@ -291,6 +291,70 @@ class DocumentIndexer:
             started=started,
         )
 
+    async def inject_bootstrap_text(
+        self,
+        slug: str,
+        content: str,
+        title: str | None,
+        description: str | None,
+        tags: list[str],
+        language_hint: str = "auto",
+    ) -> dict:
+        """Index a curated startup document exactly once per stable slug."""
+
+        cleaned = clean_text(content)
+        if not cleaned:
+            raise BadRequestError("Content cannot be empty")
+        filename = f"{slug}.md"
+        existing_indexed = await self.mongo.collection("documents").find_one(
+            {
+                "filename": filename,
+                "source_type": DocumentSourceType.BOOTSTRAP.value,
+                "status": DocumentStatus.INDEXED.value,
+            },
+            {"_id": 0, "doc_id": 1, "indexed_at": 1},
+        )
+        if existing_indexed:
+            return {
+                "doc_id": existing_indexed["doc_id"],
+                "status": DocumentStatus.INDEXED.value,
+                "filename": filename,
+                "skipped": True,
+                "indexed_at": existing_indexed.get("indexed_at"),
+            }
+
+        await self._delete_documents_by_filename(filename=filename, source_type=DocumentSourceType.BOOTSTRAP)
+
+        doc_id = new_id("doc")
+        file_size_kb = round(len(cleaned.encode("utf-8")) / 1024, 2)
+        started = time.perf_counter()
+        await self._create_document_record(
+            doc_id=doc_id,
+            batch_id=None,
+            filename=filename,
+            source_type=DocumentSourceType.BOOTSTRAP,
+            title=title,
+            description=description,
+            tags=tags,
+            file_size_kb=file_size_kb,
+        )
+        result = await self._index_text_content(
+            doc_id=doc_id,
+            batch_id=None,
+            filename=filename,
+            source_type=DocumentSourceType.BOOTSTRAP,
+            raw_text=cleaned,
+            title=title,
+            description=description,
+            tags=tags,
+            language_hint=language_hint,
+            file_size_kb=file_size_kb,
+            total_pages=1,
+            started=started,
+        )
+        result["skipped"] = False
+        return result
+
     async def parse_only(self, filename: str, file_bytes: bytes) -> dict:
         """Parse a PDF into a temporary Markdown artifact without indexing it."""
 
@@ -618,6 +682,29 @@ class DocumentIndexer:
                 }
             },
         )
+
+    async def _delete_documents_by_filename(
+        self,
+        *,
+        filename: str,
+        source_type: DocumentSourceType,
+    ) -> None:
+        """Remove stale copies for a curated source before retrying ingestion."""
+
+        existing = await (
+            self.mongo.collection("documents")
+            .find(
+                {"filename": filename, "source_type": source_type.value},
+                {"_id": 0, "doc_id": 1, "qdrant_ids": 1},
+            )
+            .to_list(length=None)
+        )
+        for document in existing:
+            qdrant_ids = document.get("qdrant_ids", [])
+            if qdrant_ids:
+                await self.qdrant.delete_points_async(qdrant_ids)
+            await self.mongo.collection("chunks").delete_many({"doc_id": document["doc_id"]})
+            await self.mongo.collection("documents").delete_one({"doc_id": document["doc_id"]})
 
     async def _save_batch(self, batch: dict) -> None:
         """Persist the current batch snapshot without MongoDB internals."""
