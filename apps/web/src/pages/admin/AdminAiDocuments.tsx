@@ -522,7 +522,7 @@ export default function AdminAiDocuments() {
               <div className="max-h-[320px] overflow-y-auto">
                 {drafts.map((draft, index) => (
                   <div
-                    key={`${draft.slug}-${index}`}
+                    key={index}
                     className={`grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_88px] gap-3 border-t px-4 py-3 ${selectedDraftIndex === index ? 'bg-muted/50' : 'bg-background'}`}
                     onClick={() => setSelectedDraftIndex(index)}
                   >

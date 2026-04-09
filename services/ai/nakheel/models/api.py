@@ -182,7 +182,7 @@ class CuratedKnowledgeComposeResponse(BaseModel):
 
 
 class CuratedKnowledgeFeedRequest(BaseModel):
-    entries: list[CuratedKnowledgeEntry] = Field(default_factory=list, min_length=1, max_length=100)
+    entries: list[CuratedKnowledgeEntry] = Field(min_length=1, max_length=40)
 
 
 class CuratedKnowledgeFeedItemResponse(BaseModel):

@@ -11,6 +11,7 @@ from nakheel.utils.slug import slugify
 from nakheel.utils.text_cleaning import clean_text
 
 MAX_CURATED_ENTRIES = 40
+MAX_ENTRY_CONTENT_CHARS = 50_000
 DESCRIPTION_LIMIT = 180
 HEADING_TERMINATORS = {".", "!", "?", "؟", ":", "؛"}
 
@@ -38,7 +39,9 @@ def normalize_curated_entries(
     normalized: list[CuratedKnowledgeDraft] = []
     seen_slugs: set[str] = set()
 
-    for index, raw_entry in enumerate(raw_entries[:MAX_CURATED_ENTRIES], start=1):
+    for index, raw_entry in enumerate(raw_entries, start=1):
+        if len(normalized) >= MAX_CURATED_ENTRIES:
+            break
         if not isinstance(raw_entry, dict):
             continue
 
@@ -48,23 +51,41 @@ def normalize_curated_entries(
 
         title = clean_text(str(raw_entry.get("title", ""))) or _derive_title(content)
         slug_source = clean_text(str(raw_entry.get("slug", ""))) or title
-        slug = _ensure_unique_slug(slugify(slug_source) or f"section-{index}", seen_slugs)
-        seen_slugs.add(slug)
-
-        description = clean_text(str(raw_entry.get("description", ""))) or _derive_description(content)
+        description = clean_text(str(raw_entry.get("description", "")))
         language = clean_text(str(raw_entry.get("language", default_language))) or default_language
         tags = _normalize_tags(raw_entry.get("tags"))
+        parts = _split_content(content)
 
-        normalized.append(
-            CuratedKnowledgeDraft(
-                slug=slug,
-                title=title,
-                description=description,
-                content=content,
-                tags=tags,
-                language=language,
+        for part_index, part_content in enumerate(parts, start=1):
+            if len(normalized) >= MAX_CURATED_ENTRIES:
+                break
+
+            is_split_entry = len(parts) > 1
+            part_title = _derive_part_title(title, part_index, language) if is_split_entry else title
+            part_slug_source = (
+                f"{slug_source} part {part_index}" if is_split_entry else slug_source
             )
-        )
+            part_slug = _ensure_unique_slug(
+                slugify(part_slug_source) or f"section-{index}-{part_index}",
+                seen_slugs,
+            )
+            seen_slugs.add(part_slug)
+            part_description = (
+                _derive_description(part_content)
+                if is_split_entry or not description
+                else description
+            )
+
+            normalized.append(
+                CuratedKnowledgeDraft(
+                    slug=part_slug,
+                    title=part_title,
+                    description=part_description,
+                    content=part_content,
+                    tags=tags,
+                    language=language,
+                )
+            )
 
     return normalized
 
@@ -131,7 +152,7 @@ def _load_llm_payload(content: str) -> list[dict]:
     if payload_text.startswith("```"):
         parts = payload_text.split("```")
         payload_text = parts[1] if len(parts) > 1 else payload_text
-        payload_text = payload_text.replace("json", "", 1).strip()
+        payload_text = payload_text.lstrip().removeprefix("json").strip()
 
     array_start = payload_text.find("[")
     array_end = payload_text.rfind("]")
@@ -263,3 +284,61 @@ def _ensure_unique_slug(slug: str, seen_slugs: set[str]) -> str:
     while f"{slug}-{suffix}" in seen_slugs:
         suffix += 1
     return f"{slug}-{suffix}"
+
+
+def _split_content(content: str) -> list[str]:
+    if len(content) <= MAX_ENTRY_CONTENT_CHARS:
+        return [content]
+
+    paragraphs = [paragraph.strip() for paragraph in re.split(r"\n{2,}", content) if paragraph.strip()]
+    if len(paragraphs) <= 1:
+        return _hard_split_content(content)
+
+    parts: list[str] = []
+    current_part = ""
+
+    for paragraph in paragraphs:
+        candidate = f"{current_part}\n\n{paragraph}" if current_part else paragraph
+        if len(candidate) <= MAX_ENTRY_CONTENT_CHARS:
+            current_part = candidate
+            continue
+
+        if current_part:
+            parts.append(current_part)
+
+        if len(paragraph) <= MAX_ENTRY_CONTENT_CHARS:
+            current_part = paragraph
+            continue
+
+        split_paragraphs = _hard_split_content(paragraph)
+        parts.extend(split_paragraphs[:-1])
+        current_part = split_paragraphs[-1]
+
+    if current_part:
+        parts.append(current_part)
+
+    return parts
+
+
+def _hard_split_content(content: str) -> list[str]:
+    parts: list[str] = []
+    remaining = content.strip()
+
+    while len(remaining) > MAX_ENTRY_CONTENT_CHARS:
+        split_at = remaining.rfind(" ", 0, MAX_ENTRY_CONTENT_CHARS + 1)
+        if split_at <= MAX_ENTRY_CONTENT_CHARS // 2:
+            split_at = MAX_ENTRY_CONTENT_CHARS
+
+        parts.append(remaining[:split_at].rstrip())
+        remaining = remaining[split_at:].lstrip()
+
+    if remaining:
+        parts.append(remaining)
+
+    return parts
+
+
+def _derive_part_title(title: str, part_index: int, language: str) -> str:
+    if language.startswith("ar"):
+        return f"{title} - الجزء {part_index}"
+    return f"{title} (Part {part_index})"

@@ -34,6 +34,7 @@ from nakheel.models.api import (
 )
 
 router = APIRouter(prefix="/documents")
+CURATED_FEED_CONCURRENCY = 4
 
 
 @router.post("/curated/compose", response_model=CuratedKnowledgeComposeResponse)
@@ -67,23 +68,21 @@ async def feed_curated_text(
     if not entries:
         raise BadRequestError("At least one valid curated entry is required")
 
-    items: list[dict] = []
-    indexed_entries = 0
+    semaphore = asyncio.Semaphore(min(CURATED_FEED_CONCURRENCY, len(entries)))
 
-    for entry in entries:
-        try:
-            result = await indexer.inject_curated_text(
-                slug=entry.slug,
-                content=entry.content,
-                title=entry.title,
-                description=entry.description,
-                tags=entry.tags,
-                language_hint=entry.language,
-            )
-            indexed_entries += 1
-            items.append(
-                {
-                    "slug": entry.slug,
+    async def process_entry(entry) -> dict:
+        async with semaphore:
+            try:
+                result = await indexer.inject_curated_text(
+                    slug=entry.slug,
+                    content=entry.content,
+                    title=entry.title,
+                    description=entry.description,
+                    tags=entry.tags,
+                    language_hint=entry.language,
+                )
+                return {
+                    "slug": result.get("slug", entry.slug),
                     "title": entry.title,
                     "status": result["status"],
                     "filename": result["filename"],
@@ -92,10 +91,9 @@ async def feed_curated_text(
                     "total_chunks": result.get("total_chunks", 0),
                     "error_detail": None,
                 }
-            )
-        except Exception as exc:
-            items.append(
-                {
+            except Exception as exc:
+                logger.exception("Curated text indexing failed for slug {}", entry.slug)
+                return {
                     "slug": entry.slug,
                     "title": entry.title,
                     "status": "failed",
@@ -105,7 +103,9 @@ async def feed_curated_text(
                     "total_chunks": 0,
                     "error_detail": str(getattr(exc, "detail", exc)),
                 }
-            )
+
+    items = await asyncio.gather(*(process_entry(entry) for entry in entries))
+    indexed_entries = sum(item["status"] == "indexed" for item in items)
 
     return {
         "total_entries": len(entries),

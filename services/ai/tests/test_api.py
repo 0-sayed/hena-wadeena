@@ -531,6 +531,23 @@ def test_compose_curated_text_endpoint_uses_fallback_sections():
     assert body["entries"][0]["slug"]
 
 
+def test_compose_curated_text_endpoint_splits_oversized_fallback_entries():
+    client = build_test_client()
+    response = client.post(
+        "/api/v1/documents/curated/compose",
+        json={
+            "text": " ".join(["new-valley"] * 15000),
+            "language": "en",
+        },
+        headers=_auth_headers(role="admin"),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["entries"]) >= 2
+    assert all(len(entry["content"]) <= 50000 for entry in body["entries"])
+
+
 def test_feed_curated_text_endpoint():
     client = build_test_client()
     response = client.post(
@@ -555,6 +572,29 @@ def test_feed_curated_text_endpoint():
     assert body["indexed_entries"] == 1
     assert body["failed_entries"] == 0
     assert body["items"][0]["filename"] == "geography.md"
+
+
+def test_feed_curated_text_endpoint_rejects_more_than_40_entries():
+    client = build_test_client()
+    response = client.post(
+        "/api/v1/documents/curated/feed",
+        json={
+            "entries": [
+                {
+                    "slug": f"section-{index}",
+                    "title": f"Section {index}",
+                    "description": "",
+                    "content": "Curated content",
+                    "tags": [],
+                    "language": "en",
+                }
+                for index in range(41)
+            ]
+        },
+        headers=_auth_headers(role="admin"),
+    )
+
+    assert response.status_code == 422
 
 
 def test_parse_document_returns_download_url_and_downloads_markdown():

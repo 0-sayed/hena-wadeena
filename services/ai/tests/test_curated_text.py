@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from nakheel.core.ingestion.curated_text import compose_curated_documents, normalize_curated_entries
+from nakheel.core.ingestion.curated_text import (
+    MAX_ENTRY_CONTENT_CHARS,
+    _load_llm_payload,
+    compose_curated_documents,
+    normalize_curated_entries,
+)
 
 
 class UnavailableLLM:
@@ -35,3 +40,30 @@ async def test_compose_curated_documents_uses_heading_fallback_when_llm_unavaila
     assert len(entries) == 3
     assert entries[1].slug == "geography-and-administration"
     assert "wide desert area" in entries[1].content
+
+
+def test_load_llm_payload_preserves_json_substrings_without_language_tag():
+    entries = _load_llm_payload(
+        '```\n[{"slug":"json-overview","title":"JSON Overview","content":"json content"}]\n```'
+    )
+
+    assert entries[0]["slug"] == "json-overview"
+    assert entries[0]["content"] == "json content"
+
+
+def test_normalize_curated_entries_splits_oversized_content():
+    oversized_content = " ".join(["new-valley"] * (MAX_ENTRY_CONTENT_CHARS // 5))
+    entries = normalize_curated_entries(
+        [
+            {
+                "slug": "strategic-report",
+                "title": "Strategic report",
+                "content": oversized_content,
+                "language": "en",
+            }
+        ]
+    )
+
+    assert len(entries) >= 2
+    assert all(len(entry.content) <= MAX_ENTRY_CONTENT_CHARS for entry in entries)
+    assert entries[0].slug == "strategic-report-part-1"
