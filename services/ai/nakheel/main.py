@@ -41,10 +41,10 @@ class StartupCheck:
 def _track_background_task(app: FastAPI, task: asyncio.Task, label: str) -> None:
     """Track background tasks so they can be cancelled cleanly on shutdown."""
 
-    tracked_tasks = getattr(app.state, "document_batch_tasks", None)
+    tracked_tasks = getattr(app.state, "background_tasks", None)
     if tracked_tasks is None:
         tracked_tasks = set()
-        app.state.document_batch_tasks = tracked_tasks
+        app.state.background_tasks = tracked_tasks
     tracked_tasks.add(task)
 
     def _on_task_done(done_task: asyncio.Task) -> None:
@@ -159,7 +159,7 @@ async def lifespan(app: FastAPI):
     app.state.prompt_builder = prompt_builder
     app.state.session_manager = session_manager
     app.state.startup_checks = startup_checks
-    app.state.document_batch_tasks = set()
+    app.state.background_tasks = set()
 
     if settings.BOOTSTRAP_KNOWLEDGE_BASE_ON_STARTUP:
         bootstrap_task = asyncio.create_task(bootstrap_knowledge_base(settings=settings, indexer=indexer))
@@ -169,7 +169,7 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        batch_tasks = list(getattr(app.state, "document_batch_tasks", set()))
+        batch_tasks = list(getattr(app.state, "background_tasks", set()))
         for task in batch_tasks:
             task.cancel()
         if batch_tasks:

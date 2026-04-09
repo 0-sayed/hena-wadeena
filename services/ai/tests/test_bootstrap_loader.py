@@ -35,6 +35,27 @@ def test_load_bootstrap_documents_reads_json_array(tmp_path: Path):
     assert documents[0].title == "عنوان"
 
 
+def test_load_bootstrap_documents_skips_malformed_entries(tmp_path: Path):
+    file_path = tmp_path / "seed.json"
+    file_path.write_text(
+        json.dumps(
+            [
+                "not-an-object",
+                {"slug": "missing-title", "content": "content"},
+                {"slug": "valid-doc", "title": "Title", "content": "Content", "tags": "bad-tags"},
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    documents = load_bootstrap_documents(file_path)
+
+    assert len(documents) == 1
+    assert documents[0].slug == "valid-doc"
+    assert documents[0].tags == []
+
+
 @pytest.mark.asyncio
 async def test_bootstrap_knowledge_base_counts_indexed_and_skipped(tmp_path: Path):
     file_path = tmp_path / "seed.json"

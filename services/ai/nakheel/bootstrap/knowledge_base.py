@@ -28,16 +28,36 @@ def load_bootstrap_documents(path: Path) -> list[BootstrapKnowledgeDocument]:
     if not isinstance(payload, list):
         raise ValueError("Bootstrap knowledge base file must contain a JSON array")
     documents: list[BootstrapKnowledgeDocument] = []
-    for raw_item in payload:
+    for index, raw_item in enumerate(payload):
         if not isinstance(raw_item, dict):
-            raise ValueError("Bootstrap knowledge base entries must be JSON objects")
+            logger.warning("Skipping non-object bootstrap entry at index {}", index)
+            continue
+        slug = str(raw_item.get("slug", "")).strip()
+        title = str(raw_item.get("title", "")).strip()
+        content = str(raw_item.get("content", "")).strip()
+        missing_fields = [
+            field_name
+            for field_name, value in (("slug", slug), ("title", title), ("content", content))
+            if not value
+        ]
+        if missing_fields:
+            logger.warning(
+                "Skipping bootstrap entry at index {} due to missing required fields: {}",
+                index,
+                ", ".join(missing_fields),
+            )
+            continue
+        raw_tags = raw_item.get("tags", [])
+        if not isinstance(raw_tags, list):
+            logger.warning("Bootstrap entry at index {} has non-list tags; defaulting to []", index)
+            raw_tags = []
         documents.append(
             BootstrapKnowledgeDocument(
-                slug=str(raw_item["slug"]).strip(),
-                title=str(raw_item["title"]).strip(),
+                slug=slug,
+                title=title,
                 description=str(raw_item.get("description", "")).strip(),
-                content=str(raw_item["content"]).strip(),
-                tags=[str(tag).strip() for tag in raw_item.get("tags", []) if str(tag).strip()],
+                content=content,
+                tags=[str(tag).strip() for tag in raw_tags if str(tag).strip()],
                 language=str(raw_item.get("language", "ar")).strip() or "ar",
             )
         )
