@@ -155,23 +155,25 @@ const InvestmentPage = () => {
             </p>
           </SR>
           <SR delay={300}>
-            <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={pickLocalizedCopy(language, {
-                  ar: 'ابحث عن فرص استثمارية...',
-                  en: 'Search for investment opportunities...',
-                })}
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28"
-              />
-              <Button
-                type="submit"
-                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
-              >
-                {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
-              </Button>
+            <form onSubmit={handleSearch} className="mx-auto max-w-xl">
+              <div className="relative flex flex-col gap-3 sm:block">
+                <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
+                <Input
+                  placeholder={pickLocalizedCopy(language, {
+                    ar: 'ابحث عن فرص استثمارية...',
+                    en: 'Search for investment opportunities...',
+                  })}
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
+                />
+                <Button
+                  type="submit"
+                  className="w-full rounded-xl sm:absolute sm:start-2 sm:top-1/2 sm:w-auto sm:-translate-y-1/2"
+                >
+                  {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
+                </Button>
+              </div>
             </form>
           </SR>
         </PageHero>
@@ -180,14 +182,20 @@ const InvestmentPage = () => {
           <div className="container px-4">
             <Tabs defaultValue="opportunities" className="w-full">
               <SR>
-                <TabsList className="mx-auto mb-10 grid h-12 w-full max-w-md grid-cols-2 rounded-xl">
-                  <TabsTrigger value="opportunities" className="rounded-lg text-sm font-semibold">
+                <TabsList className="mx-auto mb-8 grid h-auto w-full max-w-md grid-cols-2 rounded-2xl p-1 sm:mb-10 sm:h-12 sm:rounded-xl">
+                  <TabsTrigger
+                    value="opportunities"
+                    className="min-h-[44px] rounded-xl text-sm font-semibold"
+                  >
                     {pickLocalizedCopy(language, {
                       ar: 'الفرص الاستثمارية',
                       en: 'Opportunities',
                     })}
                   </TabsTrigger>
-                  <TabsTrigger value="startups" className="rounded-lg text-sm font-semibold">
+                  <TabsTrigger
+                    value="startups"
+                    className="min-h-[44px] rounded-xl text-sm font-semibold"
+                  >
                     {pickLocalizedCopy(language, {
                       ar: 'الشركات الناشئة',
                       en: 'Startups',
@@ -212,7 +220,7 @@ const InvestmentPage = () => {
                           className="rounded-2xl border-border/50 hover:border-primary/40 hover-lift"
                         >
                           <CardContent className="p-7">
-                            <div className="mb-5 flex items-start justify-between">
+                            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 sm:items-start">
                               <Badge
                                 variant={opportunity.status === 'active' ? 'default' : 'secondary'}
                                 className={
@@ -236,7 +244,7 @@ const InvestmentPage = () => {
                             <p className="mb-5 line-clamp-2 leading-relaxed text-muted-foreground">
                               {opportunity.incentives?.slice(0, 2).join(' • ')}
                             </p>
-                            <div className="mb-5 grid grid-cols-2 gap-4">
+                            <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                               <div className="flex items-center gap-2.5 text-sm">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                                   <MapPin className="h-5 w-5 text-primary" />
@@ -265,7 +273,7 @@ const InvestmentPage = () => {
                                 </span>
                               </div>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex flex-col gap-3 sm:flex-row">
                               <Button
                                 variant="outline"
                                 className="flex-1 transition-transform hover:scale-[1.02]"
@@ -363,7 +371,7 @@ const InvestmentPage = () => {
                                 </div>
                                 <div>{startupStatusLabel(startup.status, language)}</div>
                               </div>
-                              <div className="flex gap-3">
+                              <div className="flex flex-col gap-3 sm:flex-row">
                                 <Button
                                   variant="outline"
                                   className="flex-1 transition-transform hover:scale-[1.02]"

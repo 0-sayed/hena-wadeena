@@ -374,14 +374,20 @@ const MarketplacePage = () => {
           <div className="container px-4">
             <Tabs defaultValue="prices" className="w-full">
               <SR>
-                <TabsList className="mx-auto mb-10 grid h-12 w-full max-w-md grid-cols-2 rounded-xl">
-                  <TabsTrigger value="prices" className="rounded-lg text-sm font-semibold">
+                <TabsList className="mx-auto mb-8 grid h-auto w-full max-w-md grid-cols-2 rounded-2xl p-1 sm:mb-10 sm:h-12 sm:rounded-xl">
+                  <TabsTrigger
+                    value="prices"
+                    className="min-h-[44px] rounded-xl text-sm font-semibold"
+                  >
                     {pickLocalizedCopy(language, {
                       ar: 'لوحة الأسعار',
                       en: 'Price board',
                     })}
                   </TabsTrigger>
-                  <TabsTrigger value="suppliers" className="rounded-lg text-sm font-semibold">
+                  <TabsTrigger
+                    value="suppliers"
+                    className="min-h-[44px] rounded-xl text-sm font-semibold"
+                  >
                     {pickLocalizedCopy(language, {
                       ar: 'دليل الموردين',
                       en: 'Supplier directory',
@@ -427,8 +433,8 @@ const MarketplacePage = () => {
 
                 <SR delay={150}>
                   <Card className="overflow-hidden rounded-2xl border-border/50 shadow-lg">
-                    <div className="border-b border-border bg-primary/5 px-6 py-5">
-                      <div className="flex items-center justify-between">
+                    <div className="border-b border-border bg-primary/5 px-5 py-5 sm:px-6">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <h3 className="text-lg font-bold text-foreground">
                           {pickLocalizedCopy(language, {
                             ar: `أسعار ${districtLabel(selectedCity, language)}`,
@@ -446,22 +452,22 @@ const MarketplacePage = () => {
                           ))}
                         </div>
                       ) : (
-                        <Table>
+                        <Table className="min-w-[52rem] sm:min-w-0">
                           <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
-                              <TableHead className="px-6 py-5">
+                              <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
                                 {pickLocalizedCopy(language, { ar: 'المنتج', en: 'Product' })}
                               </TableHead>
-                              <TableHead className="px-6 py-5">
+                              <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
                                 {pickLocalizedCopy(language, {
                                   ar: 'التصنيف',
                                   en: 'Category',
                                 })}
                               </TableHead>
-                              <TableHead className="px-6 py-5">
+                              <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
                                 {pickLocalizedCopy(language, { ar: 'السعر', en: 'Price' })}
                               </TableHead>
-                              <TableHead className="px-6 py-5">
+                              <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
                                 {pickLocalizedCopy(language, { ar: 'التغير', en: 'Change' })}
                               </TableHead>
                             </TableRow>
@@ -476,7 +482,7 @@ const MarketplacePage = () => {
                                     : 'hover:bg-muted/20'
                                 }
                               >
-                                <TableCell className="px-6 py-5">
+                                <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                                   <span className="font-semibold text-foreground">
                                     {pickLocalizedField(language, {
                                       ar: entry.commodity.nameAr,
@@ -484,12 +490,12 @@ const MarketplacePage = () => {
                                     })}
                                   </span>
                                 </TableCell>
-                                <TableCell className="px-6 py-5">
+                                <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                                   <Badge variant="outline">
                                     {categoryLabel(entry.commodity.category, language)}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="px-6 py-5">
+                                <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                                   <span className="text-lg font-bold text-foreground">
                                     {formatPrice(entry.latestPrice)}
                                   </span>
@@ -500,7 +506,7 @@ const MarketplacePage = () => {
                                     })}
                                   </span>
                                 </TableCell>
-                                <TableCell className="px-6 py-5">
+                                <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                                   <TrendBadge changePercent={entry.changePercent} />
                                 </TableCell>
                               </TableRow>

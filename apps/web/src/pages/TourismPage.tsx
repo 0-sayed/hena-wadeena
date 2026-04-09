@@ -162,23 +162,25 @@ const TourismPage = () => {
             </p>
           </SR>
           <SR delay={300}>
-            <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={pickLocalizedCopy(language, {
-                  ar: 'ابحث عن معالم أو مرشدين...',
-                  en: 'Search for attractions or guides...',
-                })}
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 ps-28 text-lg shadow-lg backdrop-blur-sm"
-              />
-              <Button
-                type="submit"
-                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
-              >
-                {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
-              </Button>
+            <form onSubmit={handleSearch} className="mx-auto max-w-xl">
+              <div className="relative flex flex-col gap-3 sm:block">
+                <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
+                <Input
+                  placeholder={pickLocalizedCopy(language, {
+                    ar: 'ابحث عن معالم أو مرشدين...',
+                    en: 'Search for attractions or guides...',
+                  })}
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
+                />
+                <Button
+                  type="submit"
+                  className="w-full rounded-xl sm:absolute sm:start-2 sm:top-1/2 sm:w-auto sm:-translate-y-1/2"
+                >
+                  {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
+                </Button>
+              </div>
             </form>
           </SR>
         </PageHero>
@@ -187,11 +189,17 @@ const TourismPage = () => {
           <div className="container px-4">
             <Tabs defaultValue="attractions" className="w-full">
               <SR>
-                <TabsList className="mx-auto mb-10 grid h-12 w-full max-w-xs grid-cols-2 rounded-xl">
-                  <TabsTrigger value="attractions" className="rounded-lg text-sm font-semibold">
+                <TabsList className="mx-auto mb-8 grid h-auto w-full max-w-sm grid-cols-2 rounded-2xl p-1 sm:mb-10 sm:h-12 sm:max-w-xs sm:rounded-xl">
+                  <TabsTrigger
+                    value="attractions"
+                    className="min-h-[44px] rounded-xl text-sm font-semibold"
+                  >
                     {pickLocalizedCopy(language, { ar: 'المعالم', en: 'Attractions' })}
                   </TabsTrigger>
-                  <TabsTrigger value="guides" className="rounded-lg text-sm font-semibold">
+                  <TabsTrigger
+                    value="guides"
+                    className="min-h-[44px] rounded-xl text-sm font-semibold"
+                  >
                     {pickLocalizedCopy(language, { ar: 'المرشدين', en: 'Guides' })}
                   </TabsTrigger>
                 </TabsList>
@@ -289,7 +297,7 @@ const TourismPage = () => {
                     </SR>
 
                     <SR>
-                      <div className="mb-6 flex items-center justify-between">
+                      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <h3 className="text-2xl font-bold text-foreground">
                           {pickLocalizedCopy(language, {
                             ar: 'كل المعالم',
@@ -298,7 +306,7 @@ const TourismPage = () => {
                         </h3>
                         <Button
                           variant="outline"
-                          className="transition-transform hover:scale-[1.03]"
+                          className="w-full transition-transform hover:scale-[1.03] sm:w-auto"
                           onClick={() => void navigate('/tourism/attractions')}
                         >
                           {pickLocalizedCopy(language, {

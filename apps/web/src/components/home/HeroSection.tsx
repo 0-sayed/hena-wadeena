@@ -51,6 +51,35 @@ const navCards = [
   },
 ] as const;
 
+function MobileQuickLinks({ language }: { language: 'ar' | 'en' }) {
+  return (
+    <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:hidden">
+      <div className="flex snap-x snap-mandatory gap-3 pb-1">
+        {navCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`group min-w-[10.5rem] snap-start rounded-3xl border border-white/15 bg-gradient-to-br ${item.color} p-4 text-start shadow-xl shadow-foreground/10 backdrop-blur-sm`}
+            >
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
+                <Icon className="h-5 w-5 text-white" strokeWidth={1.8} />
+              </div>
+              <div className="text-sm font-bold text-white">
+                {pickLocalizedCopy(language, item.label)}
+              </div>
+              <div className="mt-1 text-xs text-white/75">
+                {pickLocalizedCopy(language, item.desc)}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CardDeck({ language }: { language: 'ar' | 'en' }) {
   const deckRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -228,8 +257,12 @@ function Counter({ target, label, delay }: { target: number; label: string; dela
     <div
       className={`transition-all duration-700 ${show ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'}`}
     >
-      <div className="tabular-nums text-4xl font-bold text-card md:text-5xl">+{val}</div>
-      <div className="mt-1 text-sm text-card/70">{label}</div>
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center shadow-lg shadow-foreground/5 backdrop-blur-sm sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-start sm:shadow-none">
+        <div className="tabular-nums text-2xl font-bold text-card sm:text-4xl md:text-5xl">
+          +{val}
+        </div>
+        <div className="mt-1 text-[11px] text-card/70 sm:text-sm">{label}</div>
+      </div>
     </div>
   );
 }
@@ -288,7 +321,7 @@ export function HeroSection() {
   const heroOpacity = Math.max(0, 1 - scrollY / 700);
 
   return (
-    <section className="relative flex min-h-[95vh] items-center overflow-hidden">
+    <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden sm:min-h-[95vh]">
       <div
         className="absolute inset-0 will-change-transform transition-transform duration-75"
         style={{
@@ -298,7 +331,11 @@ export function HeroSection() {
             : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <img src={heroImage} alt={copy.heroImageAlt} className="h-[130%] w-full object-cover" />
+        <img
+          src={heroImage}
+          alt={copy.heroImageAlt}
+          className="h-[120%] w-full object-cover sm:h-[130%]"
+        />
         <div className="absolute inset-0 bg-gradient-to-l from-foreground/85 via-foreground/65 to-foreground/40" />
       </div>
 
@@ -317,30 +354,35 @@ export function HeroSection() {
         ))}
       </div>
 
-      <div className="container relative z-10 px-4 py-20" style={{ opacity: heroOpacity }}>
+      <div className="container relative z-10 px-4 py-14 sm:py-20" style={{ opacity: heroOpacity }}>
         <div className="max-w-2xl">
           <div className="hero-reveal hero-d1 mb-8 inline-flex items-center gap-2 rounded-full glass px-5 py-2.5">
             <Sparkles className="h-5 w-5 animate-pulse text-accent" />
             <span className="text-sm font-semibold text-card">{copy.portalBadge}</span>
           </div>
 
-          <h1 className="hero-reveal hero-d2 mb-6 text-5xl font-bold leading-tight text-card md:text-6xl lg:text-7xl">
+          <h1 className="hero-reveal hero-d2 mb-5 text-4xl font-bold leading-tight text-card sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
             {copy.brandName}
-            <span className="mt-3 block text-3xl text-accent md:text-4xl lg:text-5xl">
+            <span className="mt-3 block text-2xl text-accent sm:text-3xl md:text-4xl lg:text-5xl">
               {copy.tagline}
             </span>
           </h1>
 
-          <p className="hero-reveal hero-d3 mb-10 max-w-xl text-lg leading-relaxed text-card/90 md:text-xl">
+          <p className="hero-reveal hero-d3 mb-8 max-w-xl text-base leading-relaxed text-card/90 sm:mb-10 sm:text-lg md:text-xl">
             {copy.description}
           </p>
 
-          <div className="hero-reveal hero-d4 mb-12 hidden sm:block">
+          <div className="hero-reveal hero-d4 mb-5 sm:hidden">
+            <MobileQuickLinks language={language} />
+            <p className="mt-3 text-center text-xs text-card/60">{copy.helper}</p>
+          </div>
+
+          <div className="hero-reveal hero-d4 mb-12 hidden md:block">
             <CardDeck language={language} />
             <p className="mt-4 text-center text-xs text-card/50 sm:text-end">{copy.helper} ✨</p>
           </div>
 
-          <div className="hero-reveal hero-d5 flex flex-wrap gap-12">
+          <div className="hero-reveal hero-d5 grid max-w-xl grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:gap-12">
             <Counter target={50} label={copy.transportLines} delay={900} />
             <Counter target={200} label={copy.localProducts} delay={1200} />
             <Counter target={30} label={copy.investmentOpportunities} delay={1500} />
@@ -349,7 +391,7 @@ export function HeroSection() {
       </div>
 
       <div
-        className="scroll-indicator absolute bottom-8 start-1/2 -translate-x-1/2"
+        className="scroll-indicator absolute bottom-8 start-1/2 hidden -translate-x-1/2 sm:block"
         style={{ opacity: heroOpacity }}
       >
         <div className="flex h-11 w-7 items-start justify-center rounded-full border-2 border-card/30 p-1.5">
