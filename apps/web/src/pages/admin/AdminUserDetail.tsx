@@ -29,6 +29,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useAdminUser, useResetUserPassword } from '@/hooks/use-admin';
+import { getInitials } from '@/lib/utils';
 import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 
 type LocalizedLabel = {
@@ -87,16 +88,6 @@ const documentTypeLabels: Record<string, LocalizedLabel> = {
   commercial_register: { ar: 'السجل التجاري', en: 'Commercial register' },
   business_document: { ar: 'مستند تجاري', en: 'Business document' },
 };
-
-function getInitials(fullName: string) {
-  return fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-}
 
 export default function AdminUserDetail() {
   const navigate = useNavigate();

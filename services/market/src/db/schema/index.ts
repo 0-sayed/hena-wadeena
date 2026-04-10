@@ -7,6 +7,9 @@ export * from '../enums';
 export { businessInquiries } from './business-inquiries';
 export { listingInquiries } from './listing-inquiries';
 export { listings } from './listings';
+export { jobApplications } from './job-applications';
+export { jobPosts } from './job-posts';
+export { jobReviews } from './job-reviews';
 export { priceSnapshots } from './price-snapshots';
 export { businessDirectories } from './business-directories';
 export { reviews } from './reviews';
@@ -29,6 +32,9 @@ import { commodities } from './commodities';
 import { commodityPrices } from './commodity-prices';
 import { investmentApplications } from './investment-applications';
 import { investmentOpportunities } from './investment-opportunities';
+import { jobApplications } from './job-applications';
+import { jobPosts } from './job-posts';
+import { jobReviews } from './job-reviews';
 import { listingInquiries } from './listing-inquiries';
 import { listings } from './listings';
 import { priceAlertSubscriptions } from './price-alert-subscriptions';
@@ -44,6 +50,30 @@ export const listingsRelations = relations(listings, ({ many, one }) => ({
   produceDetails: one(produceListingDetails, {
     fields: [listings.id],
     references: [produceListingDetails.listingId],
+  }),
+}));
+
+export const jobPostsRelations = relations(jobPosts, ({ many }) => ({
+  applications: many(jobApplications),
+  reviews: many(jobReviews),
+}));
+
+export const jobApplicationsRelations = relations(jobApplications, ({ one, many }) => ({
+  job: one(jobPosts, {
+    fields: [jobApplications.jobId],
+    references: [jobPosts.id],
+  }),
+  reviews: many(jobReviews),
+}));
+
+export const jobReviewsRelations = relations(jobReviews, ({ one }) => ({
+  job: one(jobPosts, {
+    fields: [jobReviews.jobId],
+    references: [jobPosts.id],
+  }),
+  application: one(jobApplications, {
+    fields: [jobReviews.applicationId],
+    references: [jobApplications.id],
   }),
 }));
 

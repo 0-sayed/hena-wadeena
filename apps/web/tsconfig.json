@@ -3,7 +3,10 @@
     "allowJs": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "paths": { "@/*": ["./src/*"] },
+    "paths": {
+      "@/*": ["./src/*"],
+      "@hena-wadeena/types": ["../../packages/types/src/index.ts"]
+    },
     "skipLibCheck": true
   },
   "files": [],
