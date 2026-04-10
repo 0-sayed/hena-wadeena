@@ -73,7 +73,10 @@ export default function JobBoardPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const canPost = user?.role === UserRole.MERCHANT || user?.role === UserRole.FARMER;
+  const canPost =
+    user?.role === UserRole.MERCHANT ||
+    user?.role === UserRole.FARMER ||
+    user?.role === UserRole.ADMIN;
 
   const category = searchParams.get('category') ?? undefined;
   const area = searchParams.get('area') ?? undefined;
