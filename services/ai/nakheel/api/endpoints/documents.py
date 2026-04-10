@@ -8,12 +8,25 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, 
 from fastapi.responses import FileResponse
 from loguru import logger
 
-from nakheel.api.deps import AuthenticatedUser, get_admin_user, get_indexer, get_mongo, get_qdrant
+from nakheel.api.deps import (
+    AuthenticatedUser,
+    get_admin_user,
+    get_indexer,
+    get_llm_client,
+    get_mongo,
+    get_qdrant,
+)
+from nakheel.core.generation.llm_client import LLMClient
+from nakheel.core.ingestion.curated_text import compose_curated_documents, normalize_curated_entries
 from nakheel.core.ingestion.indexer import DocumentIndexer, QueuedPdf
 from nakheel.db.mongo import MongoDatabase
 from nakheel.db.qdrant import QdrantDatabase
 from nakheel.exceptions import BadRequestError, DocumentNotFoundError
 from nakheel.models.api import (
+    CuratedKnowledgeComposeRequest,
+    CuratedKnowledgeComposeResponse,
+    CuratedKnowledgeFeedRequest,
+    CuratedKnowledgeFeedResponse,
     DocumentBatchResponse,
     DocumentListResponse,
     ParsedMarkdownResponse,
@@ -21,6 +34,85 @@ from nakheel.models.api import (
 )
 
 router = APIRouter(prefix="/documents")
+CURATED_FEED_CONCURRENCY = 4
+
+
+@router.post("/curated/compose", response_model=CuratedKnowledgeComposeResponse)
+async def compose_curated_text(
+    payload: CuratedKnowledgeComposeRequest,
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
+    llm_client: LLMClient = Depends(get_llm_client),
+):
+    """Convert a long report into topic-separated curated entries for review before ingestion."""
+
+    strategy, entries = await compose_curated_documents(
+        payload.text,
+        llm_client=llm_client,
+        default_language=payload.language,
+    )
+    return {"strategy": strategy, "entries": [entry.to_dict() for entry in entries]}
+
+
+@router.post("/curated/feed", response_model=CuratedKnowledgeFeedResponse)
+async def feed_curated_text(
+    payload: CuratedKnowledgeFeedRequest,
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
+    indexer: DocumentIndexer = Depends(get_indexer),
+):
+    """Index curated text entries after the admin reviews and optionally edits their slugs."""
+
+    entries = normalize_curated_entries(
+        [entry.model_dump(mode="json") for entry in payload.entries],
+        default_language="ar",
+    )
+    if not entries:
+        raise BadRequestError("At least one valid curated entry is required")
+
+    semaphore = asyncio.Semaphore(min(CURATED_FEED_CONCURRENCY, len(entries)))
+
+    async def process_entry(entry) -> dict:
+        async with semaphore:
+            try:
+                result = await indexer.inject_curated_text(
+                    slug=entry.slug,
+                    content=entry.content,
+                    title=entry.title,
+                    description=entry.description,
+                    tags=entry.tags,
+                    language_hint=entry.language,
+                )
+                return {
+                    "slug": result.get("slug", entry.slug),
+                    "title": entry.title,
+                    "status": result["status"],
+                    "filename": result["filename"],
+                    "doc_id": result["doc_id"],
+                    "indexed_at": result.get("indexed_at"),
+                    "total_chunks": result.get("total_chunks", 0),
+                    "error_detail": None,
+                }
+            except Exception as exc:
+                logger.exception("Curated text indexing failed for slug {}", entry.slug)
+                return {
+                    "slug": entry.slug,
+                    "title": entry.title,
+                    "status": "failed",
+                    "filename": f"{entry.slug}.md",
+                    "doc_id": None,
+                    "indexed_at": None,
+                    "total_chunks": 0,
+                    "error_detail": str(getattr(exc, "detail", exc)),
+                }
+
+    items = await asyncio.gather(*(process_entry(entry) for entry in entries))
+    indexed_entries = sum(item["status"] == "indexed" for item in items)
+
+    return {
+        "total_entries": len(entries),
+        "indexed_entries": indexed_entries,
+        "failed_entries": len(entries) - indexed_entries,
+        "items": items,
+    }
 
 
 @router.post(

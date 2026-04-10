@@ -6,6 +6,8 @@ import { queryKeys } from '@/lib/query-keys';
 import {
   adminAPI,
   aiKnowledgeAPI,
+  type AiCuratedKnowledgeComposeRequest,
+  type AiCuratedKnowledgeFeedRequest,
   type AiKnowledgeUploadRequest,
   type AdminBookingFilters,
   type AdminGuideFilters,
@@ -136,6 +138,32 @@ export function useDeleteAdminAiDocument() {
     },
     onError: (error: unknown) =>
       toast.error(error instanceof Error ? error.message : 'فشل حذف ملف PDF'),
+  });
+}
+
+export function useComposeAdminAiCuratedText() {
+  return useMutation({
+    mutationFn: (body: AiCuratedKnowledgeComposeRequest) => aiKnowledgeAPI.composeCuratedText(body),
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'Failed to prepare curated knowledge'),
+  });
+}
+
+export function useFeedAdminAiCuratedText() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AiCuratedKnowledgeFeedRequest) => aiKnowledgeAPI.feedCuratedText(body),
+    onSuccess: (response) => {
+      const hasFailures = response.failed_entries > 0;
+      toast.success(
+        hasFailures
+          ? `Fed ${response.indexed_entries} sections with ${response.failed_entries} failure(s)`
+          : `Fed ${response.indexed_entries} curated sections to the chatbot`,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'Failed to feed the chatbot'),
   });
 }
 
