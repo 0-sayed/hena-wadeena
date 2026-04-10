@@ -213,7 +213,9 @@ const App = () => (
             {/* ── Jobs — static routes first, then dynamic ────── */}
             <Route path="/jobs" element={<JobBoardPage />} />
             <Route element={<RequireAuth />}>
-              <Route element={<RequireRole roles={[UserRole.MERCHANT, UserRole.FARMER]} />}>
+              <Route
+                element={<RequireRole roles={[UserRole.MERCHANT, UserRole.FARMER, UserRole.ADMIN]} />}
+              >
                 <Route path="/jobs/post" element={<PostJobPage />} />
                 <Route path="/jobs/my-posts" element={<MyPostsPage />} />
               </Route>
