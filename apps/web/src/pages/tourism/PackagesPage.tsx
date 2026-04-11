@@ -21,13 +21,18 @@ import { PageHero } from '@/components/layout/PageHero';
 import heroTourism from '@/assets/hero-tourism.jpg';
 import { usePackages } from '@/hooks/use-packages';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
-import { areaLabels, piastresToEgp, formatRating } from '@/lib/format';
+import { areaLabel, areaLabels, piastresToEgp, formatRating } from '@/lib/format';
 import type { PackageFilters } from '@/services/api';
 import { useCanBook } from '@/hooks/use-bookings';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import type { AppLanguage } from '@/lib/localization';
 
 const PackagesPage = () => {
   const [filters, setFilters] = useState<Omit<PackageFilters, 'page' | 'limit'>>({});
-
+  const { t } = useTranslation('tourism');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const canBook = useCanBook();
 
   const {
@@ -53,30 +58,30 @@ const PackagesPage = () => {
   };
 
   return (
-    <Layout title="البرامج السياحية">
+    <Layout title={t('packages.pageTitle')}>
       <PageTransition>
-        <PageHero image={heroTourism} alt="باقات السياحة">
+        <PageHero image={heroTourism} alt={t('packages.packagesLabel')}>
           <SR>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
               <Clock className="h-5 w-5 text-accent" />
-              <span className="text-sm font-semibold text-card">باقات السياحة</span>
+              <span className="text-sm font-semibold text-card">{t('packages.packagesLabel')}</span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-card mb-5">
-              باقات السياحة
+              {t('packages.packagesTitle')}
             </h1>
           </SR>
           <SR delay={200}>
             <p className="text-lg md:text-xl text-card/90 mb-10">
-              اكتشف باقات سياحية متنوعة مع مرشدين محترفين في الوادي الجديد
+              {t('packages.packagesSubtitle')}
             </p>
           </SR>
           <SR delay={300}>
             <div className="relative max-w-xl mx-auto">
               <Search className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
               <Input
-                placeholder="ابحث في الباقات..."
+                placeholder={t('packages.packagesSearchPlaceholder')}
                 onChange={handleSearchChange}
                 className="search-input-with-icon-lg h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
               />
@@ -89,13 +94,13 @@ const PackagesPage = () => {
           <div className="container px-4 flex flex-wrap gap-3">
             <Select onValueChange={handleAreaChange} defaultValue="all">
               <SelectTrigger className="h-10 w-36">
-                <SelectValue placeholder="المنطقة" />
+                <SelectValue placeholder={t('packages.areaLabel')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل المناطق</SelectItem>
-                {Object.entries(areaLabels).map(([value, label]) => (
+                <SelectItem value="all">{t('packages.allAreas')}</SelectItem>
+                {Object.keys(areaLabels).map((value) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {areaLabel(value, appLanguage)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -115,9 +120,9 @@ const PackagesPage = () => {
             ) : isError ? (
               <div className="text-center py-12 space-y-4">
                 <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
-                <p className="text-muted-foreground text-lg">حدث خطأ أثناء تحميل الباقات</p>
+                <p className="text-muted-foreground text-lg">{t('packages.errorLoadingPackages')}</p>
                 <Button variant="outline" onClick={() => void refetch()}>
-                  إعادة المحاولة
+                  {t('packages.retryBtn')}
                 </Button>
               </div>
             ) : (
@@ -130,15 +135,17 @@ const PackagesPage = () => {
                         className="hover-lift overflow-hidden rounded-2xl border-border/50 hover:border-primary/40"
                       >
                         <CardContent className="p-6 space-y-4">
-                          <h3 className="text-lg font-bold text-foreground">{pkg.titleAr}</h3>
+                          <h3 className="text-lg font-bold text-foreground">
+                            {(appLanguage === 'en' ? pkg.titleEn : pkg.titleAr) ?? pkg.titleAr ?? ''}
+                          </h3>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              {pkg.durationHours} ساعة
+                              {t('packages.hours', { hours: pkg.durationHours })}
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
-                              حتى {pkg.maxPeople} أشخاص
+                              {t('packages.maxPeople', { max: pkg.maxPeople })}
                             </span>
                           </div>
                           {pkg.description && (
@@ -151,12 +158,12 @@ const PackagesPage = () => {
                           <div className="flex items-center gap-3 pt-2 border-t border-border/50">
                             <img
                               src={pkg.guideProfileImage ?? '/placeholder.jpg'}
-                              alt="مرشد"
+                              alt={t('packages.guideRole')}
                               className="h-10 w-10 rounded-full object-cover"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-foreground truncate">
-                                {pkg.guideBioAr?.slice(0, 40) ?? ''}
+                                {(appLanguage === 'en' ? pkg.guideBioEn : pkg.guideBioAr) ?? pkg.guideBioAr ?? ''?.slice(0, 40) ?? ''}
                               </p>
                               {(pkg.guideRatingAvg != null || pkg.guideLicenseVerified) && (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -168,7 +175,7 @@ const PackagesPage = () => {
                                   )}
                                   {pkg.guideLicenseVerified && (
                                     <Badge className="h-4 text-[10px] bg-green-500/10 text-green-600 me-1">
-                                      مرخّص
+                                      {t('packages.licensedBadge')}
                                     </Badge>
                                   )}
                                 </div>
@@ -196,12 +203,12 @@ const PackagesPage = () => {
                             <span className="text-xl font-bold text-primary">
                               {piastresToEgp(pkg.price)}
                               <span className="text-xs font-normal text-muted-foreground me-1">
-                                / فرد
+                                {t('packages.perPerson')}
                               </span>
                             </span>
                             {canBook && (
                               <Link to={`/tourism/book-package/${pkg.id}`}>
-                                <Button size="sm">احجز الآن</Button>
+                                <Button size="sm">{t('packages.bookNowBtn')}</Button>
                               </Link>
                             )}
                           </div>
@@ -213,7 +220,7 @@ const PackagesPage = () => {
 
                 {packages.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground text-lg">لا توجد باقات متاحة</p>
+                    <p className="text-muted-foreground text-lg">{t('packages.noPackagesAvailable')}</p>
                   </div>
                 )}
 

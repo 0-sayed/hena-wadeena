@@ -15,6 +15,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -33,116 +34,23 @@ type NavigationItem = {
   matcher: (pathname: string) => boolean;
 };
 
-type HeaderCopy = {
-  accountMenu: string;
-  beta: string;
-  bookings: string;
-  brand: string;
-  inquiries: string;
-  languageSwitchArabicError: string;
-  languageSwitchEnglishError: string;
-  login: string;
-  logout: string;
-  menu: string;
-  mobileSearchPlaceholder: string;
-  notifications: string;
-  profile: string;
-  register: string;
-  search: string;
-  searchPlaceholder: string;
-  switchToArabic: string;
-  switchToEnglish: string;
-  themeToggle: string;
-  wallet: string;
-};
-
 const CONTROL_BUTTON_CLASS =
   'flex h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 md:h-9 md:min-w-9';
 
-const headerCopy: Record<AppLanguage, HeaderCopy> = {
-  ar: {
-    accountMenu: 'قائمة الحساب',
-    beta: 'تجريبي',
-    bookings: 'حجوزاتي',
-    brand: 'هُنَا وَادِينَا',
-    inquiries: 'استفسارات الإعلانات',
-    languageSwitchArabicError: 'تعذر التبديل إلى العربية',
-    languageSwitchEnglishError: 'تعذر التبديل إلى الإنجليزية',
-    login: 'تسجيل الدخول',
-    logout: 'تسجيل الخروج',
-    menu: 'فتح القائمة',
-    mobileSearchPlaceholder: 'بحث في المنصة...',
-    notifications: 'الإشعارات',
-    profile: 'الملف الشخصي',
-    register: 'إنشاء حساب',
-    search: 'بحث',
-    searchPlaceholder: 'بحث...',
-    switchToArabic: 'التبديل إلى العربية',
-    switchToEnglish: 'Switch to English',
-    themeToggle: 'تبديل الوضع',
-    wallet: 'المحفظة',
-  },
-  en: {
-    accountMenu: 'Account menu',
-    beta: 'Beta',
-    bookings: 'My bookings',
-    brand: 'Hena Wadeena',
-    inquiries: 'Marketplace inquiries',
-    languageSwitchArabicError: 'Could not switch to Arabic',
-    languageSwitchEnglishError: 'Could not switch to English',
-    login: 'Log in',
-    logout: 'Log out',
-    menu: 'Open menu',
-    mobileSearchPlaceholder: 'Search the platform...',
-    notifications: 'Notifications',
-    profile: 'Profile',
-    register: 'Create account',
-    search: 'Search',
-    searchPlaceholder: 'Search...',
-    switchToArabic: 'Switch to Arabic',
-    switchToEnglish: 'Switch to English',
-    themeToggle: 'Toggle theme',
-    wallet: 'Wallet',
-  },
-};
-
-function buildNavigation(language: AppLanguage): NavigationItem[] {
-  const labels =
-    language === 'en'
-      ? {
-          home: 'Home',
-          tourism: 'Tourism',
-          accommodation: 'Accommodation',
-          guides: 'Guides',
-          marketplace: 'Marketplace',
-          logistics: 'Logistics',
-          investment: 'Investment',
-          jobs: 'Jobs',
-        }
-      : {
-          home: 'الرئيسية',
-          tourism: 'السياحة',
-          accommodation: 'الإقامة',
-          guides: 'المرشدين',
-          marketplace: 'البورصة',
-          logistics: 'اللوجستيات',
-          investment: 'الاستثمار',
-          jobs: 'وظائف',
-        };
-
+function buildNavigation(t: (key: string) => string): NavigationItem[] {
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
 
   return [
     {
       key: 'home',
       href: '/',
-      label: labels.home,
+      label: t('nav.home'),
       matcher: (pathname) => pathname === '/',
     },
     {
       key: 'tourism',
       href: '/tourism',
-      label: labels.tourism,
+      label: t('nav.tourism'),
       matcher: (pathname) =>
         pathname === '/tourism' ||
         (pathname.startsWith('/tourism/') && !isAccommodationPath(pathname)),
@@ -150,44 +58,45 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
     {
       key: 'accommodation',
       href: '/tourism/accommodation',
-      label: labels.accommodation,
+      label: t('nav.accommodation'),
       matcher: (pathname) => isAccommodationPath(pathname),
     },
     {
       key: 'guides',
       href: '/guides',
-      label: labels.guides,
+      label: t('nav.guides'),
       matcher: (pathname) => pathname.startsWith('/guides'),
     },
     {
       key: 'marketplace',
       href: '/marketplace',
-      label: labels.marketplace,
+      label: t('nav.marketplace'),
       matcher: (pathname) => pathname.startsWith('/marketplace'),
     },
     {
       key: 'logistics',
       href: '/logistics',
-      label: labels.logistics,
+      label: t('nav.logistics'),
       matcher: (pathname) => pathname.startsWith('/logistics'),
     },
     {
       key: 'investment',
       href: '/investment',
-      label: labels.investment,
+      label: t('nav.investment'),
       matcher: (pathname) => pathname.startsWith('/investment'),
     },
     {
       key: 'jobs',
       href: '/jobs',
-      label: labels.jobs,
+      label: t('nav.jobs'),
       matcher: (pathname) => pathname.startsWith('/jobs'),
     },
   ];
 }
 
-function ThemeToggle({ language }: { language: AppLanguage }) {
+function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const { t } = useTranslation('layout');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -201,7 +110,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
   }
 
   const isDark = resolvedTheme === 'dark';
-  const label = headerCopy[language].themeToggle;
+  const label = t('header.themeToggle');
 
   return (
     <button
@@ -225,8 +134,9 @@ function LanguageToggle({
   disabled?: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation('layout');
   const nextLanguage = language === 'ar' ? 'en' : 'ar';
-  const title = language === 'ar' ? headerCopy.ar.switchToEnglish : headerCopy.en.switchToArabic;
+  const title = language === 'ar' ? t('header.switchToEnglish') : t('header.switchToArabic');
 
   return (
     <button
@@ -256,7 +166,7 @@ function HeaderActionCluster({
   return (
     <div className="flex items-center gap-0.5 rounded-full border border-border/60 bg-background/80 p-0.5 shadow-sm sm:gap-1 sm:p-1">
       <LanguageToggle language={language} disabled={disabled} onToggle={onToggleLanguage} />
-      <ThemeToggle language={language} />
+      <ThemeToggle />
     </div>
   );
 }
@@ -274,9 +184,10 @@ export function Header() {
   const { user, direction, language, setLanguage } = authCtx;
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
+  const { t } = useTranslation('layout');
+  const { t: tc } = useTranslation('common');
 
-  const navigation = useMemo(() => buildNavigation(language), [language]);
-  const copy = headerCopy[language];
+  const navigation = useMemo(() => buildNavigation(t), [t]);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -299,7 +210,9 @@ export function Header() {
     void setLanguage(nextLanguage)
       .catch(() => {
         toast.error(
-          nextLanguage === 'en' ? copy.languageSwitchEnglishError : copy.languageSwitchArabicError,
+          nextLanguage === 'en'
+            ? t('header.languageSwitchEnglishError')
+            : t('header.languageSwitchArabicError'),
         );
       })
       .finally(() => {
@@ -315,14 +228,14 @@ export function Header() {
         <Link to="/" className="flex min-w-0 items-center gap-2 overflow-hidden">
           <img
             src="/icon-source.png"
-            alt={copy.brand}
+            alt={t('header.brand')}
             className="h-8 w-8 rounded-lg sm:h-9 sm:w-9"
           />
           <span className="truncate text-base font-bold text-foreground sm:text-xl">
-            {copy.brand}
+            {t('header.brand')}
           </span>
           <span className="mt-1 hidden self-start rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 sm:inline-flex">
-            {copy.beta}
+            {tc('beta')}
           </span>
         </Link>
 
@@ -331,11 +244,10 @@ export function Header() {
             <Link
               key={item.key}
               to={item.href}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive(item)
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive(item)
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+                }`}
             >
               {item.label}
             </Link>
@@ -360,8 +272,8 @@ export function Header() {
                     setSearchOpen(false);
                   }
                 }}
-                placeholder={copy.searchPlaceholder}
-                aria-label={copy.search}
+                placeholder={t('header.searchPlaceholder')}
+                aria-label={tc('search')}
                 className="h-9 w-48 text-sm"
               />
             </form>
@@ -371,8 +283,8 @@ export function Header() {
               size="icon"
               className="text-muted-foreground hover:text-foreground"
               onClick={() => setSearchOpen(true)}
-              aria-label={copy.search}
-              title={copy.search}
+              aria-label={tc('search')}
+              title={tc('search')}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -386,13 +298,13 @@ export function Header() {
 
           {user ? (
             <>
-              <Link to="/notifications" className="relative" aria-label={copy.notifications}>
+              <Link to="/notifications" className="relative" aria-label={tc('notifications')}>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label={copy.notifications}
-                  title={copy.notifications}
+                  aria-label={tc('notifications')}
+                  title={tc('notifications')}
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
@@ -410,7 +322,7 @@ export function Header() {
                   className="gap-1.5 text-muted-foreground hover:text-foreground"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span className="text-xs font-semibold">{copy.wallet}</span>
+                  <span className="text-xs font-semibold">{tc('wallet')}</span>
                 </Button>
               </Link>
 
@@ -419,8 +331,8 @@ export function Header() {
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
                   className="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-muted"
-                  aria-label={copy.accountMenu}
-                  title={copy.accountMenu}
+                  aria-label={t('header.accountMenu')}
+                  title={t('header.accountMenu')}
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10">
                     {user.avatar_url ? (
@@ -453,7 +365,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <User className="h-4 w-4 text-muted-foreground" />
-                          {copy.profile}
+                          {tc('profile')}
                         </Link>
                         <Link
                           to="/bookings"
@@ -461,7 +373,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <CalendarCheck className="h-4 w-4 text-muted-foreground" />
-                          {copy.bookings}
+                          {tc('bookings')}
                         </Link>
                         <Link
                           to="/marketplace/inquiries"
@@ -469,7 +381,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          {copy.inquiries}
+                          {t('header.inquiries')}
                         </Link>
                         <Link
                           to="/wallet"
@@ -477,7 +389,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Wallet className="h-4 w-4 text-muted-foreground" />
-                          {copy.wallet}
+                          {tc('wallet')}
                         </Link>
                         <Link
                           to="/notifications"
@@ -485,7 +397,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Bell className="h-4 w-4 text-muted-foreground" />
-                          {copy.notifications}
+                          {tc('notifications')}
                           {unreadCount > 0 && (
                             <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
@@ -503,7 +415,7 @@ export function Header() {
                           className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
                           <LogOut className="h-4 w-4" />
-                          {copy.logout}
+                          {tc('logout')}
                         </button>
                       </div>
                     </div>
@@ -516,24 +428,24 @@ export function Header() {
               <Link to="/login">
                 <Button variant="outline" size="sm">
                   <User className="ms-2 h-4 w-4" />
-                  {copy.login}
+                  {tc('login')}
                 </Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">{copy.register}</Button>
+                <Button size="sm">{tc('register')}</Button>
               </Link>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-0.5 lg:hidden">
-          <Link to="/search" aria-label={copy.search}>
+          <Link to="/search" aria-label={tc('search')}>
             <Button
               variant="ghost"
               size="icon"
               className="text-muted-foreground"
-              aria-label={copy.search}
-              title={copy.search}
+              aria-label={tc('search')}
+              title={tc('search')}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -546,13 +458,13 @@ export function Header() {
           />
 
           {user && (
-            <Link to="/notifications" className="relative" aria-label={copy.notifications}>
+            <Link to="/notifications" className="relative" aria-label={tc('notifications')}>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground"
-                aria-label={copy.notifications}
-                title={copy.notifications}
+                aria-label={tc('notifications')}
+                title={tc('notifications')}
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -566,7 +478,7 @@ export function Header() {
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={copy.menu} title={copy.menu}>
+              <Button variant="ghost" size="icon" aria-label={t('header.menu')} title={t('header.menu')}>
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
@@ -602,8 +514,8 @@ export function Header() {
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder={copy.mobileSearchPlaceholder}
-                    aria-label={copy.search}
+                    placeholder={t('header.mobileSearchPlaceholder')}
+                    aria-label={tc('search')}
                     className="search-input-with-icon-md h-10"
                   />
                 </form>
@@ -614,11 +526,10 @@ export function Header() {
                       key={item.key}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`rounded-lg px-4 py-3.5 text-base font-medium transition-colors ${
-                        isActive(item)
+                      className={`rounded-lg px-4 py-3.5 text-base font-medium transition-colors ${isActive(item)
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
+                        }`}
                     >
                       {item.label}
                     </Link>
@@ -633,7 +544,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <User className="h-5 w-5 text-muted-foreground" />
-                      {copy.profile}
+                      {tc('profile')}
                     </Link>
                     <Link
                       to="/bookings"
@@ -641,7 +552,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <CalendarCheck className="h-5 w-5 text-muted-foreground" />
-                      {copy.bookings}
+                      {tc('bookings')}
                     </Link>
                     <Link
                       to="/marketplace/inquiries"
@@ -649,7 +560,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                      {copy.inquiries}
+                      {t('header.inquiries')}
                     </Link>
                     <Link
                       to="/wallet"
@@ -657,7 +568,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Wallet className="h-5 w-5 text-muted-foreground" />
-                      {copy.wallet}
+                      {tc('wallet')}
                     </Link>
                     <Link
                       to="/notifications"
@@ -665,7 +576,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Bell className="h-5 w-5 text-muted-foreground" />
-                      {copy.notifications}
+                      {tc('notifications')}
                       {unreadCount > 0 && (
                         <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
@@ -681,7 +592,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-5 w-5" />
-                      {copy.logout}
+                      {tc('logout')}
                     </button>
                   </div>
                 ) : (
@@ -689,11 +600,11 @@ export function Header() {
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
                         <User className="ms-2 h-4 w-4" />
-                        {copy.login}
+                        {tc('login')}
                       </Button>
                     </Link>
                     <Link to="/register" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full">{copy.register}</Button>
+                      <Button className="w-full">{tc('register')}</Button>
                     </Link>
                   </div>
                 )}

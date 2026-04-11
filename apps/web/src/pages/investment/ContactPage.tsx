@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 import { businessesAPI, businessInquiriesAPI, investmentApplicationsAPI } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 const investorTypes = [
   {
@@ -150,10 +151,7 @@ const ContactPage = () => {
 
     if (!isAuthenticated) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'سجل الدخول أولاً لإرسال الاستفسار',
-          en: 'Sign in first to send your inquiry',
-        }),
+        t('contact.toast.signIn'),
       );
       void navigate('/login');
       return;
@@ -161,10 +159,7 @@ const ContactPage = () => {
 
     if (user && !canAccessInvestmentContact) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'هذه الميزة متاحة للمستثمرين والمسؤولين فقط',
-          en: 'This feature is available to investors and admins only',
-        }),
+        t('contact.toast.investorOnly'),
       );
       void navigate('/investment');
     }
@@ -187,10 +182,7 @@ const ContactPage = () => {
 
     if (!isAuthenticated) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'سجل الدخول أولاً لإرسال الاستفسار',
-          en: 'Sign in first to send your inquiry',
-        }),
+        t('contact.toast.signIn'),
       );
       void navigate('/login');
       return;
@@ -198,20 +190,14 @@ const ContactPage = () => {
 
     if (!canAccessInvestmentContact) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'هذه الميزة متاحة للمستثمرين والمسؤولين فقط',
-          en: 'This feature is available to investors and admins only',
-        }),
+        t('contact.toast.investorOnly'),
       );
       return;
     }
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'يرجى استكمال الاسم والبريد الإلكتروني والرسالة',
-          en: 'Please complete your name, email, and message',
-        }),
+        t('contact.toast.fillRequired'),
       );
       return;
     }
@@ -224,18 +210,18 @@ const ContactPage = () => {
         : null;
 
       const enrichedMessage = [
-        `${pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}: ${formData.name.trim()}`,
+        `${t('listingEditor.nameLabel')}: ${formData.name.trim()}`,
         formData.company.trim()
-          ? `${pickLocalizedCopy(appLanguage, { ar: 'الشركة', en: 'Company' })}: ${formData.company.trim()}`
+          ? `${t('contact.types.company')}: ${formData.company.trim()}`
           : null,
         formData.investorType
-          ? `${pickLocalizedCopy(appLanguage, { ar: 'نوع المستثمر', en: 'Investor type' })}: ${investorTypeLabel.get(formData.investorType)}`
+          ? `${t('contact.form.investorType')}: ${investorTypeLabel.get(formData.investorType)}`
           : null,
         formData.investmentRange
-          ? `${pickLocalizedCopy(appLanguage, { ar: 'النطاق الاستثماري', en: 'Investment range' })}: ${investmentRangeLabel.get(formData.investmentRange)}`
+          ? `${t('Investment range')}: ${investmentRangeLabel.get(formData.investmentRange)}`
           : null,
         amountProposed != null
-          ? `${pickLocalizedCopy(appLanguage, { ar: 'القيمة المقترحة', en: 'Proposed amount' })}: ${(amountProposed / 100).toLocaleString(appLanguage === 'en' ? 'en-US' : 'ar-EG')} ${pickLocalizedCopy(appLanguage, { ar: 'جنيه', en: 'EGP' })}`
+          ? `${t('investor.submitted.table.amount')}: ${(amountProposed / 100).toLocaleString(appLanguage === 'en' ? 'en-US' : 'ar-EG')} ${t('transactions.currency')}`
           : null,
         '',
         formData.message.trim(),
@@ -247,19 +233,13 @@ const ContactPage = () => {
         const startup = startupQuery.data;
         if (!startup) {
           throw new Error(
-            pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر تحميل بيانات الشركة حالياً',
-              en: 'Unable to load startup details right now',
-            }),
+            t('contact.toast.loadError'),
           );
         }
 
         if (startup.ownerId === user?.id) {
           toast.error(
-            pickLocalizedCopy(appLanguage, {
-              ar: 'لا يمكنك إرسال استفسار إلى شركتك الخاصة',
-              en: 'You cannot send an inquiry to your own startup',
-            }),
+            t('contact.toast.ownStartup'),
           );
           return;
         }
@@ -272,10 +252,7 @@ const ContactPage = () => {
         });
 
         toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تم إرسال استفسارك إلى صاحب الشركة بنجاح',
-            en: 'Your inquiry was sent to the startup owner successfully',
-          }),
+          t('contact.toast.successStartup'),
         );
         void navigate(postSubmitRedirect);
         return;
@@ -289,20 +266,14 @@ const ContactPage = () => {
       });
 
       toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة',
-          en: 'Your inquiry was sent successfully and will appear in the opportunity owner inbox',
-        }),
+        t('contact.toast.successOpportunity'),
       );
       void navigate(postSubmitRedirect);
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر إرسال الاستفسار',
-              en: 'Unable to send inquiry',
-            }),
+          : t('listingInquiry.submitError'),
       );
     } finally {
       setSubmitting(false);
@@ -311,33 +282,24 @@ const ContactPage = () => {
 
   const introText = isStartupFlow
     ? startupQuery.isLoading
-      ? pickLocalizedCopy(appLanguage, {
-          ar: 'جارٍ تحميل بيانات الشركة قبل إرسال الاستفسار.',
-          en: 'Loading startup details before sending your inquiry.',
-        })
+      ? t('contact.intro.loading')
       : targetName
         ? pickLocalizedCopy(appLanguage, {
             ar: `سيتم حفظ طلبك وإرساله مباشرة إلى صاحب الشركة ${targetName}.`,
             en: `Your inquiry will be saved and sent directly to ${targetName}.`,
           })
-        : pickLocalizedCopy(appLanguage, {
-            ar: 'سيتم حفظ طلبك وإرساله مباشرة إلى صاحب الشركة الناشئة.',
-            en: 'Your inquiry will be saved and sent directly to the startup owner.',
-          })
-    : pickLocalizedCopy(appLanguage, {
-        ar: 'سيتم حفظ طلبك وإرساله مباشرة إلى مالك الفرصة الاستثمارية.',
-        en: 'Your inquiry will be saved and sent directly to the opportunity owner.',
-      });
+        : t('contact.intro.startup')
+    : t('contact.intro.opportunity');
 
   return (
     <Layout
-      title={pickLocalizedCopy(language, { ar: 'التواصل مع المستثمر', en: 'Contact Investor' })}
+      title={t('contact.title')}
     >
       <section className="py-8 md:py-12">
         <div className="container max-w-2xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6 gap-2">
             <ArrowRight className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
+            {t('bookings.backBtn')}
           </Button>
 
           <Card className="border-border/50">
@@ -359,7 +321,7 @@ const ContactPage = () => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">
-                      {pickLocalizedCopy(appLanguage, { ar: 'الاسم الكامل', en: 'Full name' })} *
+                      {t('form.fullName')} *
                     </Label>
                     <div className="relative">
                       <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -377,7 +339,7 @@ const ContactPage = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="phone">
-                      {pickLocalizedCopy(appLanguage, { ar: 'رقم الهاتف', en: 'Phone number' })}
+                      {t('form.phone')}
                     </Label>
                     <div className="relative">
                       <Phone className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -397,10 +359,7 @@ const ContactPage = () => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="email">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'البريد الإلكتروني',
-                        en: 'Email address',
-                      })}{' '}
+                      {t('contact.form.email')}{' '}
                       *
                     </Label>
                     <div className="relative">
@@ -420,7 +379,7 @@ const ContactPage = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="company">
-                      {pickLocalizedCopy(appLanguage, { ar: 'اسم الشركة', en: 'Company name' })}
+                      {t('transport.form.name')}
                     </Label>
                     <div className="relative">
                       <Building2 className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -439,7 +398,7 @@ const ContactPage = () => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>
-                      {pickLocalizedCopy(appLanguage, { ar: 'نوع المستثمر', en: 'Investor type' })}
+                      {t('contact.form.investorType')}
                     </Label>
                     <Select
                       value={formData.investorType}
@@ -449,10 +408,7 @@ const ContactPage = () => {
                     >
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={pickLocalizedCopy(appLanguage, {
-                            ar: 'اختر نوع المستثمر',
-                            en: 'Select investor type',
-                          })}
+                          placeholder={t('contact.form.investorTypePlaceholder')}
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -467,10 +423,7 @@ const ContactPage = () => {
 
                   <div className="space-y-2">
                     <Label>
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'النطاق الاستثماري المتوقع',
-                        en: 'Expected investment range',
-                      })}
+                      {t('contact.form.investmentRange')}
                     </Label>
                     <Select
                       value={formData.investmentRange}
@@ -480,10 +433,7 @@ const ContactPage = () => {
                     >
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={pickLocalizedCopy(appLanguage, {
-                            ar: 'اختر النطاق',
-                            en: 'Select range',
-                          })}
+                          placeholder={t('contact.form.investmentRangePlaceholder')}
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -499,10 +449,7 @@ const ContactPage = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="amount">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'القيمة المقترحة (جنيه)',
-                      en: 'Proposed amount (EGP)',
-                    })}
+                    {t('contact.form.amount')}
                   </Label>
                   <Input
                     id="amount"
@@ -518,7 +465,7 @@ const ContactPage = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="message">
-                    {pickLocalizedCopy(appLanguage, { ar: 'رسالتك', en: 'Your message' })} *
+                    {t('contact.form.message')} *
                   </Label>
                   <Textarea
                     id="message"
@@ -542,8 +489,8 @@ const ContactPage = () => {
                 <Button type="submit" className="w-full" size="lg" disabled={submitting}>
                   <Send className="ms-2 h-5 w-5" />
                   {submitting
-                    ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الإرسال...', en: 'Sending...' })
-                    : pickLocalizedCopy(appLanguage, { ar: 'إرسال الطلب', en: 'Send inquiry' })}
+                    ? t('listingInquiry.button.submitting')
+                    : t('contact.form.sendBtn')}
                 </Button>
               </form>
             </CardContent>

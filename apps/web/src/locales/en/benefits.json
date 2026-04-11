@@ -1,0 +1,55 @@
+{
+  "title": "Government Benefits Navigator",
+  "subtitle": "Answer a few questions to discover the government programs you qualify for",
+  "wizard": {
+    "questionXofY": "Question {{current}} of {{total}}",
+    "prev": "Back",
+    "next": "Next",
+    "showResults": "Show results",
+    "restart": "Start over"
+  },
+  "steps": {
+    "householdSize": {
+      "question": "How many people are in your household?"
+    },
+    "incomeBracket": {
+      "question": "What is your household's total monthly income?",
+      "low": "Less than 1,500 EGP/month",
+      "mid": "1,500 – 3,000 EGP/month",
+      "high": "More than 3,000 EGP/month"
+    },
+    "headAge": {
+      "question": "How old is the head of household?",
+      "suffix": "yrs"
+    },
+    "hasDisability": {
+      "question": "Does any household member have a disability?"
+    },
+    "employment": {
+      "question": "What is the head of household's employment status?",
+      "employed": "Employed (public or private)",
+      "self_employed": "Self-employed or business owner",
+      "unemployed": "Unemployed",
+      "farmer": "Farmer"
+    },
+    "ownsLand": {
+      "question": "Do you own agricultural land?"
+    }
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No"
+  },
+  "results": {
+    "loadingError": "Could not load benefit data",
+    "loadingErrorSub": "Something went wrong while fetching benefits. Please try again.",
+    "tryAgain": "Try again",
+    "matchCount_one": "You qualify for {{count}} program",
+    "matchCount_other": "You qualify for {{count}} programs",
+    "matchCount_zero": "No matching programs found at this time",
+    "contactOffice": "You can contact the Social Affairs office in Kharga for more information"
+  },
+  "card": {
+    "requiredDocs": "Required documents"
+  }
+}

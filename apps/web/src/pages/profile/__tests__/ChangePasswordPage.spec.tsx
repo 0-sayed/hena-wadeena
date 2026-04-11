@@ -99,16 +99,16 @@ describe('ChangePasswordPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('كلمة المرور الحالية'), {
+    fireEvent.change(screen.getByLabelText('Current Password'), {
       target: { value: 'oldpassword123' },
     });
-    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('New Password'), {
       target: { value: 'newpassword123' },
     });
-    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('Confirm New Password'), {
       target: { value: 'newpassword123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'تحديث كلمة المرور' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Update Password' }));
 
     await waitFor(() =>
       expect(mockChangePassword).toHaveBeenCalledWith({
@@ -129,19 +129,19 @@ describe('ChangePasswordPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('كلمة المرور الحالية'), {
+    fireEvent.change(screen.getByLabelText('Current Password'), {
       target: { value: 'oldpassword123' },
     });
-    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('New Password'), {
       target: { value: 'newpassword123' },
     });
-    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('Confirm New Password'), {
       target: { value: 'different-password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'تحديث كلمة المرور' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Update Password' }));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('كلمتا المرور غير متطابقتين');
+    expect(alert).toHaveTextContent('Passwords do not match');
     expect(alert).toHaveFocus();
     expect(mockChangePassword).not.toHaveBeenCalled();
   });

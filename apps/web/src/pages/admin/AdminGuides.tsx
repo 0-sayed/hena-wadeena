@@ -39,6 +39,7 @@ import {
 } from '@/hooks/use-admin';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 type LocalizedLabel = {
   ar: string;
@@ -74,6 +75,10 @@ function countLabel(
 }
 
 export default function AdminGuides() {
+  const {
+    t
+  } = useTranslation(['wallet', 'admin', 'tourism', 'guides', 'dashboard', 'investment']);
+
   const [activeTab, setActiveTab] = useState('guides');
   const [bookingStatusFilter, setBookingStatusFilter] = useState<string>('all');
   const [cancelDialog, setCancelDialog] = useState<string | null>(null);
@@ -82,7 +87,7 @@ export default function AdminGuides() {
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
-  const currencyLabel = pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' });
+  const currencyLabel = t('transactions.currency');
 
   const guidesQuery = useAdminGuides();
   const bookingsQuery = useAdminBookings({
@@ -116,13 +121,10 @@ export default function AdminGuides() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          {pickLocalizedCopy(appLanguage, { ar: 'إدارة المرشدين', en: 'Guide management' })}
+          {t('guides.title')}
         </h1>
         <p className="text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إدارة المرشدين والحجوزات',
-            en: 'Manage guides and booking operations',
-          })}
+          {t('guides.subtitle')}
         </p>
       </div>
 
@@ -130,18 +132,18 @@ export default function AdminGuides() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="guides" className="gap-2">
             <Shield className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'المرشدون', en: 'Guides' })}
+            {t('home.tabsGuides')}
           </TabsTrigger>
           <TabsTrigger value="bookings" className="gap-2">
             <Calendar className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'الحجوزات', en: 'Bookings' })}
+            {t('dashboard.bookings.title')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="guides">
           <Card>
             <CardHeader>
-              <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'قائمة المرشدين', en: 'Guide list' })}</CardTitle>
+              <CardTitle>{t('guides.tableTitle')}</CardTitle>
               <CardDescription>
                 {guidesQuery.data
                   ? countLabel(guidesQuery.data.total, appLanguage, {
@@ -149,7 +151,7 @@ export default function AdminGuides() {
                       enSingular: 'guide',
                       enPlural: 'guides',
                     })
-                  : pickLocalizedCopy(appLanguage, { ar: 'جاري التحميل...', en: 'Loading...' })}
+                  : t('driver.rides.loading')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -157,23 +159,20 @@ export default function AdminGuides() {
                 <div className="flex flex-col items-center gap-2 py-12">
                   <AlertCircle className="h-12 w-12 text-destructive" />
                   <p className="text-muted-foreground">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'فشل تحميل البيانات',
-                      en: 'Could not load the data',
-                    })}
+                    {t('pois.loadError')}
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المرشد', en: 'Guide' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التقييم', en: 'Rating' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الترخيص', en: 'License' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الباقات', en: 'Packages' })}</TableHead>
+                      <TableHead>{t('packages.guideRole')}</TableHead>
+                      <TableHead>{t('bookings.dialogs.review.rating')}</TableHead>
+                      <TableHead>{t('guides.table.license')}</TableHead>
+                      <TableHead>{t('startupDetails.status')}</TableHead>
+                      <TableHead>{t('dashboard.stats.packages')}</TableHead>
                       <TableHead className="w-32">
-                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                        {t('dashboard.packagesList.colActions')}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -192,10 +191,7 @@ export default function AdminGuides() {
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
                           <p className="text-muted-foreground">
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'لا يوجد مرشدون',
-                              en: 'No guides found',
-                            })}
+                            {t('guides.noGuides')}
                           </p>
                         </TableCell>
                       </TableRow>
@@ -205,7 +201,7 @@ export default function AdminGuides() {
                           pickLocalizedField(appLanguage, {
                             ar: guide.bioAr,
                             en: guide.bioEn,
-                          }) || pickLocalizedCopy(appLanguage, { ar: 'مرشد', en: 'Guide' });
+                          }) || t('packages.guideRole');
 
                         return (
                           <TableRow key={guide.id}>
@@ -214,10 +210,7 @@ export default function AdminGuides() {
                                 {guide.profileImage ? (
                                   <img
                                     src={guide.profileImage}
-                                    alt={pickLocalizedCopy(appLanguage, {
-                                      ar: 'صورة المرشد',
-                                      en: 'Guide profile image',
-                                    })}
+                                    alt={t('guides.imageAlt')}
                                     className="h-10 w-10 rounded-full object-cover"
                                   />
                                 ) : (
@@ -289,11 +282,11 @@ export default function AdminGuides() {
                                 >
                                   {guide.active ? (
                                     <span className="text-destructive">
-                                      {pickLocalizedCopy(appLanguage, { ar: 'تعطيل', en: 'Deactivate' })}
+                                      {t('guides.actions.deactivate')}
                                     </span>
                                   ) : (
                                     <span className="text-green-600">
-                                      {pickLocalizedCopy(appLanguage, { ar: 'تفعيل', en: 'Activate' })}
+                                      {t('driver.rides.activateBtn')}
                                     </span>
                                   )}
                                 </Button>
@@ -315,7 +308,7 @@ export default function AdminGuides() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'الحجوزات', en: 'Bookings' })}</CardTitle>
+                  <CardTitle>{t('dashboard.bookings.title')}</CardTitle>
                   <CardDescription>
                     {bookingsQuery.data
                       ? countLabel(bookingsQuery.data.total, appLanguage, {
@@ -323,21 +316,18 @@ export default function AdminGuides() {
                           enSingular: 'booking',
                           enPlural: 'bookings',
                         })
-                      : pickLocalizedCopy(appLanguage, { ar: 'جاري التحميل...', en: 'Loading...' })}
+                      : t('driver.rides.loading')}
                   </CardDescription>
                 </div>
                 <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
                   <SelectTrigger className="w-40">
                     <SelectValue
-                      placeholder={pickLocalizedCopy(appLanguage, {
-                        ar: 'جميع الحالات',
-                        en: 'All statuses',
-                      })}
+                      placeholder={t('bookings.filterAll')}
                     />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">
-                      {pickLocalizedCopy(appLanguage, { ar: 'جميع الحالات', en: 'All statuses' })}
+                      {t('bookings.filterAll')}
                     </SelectItem>
                     {Object.entries(bookingStatusLabels).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
@@ -353,23 +343,20 @@ export default function AdminGuides() {
                 <div className="flex flex-col items-center gap-2 py-12">
                   <AlertCircle className="h-12 w-12 text-destructive" />
                   <p className="text-muted-foreground">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'فشل تحميل البيانات',
-                      en: 'Could not load the data',
-                    })}
+                    {t('pois.loadError')}
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الباقة', en: 'Package' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التاريخ', en: 'Date' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'عدد الأشخاص', en: 'People' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المبلغ', en: 'Amount' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
+                      <TableHead>{t('booking.packageLabel')}</TableHead>
+                      <TableHead>{t('booking.dateLabel')}</TableHead>
+                      <TableHead>{t('bookings.table.people')}</TableHead>
+                      <TableHead>{t('bookings.table.amount')}</TableHead>
+                      <TableHead>{t('startupDetails.status')}</TableHead>
                       <TableHead className="w-24">
-                        {pickLocalizedCopy(appLanguage, { ar: 'إجراء', en: 'Action' })}
+                        {t('bookings.table.action')}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -388,10 +375,7 @@ export default function AdminGuides() {
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
                           <p className="text-muted-foreground">
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'لا توجد حجوزات',
-                              en: 'No bookings found',
-                            })}
+                            {t('bookings.noBookings')}
                           </p>
                         </TableCell>
                       </TableRow>
@@ -424,7 +408,7 @@ export default function AdminGuides() {
                                 disabled={cancelBooking.isPending}
                                 onClick={() => setCancelDialog(booking.id)}
                               >
-                                {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+                                {t('topup.cancelBtn')}
                               </Button>
                             )}
                           </TableCell>
@@ -449,20 +433,14 @@ export default function AdminGuides() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء الحجز', en: 'Cancel booking' })}
+              {t('bookings.dialogs.cancel.title')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'يرجى إدخال سبب الإلغاء',
-                en: 'Please enter a cancellation reason',
-              })}
+              {t('bookings.cancelDesc')}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder={pickLocalizedCopy(appLanguage, {
-              ar: 'سبب الإلغاء...',
-              en: 'Cancellation reason...',
-            })}
+            placeholder={t('bookings.cancelPlaceholder')}
             value={cancelReason}
             onChange={(event) => setCancelReason(event.target.value)}
           />
@@ -474,17 +452,14 @@ export default function AdminGuides() {
                 setCancelReason('');
               }}
             >
-              {pickLocalizedCopy(appLanguage, { ar: 'رجوع', en: 'Back' })}
+              {t('bookings.backBtn')}
             </Button>
             <Button
               variant="destructive"
               disabled={!cancelReason.trim() || cancelBooking.isPending}
               onClick={handleCancelBooking}
             >
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تأكيد الإلغاء',
-                en: 'Confirm cancellation',
-              })}
+              {t('bookings.dialogs.cancel.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

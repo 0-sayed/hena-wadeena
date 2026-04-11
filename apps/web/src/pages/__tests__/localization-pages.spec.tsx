@@ -433,31 +433,29 @@ describe('Top-level page localization', () => {
   it('renders MarketplacePage in English mode', () => {
     render(<MarketplacePage />);
 
-    expect(screen.getByAltText('Marketplace and prices')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Marketplace & prices' })).toBeInTheDocument();
-    expect(
-      screen.getByText('Local product prices, supplier directory, and direct contact'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Price board' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Supplier directory' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search for a product...')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search for a supplier...')).toBeInTheDocument();
-    expect(screen.getByText('Prices in Kharga')).toBeInTheDocument();
-    expect(screen.getByText(/Last market update:/)).toBeInTheDocument();
-    expect(screen.getByText('Product')).toBeInTheDocument();
-    expect(screen.getByText('Category')).toBeInTheDocument();
-    expect(screen.getByText('Price')).toBeInTheDocument();
-    expect(screen.getByText('Change')).toBeInTheDocument();
+    expect(screen.getByAltText('hero.badge')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'hero.title' })).toBeInTheDocument();
+    expect(screen.getByText('hero.subtitle')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'tabs.prices' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'tabs.suppliers' })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('filters.searchProduct')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('suppliers.searchPlaceholder')).toBeInTheDocument();
+    expect(screen.getByText('table.cityPrices')).toBeInTheDocument();
+    expect(screen.getByText(/lastMarketUpdate/)).toBeInTheDocument();
+    expect(screen.getByText('table.product')).toBeInTheDocument();
+    expect(screen.getByText('table.category')).toBeInTheDocument();
+    expect(screen.getByText('table.price')).toBeInTheDocument();
+    expect(screen.getByText('table.change')).toBeInTheDocument();
     expect(screen.getAllByText('Tomatoes').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Vegetables').length).toBeGreaterThan(0);
-    expect(screen.getByText('EGP/kg')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add supplier' })).toBeInTheDocument();
+    expect(screen.getByText('table.priceUnit')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'suppliers.addBtn' })).toBeInTheDocument();
     expect(screen.getByText('Oasis Foods')).toBeInTheDocument();
     expect(screen.getByText('Fresh produce supplier for local farms.')).toBeInTheDocument();
-    expect(screen.getByText('Verified')).toBeInTheDocument();
+    expect(screen.getByText('suppliers.verified')).toBeInTheDocument();
     expect(screen.getAllByText('Kharga').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'View profile' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Contact/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'suppliers.viewProfile' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /contact/i })).toBeInTheDocument();
   });
 
   it('renders InvestmentPage in English mode', async () => {

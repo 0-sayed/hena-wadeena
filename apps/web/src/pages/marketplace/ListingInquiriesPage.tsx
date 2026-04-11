@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { usePublicUsers } from '@/hooks/use-users';
 import { formatRelativeTime } from '@/lib/dates';
+import { useTranslation } from 'react-i18next';
 
 type InquiryTab = 'received' | 'sent';
 const INQUIRY_RECEIVER_ROLES = new Set<UserRole>([
@@ -27,15 +28,6 @@ const INQUIRY_RECEIVER_ROLES = new Set<UserRole>([
   UserRole.RESIDENT,
   UserRole.ADMIN,
 ]);
-
-const statusConfig: Record<
-  'pending' | 'read' | 'replied',
-  { label: string; variant: 'secondary' | 'outline' | 'default' }
-> = {
-  pending: { label: 'غير مقروء', variant: 'secondary' },
-  read: { label: 'تمت القراءة', variant: 'outline' },
-  replied: { label: 'تم الرد', variant: 'default' },
-};
 
 function InquiryListSkeleton() {
   return (
@@ -48,7 +40,8 @@ function InquiryListSkeleton() {
 }
 
 export default function ListingInquiriesPage() {
-  const { user } = useAuth();
+  const { t } = useTranslation('marketplace');
+  const { user, language } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get('focus');
   const tabFromUrl = searchParams.get('tab') === 'sent' ? 'sent' : 'received';
@@ -58,6 +51,15 @@ export default function ListingInquiriesPage() {
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const markedReadRef = useRef<string | null>(null);
   const inquiryLimit = focusId ? 100 : 20;
+
+  const statusConfig: Record<
+    'pending' | 'read' | 'replied',
+    { label: string; variant: 'secondary' | 'outline' | 'default' }
+  > = {
+    pending: { label: t('listingInquiries.status.pending'), variant: 'secondary' },
+    read: { label: t('listingInquiries.status.read'), variant: 'outline' },
+    replied: { label: t('listingInquiries.status.replied'), variant: 'default' },
+  };
 
   const receivedQuery = useListingInquiriesReceived(
     { limit: inquiryLimit },
@@ -120,7 +122,7 @@ export default function ListingInquiriesPage() {
   };
 
   return (
-    <Layout title="استفسارات الإعلانات">
+    <Layout title={t('listingInquiries.title')}>
       <section className="py-10 md:py-14">
         <div className="container max-w-5xl space-y-6 px-4">
           <div className="flex flex-col gap-4 rounded-3xl border border-border/60 bg-card p-6 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -130,10 +132,10 @@ export default function ListingInquiriesPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-                  استفسارات الإعلانات
+                  {t('listingInquiries.header.title')}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  تابع الوارد على إعلاناتك والرسائل التي أرسلتها إلى الملاك من مكان واحد.
+                  {t('listingInquiries.header.subtitle')}
                 </p>
               </div>
             </div>
@@ -141,7 +143,7 @@ export default function ListingInquiriesPage() {
             <div className="grid grid-cols-2 gap-3 md:w-[280px]">
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
-                  <p className="text-xs text-muted-foreground">الوارد</p>
+                  <p className="text-xs text-muted-foreground">{t('listingInquiries.header.received')}</p>
                   <p className="mt-1 text-2xl font-bold text-foreground">
                     {receivedQuery.isLoading ? '...' : (receivedQuery.data?.total ?? 0)}
                   </p>
@@ -149,7 +151,7 @@ export default function ListingInquiriesPage() {
               </Card>
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
-                  <p className="text-xs text-muted-foreground">المرسل</p>
+                  <p className="text-xs text-muted-foreground">{t('listingInquiries.header.sent')}</p>
                   <p className="mt-1 text-2xl font-bold text-foreground">
                     {sentQuery.isLoading ? '...' : (sentQuery.data?.total ?? 0)}
                   </p>
@@ -162,8 +164,8 @@ export default function ListingInquiriesPage() {
             <TabsList
               className={`grid w-full ${canReceiveInquiries ? 'grid-cols-2 md:w-[320px]' : 'grid-cols-1 md:w-[160px]'}`}
             >
-              <TabsTrigger value="received">الوارد</TabsTrigger>
-              <TabsTrigger value="sent">المرسل</TabsTrigger>
+              <TabsTrigger value="received">{t('listingInquiries.tabs.received')}</TabsTrigger>
+              <TabsTrigger value="sent">{t('listingInquiries.tabs.sent')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="received" className="space-y-4">
@@ -172,13 +174,13 @@ export default function ListingInquiriesPage() {
               ) : receivedQuery.isError ? (
                 <Card>
                   <CardContent className="p-8 text-center text-sm text-destructive">
-                    تعذر تحميل الاستفسارات الواردة حالياً.
+                    {t('listingInquiries.errors.loadReceived')}
                   </CardContent>
                 </Card>
               ) : received.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                    لا توجد استفسارات واردة على إعلاناتك حتى الآن.
+                    {t('listingInquiries.empty.received')}
                   </CardContent>
                 </Card>
               ) : (
@@ -201,7 +203,7 @@ export default function ListingInquiriesPage() {
                               {isFocused && (
                                 <Badge variant="outline" className="gap-1">
                                   <Bell className="h-3 w-3" />
-                                  من الإشعارات
+                                  {t('listingInquiries.badges.fromNotifications')}
                                 </Badge>
                               )}
                             </div>
@@ -210,13 +212,13 @@ export default function ListingInquiriesPage() {
                               <User className="h-4 w-4" />
                               <span>{sender?.full_name ?? inquiry.contactName}</span>
                               <span>•</span>
-                              <span>{formatRelativeTime(inquiry.createdAt)}</span>
+                              <span>{formatRelativeTime(inquiry.createdAt, language)}</span>
                             </p>
                           </div>
 
                           <div className="flex flex-wrap gap-2">
                             <Button asChild size="sm" variant="outline">
-                              <Link to={`/marketplace/ads/${inquiry.listingId}`}>عرض الإعلان</Link>
+                              <Link to={`/marketplace/ads/${inquiry.listingId}`}>{t('listingInquiries.buttons.viewAd')}</Link>
                             </Button>
                             {inquiry.status === 'pending' && (
                               <Button
@@ -225,7 +227,7 @@ export default function ListingInquiriesPage() {
                                 onClick={() => markReadMutation.mutate(inquiry.id)}
                                 disabled={markReadMutation.isPending}
                               >
-                                تحديد كمقروء
+                                {t('listingInquiries.buttons.markAsRead')}
                               </Button>
                             )}
                           </div>
@@ -235,7 +237,7 @@ export default function ListingInquiriesPage() {
                       <CardContent className="space-y-4">
                         <div className="rounded-2xl bg-muted/40 p-4">
                           <p className="mb-2 text-sm font-medium text-foreground">
-                            رسالة المهتم بالإعلان
+                            {t('listingInquiries.inquiry.originalMessage')}
                           </p>
                           <p className="whitespace-pre-line text-sm text-muted-foreground">
                             {inquiry.message}
@@ -248,7 +250,7 @@ export default function ListingInquiriesPage() {
                               <Button asChild size="sm" variant="outline">
                                 <a href={`mailto:${inquiry.contactEmail}`}>
                                   <Mail className="me-2 h-4 w-4" />
-                                  مراسلة بالبريد
+                                  {t('listingInquiries.buttons.mail')}
                                 </a>
                               </Button>
                             )}
@@ -256,7 +258,7 @@ export default function ListingInquiriesPage() {
                               <Button asChild size="sm" variant="outline">
                                 <a href={`tel:${inquiry.contactPhone}`}>
                                   <Phone className="me-2 h-4 w-4" />
-                                  اتصال مباشر
+                                  {t('listingInquiries.buttons.call')}
                                 </a>
                               </Button>
                             )}
@@ -265,10 +267,10 @@ export default function ListingInquiriesPage() {
 
                         <div className="space-y-3 rounded-2xl border border-border/60 p-4">
                           <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-medium text-foreground">الرد داخل المنصة</p>
+                            <p className="text-sm font-medium text-foreground">{t('listingInquiries.inquiry.replyLabel')}</p>
                             {inquiry.respondedAt && (
                               <span className="text-xs text-muted-foreground">
-                                آخر رد {formatRelativeTime(inquiry.respondedAt)}
+                                {t('listingInquiries.inquiry.lastReplyAt', { time: formatRelativeTime(inquiry.respondedAt, language) })}
                               </span>
                             )}
                           </div>
@@ -281,13 +283,12 @@ export default function ListingInquiriesPage() {
                                 [inquiry.id]: event.target.value,
                               }))
                             }
-                            placeholder="اكتب ردك هنا ليظهر لصاحب الاستفسار في صندوق الرسائل..."
+                            placeholder={t('listingInquiries.inquiry.replyPlaceholder')}
                           />
                           <div className="flex flex-wrap justify-between gap-2">
                             {inquiry.replyMessage && (
                               <p className="text-xs text-muted-foreground">
-                                تم حفظ الرد داخل سجل هذا الاستفسار ويمكن للمستخدم رؤيته في تبويب
-                                الرسائل المرسلة.
+                                {t('listingInquiries.inquiry.replyNote')}
                               </p>
                             )}
                             <Button
@@ -302,7 +303,7 @@ export default function ListingInquiriesPage() {
                               }
                             >
                               <Send className="me-2 h-4 w-4" />
-                              {inquiry.replyMessage ? 'تحديث الرد' : 'إرسال الرد'}
+                              {inquiry.replyMessage ? t('listingInquiries.buttons.updateReply') : t('listingInquiries.buttons.sendReply')}
                             </Button>
                           </div>
                         </div>
@@ -319,14 +320,13 @@ export default function ListingInquiriesPage() {
               ) : sentQuery.isError ? (
                 <Card>
                   <CardContent className="p-8 text-center text-sm text-destructive">
-                    تعذر تحميل الاستفسارات المرسلة حالياً.
+                    {t('listingInquiries.errors.loadSent')}
                   </CardContent>
                 </Card>
               ) : sent.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                    لم ترسل أي استفسارات بعد. يمكنك التواصل مع مالكي الإعلانات من صفحة الإعلان
-                    نفسها.
+                    {t('listingInquiries.empty.sent')}
                   </CardContent>
                 </Card>
               ) : (
@@ -348,21 +348,21 @@ export default function ListingInquiriesPage() {
                               {isFocused && (
                                 <Badge variant="outline" className="gap-1">
                                   <Bell className="h-3 w-3" />
-                                  من الإشعارات
+                                  {t('listingInquiries.badges.fromNotifications')}
                                 </Badge>
                               )}
                             </div>
                             <CardTitle className="text-xl">{inquiry.listingTitle}</CardTitle>
                             <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                               <Store className="h-4 w-4" />
-                              <span>{owner?.full_name ?? 'مالك الإعلان'}</span>
+                              <span>{owner?.full_name ?? t('listingInquiries.inquiry.ownerFallback')}</span>
                               <span>•</span>
-                              <span>{formatRelativeTime(inquiry.createdAt)}</span>
+                              <span>{formatRelativeTime(inquiry.createdAt, language)}</span>
                             </p>
                           </div>
 
                           <Button asChild size="sm" variant="outline">
-                            <Link to={`/marketplace/ads/${inquiry.listingId}`}>عرض الإعلان</Link>
+                            <Link to={`/marketplace/ads/${inquiry.listingId}`}>{t('listingInquiries.buttons.viewAd')}</Link>
                           </Button>
                         </div>
                       </CardHeader>
@@ -371,7 +371,7 @@ export default function ListingInquiriesPage() {
                         <div className="rounded-2xl bg-muted/40 p-4">
                           <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                             <MessageSquare className="h-4 w-4 text-primary" />
-                            رسالتك الأصلية
+                            {t('listingInquiries.inquiry.myOriginalMessage')}
                           </p>
                           <p className="whitespace-pre-line text-sm text-muted-foreground">
                             {inquiry.message}
@@ -381,21 +381,20 @@ export default function ListingInquiriesPage() {
                         {inquiry.replyMessage ? (
                           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                             <p className="mb-2 text-sm font-medium text-foreground">
-                              رد مالك الإعلان
+                              {t('listingInquiries.inquiry.ownerReply')}
                             </p>
                             <p className="whitespace-pre-line text-sm text-muted-foreground">
                               {inquiry.replyMessage}
                             </p>
                             {inquiry.respondedAt && (
                               <p className="mt-3 text-xs text-muted-foreground">
-                                تم الرد {formatRelativeTime(inquiry.respondedAt)}
+                                {t('listingInquiries.inquiry.repliedAt', { time: formatRelativeTime(inquiry.respondedAt, language) })}
                               </p>
                             )}
                           </div>
                         ) : (
                           <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-                            لم يصل رد بعد. سيظهر هنا عند استجابة مالك الإعلان، كما ستصلك إشعارات
-                            المنصة.
+                            {t('listingInquiries.inquiry.noReplyYet')}
                           </div>
                         )}
                       </CardContent>

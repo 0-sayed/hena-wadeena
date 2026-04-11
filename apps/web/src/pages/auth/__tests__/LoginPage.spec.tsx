@@ -65,7 +65,7 @@ describe('LoginPage pending KYC flow', () => {
     fireEvent.change(document.querySelector('#password')!, {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /تسجيل الدخول/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Log in/i }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
@@ -84,7 +84,7 @@ describe('LoginPage pending KYC flow', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: /نسيت كلمة المرور/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Forgot password/i })).toHaveAttribute(
       'href',
       '/password-reset/request',
     );
@@ -99,13 +99,13 @@ describe('LoginPage pending KYC flow', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'user@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('كلمة المرور'), {
+    fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'wrong-password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /تسجيل الدخول/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Log in/i }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Invalid credentials');

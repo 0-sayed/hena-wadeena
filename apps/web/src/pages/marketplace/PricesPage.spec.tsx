@@ -93,6 +93,10 @@ vi.mock('@/hooks/use-price-index', () => ({
   usePriceSummary: () => mockUsePriceSummary(),
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({ language: 'en', direction: 'ltr', user: null }),
+}));
+
 describe('PricesPage', () => {
   it('keeps price table header and body columns on the same logical alignment', () => {
     mockUsePriceIndex.mockReturnValue({

@@ -2,13 +2,11 @@ import { MapPinned, CalendarCheck, Clock, CheckCircle } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { BookingsCard } from '@/components/dashboard/BookingsCard';
-import { useAuth } from '@/hooks/use-auth';
 import { useMyBookings } from '@/hooks/use-my-bookings';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 export default function TouristDashboard() {
-  const { language } = useAuth();
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const { t } = useTranslation('dashboard');
   const { data, isLoading, error } = useMyBookings();
   const bookings = data?.data ?? [];
 
@@ -21,26 +19,23 @@ export default function TouristDashboard() {
   return (
     <DashboardShell
       icon={MapPinned}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة السائح', en: 'Tourist dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'متابعة حجوزاتك ورحلاتك',
-        en: 'Track your bookings and trips',
-      })}
+      title={t('tourist.title')}
+      subtitle={t('tourist.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'إجمالي الحجوزات', en: 'Total bookings' })}
+          label={t('tourist.stats.total')}
           value={isLoading ? '...' : stats.total}
           icon={CalendarCheck}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'قادمة', en: 'Upcoming' })}
+          label={t('tourist.stats.upcoming')}
           value={isLoading ? '...' : stats.upcoming}
           icon={Clock}
           variant="warning"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'مكتملة', en: 'Completed' })}
+          label={t('tourist.stats.completed')}
           value={isLoading ? '...' : stats.completed}
           icon={CheckCircle}
           variant="success"

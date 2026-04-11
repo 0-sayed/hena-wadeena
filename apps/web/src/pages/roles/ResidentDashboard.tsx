@@ -19,8 +19,13 @@ import { districtLabel, listingCategoryLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 export default function ResidentDashboard() {
+  const {
+    t
+  } = useTranslation(['dashboard', 'market', 'tourism', 'investment', 'marketplace']);
+
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const { data, isLoading, error } = useListings({ limit: 10 });
@@ -30,37 +35,31 @@ export default function ResidentDashboard() {
   return (
     <DashboardShell
       icon={Home}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة المقيم', en: 'Resident dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'تابع الخدمات المحلية والإعلانات في منطقتك',
-        en: 'Follow local services and listings in your area',
-      })}
+      title={t('resident.title')}
+      subtitle={t('resident.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'إعلانات حديثة', en: 'Latest listings' })}
+          label={t('resident.listings.title')}
           value={isLoading ? '...' : total}
           icon={Newspaper}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'الخدمات', en: 'Services' })}
-          value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
+          label={t('categories.service')}
+          value={t('student.stats.browse')}
           icon={ShoppingBag}
           variant="muted"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'نقاط الاهتمام', en: 'Points of interest' })}
-          value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
+          label={t('resident.stats.pois')}
+          value={t('student.stats.browse')}
           icon={MapPin}
           variant="muted"
         />
         <Link to="/benefits">
           <StatCard
-            label={pickLocalizedCopy(appLanguage, {
-              ar: 'خدمات حكومية',
-              en: 'Government services',
-            })}
-            value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
+            label={t('resident.stats.govServices')}
+            value={t('student.stats.browse')}
             icon={Landmark}
             variant="muted"
           />
@@ -70,7 +69,7 @@ export default function ResidentDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, { ar: 'أحدث الإعلانات', en: 'Latest listings' })}
+            {t('resident.listings.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -82,22 +81,13 @@ export default function ResidentDashboard() {
             </div>
           ) : error ? (
             <p className="text-destructive text-sm">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'حدث خطأ في تحميل البيانات',
-                en: 'Something went wrong while loading listings',
-              })}
+              {t('resident.listings.loadError')}
             </p>
           ) : listings.length === 0 ? (
             <EmptyState
               icon={Newspaper}
-              message={pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد إعلانات حاليًا',
-                en: 'No listings available right now',
-              })}
-              actionLabel={pickLocalizedCopy(appLanguage, {
-                ar: 'تصفح السوق',
-                en: 'Browse marketplace',
-              })}
+              message={t('resident.listings.empty')}
+              actionLabel={t('resident.listings.browseMarketplace')}
               actionHref="/marketplace"
             />
           ) : (
@@ -105,16 +95,16 @@ export default function ResidentDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Title' })}
+                    {t('resident.table.title')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'النوع', en: 'Type' })}
+                    {t('attractions.typeLabel')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}
+                    {t('listingEditor.districtLabel')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                    {t('startupDetails.status')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -131,19 +121,13 @@ export default function ResidentDashboard() {
                     <TableCell>
                       {listing.district
                         ? districtLabel(listing.district, appLanguage)
-                        : pickLocalizedCopy(appLanguage, {
-                            ar: 'غير محدد',
-                            en: 'Unknown',
-                          })}
+                        : t('student.housingSearch.unknownDistrict')}
                     </TableCell>
                     <TableCell>
                       <Badge variant={listing.isVerified ? 'default' : 'secondary'}>
                         {listing.isVerified
-                          ? pickLocalizedCopy(appLanguage, { ar: 'موثق', en: 'Verified' })
-                          : pickLocalizedCopy(appLanguage, {
-                              ar: 'قيد المراجعة',
-                              en: 'Under review',
-                            })}
+                          ? t('supplierDetails.verified')
+                          : t('merchant.businesses.verification.pending')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -157,25 +141,22 @@ export default function ResidentDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, { ar: 'فرص العمل', en: 'Job opportunities' })}
+            {t('student.jobs.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'تصفح الوظائف المتاحة وتابع طلباتك.',
-              en: 'Browse available jobs and track your applications.',
-            })}
+            {t('student.jobs.description')}
           </p>
           <div className="flex gap-2">
             <Button asChild size="sm">
               <Link to="/jobs">
-                {pickLocalizedCopy(appLanguage, { ar: 'تصفح الوظائف', en: 'Browse jobs' })}
+                {t('student.jobs.browseJobs')}
               </Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link to="/jobs/my-applications">
-                {pickLocalizedCopy(appLanguage, { ar: 'طلباتي', en: 'My applications' })}
+                {t('student.jobs.myApplications')}
               </Link>
             </Button>
           </div>

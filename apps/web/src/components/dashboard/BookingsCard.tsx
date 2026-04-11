@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Booking } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 type BookingsCardProps = {
   bookings: Booking[];
@@ -23,6 +24,10 @@ type BookingsCardProps = {
 };
 
 export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) {
+  const {
+    t
+  } = useTranslation(['tourism', 'dashboard', 'investment']);
+
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const statusLabels = getBookingStatusLabels(appLanguage);
@@ -30,7 +35,7 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'حجوزاتي', en: 'My bookings' })}</CardTitle>
+        <CardTitle>{t('bookings.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -41,31 +46,22 @@ export function BookingsCard({ bookings, isLoading, error }: BookingsCardProps) 
           </div>
         ) : error ? (
           <p className="text-destructive text-sm">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'حدث خطأ في تحميل البيانات',
-              en: 'Something went wrong while loading your bookings',
-            })}
+            {t('bookings.loadError')}
           </p>
         ) : bookings.length === 0 ? (
           <EmptyState
             icon={CalendarCheck}
-            message={pickLocalizedCopy(appLanguage, {
-              ar: 'لا توجد حجوزات بعد',
-              en: 'No bookings yet',
-            })}
-            actionLabel={pickLocalizedCopy(appLanguage, {
-              ar: 'تصفح المرشدين',
-              en: 'Browse guides',
-            })}
+            message={t('bookings.empty')}
+            actionLabel={t('bookings.browseGuides')}
             actionHref="/guides"
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الباقة', en: 'Package' })}</TableHead>
-                <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التاريخ', en: 'Date' })}</TableHead>
-                <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
+                <TableHead>{t('booking.packageLabel')}</TableHead>
+                <TableHead>{t('booking.dateLabel')}</TableHead>
+                <TableHead>{t('startupDetails.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

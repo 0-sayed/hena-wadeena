@@ -36,7 +36,7 @@ import {
   useUploadAdminAiDocuments,
 } from '@/hooks/use-admin';
 import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 import type {
   AiCuratedKnowledgeEntry,
   AiCuratedKnowledgeFeedResponse,
@@ -97,12 +97,8 @@ export default function AdminAiDocuments() {
     null,
   );
 
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
-  const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
-  const t = useMemo(
-    () => (ar: string, en: string) => pickLocalizedCopy(appLanguage, { ar, en }),
-    [appLanguage],
-  );
+  const { t } = useTranslation('admin');
+  const locale = language === 'en' ? 'en-US' : 'ar-EG';
 
   const documentsQuery = useAdminAiDocuments({ page: 1, per_page: 100 });
   const batchQuery = useAdminAiBatch(activeBatchId);
@@ -123,31 +119,31 @@ export default function AdminAiDocuments() {
   );
 
   const sourceLabel = (sourceType: string) => {
-    if (sourceType === 'pdf') return 'PDF';
-    if (sourceType === 'bootstrap') return t('نص منظم', 'Curated text');
-    if (sourceType === 'copied_doc') return t('نص يدوي', 'Manual text');
+    if (sourceType === 'pdf') return t('ai.source.pdf');
+    if (sourceType === 'bootstrap') return t('ai.source.curated');
+    if (sourceType === 'copied_doc') return t('ai.source.manual');
     return sourceType;
   };
 
   const statusLabel = (status: string) => {
-    if (status === 'indexed') return t('مفهرس', 'Indexed');
-    if (status === 'processing') return t('جارٍ المعالجة', 'Processing');
-    if (status === 'failed') return t('فشل', 'Failed');
-    return t('قيد الانتظار', 'Pending');
+    if (status === 'indexed') return t('ai.status.indexed');
+    if (status === 'processing') return t('ai.status.processing');
+    if (status === 'failed') return t('ai.status.failed');
+    return t('ai.status.pending');
   };
 
   const batchLabel = (status: string) => {
-    if (status === 'completed') return t('اكتمل الفهرسة', 'Indexing complete');
-    if (status === 'completed_with_errors') return t('اكتمل مع أخطاء', 'Completed with errors');
-    if (status === 'failed') return t('فشل الرفع', 'Upload failed');
-    if (status === 'processing') return t('جارٍ المعالجة', 'Processing');
-    return t('في قائمة الانتظار', 'Queued');
+    if (status === 'completed') return t('ai.batch.completed');
+    if (status === 'completed_with_errors') return t('ai.batch.completedErrors');
+    if (status === 'failed') return t('ai.batch.failed');
+    if (status === 'processing') return t('ai.status.processing');
+    return t('ai.batch.queued');
   };
 
   const strategyLabel = (strategy: string | null) => {
-    if (strategy === 'llm') return t('مقسّم بالـ LLM', 'Composed with the LLM');
-    if (strategy === 'fallback') return t('تقسيم احتياطي', 'Fallback split');
-    return t('لم يتم التوليد بعد', 'Not generated yet');
+    if (strategy === 'llm') return t('ai.strategy.llm');
+    if (strategy === 'fallback') return t('ai.strategy.fallback');
+    return t('ai.strategy.notGenerated');
   };
 
   useEffect(() => {
@@ -162,21 +158,14 @@ export default function AdminAiDocuments() {
     if (batch.status === 'completed' || batch.status === 'completed_with_errors') {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
       if (batch.failed_files > 0) {
-        toast.error(
-          t(
-            `اكتملت العملية مع ${batch.failed_files} ملف غير ناجح`,
-            `Upload finished with ${batch.failed_files} failed file(s)`,
-          ),
-        );
+        toast.error(t('ai.toast.uploadErrors', { failed: batch.failed_files }));
       } else {
-        toast.success(
-          t('أصبحت ملفات PDF متاحة الآن للشات بوت', 'PDFs are now available to the chatbot'),
-        );
+        toast.success(t('ai.toast.uploadSuccess'));
       }
     }
 
     if (batch.status === 'failed') {
-      toast.error(t('فشلت عملية تحميل ملفات PDF', 'PDF upload failed'));
+        toast.error(t('ai.toast.uploadFailed'));
     }
 
     reportedBatchStateRef.current = batch.status;
@@ -201,14 +190,12 @@ export default function AdminAiDocuments() {
     }
 
     if (files.some((file) => !file.name.toLowerCase().endsWith('.pdf'))) {
-      toast.error(t('يُسمح فقط بملفات PDF', 'Only PDF files are allowed'));
+      toast.error(t('ai.pdfLimit'));
       return;
     }
 
     if (files.some((file) => file.size > MAX_PDF_SIZE_MB * 1024 * 1024)) {
-      toast.error(
-        t(`الحد الأقصى ${MAX_PDF_SIZE_MB} ميجابايت`, `Maximum file size is ${MAX_PDF_SIZE_MB}MB`),
-      );
+      toast.error(t('ai.pdfSizeLimit', { size: MAX_PDF_SIZE_MB }));
       return;
     }
 
@@ -249,7 +236,7 @@ export default function AdminAiDocuments() {
 
   const handleCompose = async () => {
     if (!rawText.trim()) {
-      toast.error(t('ألصق النص أولاً', 'Paste the text first'));
+      toast.error(t('ai.toast.pasteFirst'));
       return;
     }
 
@@ -259,12 +246,7 @@ export default function AdminAiDocuments() {
       setSelectedDraftIndex(0);
       setLastComposeStrategy(response.strategy);
       setLastFeedSummary(null);
-      toast.success(
-        t(
-          `تم تجهيز ${response.entries.length} فقرة للمراجعة`,
-          `Prepared ${response.entries.length} sections for review`,
-        ),
-      );
+      toast.success(t('ai.toast.prepared', { count: response.entries.length }));
     } catch {
       return;
     }
@@ -272,7 +254,7 @@ export default function AdminAiDocuments() {
 
   const handleFeed = async () => {
     if (drafts.length === 0) {
-      toast.error(t('أنشئ الفقرات أولاً', 'Generate sections first'));
+      toast.error(t('ai.generateFirst'));
       return;
     }
 
@@ -306,13 +288,10 @@ export default function AdminAiDocuments() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold">
-            {t('إدارة معرفة الذكاء الاصطناعي', 'AI knowledge management')}
+            {t('ai.title')}
           </h1>
           <p className="text-muted-foreground">
-            {t(
-              'حوّل النصوص الطويلة إلى فقرات معرفة منظمة للشات بوت، مع الإبقاء على رفع ملفات PDF المرجعية.',
-              'Turn long texts into curated chatbot knowledge while keeping the reference PDF flow.',
-            )}
+            {t('ai.subtitle')}
           </p>
         </div>
 
@@ -328,7 +307,7 @@ export default function AdminAiDocuments() {
             ) : (
               <RefreshCw className="h-4 w-4" />
             )}
-            {t('تحديث', 'Refresh')}
+            {t('ai.refresh')}
           </Button>
           <Button type="button" onClick={openPicker} disabled={uploadMutation.isPending}>
             {uploadMutation.isPending ? (
@@ -336,7 +315,7 @@ export default function AdminAiDocuments() {
             ) : (
               <FilePlus2 className="h-4 w-4" />
             )}
-            {t('تحميل PDF', 'Upload PDF')}
+            {t('ai.uploadPdf')}
           </Button>
         </div>
       </div>
@@ -354,38 +333,35 @@ export default function AdminAiDocuments() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
-            {t('استوديو RAG', 'RAG studio')}
+            {t('ai.studio')}
           </CardTitle>
           <CardDescription>
-            {t(
-              'ألصق تقريرًا طويلًا، راجع الـ slugs المقترحة، ثم اضغط تغذية الشات بوت.',
-              'Paste a long report, review the generated slugs, then feed the chatbot.',
-            )}
+            {t('ai.studioDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                {t('الفقرات الجاهزة', 'Prepared sections')}
+                {t('ai.preparedSections')}
               </p>
               <p className="mt-2 text-2xl font-semibold">{drafts.length}</p>
             </div>
             <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">{t('إجمالي الكلمات', 'Total words')}</p>
+              <p className="text-sm text-muted-foreground">{t('ai.totalWords')}</p>
               <p className="mt-2 text-2xl font-semibold">
                 {new Intl.NumberFormat(locale).format(totalDraftWords)}
               </p>
             </div>
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                {t('طريقة التقسيم', 'Split strategy')}
+                {t('ai.splitStrategy')}
               </p>
               <p className="mt-2 text-sm font-semibold">{strategyLabel(lastComposeStrategy)}</p>
             </div>
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                {t('مصادر منظمة حالية', 'Existing curated sources')}
+                {t('ai.existingCurated')}
               </p>
               <p className="mt-2 text-2xl font-semibold">{curatedSourcesCount}</p>
             </div>
@@ -397,10 +373,7 @@ export default function AdminAiDocuments() {
                 value={rawText}
                 onChange={(event) => setRawText(event.target.value)}
                 className="min-h-[280px]"
-                placeholder={t(
-                  'ألصق التقرير أو النص الكبير هنا...',
-                  'Paste the report or long text here...',
-                )}
+                placeholder={t('ai.pastePlaceholder')}
               />
 
               <div className="flex flex-wrap gap-2">
@@ -414,7 +387,7 @@ export default function AdminAiDocuments() {
                   ) : (
                     <Sparkles className="h-4 w-4" />
                   )}
-                  {t('توليد Slugs تلقائيًا', 'Generate slugs automatically')}
+                  {t('ai.generateSlugs')}
                 </Button>
                 <Button
                   type="button"
@@ -428,28 +401,22 @@ export default function AdminAiDocuments() {
                   }}
                   disabled={composeMutation.isPending || feedMutation.isPending}
                 >
-                  {t('إعادة ضبط', 'Reset')}
+                  {t('ai.reset')}
                 </Button>
               </div>
 
               <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                {t(
-                  'الزر النهائي يعيد فهرسة كل slug عبر نفس مسار الإدخال المنظم المستخدم سابقًا في التغذية التلقائية، لكن الآن من لوحة الإدارة فقط.',
-                  'The final action re-indexes every slug through the same curated ingestion path that used to run at startup, now only from the admin dashboard.',
-                )}
+                {t('ai.tip')}
               </div>
             </div>
 
             <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
               <div>
-                <p className="text-sm font-medium">{t('الفقرة المحددة', 'Selected section')}</p>
+                <p className="text-sm font-medium">{t('ai.selectedSection')}</p>
                 <p className="text-sm text-muted-foreground">
                   {selectedDraft
-                    ? t(
-                        'عدّل الـ slug أو المحتوى قبل التغذية.',
-                        'Edit the slug or content before feeding.',
-                      )
-                    : t('أنشئ الفقرات أولاً.', 'Generate sections first.')}
+                    ? t('ai.editBeforeFeed')
+                    : t('ai.generateFirst')}
                 </p>
               </div>
 
@@ -484,7 +451,7 @@ export default function AdminAiDocuments() {
                     }
                   />
                   <div className="text-sm text-muted-foreground">
-                    {t('الكلمات', 'Words')}:{' '}
+                    {t('ai.words')}:{' '}
                     {new Intl.NumberFormat(locale).format(countWords(selectedDraft.content))}
                   </div>
                   <Button
@@ -498,15 +465,12 @@ export default function AdminAiDocuments() {
                     ) : (
                       <Bot className="h-4 w-4" />
                     )}
-                    {t('تغذية الشات بوت', 'Feed the chatbot')}
+                    {t('ai.feedChatbot')}
                   </Button>
                 </>
               ) : (
                 <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-                  {t(
-                    'ستظهر هنا الفقرة المحددة بعد التوليد.',
-                    'The selected section will appear here after generation.',
-                  )}
+                  {t('ai.selectedPlaceholder')}
                 </div>
               )}
             </div>
@@ -515,9 +479,9 @@ export default function AdminAiDocuments() {
           {drafts.length > 0 && (
             <div className="rounded-xl border">
               <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_88px] gap-3 bg-muted/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <span>{t('الفقرة', 'Section')}</span>
+                <span>{t('ai.table.section')}</span>
                 <span>Slug</span>
-                <span className="text-end">{t('كلمات', 'Words')}</span>
+                <span className="text-end">{t('ai.table.words')}</span>
               </div>
               <div className="max-h-[320px] overflow-y-auto">
                 {drafts.map((draft, index) => (
@@ -555,12 +519,12 @@ export default function AdminAiDocuments() {
 
           {lastFeedSummary && (
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <p className="font-medium">{t('آخر عملية تغذية', 'Latest feed run')}</p>
+              <p className="font-medium">{t('ai.latestFeed')}</p>
               <p className="mt-1 text-muted-foreground">
-                {t(
-                  `تم فهرسة ${lastFeedSummary.indexed_entries} فقرة، وفشل ${lastFeedSummary.failed_entries}.`,
-                  `Indexed ${lastFeedSummary.indexed_entries} section(s), failed ${lastFeedSummary.failed_entries}.`,
-                )}
+                {t('ai.feedResult', {
+                  indexed: lastFeedSummary.indexed_entries,
+                  failed: lastFeedSummary.failed_entries
+                })}
               </p>
             </div>
           )}
@@ -571,13 +535,10 @@ export default function AdminAiDocuments() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            {t('مسار ملفات PDF', 'PDF pipeline')}
+            {t('ai.pipeline')}
           </CardTitle>
           <CardDescription>
-            {t(
-              `ملفات PDF فقط وبحد أقصى ${MAX_PDF_SIZE_MB} ميجابايت لكل ملف.`,
-              `PDF only, up to ${MAX_PDF_SIZE_MB}MB per file.`,
-            )}
+            {t('ai.pipelineDesc', { size: MAX_PDF_SIZE_MB })}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -586,18 +547,15 @@ export default function AdminAiDocuments() {
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div>
                   <p className="font-medium">
-                    {batch ? batchLabel(batch.status) : t('جارٍ رفع الملفات', 'Uploading files')}
+                    {batch ? batchLabel(batch.status) : t('ai.uploading')}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {batch
-                      ? t(
-                          `تمت فهرسة ${batch.indexed_files} من أصل ${batch.total_files} ملف`,
-                          `${batch.indexed_files} of ${batch.total_files} files indexed`,
-                        )
-                      : t(
-                          'يتم إرسال الملفات إلى خدمة الذكاء الاصطناعي.',
-                          'Sending files to the AI service.',
-                        )}
+                      ? t('ai.indexedProgress', {
+                          indexed: batch.indexed_files,
+                          total: batch.total_files
+                        })
+                      : t('ai.sendingFiles')}
                   </p>
                 </div>
                 {batch && (
@@ -611,56 +569,50 @@ export default function AdminAiDocuments() {
           )}
 
           <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-            {t(
-              'سيظهر الـ PDF بجانب المصادر النصية المنظمة في نفس inventory.',
-              'PDFs appear beside curated text sources in the same inventory.',
-            )}
+            {t('ai.pdfTip')}
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('مصادر المعرفة الحالية', 'Current knowledge sources')}</CardTitle>
+          <CardTitle>{t('ai.knowledgeSources')}</CardTitle>
           <CardDescription>
-            {t(
-              'كل المصادر الحالية مع النوع، الحالة، والبيانات الأساسية.',
-              'All current sources with type, status, and core metadata.',
-            )}
+            {t('ai.knowledgeSourcesDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {documentsQuery.isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {t('جارٍ تحميل المصادر...', 'Loading sources...')}
+              {t('ai.loadingSources')}
             </div>
           ) : documentsQuery.error ? (
             <div className="space-y-3">
               <p className="text-sm text-destructive">
                 {documentsQuery.error instanceof Error
                   ? documentsQuery.error.message
-                  : t('تعذر تحميل المصادر.', 'Could not load sources.')}
+                  : t('ai.loadError')}
               </p>
               <Button type="button" variant="outline" onClick={() => void documentsQuery.refetch()}>
-                {t('إعادة المحاولة', 'Try again')}
+                {t('ai.tryAgain')}
               </Button>
             </div>
           ) : documents.length === 0 ? (
             <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-              {t('لا توجد مصادر معرفة محمّلة حاليًا.', 'No knowledge sources are loaded yet.')}
+              {t('ai.noSources')}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('المصدر', 'Source')}</TableHead>
-                  <TableHead>{t('النوع', 'Type')}</TableHead>
-                  <TableHead>{t('تاريخ الرفع', 'Uploaded')}</TableHead>
-                  <TableHead>{t('الحجم', 'Size')}</TableHead>
-                  <TableHead>{t('الحالة', 'Status')}</TableHead>
-                  <TableHead>{t('الصفحات / المقاطع', 'Pages / Chunks')}</TableHead>
-                  <TableHead className="text-end">{t('الإجراءات', 'Actions')}</TableHead>
+                  <TableHead>{t('ai.table.source')}</TableHead>
+                  <TableHead>{t('ai.table.type')}</TableHead>
+                  <TableHead>{t('ai.table.uploaded')}</TableHead>
+                  <TableHead>{t('ai.table.size')}</TableHead>
+                  <TableHead>{t('ai.table.status')}</TableHead>
+                  <TableHead>{t('ai.table.pagesChunks')}</TableHead>
+                  <TableHead className="text-end">{t('ai.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -699,7 +651,7 @@ export default function AdminAiDocuments() {
                         onClick={() => setDeleteCandidate(document)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        {t('حذف', 'Delete')}
+                        {t('ai.table.delete')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -717,22 +669,19 @@ export default function AdminAiDocuments() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t('تأكيد حذف مصدر المعرفة', 'Confirm knowledge source deletion')}
+              {t('ai.deleteConfirmTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t(
-                'سيتم حذف هذا المصدر من القائمة ومن فهارس RAG الخاصة بالشات بوت مباشرة.',
-                'This removes the source from the list and the chatbot RAG index immediately.',
-              )}
+              {t('ai.deleteConfirmDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('إلغاء', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('ai.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleDelete()}>
               {deleteMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                t('حذف المصدر', 'Delete source')
+                t('ai.deleteAction')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

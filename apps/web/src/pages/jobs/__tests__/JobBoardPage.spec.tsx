@@ -129,7 +129,7 @@ describe('JobBoardPage', () => {
     });
     render(<JobBoardPage />);
     await waitFor(() => {
-      expect(screen.getByText('لا توجد وظائف متاحة في الوقت الحالي')).toBeInTheDocument();
+      expect(screen.getByText('No jobs available at the moment')).toBeInTheDocument();
     });
   });
 
@@ -145,7 +145,7 @@ describe('JobBoardPage', () => {
     });
     render(<JobBoardPage />);
     await waitFor(() => {
-      expect(screen.getAllByText('نشر وظيفة').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Post a Job').length).toBeGreaterThan(0);
     });
   });
 });

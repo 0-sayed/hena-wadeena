@@ -14,6 +14,9 @@ import {
 import { applicationStatusLabel } from '@/lib/format';
 import type { JobApplication } from '@/services/api';
 import { ReviewForm } from './_shared';
+import type { AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-800',
@@ -29,9 +32,13 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
 function ApplicationRow({
   app,
   workerRatings,
+  appLanguage,
+  t,
 }: {
   app: JobApplication;
   workerRatings: { applicationId: string }[];
+  appLanguage: AppLanguage;
+  t: TFunction;
 }) {
   const withdrawMutation = useWithdrawApplicationMutation(app.jobId);
   const [showReview, setShowReview] = useState(false);
@@ -42,9 +49,9 @@ function ApplicationRow({
   async function handleWithdraw() {
     try {
       await withdrawMutation.mutateAsync(app.id);
-      toast.success('تم سحب طلبك');
+      toast.success(t('withdrawSuccess'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر سحب الطلب');
+      toast.error(err instanceof Error ? err.message : t('withdrawError'));
     }
   }
 
@@ -56,17 +63,25 @@ function ApplicationRow({
             to={`/jobs/${app.jobId}`}
             className="font-semibold text-foreground hover:text-primary transition-colors"
           >
-            الوظيفة #{app.jobId.slice(0, 8)}
+            {t('jobIdPrefix')}{app.jobId.slice(0, 8)}
           </Link>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span>تقدمت في {new Date(app.appliedAt).toLocaleDateString('ar-EG')}</span>
+            <span>
+              {t('appliedOn', { 
+                date: new Date(app.appliedAt).toLocaleDateString(appLanguage === 'en' ? 'en-US' : 'ar-EG') 
+              })}
+            </span>
             {app.resolvedAt && (
-              <span>• تحديث {new Date(app.resolvedAt).toLocaleDateString('ar-EG')}</span>
+              <span>
+                • {t('updatedOn', { 
+                    date: new Date(app.resolvedAt).toLocaleDateString(appLanguage === 'en' ? 'en-US' : 'ar-EG') 
+                  })}
+              </span>
             )}
           </div>
         </div>
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}>
-          {applicationStatusLabel(app.status)}
+          {applicationStatusLabel(app.status, appLanguage)}
         </span>
       </div>
 
@@ -78,12 +93,12 @@ function ApplicationRow({
             onClick={() => void handleWithdraw()}
             disabled={withdrawMutation.isPending}
           >
-            {withdrawMutation.isPending ? 'جارٍ...' : 'سحب الطلب'}
+            {withdrawMutation.isPending ? t('withdrawingStatus') : t('withdrawBtn')}
           </Button>
         )}
         {app.status === 'completed' && !hasRated && !showReview && (
           <Button size="sm" variant="outline" onClick={() => setShowReview(true)}>
-            تقييم صاحب العمل
+            {t('rateEmployerBtn')}
           </Button>
         )}
       </div>
@@ -92,7 +107,7 @@ function ApplicationRow({
         <ReviewForm
           jobId={app.jobId}
           appId={app.id}
-          label="تقييم صاحب العمل"
+          label={t('rateEmployerBtn')}
           onDone={() => setShowReview(false)}
         />
       )}
@@ -103,7 +118,9 @@ function ApplicationRow({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MyApplicationsPage() {
-  const { user } = useAuth();
+  const { user, language } = useAuth();
+  const appLanguage = language as AppLanguage;
+  const { t } = useTranslation('jobs');
   const { data, isLoading, isError, refetch } = useMyApplications(true);
   const { data: myReviews } = useUserReviews(user?.id);
   const apps = data?.data ?? [];
@@ -112,7 +129,7 @@ export default function MyApplicationsPage() {
 
   if (isLoading) {
     return (
-      <Layout title="طلباتي">
+      <Layout title={t('myApplicationsTitle')}>
         <div className="container py-10 space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
@@ -124,34 +141,34 @@ export default function MyApplicationsPage() {
 
   if (isError) {
     return (
-      <Layout title="طلباتي">
+      <Layout title={t('myApplicationsTitle')}>
         <div className="container py-20 text-center space-y-4">
-          <p className="text-muted-foreground">تعذر تحميل طلباتك.</p>
-          <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+          <p className="text-muted-foreground">{t('loadErrorApplications')}</p>
+          <Button onClick={() => void refetch()}>{t('retryBtn')}</Button>
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout title="طلباتي">
+    <Layout title={t('myApplicationsTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
-          <h1 className="mb-8 text-2xl font-bold text-foreground">طلباتي</h1>
+          <h1 className="mb-8 text-2xl font-bold text-foreground">{t('myApplicationsTitle')}</h1>
 
           {apps.length === 0 ? (
             <Card className="border-border/50">
               <CardContent className="py-20 text-center">
-                <p className="text-lg text-muted-foreground mb-4">لم تتقدم لأي وظيفة بعد.</p>
+                <p className="text-lg text-muted-foreground mb-4">{t('emptyApplications')}</p>
                 <Button asChild>
-                  <Link to="/jobs">تصفح الوظائف</Link>
+                  <Link to="/jobs">{t('browseJobsBtn')}</Link>
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
               {apps.map((app) => (
-                <ApplicationRow key={app.id} app={app} workerRatings={workerRatings} />
+                <ApplicationRow key={app.id} app={app} workerRatings={workerRatings} appLanguage={appLanguage} t={t} />
               ))}
             </div>
           )}

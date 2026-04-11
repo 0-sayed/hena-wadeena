@@ -59,7 +59,7 @@ describe('KycContinuePage', () => {
       </MemoryRouter>,
     );
 
-    expect((await screen.findAllByText('بطاقة الرقم القومي')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('رخصة الإرشاد').length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('document.national_id')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('document.guide_license').length).toBeGreaterThan(0);
   });
 });

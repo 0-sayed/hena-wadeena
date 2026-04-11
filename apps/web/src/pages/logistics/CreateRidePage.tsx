@@ -15,14 +15,15 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import { useCreateRide } from '@/hooks/use-map';
 import { AREA_PRESETS, findArea, getAreaDisplayName } from '@/lib/area-presets';
-import { pickLocalizedCopy } from '@/lib/localization';
 
 const CreateRidePage = () => {
+  const { t } = useTranslation('logistics');
   const navigate = useNavigate();
-  const { language: appLanguage } = useAuth();
+  const { language } = useAuth();
   const createRide = useCreateRide();
 
   const [originId, setOriginId] = useState('');
@@ -44,44 +45,24 @@ const CreateRidePage = () => {
     const dest = findArea(destId);
 
     if (!origin || !dest) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اختر نقطة الانطلاق والوجهة',
-          en: 'Select both the origin and destination',
-        }),
-      );
+      toast.error(t('rides.createRide.toasts.selectEndpoints'));
       return;
     }
 
     if (originId === destId) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'نقطة الانطلاق والوجهة يجب أن تكونا مختلفتين',
-          en: 'Origin and destination must be different',
-        }),
-      );
+      toast.error(t('rides.createRide.toasts.sameEndpoints'));
       return;
     }
 
     if (!date || !time) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'حدد التاريخ والوقت',
-          en: 'Choose the date and time',
-        }),
-      );
+      toast.error(t('rides.createRide.toasts.missingDateTime'));
       return;
     }
 
     const departureTime = new Date(`${date}T${time}`).toISOString();
 
     if (new Date(departureTime) <= new Date()) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'وقت المغادرة يجب أن يكون في المستقبل',
-          en: 'Departure time must be in the future',
-        }),
-      );
+      toast.error(t('rides.createRide.toasts.futureOnly'));
       return;
     }
 
@@ -89,8 +70,8 @@ const CreateRidePage = () => {
       {
         origin: { lat: origin.lat, lng: origin.lng },
         destination: { lat: dest.lat, lng: dest.lng },
-        originName: getAreaDisplayName(origin, appLanguage),
-        destinationName: getAreaDisplayName(dest, appLanguage),
+        originName: getAreaDisplayName(origin, (language === 'en' ? 'en' : 'ar')),
+        destinationName: getAreaDisplayName(dest, (language === 'en' ? 'en' : 'ar')),
         departureTime,
         seatsTotal: Number(seats),
         pricePerSeat: Math.round(Number(price) * 100),
@@ -98,21 +79,12 @@ const CreateRidePage = () => {
       },
       {
         onSuccess: (ride) => {
-          toast.success(
-            pickLocalizedCopy(appLanguage, {
-              ar: 'تم إنشاء الرحلة بنجاح!',
-              en: 'Ride created successfully!',
-            }),
-          );
+          toast.success(t('rides.createRide.toasts.success'));
           void navigate(`/logistics/ride/${ride.id}`);
         },
         onError: (err) => {
           toast.error(
-            err.message ||
-              pickLocalizedCopy(appLanguage, {
-                ar: 'حدث خطأ أثناء إنشاء الرحلة',
-                en: 'Something went wrong while creating the ride',
-              }),
+            err.message || t('rides.createRide.toasts.error')
           );
         },
       },
@@ -121,7 +93,7 @@ const CreateRidePage = () => {
 
   return (
     <Layout
-      title={pickLocalizedCopy(appLanguage, { ar: 'إنشاء رحلة جديدة', en: 'Create New Ride' })}
+      title={t('rides.createRide.title')}
     >
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
@@ -131,10 +103,7 @@ const CreateRidePage = () => {
             className="mb-6 gap-2"
           >
             <ArrowRight className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'العودة للخريطة والتنقل',
-              en: 'Back to maps & transport',
-            })}
+            {t('rides.createRide.backBtn')}
           </Button>
 
           <Card className="border-border/50">
@@ -143,56 +112,44 @@ const CreateRidePage = () => {
                 <Car className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'إنشاء رحلة جديدة',
-                  en: 'Create a new ride',
-                })}
+                {t('rides.createRide.cardTitle')}
               </CardTitle>
               <p className="text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'شارك رحلتك مع الآخرين ووفر التكلفة',
-                  en: 'Share your trip with others and split the cost',
-                })}
+                {t('rides.createRide.cardSubtitle')}
               </p>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{pickLocalizedCopy(appLanguage, { ar: 'من', en: 'From' })}</Label>
+                    <Label>{t('rides.createRide.labels.from')}</Label>
                     <Select value={originId} onValueChange={setOriginId}>
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={pickLocalizedCopy(appLanguage, {
-                            ar: 'اختر نقطة الانطلاق',
-                            en: 'Select the origin',
-                          })}
+                          placeholder={t('rides.createRide.placeholders.origin')}
                         />
                       </SelectTrigger>
                       <SelectContent>
                         {AREA_PRESETS.map((a) => (
                           <SelectItem key={a.id} value={a.id}>
-                            {getAreaDisplayName(a, appLanguage)}
+                            {getAreaDisplayName(a, (language === 'en' ? 'en' : 'ar'))}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>{pickLocalizedCopy(appLanguage, { ar: 'إلى', en: 'To' })}</Label>
+                    <Label>{t('rides.createRide.labels.to')}</Label>
                     <Select value={destId} onValueChange={setDestId}>
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={pickLocalizedCopy(appLanguage, {
-                            ar: 'اختر الوجهة',
-                            en: 'Select the destination',
-                          })}
+                          placeholder={t('rides.createRide.placeholders.destination')}
                         />
                       </SelectTrigger>
                       <SelectContent>
                         {AREA_PRESETS.filter((a) => a.id !== originId).map((a) => (
                           <SelectItem key={a.id} value={a.id}>
-                            {getAreaDisplayName(a, appLanguage)}
+                            {getAreaDisplayName(a, (language === 'en' ? 'en' : 'ar'))}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -203,7 +160,7 @@ const CreateRidePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date">
-                      {pickLocalizedCopy(appLanguage, { ar: 'التاريخ', en: 'Date' })}
+                      {t('rides.createRide.labels.date')}
                     </Label>
                     <Input
                       id="date"
@@ -216,7 +173,7 @@ const CreateRidePage = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="time">
-                      {pickLocalizedCopy(appLanguage, { ar: 'الوقت', en: 'Time' })}
+                      {t('rides.createRide.labels.time')}
                     </Label>
                     <Input
                       id="time"
@@ -231,10 +188,7 @@ const CreateRidePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="seats">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'عدد المقاعد المتاحة',
-                        en: 'Available seats',
-                      })}
+                      {t('rides.createRide.labels.seats')}
                     </Label>
                     <Input
                       id="seats"
@@ -248,10 +202,7 @@ const CreateRidePage = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="price">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'السعر للمقعد (جنيه) — 0 = مجاني',
-                        en: 'Price per seat (EGP) - 0 = free',
-                      })}
+                      {t('rides.createRide.labels.price')}
                     </Label>
                     <Input
                       id="price"
@@ -265,17 +216,11 @@ const CreateRidePage = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'ملاحظات إضافية',
-                      en: 'Additional notes',
-                    })}
+                    {t('rides.createRide.labels.notes')}
                   </Label>
                   <Textarea
                     id="notes"
-                    placeholder={pickLocalizedCopy(appLanguage, {
-                      ar: 'أي تفاصيل إضافية عن الرحلة...',
-                      en: 'Any extra details about the ride...',
-                    })}
+                    placeholder={t('rides.createRide.placeholders.notes')}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     maxLength={500}
@@ -285,14 +230,8 @@ const CreateRidePage = () => {
 
                 <Button type="submit" className="w-full" size="lg" disabled={createRide.isPending}>
                   {createRide.isPending
-                    ? pickLocalizedCopy(appLanguage, {
-                        ar: 'جارٍ الإنشاء...',
-                        en: 'Creating...',
-                      })
-                    : pickLocalizedCopy(appLanguage, {
-                        ar: 'نشر الرحلة',
-                        en: 'Publish ride',
-                      })}
+                    ? t('rides.createRide.creating')
+                    : t('rides.createRide.publishBtn')}
                 </Button>
               </form>
             </CardContent>

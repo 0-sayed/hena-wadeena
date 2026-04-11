@@ -46,10 +46,10 @@ describe('RequestPasswordResetPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'user@example.com' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'إرسال الرمز' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send Code' }));
 
     await waitFor(() =>
       expect(mockRequestPasswordReset).toHaveBeenCalledWith({ email: 'user@example.com' }),
@@ -65,10 +65,10 @@ describe('RequestPasswordResetPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'user@example.com' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'إرسال الرمز' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send Code' }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Unable to send reset code');

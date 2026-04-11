@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useListing } from '@/hooks/use-listings';
 import { usePublicUsers } from '@/hooks/use-users';
+import { useTranslation } from 'react-i18next';
 import {
   districtLabel,
   formatPrice,
@@ -38,9 +39,10 @@ function getContactField(
 }
 
 export default function ListingDetailsPage() {
+  const { t } = useTranslation('marketplace');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, language } = useAuth();
   const { data: listing, isLoading, isError, refetch } = useListing(id);
   const ownerProfiles = usePublicUsers(listing ? [listing.ownerId] : []);
 
@@ -69,16 +71,16 @@ export default function ListingDetailsPage() {
         lat: listing.location.y,
         lng: listing.location.x,
         description: listing.address ?? listing.district ?? '',
-        type: listingCategoryLabel(listing.category),
+        type: listingCategoryLabel(listing.category, language === 'en' ? 'en' : 'ar'),
         image: listing.images?.[0],
         color: '#ea580c',
       },
     ];
-  }, [listing]);
+  }, [listing, language]);
 
   if (isLoading) {
     return (
-      <Layout title="تفاصيل الإعلان">
+      <Layout title={t('listingDetails.title')}>
         <div className="container py-10 space-y-6">
           <Skeleton h="h-10" className="w-32 rounded-xl" />
           <Skeleton h="h-80" className="rounded-2xl" />
@@ -90,14 +92,14 @@ export default function ListingDetailsPage() {
 
   if (isError || !listing) {
     return (
-      <Layout title="تفاصيل الإعلان">
+      <Layout title={t('listingDetails.title')}>
         <div className="container py-20 text-center space-y-4">
-          <p className="text-lg text-muted-foreground">تعذر تحميل تفاصيل الإعلان.</p>
+          <p className="text-lg text-muted-foreground">{t('listingDetails.loadError')}</p>
           <div className="flex items-center justify-center gap-3">
             <Button variant="outline" onClick={() => void navigate('/marketplace')}>
-              العودة إلى السوق
+              {t('listingDetails.backToMarket')}
             </Button>
-            <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+            <Button onClick={() => void refetch()}>{t('listingDetails.retry')}</Button>
           </div>
         </div>
       </Layout>
@@ -105,12 +107,12 @@ export default function ListingDetailsPage() {
   }
 
   return (
-    <Layout title="تفاصيل الإعلان">
+    <Layout title={t('listingDetails.title')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
             <ArrowRight className="h-4 w-4" />
-            العودة
+            {t('listingDetails.back')}
           </Button>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -136,8 +138,8 @@ export default function ListingDetailsPage() {
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{listingCategoryLabel(listing.category)}</Badge>
-                    <Badge variant="outline">{transactionLabel(listing.transaction)}</Badge>
+                    <Badge variant="secondary">{listingCategoryLabel(listing.category, language === 'en' ? 'en' : 'ar')}</Badge>
+                    <Badge variant="outline">{transactionLabel(listing.transaction, language === 'en' ? 'en' : 'ar')}</Badge>
                     {listing.subCategory && <Badge variant="outline">{listing.subCategory}</Badge>}
                     {listing.tags?.slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="outline">
@@ -151,7 +153,7 @@ export default function ListingDetailsPage() {
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>{districtLabel(listing.district ?? listing.address ?? 'غير محدد')}</span>
+                      <span>{districtLabel(listing.district ?? listing.address ?? t('listingDetails.undefinedDistrict'), language === 'en' ? 'en' : 'ar')}</span>
                     </div>
                     {listing.areaSqm != null && (
                       <div className="flex items-center gap-2">
@@ -168,11 +170,11 @@ export default function ListingDetailsPage() {
                   </div>
                   {listing.ratingAvg != null && listing.reviewCount > 0 && (
                     <p className="mt-4 text-sm text-muted-foreground">
-                      التقييم:{' '}
+                      {t('listingDetails.rating')}
                       <span className="font-semibold text-foreground">
                         {formatRating(listing.ratingAvg)}
                       </span>{' '}
-                      ({listing.reviewCount} تقييم)
+                      {t('listingDetails.reviews', { count: listing.reviewCount })}
                     </p>
                   )}
                 </CardContent>
@@ -181,7 +183,7 @@ export default function ListingDetailsPage() {
               {listing.description && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">وصف الإعلان</CardTitle>
+                    <CardTitle className="text-lg">{t('listingDetails.descriptionTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
@@ -194,7 +196,7 @@ export default function ListingDetailsPage() {
               {listing.amenities && listing.amenities.length > 0 && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">المميزات</CardTitle>
+                    <CardTitle className="text-lg">{t('listingDetails.amenitiesTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -214,7 +216,7 @@ export default function ListingDetailsPage() {
               {listing.features && Object.keys(listing.features).length > 0 && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">تفاصيل إضافية</CardTitle>
+                    <CardTitle className="text-lg">{t('listingDetails.featuresTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-3 md:grid-cols-2">
@@ -234,7 +236,7 @@ export default function ListingDetailsPage() {
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">الموقع</CardTitle>
+                  <CardTitle className="text-lg">{t('listingDetails.locationTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {mapLocations.length > 0 ? (
@@ -246,7 +248,7 @@ export default function ListingDetailsPage() {
                     />
                   ) : (
                     <div className="rounded-xl bg-muted/40 p-6 text-center text-muted-foreground">
-                      لا تتوفر إحداثيات دقيقة لهذا الإعلان حالياً.
+                      {t('listingDetails.noCoordinates')}
                     </div>
                   )}
                 </CardContent>
@@ -256,14 +258,14 @@ export default function ListingDetailsPage() {
             <div className="space-y-6">
               <Card className="sticky top-20 border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">ملخص الإعلان</CardTitle>
+                  <CardTitle className="text-lg">{t('listingDetails.summaryTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="rounded-lg bg-primary/5 py-4 text-center">
-                    <p className="text-sm text-muted-foreground">السعر</p>
+                    <p className="text-sm text-muted-foreground">{t('listingDetails.priceLabel')}</p>
                     <p className="text-3xl font-bold text-primary">{formatPrice(listing.price)}</p>
                     <p className="text-sm text-muted-foreground">
-                      جنيه/{listing.priceUnit || 'الوحدة'}
+                      {t('listingDetails.priceUnit', { unit: listing.priceUnit || t('listingDetails.unitFallback') })}
                     </p>
                   </div>
 
@@ -274,7 +276,7 @@ export default function ListingDetailsPage() {
                       onClick={() => void navigate(`/tourism/accommodation/${listing.id}`)}
                     >
                       <MessageSquare className="ms-2 h-5 w-5" />
-                      عرض صفحة السكن
+                      {t('listingDetails.viewAccommodation')}
                     </Button>
                   )}
 
@@ -285,7 +287,7 @@ export default function ListingDetailsPage() {
                       onClick={() => void navigate('/marketplace/inquiries?tab=received')}
                     >
                       <MessageSquare className="ms-2 h-5 w-5" />
-                      متابعة الاستفسارات الواردة
+                      {t('listingDetails.manageInquiries')}
                     </Button>
                   ) : (
                     <Button
@@ -297,7 +299,7 @@ export default function ListingDetailsPage() {
                       }
                     >
                       <MessageSquare className="ms-2 h-5 w-5" />
-                      إرسال استفسار إلى المالك
+                      {t('listingDetails.sendInquiry')}
                     </Button>
                   )}
                 </CardContent>
@@ -305,7 +307,7 @@ export default function ListingDetailsPage() {
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">مالك الإعلان</CardTitle>
+                  <CardTitle className="text-lg">{t('listingDetails.ownerTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -315,23 +317,22 @@ export default function ListingDetailsPage() {
                     </Avatar>
                     <div>
                       <p className="font-semibold text-foreground">
-                        {owner?.full_name ?? contactName ?? 'صاحب الإعلان'}
+                        {owner?.full_name ?? contactName ?? t('listingDetails.ownerFallback')}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {owner?.role ?? 'مالك الإعلان'}
+                        {owner?.role ?? t('listingDetails.ownerBadge')}
                       </p>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    هذا الإعلان مرتبط بصاحبه مباشرة عبر النظام، ويمكنك إرسال استفسارك من الزر
-                    المخصص ليصل إلى صندوق الوارد الخاص به.
+                    {t('listingDetails.ownerSystemNote')}
                   </p>
                 </CardContent>
               </Card>
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">بيانات التواصل</CardTitle>
+                  <CardTitle className="text-lg">{t('listingDetails.contactTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   {contactName && (
@@ -366,7 +367,7 @@ export default function ListingDetailsPage() {
                     </div>
                   )}
                   {!contactName && !contactPhone && !contactWebsite && (
-                    <p className="text-muted-foreground">لا توجد بيانات تواصل منشورة لهذا الإعلان.</p>
+                    <p className="text-muted-foreground">{t('listingDetails.noContact')}</p>
                   )}
                 </CardContent>
               </Card>

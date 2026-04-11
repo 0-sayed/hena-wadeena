@@ -16,6 +16,7 @@ import { authAPI } from '@/services/api';
 import type { AuthFlowResponse } from '@/services/api';
 import * as authManager from '@/services/auth-manager';
 import * as kycSessionManager from '@/services/kyc-session-manager';
+import { useTranslation } from 'react-i18next';
 
 function isPendingKycResponse(
   response: AuthFlowResponse,
@@ -24,6 +25,7 @@ function isPendingKycResponse(
 }
 
 export default function ChangePasswordPage() {
+  const { t } = useTranslation('auth');
   const navigate = useNavigate();
   const auth = useAuth();
   const [formData, setFormData] = useState({
@@ -38,7 +40,7 @@ export default function ChangePasswordPage() {
     event.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setFormError('كلمتا المرور غير متطابقتين');
+      setFormError(t('validation.passwordMismatch'));
       return;
     }
 
@@ -53,7 +55,7 @@ export default function ChangePasswordPage() {
       if (isPendingKycResponse(response)) {
         authManager.clearTokens();
         kycSessionManager.setKycSessionToken(response.kyc_session_token);
-        toast.success('تم تحديث كلمة المرور. أكمل إجراءات التحقق للمتابعة');
+        toast.success(t('resetPasswordConfirm.kycRequired'));
         void navigate('/kyc/continue');
         return;
       }
@@ -61,17 +63,17 @@ export default function ChangePasswordPage() {
       kycSessionManager.clearKycSessionToken();
       authManager.setTokens(response.access_token, response.refresh_token);
       auth.updateUser(response.user);
-      toast.success('تم تغيير كلمة المرور بنجاح');
+      toast.success(t('changePassword.success'));
       void navigate('/profile');
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'تعذر تغيير كلمة المرور');
+      setFormError(error instanceof Error ? error.message : t('changePassword.error'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Layout title="تغيير كلمة المرور">
+    <Layout title={t('changePassword.title')}>
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
@@ -82,16 +84,16 @@ export default function ChangePasswordPage() {
                   <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-lg">
                     <KeyRound className="h-10 w-10 text-primary" />
                   </div>
-                  <CardTitle className="text-2xl">تغيير كلمة المرور</CardTitle>
+                  <CardTitle className="text-2xl">{t('changePassword.cardTitle')}</CardTitle>
                   <p className="mt-2 text-muted-foreground">
-                    أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة
+                    {t('changePassword.cardSubtitle')}
                   </p>
                 </CardHeader>
                 <CardContent className="px-8 pb-10 pt-8">
                   <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
                     {formError ? <FormErrorAlert message={formError} /> : null}
                     <div className="space-y-2">
-                      <Label htmlFor="currentPassword">كلمة المرور الحالية</Label>
+                      <Label htmlFor="currentPassword">{t('changePassword.currentPasswordLabel')}</Label>
                       <Input
                         id="currentPassword"
                         type="password"
@@ -109,7 +111,7 @@ export default function ChangePasswordPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                      <Label htmlFor="newPassword">{t('changePassword.newPasswordLabel')}</Label>
                       <Input
                         id="newPassword"
                         type="password"
@@ -127,7 +129,7 @@ export default function ChangePasswordPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">تأكيد كلمة المرور الجديدة</Label>
+                      <Label htmlFor="confirmPassword">{t('changePassword.confirmPasswordLabel')}</Label>
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -149,7 +151,7 @@ export default function ChangePasswordPage() {
                       className="h-14 w-full rounded-xl text-base"
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? 'جارٍ التحديث...' : 'تحديث كلمة المرور'}
+                      {isSubmitting ? t('changePassword.submitting') : t('changePassword.submit')}
                     </Button>
                   </form>
                 </CardContent>

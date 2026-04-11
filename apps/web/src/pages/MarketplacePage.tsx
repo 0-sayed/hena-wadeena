@@ -47,10 +47,10 @@ import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
 import { useBusinesses } from '@/hooks/use-businesses';
 import { useCommodities } from '@/hooks/use-commodities';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
-import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import { formatPrice, districtLabel, categoryLabel, unitLabel, DISTRICTS } from '@/lib/format';
 import { matchesSearchQuery } from '@/lib/search';
 
@@ -94,6 +94,7 @@ function isValidLogoUrl(value: string) {
 }
 
 const MarketplacePage = () => {
+  const { t } = useTranslation(['marketplace', 'common', 'dashboard']);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, language } = useAuth();
@@ -132,7 +133,7 @@ const MarketplacePage = () => {
           biz.category,
           biz.descriptionAr,
           biz.description,
-          districtLabel(biz.district ?? ''),
+          districtLabel(biz.district ?? '', language),
           ...(biz.commodities.flatMap((commodity) => [
             commodity.nameAr,
             commodity.nameEn,
@@ -140,7 +141,7 @@ const MarketplacePage = () => {
           ]) as string[]),
         ]),
       ),
-    [businesses, supplierSearch],
+    [businesses, supplierSearch, language],
   );
   const selectedPrimaryCommodity = useMemo(
     () => commodities.find((commodity) => commodity.id === supplierForm.primaryCommodityId),
@@ -156,10 +157,7 @@ const MarketplacePage = () => {
     if (!normalizedQuery) return priceEntries;
 
     return priceEntries.filter((entry) => {
-      const commodityName = pickLocalizedField(language, {
-        ar: entry.commodity.nameAr,
-        en: entry.commodity.nameEn,
-      }).toLowerCase();
+      const commodityName = ((language === 'en' ? entry.commodity.nameEn : entry.commodity.nameAr) ?? entry.commodity.nameAr ?? '').toLowerCase();
       const commodityCategory = categoryLabel(entry.commodity.category, language).toLowerCase();
 
       return commodityName.includes(normalizedQuery) || commodityCategory.includes(normalizedQuery);
@@ -207,22 +205,12 @@ const MarketplacePage = () => {
 
   const handleCreateSupplier = async () => {
     if (!supplierForm.nameAr.trim()) {
-      toast.error(
-        pickLocalizedCopy(language, {
-          ar: 'اسم المورد مطلوب',
-          en: 'Supplier name is required',
-        }),
-      );
+      toast.error(t('toast.nameReq'));
       return;
     }
 
     if (!supplierForm.primaryCommodityId) {
-      toast.error(
-        pickLocalizedCopy(language, {
-          ar: 'اختر المحصول الرئيسي',
-          en: 'Choose the primary commodity',
-        }),
-      );
+      toast.error(t('toast.commodityReq'));
       return;
     }
 
@@ -232,42 +220,22 @@ const MarketplacePage = () => {
         : (selectedPrimaryCommodity?.nameAr.trim() ?? '');
 
     if (!resolvedCropName) {
-      toast.error(
-        pickLocalizedCopy(language, {
-          ar: 'أدخل اسم المحصول المخصص',
-          en: 'Enter the custom commodity name',
-        }),
-      );
+      toast.error(t('toast.customNameReq'));
       return;
     }
 
     if (!supplierForm.district) {
-      toast.error(
-        pickLocalizedCopy(language, {
-          ar: 'اختر المنطقة',
-          en: 'Choose the district',
-        }),
-      );
+      toast.error(t('toast.districtReq'));
       return;
     }
 
     if (supplierForm.website.trim() && !/^https?:\/\//i.test(supplierForm.website.trim())) {
-      toast.error(
-        pickLocalizedCopy(language, {
-          ar: 'رابط الموقع يجب أن يبدأ بـ http:// أو https://',
-          en: 'Website URL must start with http:// or https://',
-        }),
-      );
+      toast.error(t('toast.urlInvalid'));
       return;
     }
 
     if (supplierForm.logoUrl.trim() && !isValidLogoUrl(supplierForm.logoUrl.trim())) {
-      toast.error(
-        pickLocalizedCopy(language, {
-          ar: 'رابط الشعار يجب أن يكون مساراً نسبياً أو رابط http(s) أو data URL',
-          en: 'Logo URL must be a relative path, an http(s) URL, or a data URL',
-        }),
-      );
+      toast.error(t('toast.logoInvalid'));
       return;
     }
 
@@ -291,17 +259,9 @@ const MarketplacePage = () => {
 
       void queryClient.invalidateQueries({ queryKey: ['market', 'businesses'] });
       resetSupplierDialog();
-      toast.success(
-        pickLocalizedCopy(language, {
-          ar: 'تمت إضافة المورد وظهر مباشرة في الدليل',
-          en: 'Supplier added and published in the directory',
-        }),
-      );
+      toast.success(t('toast.added'));
     } catch (error) {
-      const fallbackMessage = pickLocalizedCopy(language, {
-        ar: 'تعذر إضافة المورد',
-        en: 'Unable to add the supplier',
-      });
+      const fallbackMessage = t('toast.error');
       const message = error instanceof Error ? error.message : fallbackMessage;
       toast.error(message);
     } finally {
@@ -310,62 +270,40 @@ const MarketplacePage = () => {
   };
 
   const lastUpdatedLabel = summary?.lastUpdated
-    ? pickLocalizedCopy(language, {
-        ar: `آخر تحديث للبورصة: ${new Date(summary.lastUpdated).toLocaleString('ar-EG', {
+    ? t('lastMarketUpdate', {
+        date: new Date(summary.lastUpdated).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
-        })}`,
-        en: `Last market update: ${new Date(summary.lastUpdated).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}`,
+        }),
       })
-    : pickLocalizedCopy(language, {
-        ar: 'آخر تحديث: غير متاح',
-        en: 'Last update: unavailable',
-      });
+    : t('lastUpdateUnavailable');
 
   return (
-    <Layout title={pickLocalizedCopy(language, { ar: 'البورصة', en: 'Marketplace' })}>
+    <Layout title={t('title')}>
       <PageTransition>
         <PageHero
           image={heroMarketplace}
-          alt={pickLocalizedCopy(language, {
-            ar: 'البورصة والأسعار',
-            en: 'Marketplace and prices',
-          })}
+          alt={t('hero.badge')}
         >
           <SR>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <BarChart3 className="h-5 w-5 text-accent" />
               <span className="text-sm font-semibold text-card">
-                {pickLocalizedCopy(language, {
-                  ar: 'البورصة والأسعار',
-                  en: 'Marketplace & prices',
-                })}
+                {t('hero.badge')}
               </span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-              {pickLocalizedCopy(language, {
-                ar: 'البورصة والأسعار',
-                en: 'Marketplace & prices',
-              })}
+              {t('hero.title')}
             </h1>
           </SR>
           <SR delay={200}>
             <p className="mb-8 text-lg text-card/90 md:text-xl">
-              {pickLocalizedCopy(language, {
-                ar: 'أسعار المنتجات المحلية، دليل الموردين، والتواصل المباشر',
-                en: 'Local product prices, supplier directory, and direct contact',
-              })}
+              {t('hero.subtitle')}
             </p>
           </SR>
         </PageHero>
@@ -379,19 +317,13 @@ const MarketplacePage = () => {
                     value="prices"
                     className="min-h-[44px] rounded-xl text-sm font-semibold"
                   >
-                    {pickLocalizedCopy(language, {
-                      ar: 'لوحة الأسعار',
-                      en: 'Price board',
-                    })}
+                    {t('tabs.prices')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="suppliers"
                     className="min-h-[44px] rounded-xl text-sm font-semibold"
                   >
-                    {pickLocalizedCopy(language, {
-                      ar: 'دليل الموردين',
-                      en: 'Supplier directory',
-                    })}
+                    {t('tabs.suppliers')}
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -402,10 +334,7 @@ const MarketplacePage = () => {
                     <Select value={selectedCity} onValueChange={setSelectedCity}>
                       <SelectTrigger className="h-12 w-full rounded-xl md:w-48">
                         <SelectValue
-                          placeholder={pickLocalizedCopy(language, {
-                            ar: 'اختر المدينة',
-                            en: 'Select city',
-                          })}
+                          placeholder={t('filters.selectCity')}
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -419,10 +348,7 @@ const MarketplacePage = () => {
                     <div className="relative flex-1">
                       <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder={pickLocalizedCopy(language, {
-                          ar: 'ابحث عن منتج...',
-                          en: 'Search for a product...',
-                        })}
+                        placeholder={t('filters.searchProduct')}
                         value={priceSearchQuery}
                         onChange={(event) => setPriceSearchQuery(event.target.value)}
                         className="search-input-with-icon-lg h-12 rounded-xl"
@@ -436,10 +362,7 @@ const MarketplacePage = () => {
                     <div className="border-b border-border bg-primary/5 px-5 py-5 sm:px-6">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <h3 className="text-lg font-bold text-foreground">
-                          {pickLocalizedCopy(language, {
-                            ar: `أسعار ${districtLabel(selectedCity, language)}`,
-                            en: `Prices in ${districtLabel(selectedCity, language)}`,
-                          })}
+                          {t('table.cityPrices', { city: districtLabel(selectedCity, language) })}
                         </h3>
                         <span className="text-sm text-muted-foreground">{lastUpdatedLabel}</span>
                       </div>
@@ -456,19 +379,16 @@ const MarketplacePage = () => {
                           <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
                               <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
-                                {pickLocalizedCopy(language, { ar: 'المنتج', en: 'Product' })}
+                                {t('table.product')}
                               </TableHead>
                               <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
-                                {pickLocalizedCopy(language, {
-                                  ar: 'التصنيف',
-                                  en: 'Category',
-                                })}
+                                {t('table.category')}
                               </TableHead>
                               <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
-                                {pickLocalizedCopy(language, { ar: 'السعر', en: 'Price' })}
+                                {t('table.price')}
                               </TableHead>
                               <TableHead className="px-4 py-4 sm:px-6 sm:py-5">
-                                {pickLocalizedCopy(language, { ar: 'التغير', en: 'Change' })}
+                                {t('table.change')}
                               </TableHead>
                             </TableRow>
                           </TableHeader>
@@ -484,10 +404,7 @@ const MarketplacePage = () => {
                               >
                                 <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                                   <span className="font-semibold text-foreground">
-                                    {pickLocalizedField(language, {
-                                      ar: entry.commodity.nameAr,
-                                      en: entry.commodity.nameEn,
-                                    })}
+                                    {(language === 'en' ? entry.commodity.nameEn : entry.commodity.nameAr) ?? entry.commodity.nameAr ?? ''}
                                   </span>
                                 </TableCell>
                                 <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
@@ -500,10 +417,7 @@ const MarketplacePage = () => {
                                     {formatPrice(entry.latestPrice)}
                                   </span>
                                   <span className="ms-1 text-sm text-muted-foreground">
-                                    {pickLocalizedCopy(language, {
-                                      ar: `جنيه/${unitLabel(entry.commodity.unit, language)}`,
-                                      en: `EGP/${unitLabel(entry.commodity.unit, language)}`,
-                                    })}
+                                    {t('table.priceUnit', { unit: unitLabel(entry.commodity.unit, language) })}
                                   </span>
                                 </TableCell>
                                 <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
@@ -530,10 +444,7 @@ const MarketplacePage = () => {
                     <div className="relative max-w-md flex-1">
                       <Search className="search-inline-icon-md absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder={pickLocalizedCopy(language, {
-                          ar: 'ابحث عن مورد...',
-                          en: 'Search for a supplier...',
-                        })}
+                        placeholder={t('suppliers.searchPlaceholder')}
                         value={supplierSearch}
                         onChange={(event) => setSupplierSearch(event.target.value)}
                         className="search-input-with-icon-md h-12 rounded-xl"
@@ -542,10 +453,7 @@ const MarketplacePage = () => {
                     {canManageSuppliers && (
                       <Button className="gap-2" onClick={() => setSupplierDialogOpen(true)}>
                         <Plus className="h-4 w-4" />
-                        {pickLocalizedCopy(language, {
-                          ar: 'إضافة مورد',
-                          en: 'Add supplier',
-                        })}
+                        {t('suppliers.addBtn')}
                       </Button>
                     )}
                   </div>
@@ -561,10 +469,7 @@ const MarketplacePage = () => {
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
                       {filteredBusinesses.map((biz) => {
-                        const businessName = pickLocalizedField(language, {
-                          ar: biz.nameAr,
-                          en: biz.nameEn,
-                        });
+                        const businessName = (language === 'en' ? biz.nameEn: biz.nameAr) ?? biz.nameAr ?? '';
                         const businessDescription =
                           language === 'en'
                             ? (biz.description?.trim() ?? '')
@@ -590,10 +495,7 @@ const MarketplacePage = () => {
                                     </h3>
                                     {biz.verificationStatus === 'verified' && (
                                       <Badge className="bg-primary/10 text-primary">
-                                        {pickLocalizedCopy(language, {
-                                          ar: 'موثق',
-                                          en: 'Verified',
-                                        })}
+                                        {t('suppliers.verified')}
                                       </Badge>
                                     )}
                                   </div>
@@ -609,10 +511,7 @@ const MarketplacePage = () => {
                               <div className="mb-4 flex flex-wrap gap-1.5">
                                 {biz.commodities.map((commodity) => (
                                   <Badge key={commodity.id} variant="secondary">
-                                    {pickLocalizedField(language, {
-                                      ar: commodity.nameAr,
-                                      en: commodity.nameEn,
-                                    })}
+                                    {(language === 'en' ? commodity.nameEn: commodity.nameAr) ?? commodity.nameAr ?? ''}
                                   </Badge>
                                 ))}
                               </div>
@@ -627,10 +526,7 @@ const MarketplacePage = () => {
                                   className="flex-1 transition-transform hover:scale-[1.02]"
                                   onClick={() => void navigate(`/marketplace/supplier/${biz.id}`)}
                                 >
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'عرض الملف',
-                                    en: 'View profile',
-                                  })}
+                                  {t('suppliers.viewProfile')}
                                 </Button>
                                 {biz.phone ? (
                                   <Button
@@ -639,10 +535,7 @@ const MarketplacePage = () => {
                                   >
                                     <a href={`tel:${biz.phone}`}>
                                       <Phone className="ms-2 h-4 w-4" />
-                                      {pickLocalizedCopy(language, {
-                                        ar: 'تواصل',
-                                        en: 'Contact',
-                                      })}
+                                      {t('common:contact')}
                                     </a>
                                   </Button>
                                 ) : biz.website ? (
@@ -652,10 +545,7 @@ const MarketplacePage = () => {
                                   >
                                     <a href={biz.website} target="_blank" rel="noreferrer">
                                       <ExternalLink className="ms-2 h-4 w-4" />
-                                      {pickLocalizedCopy(language, {
-                                        ar: 'زيارة الموقع',
-                                        en: 'Visit website',
-                                      })}
+                                      {t('suppliers.visitWebsite')}
                                     </a>
                                   </Button>
                                 ) : null}
@@ -681,23 +571,17 @@ const MarketplacePage = () => {
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                {pickLocalizedCopy(language, {
-                  ar: 'إضافة مورد جديد',
-                  en: 'Add a new supplier',
-                })}
+                {t('dialog.addTitle')}
               </DialogTitle>
               <DialogDescription>
-                {pickLocalizedCopy(language, {
-                  ar: 'اختر المحصول الرئيسي من القائمة، أو استخدم "أخرى" لإدخال محصول غير موجود.',
-                  en: 'Choose the main commodity from the list, or use "Other" to enter one manually.',
-                })}
+                {t('dialog.addDesc')}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="supplierName">
-                  {pickLocalizedCopy(language, { ar: 'اسم المورد', en: 'Supplier name' })}
+                  {t('dialog.form.name')}
                 </Label>
                 <Input
                   id="supplierName"
@@ -707,10 +591,7 @@ const MarketplacePage = () => {
               </div>
               <div className="space-y-2">
                 <Label>
-                  {pickLocalizedCopy(language, {
-                    ar: 'المحصول الرئيسي',
-                    en: 'Primary commodity',
-                  })}
+                  {t('dialog.form.primaryCommodity')}
                 </Label>
                 <Select
                   value={supplierForm.primaryCommodityId}
@@ -718,23 +599,17 @@ const MarketplacePage = () => {
                 >
                   <SelectTrigger>
                     <SelectValue
-                      placeholder={pickLocalizedCopy(language, {
-                        ar: 'اختر المحصول الرئيسي',
-                        en: 'Choose the primary commodity',
-                      })}
+                      placeholder={t('toast.commodityReq')}
                     />
                   </SelectTrigger>
                   <SelectContent>
                     {commodities.map((commodity) => (
                       <SelectItem key={commodity.id} value={commodity.id}>
-                        {pickLocalizedField(language, {
-                          ar: commodity.nameAr,
-                          en: commodity.nameEn,
-                        })}
+                        {(language === 'en' ? commodity.nameEn : commodity.nameAr) ?? commodity.nameAr ?? ''}
                       </SelectItem>
                     ))}
                     <SelectItem value={OTHER_COMMODITY_VALUE}>
-                      {pickLocalizedCopy(language, { ar: 'أخرى', en: 'Other' })}
+                      {t('dialog.form.other')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -742,10 +617,7 @@ const MarketplacePage = () => {
               {supplierForm.primaryCommodityId === OTHER_COMMODITY_VALUE && (
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="supplierCustomCommodity">
-                    {pickLocalizedCopy(language, {
-                      ar: 'حدد المحصول',
-                      en: 'Custom commodity name',
-                    })}
+                    {t('dialog.form.customCommodity')}
                   </Label>
                   <Input
                     id="supplierCustomCommodity"
@@ -753,15 +625,12 @@ const MarketplacePage = () => {
                     onChange={(event) =>
                       handleSupplierFieldChange('customCommodityName', event.target.value)
                     }
-                    placeholder={pickLocalizedCopy(language, {
-                      ar: 'اكتب اسم المحصول',
-                      en: 'Enter the commodity name',
-                    })}
+                    placeholder={t('dialog.form.customPlaceholder')}
                   />
                 </div>
               )}
               <div className="space-y-2">
-                <Label>{pickLocalizedCopy(language, { ar: 'المنطقة', en: 'District' })}</Label>
+                <Label>{t('common:district')}</Label>
                 <Select
                   value={supplierForm.district}
                   onValueChange={(value) => handleSupplierFieldChange('district', value)}
@@ -780,7 +649,7 @@ const MarketplacePage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplierPhone">
-                  {pickLocalizedCopy(language, { ar: 'رقم التواصل', en: 'Phone number' })}
+                  {t('dialog.form.phone')}
                 </Label>
                 <Input
                   id="supplierPhone"
@@ -790,7 +659,7 @@ const MarketplacePage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplierWebsite">
-                  {pickLocalizedCopy(language, { ar: 'رابط الموقع', en: 'Website URL' })}
+                  {t('dialog.form.website')}
                 </Label>
                 <Input
                   id="supplierWebsite"
@@ -801,7 +670,7 @@ const MarketplacePage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplierLogo">
-                  {pickLocalizedCopy(language, { ar: 'رابط الشعار', en: 'Logo URL' })}
+                  {t('dialog.form.logo')}
                 </Label>
                 <Input
                   id="supplierLogo"
@@ -814,7 +683,7 @@ const MarketplacePage = () => {
 
             <div className="space-y-2">
               <Label htmlFor="supplierDescription">
-                {pickLocalizedCopy(language, { ar: 'الوصف', en: 'Description' })}
+                {t('dialog.form.description')}
               </Label>
               <Textarea
                 id="supplierDescription"
@@ -827,14 +696,11 @@ const MarketplacePage = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>
-                  {pickLocalizedCopy(language, {
-                    ar: 'محاصيل مرتبطة إضافية (اختياري)',
-                    en: 'Additional linked commodities (optional)',
-                  })}
+                  {t('dialog.form.commodities')}
                 </Label>
                 {commoditiesLoading && (
                   <span className="text-sm text-muted-foreground">
-                    {pickLocalizedCopy(language, { ar: 'جارٍ التحميل...', en: 'Loading...' })}
+                    {t('dashboard:loading')}
                   </span>
                 )}
               </div>
@@ -850,10 +716,7 @@ const MarketplacePage = () => {
                     />
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
-                        {pickLocalizedField(language, {
-                          ar: commodity.nameAr,
-                          en: commodity.nameEn,
-                        })}
+                        {(language === 'en' ? commodity.nameEn : commodity.nameAr) ?? commodity.nameAr ?? ''}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {categoryLabel(commodity.category, language)} ·{' '}
@@ -867,12 +730,12 @@ const MarketplacePage = () => {
 
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={resetSupplierDialog} disabled={isSavingSupplier}>
-                {pickLocalizedCopy(language, { ar: 'إلغاء', en: 'Cancel' })}
+                {t('common:cancelBtn')}
               </Button>
               <Button onClick={() => void handleCreateSupplier()} disabled={isSavingSupplier}>
                 {isSavingSupplier
-                  ? pickLocalizedCopy(language, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
-                  : pickLocalizedCopy(language, { ar: 'حفظ المورد', en: 'Save supplier' })}
+                  ? t('common:roleCrud.saveBtn', { defaultValue: 'Saving...' })
+                  : t('common:roleCrud.addBtn', { defaultValue: 'Save supplier' })}
               </Button>
             </DialogFooter>
           </DialogContent>

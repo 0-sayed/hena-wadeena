@@ -7,6 +7,20 @@ import AttractionDetailsPage from './AttractionDetailsPage';
 const mockNavigate = vi.fn();
 const mockUseAttraction = vi.fn();
 const mockUseNearbyAttractions = vi.fn();
+const mockUseAuth = vi.fn();
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      if (key === 'attractions.locationTitle') return 'الموقع';
+      return key;
+    }
+  }),
+}));
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
@@ -80,6 +94,8 @@ vi.mock('@/hooks/use-attractions', () => ({
 
 describe('AttractionDetailsPage', () => {
   it('shows the map section without rendering the raw coordinate row', () => {
+    mockUseAuth.mockReturnValue({ language: 'ar', isAuthenticated: false, user: null });
+    
     mockUseAttraction.mockReturnValue({
       data: {
         id: 'attr-1',

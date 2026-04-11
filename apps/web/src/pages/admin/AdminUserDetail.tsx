@@ -30,71 +30,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useAdminUser, useResetUserPassword } from '@/hooks/use-admin';
 import { getInitials } from '@/lib/utils';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
-
-type LocalizedLabel = {
-  ar: string;
-  en: string;
-};
-
-const roleLabels: Record<string, LocalizedLabel> = {
-  admin: { ar: 'مدير', en: 'Admin' },
-  moderator: { ar: 'مشرف', en: 'Moderator' },
-  reviewer: { ar: 'مراجع', en: 'Reviewer' },
-  tourist: { ar: 'سائح', en: 'Tourist' },
-  resident: { ar: 'مقيم', en: 'Resident' },
-  student: { ar: 'طالب', en: 'Student' },
-  merchant: { ar: 'تاجر', en: 'Merchant' },
-  driver: { ar: 'سائق', en: 'Driver' },
-  guide: { ar: 'مرشد', en: 'Guide' },
-  investor: { ar: 'مستثمر', en: 'Investor' },
-};
-
-const statusLabels: Record<string, LocalizedLabel> = {
-  active: { ar: 'نشط', en: 'Active' },
-  suspended: { ar: 'موقوف', en: 'Suspended' },
-  banned: { ar: 'محظور', en: 'Banned' },
-};
-
-const kycLabels: Record<string, LocalizedLabel> = {
-  pending: { ar: 'قيد الانتظار', en: 'Pending' },
-  under_review: { ar: 'قيد المراجعة', en: 'Under review' },
-  approved: { ar: 'معتمد', en: 'Approved' },
-  rejected: { ar: 'مرفوض', en: 'Rejected' },
-};
-
-const auditLabels: Record<string, LocalizedLabel> = {
-  register: { ar: 'تسجيل حساب', en: 'Account registration' },
-  login: { ar: 'تسجيل دخول', en: 'Login' },
-  logout: { ar: 'تسجيل خروج', en: 'Logout' },
-  failed_login: { ar: 'محاولة دخول فاشلة', en: 'Failed login attempt' },
-  password_changed: { ar: 'تغيير كلمة المرور', en: 'Password changed' },
-  password_reset: { ar: 'إعادة تعيين كلمة المرور', en: 'Password reset' },
-  token_refreshed: { ar: 'تحديث الجلسة', en: 'Session refreshed' },
-  account_suspended: { ar: 'إيقاف الحساب', en: 'Account suspended' },
-  account_banned: { ar: 'حظر الحساب', en: 'Account banned' },
-  role_changed: { ar: 'تغيير الدور', en: 'Role changed' },
-  account_activated: { ar: 'إعادة تفعيل الحساب', en: 'Account reactivated' },
-  account_deleted: { ar: 'حذف الحساب', en: 'Account deleted' },
-  kyc_submitted: { ar: 'إرسال مستندات التحقق', en: 'KYC submitted' },
-  kyc_approved: { ar: 'اعتماد التحقق', en: 'KYC approved' },
-  kyc_rejected: { ar: 'رفض التحقق', en: 'KYC rejected' },
-};
-
-const documentTypeLabels: Record<string, LocalizedLabel> = {
-  national_id: { ar: 'بطاقة الرقم القومي', en: 'National ID' },
-  student_id: { ar: 'بطاقة الطالب', en: 'Student ID' },
-  guide_license: { ar: 'رخصة الإرشاد', en: 'Guide license' },
-  commercial_register: { ar: 'السجل التجاري', en: 'Commercial register' },
-  business_document: { ar: 'مستند تجاري', en: 'Business document' },
-};
+import { useTranslation } from 'react-i18next';
 
 export default function AdminUserDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { language } = useAuth();
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
-  const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
+  const { t } = useTranslation('admin');
+  const locale = language === 'en' ? 'en-US' : 'ar-EG';
 
   const { data: user, isLoading, error } = useAdminUser(id);
   const resetPasswordMutation = useResetUserPassword();
@@ -104,32 +47,22 @@ export default function AdminUserDetail() {
 
   const formatDateTime = (value: string | null) => {
     if (!value) {
-      return pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' });
+      return t('users.detail.unavailable');
     }
 
     return new Date(value).toLocaleString(locale);
   };
 
-  const localizedRole = (role: string) =>
-    pickLocalizedCopy(appLanguage, roleLabels[role] ?? { ar: role, en: role });
-  const localizedStatus = (status: string) =>
-    pickLocalizedCopy(appLanguage, statusLabels[status] ?? { ar: status, en: status });
-  const localizedKyc = (status: string) =>
-    pickLocalizedCopy(appLanguage, kycLabels[status] ?? { ar: status, en: status });
-  const localizedAudit = (eventType: string) =>
-    pickLocalizedCopy(appLanguage, auditLabels[eventType] ?? { ar: eventType, en: eventType });
+  const localizedRole = (role: string) => t(`users.roles.${role}`, { defaultValue: role });
+  const localizedStatus = (status: string) => t(`users.statuses.${status}`, { defaultValue: status });
+  const localizedKyc = (status: string) => t(`moderation.kyc.status.${status}`, { defaultValue: status });
+  const localizedAudit = (eventType: string) => t(`users.audit.${eventType}`, { defaultValue: eventType });
   const localizedDocumentType = (documentType: string | null) => {
     if (!documentType) {
-      return pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' });
+      return t('users.detail.unavailable');
     }
 
-    return pickLocalizedCopy(
-      appLanguage,
-      documentTypeLabels[documentType] ?? {
-        ar: documentType,
-        en: documentType,
-      },
-    );
+    return t(`moderation.kyc.doc.${documentType}`, { defaultValue: documentType });
   };
 
   const handleResetPassword = async () => {
@@ -150,19 +83,9 @@ export default function AdminUserDetail() {
   const handleCopyPassword = async () => {
     try {
       await navigator.clipboard.writeText(generatedPassword);
-      toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم نسخ كلمة المرور الجديدة',
-          en: 'The new password has been copied',
-        }),
-      );
+      toast.success(t('users.detail.passwordCopied'));
     } catch {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تعذر نسخ كلمة المرور',
-          en: 'Could not copy the password',
-        }),
-      );
+      toast.error(t('users.detail.passwordCopyError'));
     }
   };
 
@@ -190,14 +113,11 @@ export default function AdminUserDetail() {
           }}
         >
           <ArrowRight className="h-4 w-4" />
-          {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
+          {t('users.detail.back')}
         </Button>
         <Card>
           <CardContent className="p-8 text-center text-sm text-destructive">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر تحميل تفاصيل المستخدم المطلوبة.',
-              en: 'Could not load the requested user details.',
-            })}
+            {t('users.detail.loadError')}
           </CardContent>
         </Card>
       </div>
@@ -216,28 +136,19 @@ export default function AdminUserDetail() {
             }}
           >
             <ArrowRight className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
+            {t('users.detail.back')}
           </Button>
           <h1 className="text-2xl font-bold">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'الملف الإداري للمستخدم',
-              en: 'Admin user profile',
-            })}
+            {t('users.detail.title')}
           </h1>
           <p className="text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'عرض حالة الحساب، التحقق، وسجل النشاط مع إمكانية إعادة تعيين كلمة المرور.',
-              en: 'Review the account status, verification details, and activity log, with the option to reset the password.',
-            })}
+            {t('users.detail.subtitle')}
           </p>
         </div>
 
         <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
           <KeyRound className="ms-2 h-4 w-4" />
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إعادة تعيين كلمة المرور',
-            en: 'Reset password',
-          })}
+          {t('users.detail.resetPwd')}
         </Button>
       </div>
 
@@ -261,8 +172,7 @@ export default function AdminUserDetail() {
               </LtrText>
               {user.displayName && (
                 <p className="text-sm text-muted-foreground">
-                  {pickLocalizedCopy(appLanguage, { ar: 'الاسم الظاهر:', en: 'Display name:' })}{' '}
-                  {user.displayName}
+                  {t('users.detail.displayName')} {user.displayName}
                 </p>
               )}
             </div>
@@ -270,19 +180,13 @@ export default function AdminUserDetail() {
 
           <div className="grid gap-2 text-sm text-muted-foreground">
             <p>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تم إنشاء الحساب:',
-                en: 'Account created:',
-              })}{' '}
-              {formatDateTime(user.createdAt)}
+              {t('users.detail.created')} {formatDateTime(user.createdAt)}
             </p>
             <p>
-              {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث:', en: 'Last updated:' })}{' '}
-              {formatDateTime(user.updatedAt)}
+              {t('users.detail.updated')} {formatDateTime(user.updatedAt)}
             </p>
             <p>
-              {pickLocalizedCopy(appLanguage, { ar: 'آخر تسجيل دخول:', en: 'Last login:' })}{' '}
-              {formatDateTime(user.lastLoginAt)}
+              {t('users.detail.lastLogin')} {formatDateTime(user.lastLoginAt)}
             </p>
           </div>
         </CardContent>
@@ -292,7 +196,7 @@ export default function AdminUserDetail() {
         <Card className="xl:col-span-1">
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'بيانات الحساب', en: 'Account details' })}
+              {t('users.detail.accountDetails')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
@@ -300,10 +204,7 @@ export default function AdminUserDetail() {
               <Mail className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-muted-foreground">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'البريد الإلكتروني',
-                    en: 'Email',
-                  })}
+                  {t('users.detail.email')}
                 </p>
                 <LtrText as="p" className="font-medium text-foreground">
                   {user.email}
@@ -314,7 +215,7 @@ export default function AdminUserDetail() {
               <Phone className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-muted-foreground">
-                  {pickLocalizedCopy(appLanguage, { ar: 'الهاتف', en: 'Phone' })}
+                  {t('users.detail.phone')}
                 </p>
                 {user.phone ? (
                   <LtrText as="p" className="font-medium text-foreground">
@@ -322,7 +223,7 @@ export default function AdminUserDetail() {
                   </LtrText>
                 ) : (
                   <p className="font-medium text-foreground">
-                    {pickLocalizedCopy(appLanguage, { ar: 'غير متاح', en: 'Unavailable' })}
+                    {t('users.detail.unavailable')}
                   </p>
                 )}
               </div>
@@ -331,10 +232,7 @@ export default function AdminUserDetail() {
               <User className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-muted-foreground">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'الدور الحالي',
-                    en: 'Current role',
-                  })}
+                  {t('users.detail.currentRole')}
                 </p>
                 <p className="font-medium text-foreground">{localizedRole(user.role)}</p>
               </div>
@@ -343,12 +241,12 @@ export default function AdminUserDetail() {
               <UserCog className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-muted-foreground">
-                  {pickLocalizedCopy(appLanguage, { ar: 'اللغة', en: 'Language' })}
+                  {t('users.detail.language')}
                 </p>
                 <p className="font-medium text-foreground">
                   {user.language === 'en'
                     ? 'English'
-                    : pickLocalizedCopy(appLanguage, { ar: 'العربية', en: 'Arabic' })}
+                    : t('users.detail.langAr')}
                 </p>
               </div>
             </div>
@@ -358,41 +256,29 @@ export default function AdminUserDetail() {
         <Card className="xl:col-span-1">
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'التحقق والحالة',
-                en: 'Verification and status',
-              })}
+              {t('users.detail.verificationStats')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'حالة الحساب',
-                  en: 'Account status',
-                })}
+                {t('users.detail.accountStatus')}
               </p>
               <p className="font-medium text-foreground">{localizedStatus(user.status)}</p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, { ar: 'حالة KYC', en: 'KYC status' })}
+                {t('users.detail.kycStatus')}
               </p>
               <p className="font-medium text-foreground">
                 {user.kycStatus
                   ? localizedKyc(user.kycStatus)
-                  : pickLocalizedCopy(appLanguage, {
-                      ar: 'لا يوجد طلب تحقق',
-                      en: 'No KYC submission',
-                    })}
+                  : t('users.detail.noKyc')}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'نوع آخر مستند',
-                  en: 'Latest document type',
-                })}
+                {t('users.detail.latestDoc')}
               </p>
               <p className="font-medium text-foreground">
                 {localizedDocumentType(user.latestKycDocumentType)}
@@ -400,35 +286,23 @@ export default function AdminUserDetail() {
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'تم التحقق من الحساب',
-                  en: 'Account verified at',
-                })}
+                {t('users.detail.verifiedAt')}
               </p>
               <p className="font-medium text-foreground">
                 {user.verifiedAt
                   ? formatDateTime(user.verifiedAt)
-                  : pickLocalizedCopy(appLanguage, {
-                      ar: 'لم يتم التحقق بعد',
-                      en: 'Not verified yet',
-                    })}
+                  : t('users.detail.notVerified')}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'آخر إرسال KYC',
-                  en: 'Last KYC submission',
-                })}
+                {t('users.detail.kycLastSub')}
               </p>
               <p className="font-medium text-foreground">{formatDateTime(user.kycSubmittedAt)}</p>
             </div>
             <div className="rounded-xl border border-border/60 p-4">
               <p className="mb-1 text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'آخر مراجعة KYC',
-                  en: 'Last KYC review',
-                })}
+                {t('users.detail.kycLastReview')}
               </p>
               <p className="font-medium text-foreground">{formatDateTime(user.kycReviewedAt)}</p>
             </div>
@@ -438,16 +312,13 @@ export default function AdminUserDetail() {
         <Card className="xl:col-span-1">
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'ملخص النشاط', en: 'Recent activity' })}
+              {t('users.detail.activity')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {user.recentAuditEvents.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لا توجد أحداث مسجلة لهذا الحساب حتى الآن.',
-                  en: 'No activity has been recorded for this account yet.',
-                })}
+                {t('users.detail.noActivity')}
               </p>
             ) : (
               user.recentAuditEvents.map((event) => (
@@ -470,21 +341,15 @@ export default function AdminUserDetail() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'إعادة تعيين كلمة المرور',
-                en: 'Reset password',
-              })}
+              {t('users.detail.resetPwd')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'سيتم إنشاء كلمة مرور عشوائية جديدة لهذا المستخدم وإلغاء جلساته الحالية. اعرض كلمة المرور الجديدة مرة واحدة فقط وشاركها معه بشكل آمن.',
-                en: 'A new random password will be generated for this user and all active sessions will be revoked. The new password is shown only once, so share it through a secure channel.',
-              })}
+              {t('users.detail.resetDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+              {t('users.detail.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
@@ -494,14 +359,8 @@ export default function AdminUserDetail() {
               disabled={resetPasswordMutation.isPending}
             >
               {resetPasswordMutation.isPending
-                ? pickLocalizedCopy(appLanguage, {
-                    ar: 'جارٍ التنفيذ...',
-                    en: 'Processing...',
-                  })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'تأكيد إعادة التعيين',
-                    en: 'Confirm reset',
-                  })}
+                ? t('users.detail.processing')
+                : t('users.detail.confirmReset')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -519,25 +378,16 @@ export default function AdminUserDetail() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تم إنشاء كلمة مرور جديدة',
-                en: 'A new password has been generated',
-              })}
+              {t('users.detail.newPwdTitle')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'هذه الكلمة ستُعرض مرة واحدة فقط. يرجى نسخها ومشاركتها مع المستخدم عبر قناة آمنة.',
-                en: 'This password is shown only once. Copy it now and share it with the user through a secure channel.',
-              })}
+              {t('users.detail.newPwdDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
             <p className="mb-2 text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'كلمة المرور المؤقتة',
-                en: 'Temporary password',
-              })}
+              {t('users.detail.tempPwd')}
             </p>
             <code className="block break-all rounded-lg bg-background px-3 py-3 text-base font-semibold">
               {generatedPassword}
@@ -552,13 +402,10 @@ export default function AdminUserDetail() {
               }}
             >
               <Copy className="ms-2 h-4 w-4" />
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'نسخ كلمة المرور',
-                en: 'Copy password',
-              })}
+              {t('users.detail.copyPwd')}
             </Button>
             <Button onClick={() => setPasswordDialogOpen(false)}>
-              {pickLocalizedCopy(appLanguage, { ar: 'إغلاق', en: 'Close' })}
+              {t('users.detail.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

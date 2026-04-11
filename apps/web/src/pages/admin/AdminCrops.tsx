@@ -44,6 +44,7 @@ import {
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 import { commoditiesAPI, commodityPricesAPI } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 const commodityCategories: CommodityCategory[] = [
   CommodityCategory.FRUITS,
@@ -123,11 +124,15 @@ function getPriceChange(previousPrice: number | null, currentPrice: number | nul
 }
 
 export default function AdminCrops() {
+  const {
+    t
+  } = useTranslation(['wallet', 'admin', 'dashboard', 'marketplace', 'guides', 'tourism', 'logistics', 'profile', 'market']);
+
   const queryClient = useQueryClient();
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
-  const currencyLabel = pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' });
+  const currencyLabel = t('transactions.currency');
 
   const { data: commodities, isLoading } = useCommodities();
   const [selectedCommodityId, setSelectedCommodityId] = useState<string | undefined>();
@@ -216,10 +221,7 @@ export default function AdminCrops() {
   const handleSaveCrop = async () => {
     if (!cropForm.nameAr.trim()) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اسم المحصول بالعربية مطلوب',
-          en: 'The Arabic crop name is required',
-        }),
+        t('crops.nameArReq'),
       );
       return;
     }
@@ -251,10 +253,7 @@ export default function AdminCrops() {
         }),
       );
     } catch (error) {
-      const fallback = pickLocalizedCopy(appLanguage, {
-        ar: 'تعذر حفظ المحصول',
-        en: 'Could not save the crop',
-      });
+      const fallback = t('crops.cropSaveErr');
       toast.error(error instanceof Error ? error.message : fallback);
     } finally {
       setSavingCrop(false);
@@ -269,16 +268,10 @@ export default function AdminCrops() {
       }
       refreshCommodities();
       toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم حذف المحصول من القائمة النشطة',
-          en: 'The crop was removed from the active list',
-        }),
+        t('crops.cropDeleted'),
       );
     } catch (error) {
-      const fallback = pickLocalizedCopy(appLanguage, {
-        ar: 'تعذر حذف المحصول',
-        en: 'Could not remove the crop',
-      });
+      const fallback = t('crops.cropDeleteErr');
       toast.error(error instanceof Error ? error.message : fallback);
     }
   };
@@ -286,20 +279,14 @@ export default function AdminCrops() {
   const handleSavePrice = async () => {
     if (!selectedCommodityId) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اختر محصولاً أولاً',
-          en: 'Select a crop first',
-        }),
+        t('crops.selectCropFirst'),
       );
       return;
     }
 
     if (parsedPrice == null) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'أدخل سعراً صحيحاً',
-          en: 'Enter a valid price',
-        }),
+        t('merchant.toasts.invalidPrice'),
       );
       return;
     }
@@ -332,10 +319,7 @@ export default function AdminCrops() {
         }),
       );
     } catch (error) {
-      const fallback = pickLocalizedCopy(appLanguage, {
-        ar: 'تعذر حفظ السعر',
-        en: 'Could not save the price',
-      });
+      const fallback = t('crops.priceSaveErr');
       toast.error(error instanceof Error ? error.message : fallback);
     } finally {
       setSavingPrice(false);
@@ -350,16 +334,10 @@ export default function AdminCrops() {
         setPriceForm(emptyPriceForm);
       }
       toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم حذف سجل السعر',
-          en: 'Price record removed',
-        }),
+        t('crops.priceDeleted'),
       );
     } catch (error) {
-      const fallback = pickLocalizedCopy(appLanguage, {
-        ar: 'تعذر حذف السعر',
-        en: 'Could not remove the price',
-      });
+      const fallback = t('crops.priceDeleteErr');
       toast.error(error instanceof Error ? error.message : fallback);
     }
   };
@@ -369,33 +347,27 @@ export default function AdminCrops() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'إدارة المحاصيل والأسعار',
-              en: 'Crop and price management',
-            })}
+            {t('crops.title')}
           </h1>
           <p className="text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'استخدم نفس قائمة المحاصيل المستخدمة في البورصة، وأدر الأسعار من خلال نوافذ منبثقة بدلاً من النماذج الثابتة.',
-              en: 'Use the same crop catalogue shown in the market, and manage prices from contextual dialogs instead of fixed forms.',
-            })}
+            {t('crops.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button onClick={openCreateCropDialog}>
             <PlusCircle className="ms-2 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'إضافة محصول', en: 'Add crop' })}
+            {t('crops.addCropBtn')}
           </Button>
           <Button variant="outline" onClick={openCreatePriceDialog} disabled={!selectedCommodity}>
             <Tag className="ms-2 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'إضافة سعر', en: 'Add price' })}
+            {t('crops.addPrice')}
           </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'المحاصيل النشطة', en: 'Active crops' })}</CardTitle>
+          <CardTitle>{t('crops.activeCrops')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -406,19 +378,16 @@ export default function AdminCrops() {
             </div>
           ) : !commodities || commodities.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد محاصيل نشطة حالياً.',
-                en: 'There are no active crops right now.',
-              })}
+              {t('crops.noActiveCrops')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المحصول', en: 'Crop' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الوحدة', en: 'Unit' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}</TableHead>
+                  <TableHead>{t('crops.table.crop')}</TableHead>
+                  <TableHead>{t('prices.table.category')}</TableHead>
+                  <TableHead>{t('supplierDetails.table.unit')}</TableHead>
+                  <TableHead>{t('dashboard.packagesList.colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -441,7 +410,7 @@ export default function AdminCrops() {
                             openEditCropDialog(commodity);
                           }}
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'تعديل', en: 'Edit' })}
+                          {t('booking.editBtn')}
                         </Button>
                         <Button
                           size="sm"
@@ -451,7 +420,7 @@ export default function AdminCrops() {
                             void handleDeactivateCrop(commodity.id);
                           }}
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'حذف', en: 'Delete' })}
+                          {t('transport.delete')}
                         </Button>
                       </div>
                     </TableCell>
@@ -467,10 +436,7 @@ export default function AdminCrops() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Leaf className="h-5 w-5 text-primary" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'أحدث الأسعار للمحصول المختار',
-              en: 'Latest prices for the selected crop',
-            })}
+            {t('crops.latestPrices')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -492,27 +458,21 @@ export default function AdminCrops() {
             </div>
           ) : !selectedCommodity ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'اختر محصولاً لعرض أسعاره.',
-                en: 'Select a crop to view its prices.',
-              })}
+              {t('crops.selectCropPrices')}
             </p>
           ) : selectedCommodity.latestPricesByRegion.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد أسعار مسجلة لهذا المحصول بعد.',
-                en: 'No prices have been recorded for this crop yet.',
-              })}
+              {t('crops.noPrices')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'Region' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'نوع السعر', en: 'Price type' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التاريخ', en: 'Date' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}</TableHead>
+                  <TableHead>{t('crops.table.region')}</TableHead>
+                  <TableHead>{t('crops.table.priceType')}</TableHead>
+                  <TableHead>{t('prices.table.price')}</TableHead>
+                  <TableHead>{t('booking.dateLabel')}</TableHead>
+                  <TableHead>{t('dashboard.packagesList.colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -527,14 +487,14 @@ export default function AdminCrops() {
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => openEditPriceDialog(price)}>
-                          {pickLocalizedCopy(appLanguage, { ar: 'تعديل', en: 'Edit' })}
+                          {t('booking.editBtn')}
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => void handleDeletePrice(price.id)}
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'حذف', en: 'Delete' })}
+                          {t('transport.delete')}
                         </Button>
                       </div>
                     </TableCell>
@@ -551,21 +511,18 @@ export default function AdminCrops() {
           <DialogHeader>
             <DialogTitle>
               {cropForm.id
-                ? pickLocalizedCopy(appLanguage, { ar: 'تعديل محصول', en: 'Edit crop' })
-                : pickLocalizedCopy(appLanguage, { ar: 'إضافة محصول جديد', en: 'Add a new crop' })}
+                ? t('crops.cropDialogTitleEdit')
+                : t('crops.cropDialogTitleAdd')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'أي تحديث هنا سينعكس مباشرة على صفحة البورصة ودليل الموردين.',
-                en: 'Any update here is reflected directly on the market page and supplier directory.',
-              })}
+              {t('crops.cropDialogDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="cropNameAr">
-                {pickLocalizedCopy(appLanguage, { ar: 'الاسم بالعربية', en: 'Arabic name' })}
+                {t('crops.cropNameAr')}
               </Label>
               <Input
                 id="cropNameAr"
@@ -577,7 +534,7 @@ export default function AdminCrops() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cropNameEn">
-                {pickLocalizedCopy(appLanguage, { ar: 'الاسم بالإنجليزية', en: 'English name' })}
+                {t('crops.cropNameEn')}
               </Label>
               <Input
                 id="cropNameEn"
@@ -589,7 +546,7 @@ export default function AdminCrops() {
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</Label>
+                <Label>{t('prices.table.category')}</Label>
                 <Select
                   value={cropForm.category}
                   onValueChange={(value) =>
@@ -612,7 +569,7 @@ export default function AdminCrops() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>{pickLocalizedCopy(appLanguage, { ar: 'الوحدة', en: 'Unit' })}</Label>
+                <Label>{t('supplierDetails.table.unit')}</Label>
                 <Select
                   value={cropForm.unit}
                   onValueChange={(value) =>
@@ -633,7 +590,7 @@ export default function AdminCrops() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sortOrder">
-                  {pickLocalizedCopy(appLanguage, { ar: 'الترتيب', en: 'Sort order' })}
+                  {t('crops.sortOrder')}
                 </Label>
                 <Input
                   id="sortOrder"
@@ -650,14 +607,14 @@ export default function AdminCrops() {
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setCropDialogOpen(false)} disabled={savingCrop}>
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+              {t('topup.cancelBtn')}
             </Button>
             <Button onClick={() => void handleSaveCrop()} disabled={savingCrop}>
               {savingCrop
-                ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
+                ? t('form.savingBtn')
                 : cropForm.id
-                  ? pickLocalizedCopy(appLanguage, { ar: 'تحديث المحصول', en: 'Update crop' })
-                  : pickLocalizedCopy(appLanguage, { ar: 'إضافة المحصول', en: 'Add crop' })}
+                  ? t('crops.updateCropBtn')
+                  : t('crops.addCropBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -668,8 +625,8 @@ export default function AdminCrops() {
           <DialogHeader>
             <DialogTitle>
               {priceForm.priceId
-                ? pickLocalizedCopy(appLanguage, { ar: 'تعديل سعر', en: 'Edit price' })
-                : pickLocalizedCopy(appLanguage, { ar: 'إضافة سعر جديد', en: 'Add a new price' })}
+                ? t('crops.priceDialogTitleEdit')
+                : t('crops.priceDialogTitleAdd')}
             </DialogTitle>
             <DialogDescription>
               {selectedCommodity
@@ -677,10 +634,7 @@ export default function AdminCrops() {
                     ar: `يتم تحديث سعر ${formatCommodityName(selectedCommodity)} مع احتساب نسبة التغير تلقائياً.`,
                     en: `Update the price for ${formatCommodityName(selectedCommodity)} with the change percentage calculated automatically.`,
                   })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'اختر محصولاً أولاً قبل إضافة السعر.',
-                    en: 'Select a crop before adding a price.',
-                  })}
+                : t('crops.priceDialogDescAdd')}
             </DialogDescription>
           </DialogHeader>
 
@@ -696,17 +650,14 @@ export default function AdminCrops() {
                 </>
               ) : (
                 <p className="text-muted-foreground">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'اختر محصولاً من الجدول لإدارة أسعاره.',
-                    en: 'Select a crop from the table to manage its prices.',
-                  })}
+                  {t('crops.selectFromTable')}
                 </p>
               )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'Region' })}</Label>
+                <Label>{t('crops.table.region')}</Label>
                 <Select
                   value={priceForm.region}
                   onValueChange={(value) =>
@@ -726,7 +677,7 @@ export default function AdminCrops() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>{pickLocalizedCopy(appLanguage, { ar: 'نوع السعر', en: 'Price type' })}</Label>
+                <Label>{t('crops.table.priceType')}</Label>
                 <Select
                   value={priceForm.priceType}
                   onValueChange={(value) =>
@@ -747,10 +698,7 @@ export default function AdminCrops() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="priceValue">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'السعر (جنيه)',
-                    en: 'Price (EGP)',
-                  })}
+                  {t('listingEditor.priceLabel')}
                 </Label>
                 <Input
                   id="priceValue"
@@ -770,7 +718,7 @@ export default function AdminCrops() {
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, { ar: 'السعر السابق', en: 'Previous price' })}
+                      {t('crops.previousPrice')}
                     </p>
                     <p className="text-lg font-semibold">
                       <span>{formatPrice(comparisonPrice)}</span> <span>{currencyLabel}</span>
@@ -789,7 +737,7 @@ export default function AdminCrops() {
                       {priceChange.direction === 'up' && <ArrowUp className="h-4 w-4" />}
                       {priceChange.direction === 'down' && <ArrowDown className="h-4 w-4" />}
                       {priceChange.direction === 'same'
-                        ? pickLocalizedCopy(appLanguage, { ar: 'لا يوجد تغير', en: 'No change' })
+                        ? t('crops.noChange')
                         : `${pickLocalizedCopy(appLanguage, {
                             ar: priceChange.direction === 'up' ? 'زيادة' : 'انخفاض',
                             en: priceChange.direction === 'up' ? 'Increase' : 'Decrease',
@@ -797,10 +745,7 @@ export default function AdminCrops() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'أدخل السعر الجديد لاحتساب نسبة التغير.',
-                        en: 'Enter the new price to calculate the change percentage.',
-                      })}
+                      {t('crops.enterNewPrice')}
                     </p>
                   )}
                 </div>
@@ -810,14 +755,14 @@ export default function AdminCrops() {
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPriceDialogOpen(false)} disabled={savingPrice}>
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+              {t('topup.cancelBtn')}
             </Button>
             <Button onClick={() => void handleSavePrice()} disabled={savingPrice || !selectedCommodity}>
               {savingPrice
-                ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
+                ? t('form.savingBtn')
                 : priceForm.priceId
-                  ? pickLocalizedCopy(appLanguage, { ar: 'تحديث السعر', en: 'Update price' })
-                  : pickLocalizedCopy(appLanguage, { ar: 'إضافة السعر', en: 'Add price' })}
+                  ? t('crops.updatePriceBtn')
+                  : t('crops.addPrice')}
             </Button>
           </DialogFooter>
         </DialogContent>

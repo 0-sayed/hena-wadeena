@@ -1,0 +1,26 @@
+{
+  "title": "المحفظة",
+  "balance": {
+    "label": "الرصيد الحالي",
+    "currencyLine": "جنيه مصري"
+  },
+  "topup": {
+    "btn": "شحن المحفظة",
+    "title": "شحن المحفظة",
+    "otherAmountPlaceholder": "مبلغ آخر...",
+    "submitBtn": "شحن الآن",
+    "cancelBtn": "إلغاء",
+    "success": "تم شحن المحفظة بنجاح",
+    "invalidAmount": "أدخل مبلغًا صحيحًا",
+    "error": "تعذر شحن المحفظة"
+  },
+  "transactions": {
+    "title": "سجل المعاملات",
+    "empty": "لا توجد معاملات بعد",
+    "currency": "جنيه",
+    "status": {
+      "completed": "مكتمل",
+      "pending": "معلق"
+    }
+  }
+}

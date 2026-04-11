@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAdminPendingPois, useApprovePoi, useRejectPoi } from '@/hooks/use-admin';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 type LocalizedLabel = {
   ar: string;
@@ -52,6 +53,10 @@ function pendingCountLabel(total: number, language: AppLanguage) {
 }
 
 export default function AdminMap() {
+  const {
+    t
+  } = useTranslation(['admin', 'dashboard', 'market', 'marketplace', 'tourism', 'guides', 'wallet']);
+
   const [rejectDialog, setRejectDialog] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [expandedPoi, setExpandedPoi] = useState<string | null>(null);
@@ -87,31 +92,22 @@ export default function AdminMap() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إدارة نقاط الاهتمام',
-            en: 'Point-of-interest management',
-          })}
+          {t('pois.title')}
         </h1>
         <p className="text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'مراجعة نقاط الاهتمام المقترحة من المستخدمين',
-            en: 'Review user-submitted points of interest',
-          })}
+          {t('pois.subtitle')}
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'نقاط الاهتمام المعلقة',
-              en: 'Pending points of interest',
-            })}
+            {t('pois.pendingTitle')}
           </CardTitle>
           <CardDescription>
             {poisQuery.data
               ? pendingCountLabel(poisQuery.data.total, appLanguage)
-              : pickLocalizedCopy(appLanguage, { ar: 'جاري التحميل...', en: 'Loading...' })}
+              : t('driver.rides.loading')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -119,32 +115,26 @@ export default function AdminMap() {
             <div className="flex flex-col items-center gap-2 py-12">
               <AlertCircle className="h-12 w-12 text-destructive" />
               <p className="text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'فشل تحميل البيانات',
-                  en: 'Could not load the data',
-                })}
+                {t('pois.loadError')}
               </p>
             </div>
           ) : poisQuery.data?.data.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12">
               <CheckCircle className="h-12 w-12 text-green-500" />
               <p className="text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لا توجد نقاط معلقة',
-                  en: 'No pending points of interest',
-                })}
+                {t('pois.noPending')}
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الموقع', en: 'Location' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'تاريخ الإضافة', en: 'Date added' })}</TableHead>
+                  <TableHead>{t('listingEditor.nameLabel')}</TableHead>
+                  <TableHead>{t('prices.table.category')}</TableHead>
+                  <TableHead>{t('attractions.locationTitle')}</TableHead>
+                  <TableHead>{t('pois.table.dateAdded')}</TableHead>
                   <TableHead className="w-32">
-                    {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                    {t('dashboard.packagesList.colActions')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -197,7 +187,7 @@ export default function AdminMap() {
                                 className="text-green-600 hover:text-green-700"
                                 disabled={approvePoi.isPending}
                                 onClick={() => approvePoi.mutate(poi.id)}
-                                title={pickLocalizedCopy(appLanguage, { ar: 'موافقة', en: 'Approve' })}
+                                title={t('pois.approve')}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -207,7 +197,7 @@ export default function AdminMap() {
                                 className="text-destructive hover:text-destructive"
                                 disabled={rejectPoi.isPending}
                                 onClick={() => setRejectDialog(poi.id)}
-                                title={pickLocalizedCopy(appLanguage, { ar: 'رفض', en: 'Reject' })}
+                                title={t('bookings.actions.reject')}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -221,10 +211,7 @@ export default function AdminMap() {
                                 {poi.nameEn && (
                                   <p>
                                     <strong>
-                                      {pickLocalizedCopy(appLanguage, {
-                                        ar: 'الاسم بالإنجليزية:',
-                                        en: 'English name:',
-                                      })}
+                                      {t('pois.nameEn')}
                                     </strong>{' '}
                                     {poi.nameEn}
                                   </p>
@@ -232,7 +219,7 @@ export default function AdminMap() {
                                 {poi.description && (
                                   <p>
                                     <strong>
-                                      {pickLocalizedCopy(appLanguage, { ar: 'الوصف:', en: 'Description:' })}
+                                      {t('pois.description')}
                                     </strong>{' '}
                                     {poi.description}
                                   </p>
@@ -240,7 +227,7 @@ export default function AdminMap() {
                                 {poi.address && (
                                   <p>
                                     <strong>
-                                      {pickLocalizedCopy(appLanguage, { ar: 'العنوان:', en: 'Address:' })}
+                                      {t('pois.address')}
                                     </strong>{' '}
                                     {poi.address}
                                   </p>
@@ -248,7 +235,7 @@ export default function AdminMap() {
                                 {poi.phone && (
                                   <p>
                                     <strong>
-                                      {pickLocalizedCopy(appLanguage, { ar: 'الهاتف:', en: 'Phone:' })}
+                                      {t('investor.inbox.phone')}
                                     </strong>{' '}
                                     <LtrText>{poi.phone}</LtrText>
                                   </p>
@@ -256,7 +243,7 @@ export default function AdminMap() {
                                 {poi.website && (
                                   <p>
                                     <strong>
-                                      {pickLocalizedCopy(appLanguage, { ar: 'الموقع:', en: 'Website:' })}
+                                      {t('pois.website')}
                                     </strong>{' '}
                                     <a
                                       href={poi.website}
@@ -292,23 +279,14 @@ export default function AdminMap() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'رفض نقطة الاهتمام',
-                en: 'Reject point of interest',
-              })}
+              {t('pois.rejectTitle')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'يرجى إدخال سبب الرفض (اختياري)',
-                en: 'Provide a rejection reason (optional)',
-              })}
+              {t('pois.rejectDesc')}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder={pickLocalizedCopy(appLanguage, {
-              ar: 'سبب الرفض...',
-              en: 'Rejection reason...',
-            })}
+            placeholder={t('pois.rejectPlaceholder')}
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
           />
@@ -320,13 +298,10 @@ export default function AdminMap() {
                 setRejectReason('');
               }}
             >
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+              {t('topup.cancelBtn')}
             </Button>
             <Button variant="destructive" onClick={handleReject}>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تأكيد الرفض',
-                en: 'Confirm rejection',
-              })}
+              {t('pois.confirmReject')}
             </Button>
           </DialogFooter>
         </DialogContent>

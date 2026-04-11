@@ -14,51 +14,43 @@ import { PageTransition } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
 import heroInvestment from '@/assets/hero-investment.jpg';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
+
 import { districtLabel } from '@/lib/format';
 import { matchesSearchQuery } from '@/lib/search';
 
-const sectorLabels = {
-  agriculture: { ar: 'زراعة', en: 'Agriculture' },
-  tourism: { ar: 'سياحة', en: 'Tourism' },
-  industry: { ar: 'صناعة', en: 'Industry' },
-  real_estate: { ar: 'عقارات', en: 'Real estate' },
-  services: { ar: 'خدمات', en: 'Services' },
-  technology: { ar: 'تكنولوجيا', en: 'Technology' },
-  energy: { ar: 'طاقة', en: 'Energy' },
-} as const satisfies Record<string, { ar: string; en: string }>;
-
-function sectorLabel(sector: string, language: 'ar' | 'en') {
-  const copy = sectorLabels[sector as keyof typeof sectorLabels];
-  return copy ? pickLocalizedCopy(language, copy) : sector;
+function sectorLabel(sector: string, t: (key: string, options?: any) => string) {
+  return t(`sectors.${sector}`, { defaultValue: sector });
 }
 
-function opportunityStatusLabel(status: string, language: 'ar' | 'en') {
+function opportunityStatusLabel(status: string, t: (key: string, options?: any) => string) {
   if (status === 'active') {
-    return pickLocalizedCopy(language, { ar: 'متاح', en: 'Available' });
+    return t('status.available');
   }
   return status;
 }
 
-function startupStatusLabel(status: string, language: 'ar' | 'en') {
+function startupStatusLabel(status: string, t: (key: string, options?: any) => string) {
   if (status === 'active') {
-    return pickLocalizedCopy(language, { ar: 'نشط', en: 'Active' });
+    return t('status.active');
   }
   return status;
 }
 
-function formatInvestmentRange(opportunity: Opportunity, language: 'ar' | 'en') {
+function formatInvestmentRange(opportunity: Opportunity, t: (key: string, options?: any) => string) {
   const minMillions = (opportunity.minInvestment / 100_000_000).toFixed(0);
   const maxMillions = (opportunity.maxInvestment / 100_000_000).toFixed(0);
 
-  return pickLocalizedCopy(language, {
-    ar: `${minMillions}-${maxMillions} مليون ${opportunity.currency}`,
-    en: `${minMillions}-${maxMillions} million ${opportunity.currency}`,
+  return t('card.investmentRange', {
+    min: minMillions,
+    max: maxMillions,
+    currency: opportunity.currency,
   });
 }
 
 const InvestmentPage = () => {
+  const { t } = useTranslation(['investment', 'common']);
   const navigate = useNavigate();
   const { language, user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -90,14 +82,14 @@ const InvestmentPage = () => {
           opp.titleEn,
           opp.description,
           opp.sector,
-          sectorLabel(opp.sector, language),
+          sectorLabel(opp.sector, t),
           opp.area,
-          districtLabel(opp.area, language),
+          districtLabel(opp.area, (language === 'en' ? 'en' : 'ar')),
           ...opp.incentives,
           ...(opp.contact?.name ? [opp.contact.name] : []),
         ]),
       ),
-    [opportunities, searchQuery, language],
+    [opportunities, searchQuery, language, t],
   );
 
   const filteredStartups = useMemo(
@@ -110,7 +102,7 @@ const InvestmentPage = () => {
           startup.descriptionAr,
           startup.category,
           startup.district,
-          districtLabel(startup.district ?? '', language),
+          districtLabel(startup.district ?? '', (language === 'en' ? 'en' : 'ar')),
           startup.status,
         ]),
       ),
@@ -118,40 +110,28 @@ const InvestmentPage = () => {
   );
 
   return (
-    <Layout title={pickLocalizedCopy(language, { ar: 'الاستثمار', en: 'Investment' })}>
+    <Layout title={t('title')}>
       <PageTransition>
         <PageHero
           image={heroInvestment}
-          alt={pickLocalizedCopy(language, {
-            ar: 'فرص الاستثمار',
-            en: 'Investment opportunities',
-          })}
+          alt={t('hero.title')}
         >
           <SR>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <TrendingUp className="h-5 w-5 text-accent" />
               <span className="text-sm font-semibold text-card">
-                {pickLocalizedCopy(language, {
-                  ar: 'فرص الاستثمار',
-                  en: 'Investment opportunities',
-                })}
+                {t('hero.badge')}
               </span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-              {pickLocalizedCopy(language, {
-                ar: 'فرص الاستثمار',
-                en: 'Investment opportunities',
-              })}
+              {t('hero.title')}
             </h1>
           </SR>
           <SR delay={200}>
             <p className="mb-10 text-lg text-card/90 md:text-xl">
-              {pickLocalizedCopy(language, {
-                ar: 'اكتشف الفرص الاستثمارية في الوادي الجديد وتواصل مع الشركات الناشئة',
-                en: 'Discover investment opportunities in New Valley and connect with startups',
-              })}
+              {t('hero.subtitle')}
             </p>
           </SR>
           <SR delay={300}>
@@ -160,10 +140,7 @@ const InvestmentPage = () => {
                 <div className="relative">
                   <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
                   <Input
-                    placeholder={pickLocalizedCopy(language, {
-                      ar: 'ابحث عن فرص استثمارية...',
-                      en: 'Search for investment opportunities...',
-                    })}
+                    placeholder={t('hero.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
@@ -173,7 +150,7 @@ const InvestmentPage = () => {
                   type="submit"
                   className="w-full rounded-xl sm:absolute sm:start-2 sm:top-1/2 sm:w-auto sm:-translate-y-1/2"
                 >
-                  {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
+                  {t('common:search')}
                 </Button>
               </div>
             </form>
@@ -189,19 +166,13 @@ const InvestmentPage = () => {
                     value="opportunities"
                     className="min-h-[44px] rounded-xl text-sm font-semibold"
                   >
-                    {pickLocalizedCopy(language, {
-                      ar: 'الفرص الاستثمارية',
-                      en: 'Opportunities',
-                    })}
+                    {t('tabs.opportunities')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="startups"
                     className="min-h-[44px] rounded-xl text-sm font-semibold"
                   >
-                    {pickLocalizedCopy(language, {
-                      ar: 'الشركات الناشئة',
-                      en: 'Startups',
-                    })}
+                    {t('tabs.startups')}
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -231,17 +202,14 @@ const InvestmentPage = () => {
                                     : 'px-3 py-1'
                                 }
                               >
-                                {opportunityStatusLabel(opportunity.status, language)}
+                                {opportunityStatusLabel(opportunity.status, t)}
                               </Badge>
                               <Badge variant="outline" className="px-3 py-1">
-                                {sectorLabel(opportunity.sector, language)}
+                                {sectorLabel(opportunity.sector, t)}
                               </Badge>
                             </div>
                             <h3 className="mb-3 text-xl font-bold text-foreground">
-                              {pickLocalizedField(language, {
-                                ar: opportunity.titleAr,
-                                en: opportunity.titleEn,
-                              })}
+                              {(language === 'en' ? opportunity.titleEn : opportunity.titleAr) ?? opportunity.titleAr ?? ''}
                             </h3>
                             <p className="mb-5 line-clamp-2 leading-relaxed text-muted-foreground">
                               {opportunity.incentives?.slice(0, 2).join(' • ')}
@@ -260,7 +228,7 @@ const InvestmentPage = () => {
                                   <DollarSign className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  {formatInvestmentRange(opportunity, language)}
+                                  {formatInvestmentRange(opportunity, t)}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2.5 text-sm sm:col-span-2">
@@ -268,10 +236,7 @@ const InvestmentPage = () => {
                                   <TrendingUp className="h-5 w-5 text-primary" />
                                 </div>
                                 <span className="text-muted-foreground">
-                                  {pickLocalizedCopy(language, {
-                                    ar: `العائد المتوقع: ${opportunity.expectedReturnPct}%`,
-                                    en: `Expected return: ${opportunity.expectedReturnPct}%`,
-                                  })}
+                                  {t('card.expectedReturn', { pct: opportunity.expectedReturnPct })}
                                 </span>
                               </div>
                             </div>
@@ -283,10 +248,7 @@ const InvestmentPage = () => {
                                   void navigate(`/investment/opportunity/${opportunity.id}`)
                                 }
                               >
-                                {pickLocalizedCopy(language, {
-                                  ar: 'التفاصيل',
-                                  en: 'Details',
-                                })}{' '}
+                                {t('common:details')}{' '}
                                 <ArrowLeft className="me-2 h-4 w-4" />
                               </Button>
                               {canAccessInvestmentContact ? (
@@ -297,10 +259,7 @@ const InvestmentPage = () => {
                                   }
                                 >
                                   <Send className="ms-2 h-4 w-4" />
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'استفسار',
-                                    en: 'Inquiry',
-                                  })}
+                                  {t('common:inquiry')}
                                 </Button>
                               ) : null}
                             </div>
@@ -323,10 +282,7 @@ const InvestmentPage = () => {
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
                       {filteredStartups.map((startup) => {
-                        const startupDescription = pickLocalizedField(language, {
-                          ar: startup.descriptionAr,
-                          en: startup.description,
-                        });
+                        const startupDescription = (language === 'en' ? startup.description : startup.descriptionAr) ?? startup.description ?? '';
 
                         return (
                           <Card
@@ -339,10 +295,7 @@ const InvestmentPage = () => {
                                   {startup.logoUrl ? (
                                     <img
                                       src={startup.logoUrl}
-                                      alt={pickLocalizedField(language, {
-                                        ar: startup.nameAr,
-                                        en: startup.nameEn,
-                                      })}
+                                      alt={(language === 'en' ? startup.nameEn : startup.nameAr) ?? startup.nameAr ?? ''}
                                       className="h-full w-full object-cover"
                                     />
                                   ) : (
@@ -351,10 +304,7 @@ const InvestmentPage = () => {
                                 </div>
                                 <div>
                                   <h3 className="text-lg font-bold text-foreground">
-                                    {pickLocalizedField(language, {
-                                      ar: startup.nameAr,
-                                      en: startup.nameEn,
-                                    })}
+                                    {(language === 'en' ? startup.nameEn : startup.nameAr) ?? startup.nameAr ?? ''}
                                   </h3>
                                   <Badge variant="secondary" className="mt-1">
                                     {startup.category}
@@ -371,7 +321,7 @@ const InvestmentPage = () => {
                                   <MapPin className="h-4 w-4" />
                                   {districtLabel(startup.district ?? '', language)}
                                 </div>
-                                <div>{startupStatusLabel(startup.status, language)}</div>
+                                <div>{startupStatusLabel(startup.status, t)}</div>
                               </div>
                               <div className="flex flex-col gap-3 sm:flex-row">
                                 <Button
@@ -381,10 +331,7 @@ const InvestmentPage = () => {
                                     void navigate(`/investment/startups/${startup.id}`)
                                   }
                                 >
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'التفاصيل',
-                                    en: 'Details',
-                                  })}{' '}
+                                  {t('common:details')}{' '}
                                   <ArrowLeft className="me-2 h-4 w-4" />
                                 </Button>
                                 {canAccessInvestmentContact ? (
@@ -397,10 +344,7 @@ const InvestmentPage = () => {
                                     }
                                   >
                                     <Send className="ms-2 h-4 w-4" />
-                                    {pickLocalizedCopy(language, {
-                                      ar: 'تواصل',
-                                      en: 'Contact',
-                                    })}
+                                    {t('common:contact')}
                                   </Button>
                                 ) : null}
                               </div>

@@ -1,5 +1,6 @@
 import { Home, LogIn, Mountain, ShoppingBag, Truck, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
@@ -15,9 +16,10 @@ type NavItem = {
 
 export function MobileBottomNav() {
   const { pathname } = useLocation();
-  const { user, language } = useAuth();
+  const { user } = useAuth();
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
+  const { t } = useTranslation('layout');
 
   if (!shouldShowMobileBottomNav(pathname)) {
     return null;
@@ -25,48 +27,48 @@ export function MobileBottomNav() {
 
   const accountItem: NavItem = user
     ? {
-        href: '/profile',
-        label: language === 'en' ? 'Account' : 'الحساب',
-        icon: User,
-        matcher: (currentPath) =>
-          currentPath === '/profile' ||
-          currentPath.startsWith('/wallet') ||
-          currentPath.startsWith('/bookings') ||
-          currentPath.startsWith('/notifications'),
-        badge: unreadCount > 0 ? unreadCount : undefined,
-      }
+      href: '/profile',
+      label: t('mobileNav.account'),
+      icon: User,
+      matcher: (currentPath) =>
+        currentPath === '/profile' ||
+        currentPath.startsWith('/wallet') ||
+        currentPath.startsWith('/bookings') ||
+        currentPath.startsWith('/notifications'),
+      badge: unreadCount > 0 ? unreadCount : undefined,
+    }
     : {
-        href: '/login',
-        label: language === 'en' ? 'Log in' : 'دخول',
-        icon: LogIn,
-        matcher: (currentPath) =>
-          currentPath.startsWith('/login') || currentPath.startsWith('/register'),
-      };
+      href: '/login',
+      label: t('mobileNav.login'),
+      icon: LogIn,
+      matcher: (currentPath) =>
+        currentPath.startsWith('/login') || currentPath.startsWith('/register'),
+    };
 
   const items: NavItem[] = [
     {
       href: '/',
-      label: language === 'en' ? 'Home' : 'الرئيسية',
+      label: t('mobileNav.home'),
       icon: Home,
       matcher: (currentPath) => currentPath === '/',
     },
     {
       href: '/tourism',
-      label: language === 'en' ? 'Tourism' : 'السياحة',
+      label: t('mobileNav.tourism'),
       icon: Mountain,
       matcher: (currentPath) =>
         currentPath.startsWith('/tourism') || currentPath.startsWith('/guides'),
     },
     {
       href: '/marketplace',
-      label: language === 'en' ? 'Market' : 'البورصة',
+      label: t('mobileNav.market'),
       icon: ShoppingBag,
       matcher: (currentPath) =>
         currentPath.startsWith('/marketplace') || currentPath.startsWith('/investment'),
     },
     {
       href: '/logistics',
-      label: language === 'en' ? 'Transport' : 'النقل',
+      label: t('mobileNav.transport'),
       icon: Truck,
       matcher: (currentPath) => currentPath.startsWith('/logistics'),
     },
@@ -75,7 +77,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      aria-label={language === 'en' ? 'Mobile navigation' : 'التنقل على الجوال'}
+      aria-label={t('mobileNav.ariaLabel')}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 shadow-[0_-12px_30px_hsl(30_20%_20%_/_0.08)] backdrop-blur md:hidden"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
     >
@@ -89,11 +91,10 @@ export function MobileBottomNav() {
               key={item.href}
               to={item.href}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition-colors ${
-                isActive
+              className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition-colors ${isActive
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-              }`}
+                }`}
             >
               <Icon className="h-5 w-5" />
               <span>{item.label}</span>

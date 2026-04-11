@@ -20,6 +20,9 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { useListing } from '@/hooks/use-listings';
 import { usePois } from '@/hooks/use-map';
 import { districtLabel, formatPrice, formatRating } from '@/lib/format';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import type { AppLanguage } from '@/lib/localization';
 
 function getContactField(
   contact: Record<string, unknown> | null,
@@ -31,6 +34,9 @@ function getContactField(
 
 const AccommodationDetailsPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('accommodation');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const { id } = useParams<{ id: string }>();
   const { data: listing, isLoading, isError, refetch } = useListing(id);
 
@@ -55,20 +61,20 @@ const AccommodationDetailsPage = () => {
     return [
       {
         id: listing.id,
-        name: listing.titleAr,
+        name: (appLanguage === 'en' ? listing.titleEn : listing.titleAr) ?? listing.titleAr ?? '',
         lat: listing.location.y,
         lng: listing.location.x,
         description: listing.address ?? listing.district ?? '',
-        type: 'سكن',
+        type: t('list.badgeType'),
         image: listing.images?.[0],
         color: '#2563eb',
       },
     ];
-  }, [listing]);
+  }, [listing, appLanguage, t]);
 
   if (isLoading) {
     return (
-      <Layout title="تفاصيل الإقامة">
+      <Layout title={t('details.pageTitle')}>
         <div className="container py-10 space-y-6">
           <Skeleton h="h-10" className="w-32 rounded-xl" />
           <Skeleton h="h-80" className="rounded-2xl" />
@@ -80,14 +86,14 @@ const AccommodationDetailsPage = () => {
 
   if (isError || !listing) {
     return (
-      <Layout title="تفاصيل الإقامة">
+      <Layout title={t('details.pageTitle')}>
         <div className="container py-20 text-center space-y-4">
-          <p className="text-lg text-muted-foreground">تعذر تحميل بيانات السكن.</p>
+          <p className="text-lg text-muted-foreground">{t('details.loadingError')}</p>
           <div className="flex items-center justify-center gap-3">
             <Button variant="outline" onClick={() => void navigate('/tourism/accommodation')}>
-              العودة إلى السكن
+              {t('details.back')}
             </Button>
-            <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+            <Button onClick={() => void refetch()}>{t('list.retry')}</Button>
           </div>
         </div>
       </Layout>
@@ -95,7 +101,7 @@ const AccommodationDetailsPage = () => {
   }
 
   return (
-    <Layout title="تفاصيل الإقامة">
+    <Layout title={t('details.pageTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button
@@ -104,7 +110,7 @@ const AccommodationDetailsPage = () => {
             className="mb-6"
           >
             <ArrowRight className="h-4 w-4" />
-            العودة إلى السكن
+            {t('details.back')}
           </Button>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -113,7 +119,7 @@ const AccommodationDetailsPage = () => {
                 <div className="md:col-span-2">
                   <img
                     src={listing.images?.[0] ?? '/placeholder.jpg'}
-                    alt={listing.titleAr}
+                    alt={(appLanguage === 'en' ? listing.titleEn : listing.titleAr) ?? listing.titleAr ?? ''}
                     className="h-64 w-full rounded-xl object-cover md:h-80"
                   />
                 </div>
@@ -121,7 +127,7 @@ const AccommodationDetailsPage = () => {
                   <img
                     key={`${image}-${index}`}
                     src={image}
-                    alt={`${listing.titleAr} ${index + 2}`}
+                    alt={`${(appLanguage === 'en' ? listing.titleEn : listing.titleAr) ?? listing.titleAr ?? ''} ${index + 2}`}
                     className="h-40 w-full rounded-xl object-cover"
                   />
                 ))}
@@ -130,7 +136,7 @@ const AccommodationDetailsPage = () => {
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{listing.subCategory ?? 'إقامة'}</Badge>
+                    <Badge variant="secondary">{listing.subCategory ?? t('list.badgeType')}</Badge>
                     {listing.tags?.slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="outline">
                         {tag}
@@ -138,12 +144,12 @@ const AccommodationDetailsPage = () => {
                     ))}
                   </div>
                   <h1 className="mb-3 text-2xl font-bold text-foreground md:text-3xl">
-                    {listing.titleAr}
+                    {(appLanguage === 'en' ? listing.titleEn : listing.titleAr) ?? listing.titleAr ?? ''}
                   </h1>
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>{districtLabel(listing.district ?? listing.address ?? 'غير محدد')}</span>
+                      <span>{districtLabel(listing.district ?? listing.address ?? '', appLanguage) || t('list.unspecified')}</span>
                     </div>
                     {listing.areaSqm != null && (
                       <div className="flex items-center gap-2">
@@ -160,8 +166,8 @@ const AccommodationDetailsPage = () => {
                   </div>
                   {listing.ratingAvg != null && listing.reviewCount > 0 && (
                     <p className="mt-4 text-sm text-muted-foreground">
-                      التقييم: <span className="font-semibold text-foreground">{formatRating(listing.ratingAvg)}</span>
-                      {' '}({listing.reviewCount} تقييم)
+                      {t('details.rating')} <span className="font-semibold text-foreground">{formatRating(listing.ratingAvg)}</span>
+                      {' '}({listing.reviewCount} {t('details.reviewsCount')})
                     </p>
                   )}
                 </CardContent>
@@ -170,11 +176,11 @@ const AccommodationDetailsPage = () => {
               {listing.description && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">وصف السكن</CardTitle>
+                    <CardTitle className="text-lg">{t('details.descriptionTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
-                      {listing.description}
+                      {(appLanguage === 'en' ? listing.descriptionEn : listing.descriptionAr || listing.description) ?? listing.descriptionAr || listing.description ?? ''}
                     </p>
                   </CardContent>
                 </Card>
@@ -183,7 +189,7 @@ const AccommodationDetailsPage = () => {
               {listing.amenities && listing.amenities.length > 0 && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">المميزات</CardTitle>
+                    <CardTitle className="text-lg">{t('details.amenitiesTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -202,7 +208,7 @@ const AccommodationDetailsPage = () => {
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">الموقع</CardTitle>
+                  <CardTitle className="text-lg">{t('details.locationTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {mapLocations.length > 0 ? (
@@ -214,21 +220,25 @@ const AccommodationDetailsPage = () => {
                     />
                   ) : (
                     <div className="rounded-xl bg-muted/40 p-6 text-center text-muted-foreground">
-                      لا تتوفر إحداثيات دقيقة لهذا السكن حالياً.
+                      {t('details.noMapData')}
                     </div>
                   )}
 
                   {nearbyPoisQuery.data?.data && nearbyPoisQuery.data.data.length > 0 && (
                     <div className="space-y-3">
-                      <p className="text-sm font-medium text-foreground">أماكن قريبة</p>
+                      <p className="text-sm font-medium text-foreground">{t('details.nearbyTitle')}</p>
                       <div className="grid gap-3 md:grid-cols-2">
                         {nearbyPoisQuery.data.data.slice(0, 4).map((poi) => (
                           <div
                             key={poi.id}
                             className="rounded-xl border border-border px-4 py-3 text-sm"
                           >
-                            <p className="font-semibold text-foreground">{poi.nameAr}</p>
-                            <p className="text-muted-foreground">{poi.address ?? 'بدون عنوان'}</p>
+                            <p className="font-semibold text-foreground">
+                              {(appLanguage === 'en' ? poi.nameEn : poi.nameAr) ?? poi.nameAr ?? ''}
+                            </p>
+                            <p className="text-muted-foreground">
+                              {(appLanguage === 'en' ? poi.addressEn : poi.addressAr || poi.address) ?? poi.addressAr || poi.address ?? '' ?? t('list.noAddress')}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -241,16 +251,16 @@ const AccommodationDetailsPage = () => {
             <div className="space-y-6">
               <Card className="sticky top-20 border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">تفاصيل العرض</CardTitle>
+                  <CardTitle className="text-lg">{t('details.pricingTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="rounded-lg bg-primary/5 py-4 text-center">
-                    <p className="text-sm text-muted-foreground">السعر</p>
+                    <p className="text-sm text-muted-foreground">{t('list.priceLabel')}</p>
                     <p className="text-3xl font-bold text-primary">
                       {formatPrice(listing.price)}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      جنيه/{listing.priceUnit || 'شهرياً'}
+                      {t('list.currency')}/{listing.priceUnit || t('details.pricePerUnit')}
                     </p>
                   </div>
 
@@ -260,14 +270,14 @@ const AccommodationDetailsPage = () => {
                     onClick={() => void navigate(`/tourism/accommodation-inquiry/${listing.id}`)}
                   >
                     <MessageSquare className="ms-2 h-5 w-5" />
-                    تواصل بشأن السكن
+                    {t('details.contactBtn')}
                   </Button>
                 </CardContent>
               </Card>
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">معلومات التواصل</CardTitle>
+                  <CardTitle className="text-lg">{t('details.contactInfoTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   {contactName && (
@@ -306,7 +316,7 @@ const AccommodationDetailsPage = () => {
                     </div>
                   )}
                   {!contactName && !contactPhone && !contactEmail && !contactWebsite && (
-                    <p className="text-muted-foreground">سيتم توفير بيانات التواصل بعد إرسال الاستفسار.</p>
+                    <p className="text-muted-foreground">{t('details.contactHidden')}</p>
                   )}
                 </CardContent>
               </Card>

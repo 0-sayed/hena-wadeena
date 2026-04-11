@@ -292,7 +292,7 @@ describe('MarketplacePage', () => {
 
     render(<MarketplacePage />);
 
-    fireEvent.change(screen.getByPlaceholderText('ابحث عن مورد...'), {
+    fireEvent.change(screen.getByPlaceholderText('suppliers.searchPlaceholder'), {
       target: { value: 'الواح' },
     });
 

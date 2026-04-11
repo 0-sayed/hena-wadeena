@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { kycOnboardingAPI } from '@/services/api';
 import type { KycOnboardingSession, KycOnboardingSubmission } from '@/services/api';
 import { clearKycSessionToken, getKycSessionToken } from '@/services/kyc-session-manager';
+import { useTranslation } from 'react-i18next';
 
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 const ALLOWED_DOCUMENT_TYPES = new Set([
@@ -24,21 +25,6 @@ const ALLOWED_DOCUMENT_TYPES = new Set([
   'image/png',
   'image/webp',
 ]);
-
-const documentLabels: Record<string, string> = {
-  [KycDocType.NATIONAL_ID]: 'بطاقة الرقم القومي',
-  [KycDocType.STUDENT_ID]: 'بطاقة الطالب',
-  [KycDocType.GUIDE_LICENSE]: 'رخصة الإرشاد',
-  [KycDocType.COMMERCIAL_REGISTER]: 'السجل التجاري',
-  [KycDocType.BUSINESS_DOCUMENT]: 'مستند تجاري',
-};
-
-const statusLabels: Record<KycOnboardingSubmission['status'], string> = {
-  pending: 'قيد الانتظار',
-  under_review: 'قيد المراجعة',
-  approved: 'مقبول',
-  rejected: 'مرفوض',
-};
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -50,9 +36,9 @@ function readFileAsDataUrl(file: File): Promise<string> {
         return;
       }
 
-      reject(new Error('تعذر قراءة الملف'));
+      reject(new Error('readError'));
     };
-    reader.onerror = () => reject(new Error('تعذر قراءة الملف'));
+    reader.onerror = () => reject(new Error('readError'));
     reader.readAsDataURL(file);
   });
 }
@@ -65,6 +51,7 @@ function getLatestSubmission(
 }
 
 export default function KycContinuePage() {
+  const { t } = useTranslation('kyc');
   const navigate = useNavigate();
   const [session, setSession] = useState<KycOnboardingSession | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File | null>>({});
@@ -89,7 +76,7 @@ export default function KycContinuePage() {
       } catch (error) {
         clearKycSessionToken();
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : 'تعذر تحميل جلسة التحقق');
+          toast.error(error instanceof Error ? error.message : t('loadError'));
           void navigate('/login');
         }
       } finally {
@@ -103,7 +90,7 @@ export default function KycContinuePage() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, t]);
 
   const handleFileSelected = (docType: string) => (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -112,13 +99,13 @@ export default function KycContinuePage() {
     }
 
     if (!ALLOWED_DOCUMENT_TYPES.has(file.type)) {
-      toast.error('اختر ملف PDF أو صورة JPG/PNG/WebP');
+      toast.error(t('document.typeError'));
       event.target.value = '';
       return;
     }
 
     if (file.size > MAX_DOCUMENT_BYTES) {
-      toast.error('حجم الملف يجب ألا يتجاوز 5 ميجابايت');
+      toast.error(t('document.sizeError'));
       event.target.value = '';
       return;
     }
@@ -142,7 +129,7 @@ export default function KycContinuePage() {
     const file = selectedFiles[docType];
     const kycSessionToken = getKycSessionToken();
     if (!file || !kycSessionToken) {
-      toast.error('اختر الملف أولاً');
+      toast.error(t('document.requiredError'));
       return;
     }
 
@@ -152,9 +139,9 @@ export default function KycContinuePage() {
       await kycOnboardingAPI.submitDocument(kycSessionToken, { docType, docUrl });
       setSelectedFiles((current) => ({ ...current, [docType]: null }));
       await refreshSession();
-      toast.success('تم رفع المستند بنجاح');
+      toast.success(t('document.uploadSuccess'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'تعذر رفع المستند');
+      toast.error(error instanceof Error && error.message === 'readError' ? t('document.readError') : (error instanceof Error ? error.message : t('document.uploadError')));
     } finally {
       setSubmittingDocType(null);
     }
@@ -162,9 +149,9 @@ export default function KycContinuePage() {
 
   if (loading) {
     return (
-      <Layout title="التحقق من الهوية">
+      <Layout title={t('title')}>
         <div className="container py-16 text-center text-muted-foreground">
-          جاري تحميل حالة التحقق...
+          {t('loading')}
         </div>
       </Layout>
     );
@@ -175,7 +162,7 @@ export default function KycContinuePage() {
   }
 
   return (
-    <Layout title="التحقق من الهوية">
+    <Layout title={t('title')}>
       <PageTransition>
         <section className="relative overflow-hidden py-12 md:py-16">
           <GradientMesh />
@@ -188,16 +175,16 @@ export default function KycContinuePage() {
                       <FileBadge2 className="h-6 w-6" />
                     </div>
                     <div>
-                      <CardTitle>استكمال التحقق من الهوية</CardTitle>
+                      <CardTitle>{t('cardTitle')}</CardTitle>
                       <CardDescription>
-                        ارفع المستندات المطلوبة لتفعيل حساب {session.user.full_name}
+                        {t('cardDescription', { name: session.user.full_name })}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {session.required_documents.map((docType) => (
                       <Badge key={docType} variant="secondary">
-                        {documentLabels[docType] ?? docType}
+                        {t(`document.${docType}`)}
                       </Badge>
                     ))}
                   </div>
@@ -216,11 +203,11 @@ export default function KycContinuePage() {
                       >
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div>
-                            <h2 className="font-semibold">{documentLabels[docType] ?? docType}</h2>
+                            <h2 className="font-semibold">{t(`document.${docType}`)}</h2>
                             <p className="text-sm text-muted-foreground">
                               {latestSubmission
-                                ? `الحالة الحالية: ${statusLabels[latestSubmission.status]}`
-                                : 'لم يتم رفع هذا المستند بعد'}
+                                ? t('status.current', { status: t(`status.${latestSubmission.status}`) })
+                                : t('status.notSubmitted')}
                             </p>
                           </div>
                           {latestSubmission ? (
@@ -233,20 +220,20 @@ export default function KycContinuePage() {
                                     : 'secondary'
                               }
                             >
-                              {statusLabels[latestSubmission.status]}
+                              {t(`status.${latestSubmission.status}`)}
                             </Badge>
                           ) : null}
                         </div>
 
                         {latestSubmission?.rejectionReason ? (
                           <div className="mb-3 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
-                            سبب الرفض: {latestSubmission.rejectionReason}
+                            {t('status.rejectionReason', { reason: latestSubmission.rejectionReason })}
                           </div>
                         ) : null}
 
                         <div className="flex flex-col gap-3 md:flex-row md:items-end">
                           <div className="flex-1 space-y-2">
-                            <Label htmlFor={`kyc-${docType}`}>اختر الملف</Label>
+                            <Label htmlFor={`kyc-${docType}`}>{t('document.selectFile')}</Label>
                             <Input
                               id={`kyc-${docType}`}
                               type="file"
@@ -265,27 +252,27 @@ export default function KycContinuePage() {
                             {submittingDocType === docType ? (
                               <>
                                 <Hourglass className="ml-2 h-4 w-4" />
-                                جارٍ الرفع...
+                                {t('button.submitting')}
                               </>
                             ) : latestSubmission?.status === 'rejected' ? (
                               <>
                                 <FileUp className="ml-2 h-4 w-4" />
-                                إعادة الرفع
+                                {t('button.reUpload')}
                               </>
                             ) : latestSubmission?.status === 'approved' ? (
                               <>
                                 <CheckCircle2 className="ml-2 h-4 w-4" />
-                                تم الاعتماد
+                                {t('button.approved')}
                               </>
                             ) : latestSubmission?.status === 'pending' ? (
                               <>
                                 <Hourglass className="ml-2 h-4 w-4" />
-                                بانتظار المراجعة
+                                {t('button.pendingReview')}
                               </>
                             ) : (
                               <>
                                 <FileUp className="ml-2 h-4 w-4" />
-                                رفع المستند
+                                {t('button.upload')}
                               </>
                             )}
                           </Button>
@@ -297,11 +284,10 @@ export default function KycContinuePage() {
                   <div className="rounded-2xl bg-muted/40 p-4 text-sm text-muted-foreground">
                     <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
                       <AlertCircle className="h-4 w-4 text-primary" />
-                      ماذا يحدث بعد الرفع؟
+                      {t('info.title')}
                     </div>
                     <p>
-                      تظهر المستندات في لوحة الإدارة للمراجعة. سيبقى الحساب معلقًا حتى يتم اعتماد كل
-                      المستندات المطلوبة.
+                      {t('info.description')}
                     </p>
                   </div>
 
@@ -314,7 +300,7 @@ export default function KycContinuePage() {
                         void navigate('/login');
                       }}
                     >
-                      العودة إلى تسجيل الدخول
+                      {t('button.backToLogin')}
                     </Button>
                   </div>
                 </CardContent>

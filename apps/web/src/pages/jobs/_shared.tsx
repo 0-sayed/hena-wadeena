@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useSubmitReviewMutation } from '@/hooks/use-jobs';
+import { useTranslation } from 'react-i18next';
 
 export function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
@@ -35,15 +36,16 @@ export function ReviewForm({
 }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const { t } = useTranslation('jobs');
   const submitMutation = useSubmitReviewMutation(jobId, appId);
 
   async function handleSubmit() {
     try {
       await submitMutation.mutateAsync({ rating, comment: comment.trim() || undefined });
-      toast.success('تم إرسال تقييمك');
+      toast.success(t('shared.reviewSuccess'));
       onDone();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر إرسال التقييم');
+      toast.error(err instanceof Error ? err.message : t('shared.reviewError'));
     }
   }
 
@@ -52,17 +54,17 @@ export function ReviewForm({
       <p className="text-sm font-medium">{label}</p>
       <StarRating value={rating} onChange={setRating} />
       <Textarea
-        placeholder="تعليق (اختياري)"
+        placeholder={t('shared.commentPlaceholder')}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         rows={2}
       />
       <div className="flex gap-2">
         <Button size="sm" onClick={() => void handleSubmit()} disabled={submitMutation.isPending}>
-          {submitMutation.isPending ? 'جارٍ...' : 'إرسال التقييم'}
+          {submitMutation.isPending ? t('shared.reviewSubmittingStatus') : t('shared.submitReviewBtn')}
         </Button>
         <Button size="sm" variant="ghost" onClick={onDone}>
-          إلغاء
+          {t('shared.cancelReviewBtn')}
         </Button>
       </div>
     </div>

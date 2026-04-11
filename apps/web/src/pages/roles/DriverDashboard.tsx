@@ -1,4 +1,4 @@
-﻿import { Truck, Route, Users, Car } from 'lucide-react';
+import { Truck, Route, Users, Car } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
@@ -16,23 +16,21 @@ import {
 } from '@/components/ui/table';
 import { useActivateRide, useCancelRide, useDeleteRide, useMyRides } from '@/hooks/use-map';
 import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
-const rideStatusLabels: Record<
-  string,
-  { ar: string; en: string; variant: 'default' | 'secondary' | 'outline' }
-> = {
-  open: { ar: 'مفتوح', en: 'Open', variant: 'default' },
-  full: { ar: 'مكتمل', en: 'Full', variant: 'secondary' },
-  departed: { ar: 'انطلق', en: 'Departed', variant: 'outline' },
-  completed: { ar: 'منتهي', en: 'Completed', variant: 'outline' },
-  cancelled: { ar: 'ملغي', en: 'Cancelled', variant: 'outline' },
+const rideStatusVariants: Record<string, 'default' | 'secondary' | 'outline'> = {
+  open: 'default',
+  full: 'secondary',
+  departed: 'outline',
+  completed: 'outline',
+  cancelled: 'outline',
 };
 
 export default function DriverDashboard() {
+  const { t } = useTranslation('dashboard');
   const navigate = useNavigate();
   const { language } = useAuth();
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const appLanguage = language === 'en' ? 'en' : 'ar';
   const { data: myRidesData, isLoading } = useMyRides();
   const cancelRide = useCancelRide();
   const activateRide = useActivateRide();
@@ -50,12 +48,7 @@ export default function DriverDashboard() {
   const handleCancelRide = (rideId: string) => {
     cancelRide.mutate(rideId, {
       onSuccess: () =>
-        toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تم إلغاء الرحلة',
-            en: 'Ride cancelled',
-          }),
-        ),
+        toast.success(t('driver.toasts.cancelled')),
       onError: (error) => toast.error(error.message),
     });
   };
@@ -63,36 +56,19 @@ export default function DriverDashboard() {
   const handleActivateRide = (rideId: string) => {
     activateRide.mutate(rideId, {
       onSuccess: () =>
-        toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تمت إعادة تفعيل الرحلة',
-            en: 'Ride reactivated',
-          }),
-        ),
+        toast.success(t('driver.toasts.reactivated')),
       onError: (error) => toast.error(error.message),
     });
   };
 
   const handleDeleteRide = (rideId: string) => {
-    if (
-      !window.confirm(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'هل تريد حذف هذه الرحلة نهائيًا؟',
-          en: 'Do you want to permanently delete this ride?',
-        }),
-      )
-    ) {
+    if (!window.confirm(t('driver.toasts.confirmDelete'))) {
       return;
     }
 
     deleteRide.mutate(rideId, {
       onSuccess: () =>
-        toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تم حذف الرحلة',
-            en: 'Ride deleted',
-          }),
-        ),
+        toast.success(t('driver.toasts.deleted')),
       onError: (error) => toast.error(error.message),
     });
   };
@@ -100,22 +76,19 @@ export default function DriverDashboard() {
   return (
     <DashboardShell
       icon={Truck}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة السائق', en: 'Driver dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'إدارة رحلات الكاربول والمقاعد المتاحة',
-        en: 'Manage carpool rides and available seats',
-      })}
+      title={t('driver.title')}
+      subtitle={t('driver.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label={pickLocalizedCopy(appLanguage, { ar: 'الرحلات', en: 'Rides' })} value={stats.total} icon={Route} />
+        <StatCard label={t('driver.stats.rides')} value={stats.total} icon={Route} />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'مقاعد متاحة', en: 'Available seats' })}
+          label={t('driver.stats.available')}
           value={stats.available}
           icon={Car}
           variant="success"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'مقاعد محجوزة', en: 'Booked seats' })}
+          label={t('driver.stats.booked')}
           value={stats.booked}
           icon={Users}
           variant="warning"
@@ -124,32 +97,33 @@ export default function DriverDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'رحلاتي', en: 'My rides' })}</CardTitle>
+          <CardTitle>{t('driver.rides.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, { ar: 'جارٍ التحميل...', en: 'Loading...' })}
+              {t('driver.rides.loading')}
             </p>
           ) : rides.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, { ar: 'لا توجد رحلات بعد', en: 'No rides yet' })}
+              {t('driver.rides.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المسار', en: 'Route' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الموعد', en: 'Schedule' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المقاعد', en: 'Seats' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعر/مقعد', en: 'Price/seat' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}</TableHead>
+                  <TableHead>{t('driver.rides.table.route')}</TableHead>
+                  <TableHead>{t('driver.rides.table.schedule')}</TableHead>
+                  <TableHead>{t('driver.rides.table.seats')}</TableHead>
+                  <TableHead>{t('driver.rides.table.price')}</TableHead>
+                  <TableHead>{t('driver.rides.table.status')}</TableHead>
+                  <TableHead>{t('driver.rides.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rides.map((ride) => {
-                  const status = rideStatusLabels[ride.status] ?? rideStatusLabels.open;
+                  const statusLabel = t(`driver.status.${ride.status}`);
+                  const variant = rideStatusVariants[ride.status] ?? 'default';
                   const canDelete = ride.status === 'cancelled' || ride.status === 'completed';
 
                   return (
@@ -171,11 +145,10 @@ export default function DriverDashboard() {
                         {ride.seatsTaken}/{ride.seatsTotal}
                       </TableCell>
                       <TableCell dir="ltr" className="text-end">
-                        {(ride.pricePerSeat / 100).toFixed(0)}{' '}
-                        {pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' })}
+                        {(ride.pricePerSeat / 100).toFixed(0)} {t('driver.currency')}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={status.variant}>{pickLocalizedCopy(appLanguage, status)}</Badge>
+                        <Badge variant={variant}>{statusLabel}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
@@ -184,7 +157,7 @@ export default function DriverDashboard() {
                             variant="outline"
                             onClick={() => void navigate(`/logistics/ride/${ride.id}`)}
                           >
-                            {pickLocalizedCopy(appLanguage, { ar: 'التفاصيل', en: 'Details' })}
+                            {t('driver.rides.detailsBtn')}
                           </Button>
                           {ride.status === 'open' && (
                             <Button
@@ -193,7 +166,7 @@ export default function DriverDashboard() {
                               disabled={controlsDisabled}
                               onClick={() => handleCancelRide(ride.id)}
                             >
-                              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+                              {t('driver.rides.cancelBtn')}
                             </Button>
                           )}
                           {ride.status === 'cancelled' && (
@@ -203,7 +176,7 @@ export default function DriverDashboard() {
                               disabled={controlsDisabled}
                               onClick={() => handleActivateRide(ride.id)}
                             >
-                              {pickLocalizedCopy(appLanguage, { ar: 'تفعيل', en: 'Activate' })}
+                              {t('driver.rides.activateBtn')}
                             </Button>
                           )}
                           {canDelete && (
@@ -213,7 +186,7 @@ export default function DriverDashboard() {
                               disabled={controlsDisabled}
                               onClick={() => handleDeleteRide(ride.id)}
                             >
-                              {pickLocalizedCopy(appLanguage, { ar: 'حذف', en: 'Delete' })}
+                              {t('driver.rides.deleteBtn')}
                             </Button>
                           )}
                         </div>

@@ -7,6 +7,23 @@ import GuidesPage from '../GuidesPage';
 const mockUseGuides = vi.fn();
 const mockUsePublicUsers = vi.fn();
 const mockUseDebouncedCallback = vi.fn();
+const mockUseAuth = vi.fn();
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const texts: Record<string, string> = {
+        'searchPlaceholder': 'ابحث بالتخصص أو الوصف...',
+        'guide.defaultName': 'مرشد سياحي',
+      };
+      return texts[key] || key;
+    }
+  }),
+}));
 
 vi.mock('react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
@@ -102,6 +119,9 @@ describe('GuidesPage', () => {
     mockUseGuides.mockReset();
     mockUsePublicUsers.mockReset();
     mockUseDebouncedCallback.mockReset();
+    mockUseAuth.mockReset();
+
+    mockUseAuth.mockReturnValue({ language: 'ar', isAuthenticated: false, user: null });
 
     mockUseGuides.mockReturnValue({
       data: [

@@ -1,0 +1,64 @@
+{
+  "title": "Profile",
+  "loadError": "The profile cannot be loaded right now.",
+  "notProvided": "Not provided",
+  "roles": {
+    "admin": "Admin",
+    "tourist": "Tourist",
+    "investor": "Investor",
+    "merchant": "Merchant",
+    "guide": "Tour guide",
+    "student": "Student",
+    "driver": "Driver",
+    "resident": "Resident",
+    "moderator": "Moderator",
+    "reviewer": "Reviewer"
+  },
+  "status": {
+    "active": "Active",
+    "suspended": "Suspended",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "pending_kyc": "Pending KYC",
+    "rejected": "Rejected"
+  },
+  "languages": {
+    "ar": "Arabic",
+    "en": "English"
+  },
+  "form": {
+    "fullName": "Full name",
+    "email": "Email",
+    "phone": "Phone number",
+    "language": "Language",
+    "saveBtn": "Save changes",
+    "savingBtn": "Saving...",
+    "cancelBtn": "Cancel",
+    "editBtn": "Edit profile",
+    "changePasswordBtn": "Change password"
+  },
+  "validation": {
+    "fullNameRequired": "Full name is required",
+    "fullNameMin": "Full name must be at least 3 characters",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Enter a valid email address",
+    "phoneInvalid": "Enter a valid phone number"
+  },
+  "toast": {
+    "updateSuccess": "Profile updated successfully",
+    "updateError": "Unable to update the profile",
+    "imageType": "Choose a JPG, PNG, or WebP image",
+    "imageSize": "Image size must not exceed 5 MB",
+    "imageReadError": "Unable to read the image",
+    "imageReady": "Image is ready. Save the changes to update your profile"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "loadError": "Error loading notifications",
+    "retryBtn": "Retry",
+    "empty": "No notifications",
+    "markReadError": "Unable to update notification",
+    "markAllReadError": "Unable to update notifications"
+  }
+}

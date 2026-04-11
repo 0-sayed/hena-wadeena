@@ -387,6 +387,7 @@ export interface Attraction {
   descriptionAr: string | null;
   descriptionEn: string | null;
   historyAr: string | null;
+  historyEn: string | null;
   bestSeason: BestSeason | null;
   bestTimeOfDay: BestTimeOfDay | null;
   entryFee: {
@@ -811,6 +812,8 @@ export interface Listing {
   titleAr: string;
   titleEn: string | null;
   description: string | null;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
   category: string;
   subCategory: string | null;
   price: number;
@@ -820,6 +823,8 @@ export interface Listing {
   location: { x: number; y: number } | null;
   district: string | null;
   address: string | null;
+  addressAr: string | null;
+  addressEn: string | null;
   images: string[] | null;
   features: Record<string, unknown> | null;
   amenities: string[] | null;
@@ -1429,6 +1434,8 @@ export interface Poi {
   category: PoiCategory;
   location: { x: number; y: number }; // PostGIS point: x=lng, y=lat
   address: string | null;
+  addressAr: string | null;
+  addressEn: string | null;
   phone: string | null;
   website: string | null;
   images: string[] | null;

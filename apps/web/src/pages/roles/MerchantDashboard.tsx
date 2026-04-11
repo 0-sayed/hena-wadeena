@@ -30,6 +30,7 @@ import { districtLabel, formatPrice } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
 import { listingsAPI } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 const verificationLabels: Record<string, { ar: string; en: string }> = {
   verified: { ar: 'موثق', en: 'Verified' },
@@ -54,7 +55,7 @@ const listingStatusLabels: Record<string, { ar: string; en: string }> = {
 };
 
 function formatAmountWithCurrency(value: number, language: AppLanguage): string {
-  return `${formatPrice(value)} ${pickLocalizedCopy(language, { ar: 'ج.م', en: 'EGP' })}`;
+  return `${formatPrice(value)} ${t('transactions.currency')}`;
 }
 
 function listingStatusLabel(status: string, language: AppLanguage) {
@@ -63,6 +64,10 @@ function listingStatusLabel(status: string, language: AppLanguage) {
 }
 
 export default function MerchantDashboard() {
+  const {
+    t
+  } = useTranslation(['wallet', 'dashboard', 'marketplace', 'market', 'investment', 'profile', 'guides', 'tourism', 'logistics']);
+
   const queryClient = useQueryClient();
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
@@ -139,19 +144,13 @@ export default function MerchantDashboard() {
     const price = parseEgpInputToPiasters(listingForm.priceEgp);
     if (!listingForm.titleAr.trim()) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اسم المنتج أو الخدمة مطلوب',
-          en: 'Listing name is required',
-        }),
+        t('merchant.toasts.titleRequired'),
       );
       return;
     }
     if (price == null) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'أدخل سعرًا صحيحًا',
-          en: 'Enter a valid price',
-        }),
+        t('merchant.toasts.invalidPrice'),
       );
       return;
     }
@@ -182,23 +181,14 @@ export default function MerchantDashboard() {
       await refreshMerchantData();
       toast.success(
         listingForm.id
-          ? pickLocalizedCopy(appLanguage, {
-              ar: 'تم تحديث الإعلان',
-              en: 'Listing updated',
-            })
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تمت إضافة الإعلان',
-              en: 'Listing added',
-            }),
+          ? t('merchant.toasts.updated')
+          : t('merchant.toasts.added'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حفظ الإعلان',
-              en: 'Unable to save the listing',
-            });
+          : t('merchant.toasts.saveError');
       toast.error(message);
     } finally {
       isSavingRef.current = false;
@@ -214,19 +204,13 @@ export default function MerchantDashboard() {
         setListingForm(emptyListingForm);
       }
       toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم حذف الإعلان',
-          en: 'Listing deleted',
-        }),
+        t('merchant.toasts.deleted'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حذف الإعلان',
-              en: 'Unable to delete the listing',
-            });
+          : t('merchant.toasts.deleteError');
       toast.error(message);
     }
   };
@@ -234,49 +218,40 @@ export default function MerchantDashboard() {
   return (
     <DashboardShell
       icon={Store}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة التاجر', en: 'Merchant dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'إدارة نشاطك التجاري، إعلاناتك، والاستفسارات الواردة من المهتمين',
-        en: 'Manage your business activity, listings, and incoming inquiries',
-      })}
+      title={t('merchant.title')}
+      subtitle={t('merchant.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'الأنشطة التجارية', en: 'Businesses' })}
+          label={t('merchant.stats.businesses')}
           value={loadingBusinesses ? '...' : stats.totalBusinesses}
           icon={Building2}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'أنشطة موثقة', en: 'Verified businesses' })}
+          label={t('merchant.stats.verified')}
           value={loadingBusinesses ? '...' : stats.verifiedBusinesses}
           icon={CheckCircle}
           variant="success"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, {
-            ar: 'أنشطة قيد المراجعة',
-            en: 'Businesses under review',
-          })}
+          label={t('merchant.stats.underReview')}
           value={loadingBusinesses ? '...' : stats.pendingBusinesses}
           icon={Clock}
           variant="warning"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'إعلاناتي', en: 'My listings' })}
+          label={t('merchant.stats.myListings')}
           value={loadingListings ? '...' : stats.listings}
           icon={Package2}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, {
-            ar: 'استفسارات واردة',
-            en: 'Incoming inquiries',
-          })}
+          label={t('merchant.stats.inquiries')}
           value={loadingInquiries ? '...' : stats.receivedInquiries}
           icon={Inbox}
           variant="warning"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'وظائف مفتوحة', en: 'Open jobs' })}
+          label={t('merchant.stats.openJobs')}
           value={loadingMyPosts ? '...' : openJobsCount}
           icon={Briefcase}
         />
@@ -286,7 +261,7 @@ export default function MerchantDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'أنشطتي التجارية', en: 'My businesses' })}
+              {t('merchant.businesses.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -298,33 +273,27 @@ export default function MerchantDashboard() {
               </div>
             ) : businessesError ? (
               <p className="text-sm text-destructive">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'حدث خطأ في تحميل الأنشطة التجارية',
-                  en: 'There was an error loading your businesses',
-                })}
+                {t('merchant.businesses.loadError')}
               </p>
             ) : businesses.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لم تسجل أي نشاط تجاري بعد.',
-                  en: 'No businesses yet.',
-                })}
+                {t('merchant.businesses.empty')}
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'النشاط', en: 'Business' })}
+                      {t('merchant.businesses.table.business')}
                     </TableHead>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'التصنيف', en: 'Category' })}
+                      {t('prices.table.category')}
                     </TableHead>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}
+                      {t('listingEditor.districtLabel')}
                     </TableHead>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                      {t('startupDetails.status')}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -362,24 +331,18 @@ export default function MerchantDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان جديد', en: 'Add a new listing' })}
+              {t('listingEditor.titleAdd')}
             </CardTitle>
             <CardDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'افتح نافذة منبثقة لإضافة إعلان جديد أو تعديل إعلان حالي دون تغيير تخطيط الصفحة.',
-                en: 'Open a modal to add a new listing or edit an existing one without shifting the page layout.',
-              })}
+              {t('merchant.listingActions.description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'استخدم الزر التالي لفتح نموذج الإعلان في نافذة مستقلة. يمكنك أيضاً تعديل أي إعلان من الجدول أدناه بنفس النافذة.',
-                en: 'Use the button below to open the listing form in a dedicated modal. You can also edit any listing from the table below using the same dialog.',
-              })}
+              {t('merchant.listingActions.helpText')}
             </p>
             <Button onClick={openCreateListingDialog}>
-              {pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان', en: 'Add advertisement' })}
+              {t('merchant.listingActions.addBtn')}
             </Button>
           </CardContent>
         </Card>
@@ -387,25 +350,22 @@ export default function MerchantDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'لوحة التوظيف', en: 'Employment board' })}
+              {t('merchant.employment.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'انشر وظائف وأدر الطلبات مباشرة من هنا.',
-                en: 'Post jobs and manage applications.',
-              })}
+              {t('merchant.employment.description')}
             </p>
             <div className="flex gap-2">
               <Button asChild size="sm">
                 <Link to="/jobs/post">
-                  {pickLocalizedCopy(appLanguage, { ar: 'نشر وظيفة', en: 'Post a job' })}
+                  {t('merchant.employment.postBtn')}
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
                 <Link to="/jobs/my-posts">
-                  {pickLocalizedCopy(appLanguage, { ar: 'وظائفي', en: 'My posts' })}
+                  {t('merchant.employment.myPostsBtn')}
                 </Link>
               </Button>
             </div>
@@ -429,24 +389,15 @@ export default function MerchantDashboard() {
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'صندوق وارد الاستفسارات',
-                en: 'Inquiry inbox',
-              })}
+              {t('merchant.inbox.title')}
             </CardTitle>
             <CardDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'آخر الرسائل التي وصلت على إعلاناتك مع الوصول السريع لصفحة المتابعة.',
-                en: 'Recent messages on your listings with quick access to the follow-up page.',
-              })}
+              {t('merchant.inbox.description')}
             </CardDescription>
           </div>
           <Button asChild variant="outline">
             <Link to="/marketplace/inquiries?tab=received">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'إدارة كل الاستفسارات',
-                en: 'Manage all inquiries',
-              })}
+              {t('merchant.inbox.manageBtn')}
             </Link>
           </Button>
         </CardHeader>
@@ -459,17 +410,11 @@ export default function MerchantDashboard() {
             </div>
           ) : inquiriesError ? (
             <p className="text-sm text-destructive">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تعذر تحميل الاستفسارات الواردة حاليًا.',
-                en: 'Unable to load incoming inquiries right now.',
-              })}
+              {t('merchant.inbox.loadError')}
             </p>
           ) : inquiries.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد استفسارات واردة على إعلاناتك حتى الآن.',
-                en: 'No incoming inquiries on your listings yet.',
-              })}
+              {t('merchant.inbox.empty')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -492,7 +437,7 @@ export default function MerchantDashboard() {
                       </div>
                       <p className="font-semibold text-foreground">{inquiry.listingTitle}</p>
                       <p className="text-sm text-muted-foreground">
-                        {pickLocalizedCopy(appLanguage, { ar: 'من:', en: 'From:' })}{' '}
+                        {t('merchant.inbox.from')}{' '}
                         {inquiry.contactName}
                         {inquiry.contactEmail ? ` • ${inquiry.contactEmail}` : ''}
                       </p>
@@ -500,7 +445,7 @@ export default function MerchantDashboard() {
 
                     <Button asChild size="sm" variant="outline">
                       <Link to={`/marketplace/inquiries?tab=received&focus=${inquiry.id}`}>
-                        {pickLocalizedCopy(appLanguage, { ar: 'فتح المحادثة', en: 'Open thread' })}
+                        {t('merchant.inbox.openThread')}
                       </Link>
                     </Button>
                   </div>
@@ -512,10 +457,7 @@ export default function MerchantDashboard() {
                   {inquiry.replyMessage && (
                     <div className="mt-3 rounded-xl bg-primary/5 p-3 text-sm text-muted-foreground">
                       <p className="mb-1 font-medium text-foreground">
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'آخر رد محفوظ',
-                          en: 'Latest saved reply',
-                        })}
+                        {t('merchant.inbox.latestReply')}
                       </p>
                       <p className="whitespace-pre-line">{inquiry.replyMessage}</p>
                     </div>
@@ -525,20 +467,20 @@ export default function MerchantDashboard() {
                     {inquiry.contactEmail && (
                       <Button asChild size="sm" variant="outline">
                         <a href={`mailto:${inquiry.contactEmail}`}>
-                          {pickLocalizedCopy(appLanguage, { ar: 'مراسلة بالبريد', en: 'Email' })}
+                          {t('form.email')}
                         </a>
                       </Button>
                     )}
                     {inquiry.contactPhone && (
                       <Button asChild size="sm" variant="secondary">
                         <a href={`tel:${inquiry.contactPhone}`}>
-                          {pickLocalizedCopy(appLanguage, { ar: 'اتصال مباشر', en: 'Call' })}
+                          {t('merchant.inbox.call')}
                         </a>
                       </Button>
                     )}
                     <Button asChild size="sm" variant="ghost">
                       <Link to={`/marketplace/ads/${inquiry.listingId}`}>
-                        {pickLocalizedCopy(appLanguage, { ar: 'عرض الإعلان', en: 'View listing' })}
+                        {t('merchant.inbox.viewListing')}
                       </Link>
                     </Button>
                   </div>
@@ -552,7 +494,7 @@ export default function MerchantDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, { ar: 'إعلاناتي الحالية', en: 'Current listings' })}
+            {t('merchant.listingsList.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -564,29 +506,26 @@ export default function MerchantDashboard() {
             </div>
           ) : listings.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد إعلانات حاليًا.',
-                en: 'No listings right now.',
-              })}
+              {t('merchant.listingsList.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'الإعلان', en: 'Listing' })}
+                    {t('merchant.listingsList.table.listing')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}
+                    {t('listingEditor.districtLabel')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}
+                    {t('prices.table.price')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                    {t('startupDetails.status')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
+                    {t('dashboard.packagesList.colActions')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -611,14 +550,14 @@ export default function MerchantDashboard() {
                           variant="outline"
                           onClick={() => openEditListingDialog(listing)}
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'تعديل', en: 'Edit' })}
+                          {t('booking.editBtn')}
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => void handleDeleteListing(listing.id)}
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'حذف', en: 'Delete' })}
+                          {t('transport.delete')}
                         </Button>
                       </div>
                     </TableCell>

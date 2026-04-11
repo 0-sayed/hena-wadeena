@@ -1,5 +1,7 @@
+
 import { Link } from 'react-router';
 import { UserRole } from '@hena-wadeena/types';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
 import { HeroSection } from '@/components/home/HeroSection';
 import { QuickAccess } from '@/components/home/QuickAccess';
@@ -23,8 +25,8 @@ import {
 type DashboardLink = {
   to: string;
   icon: typeof Shield;
-  label: string;
-  desc: string;
+  labelKey: string;
+  descKey: string;
   roles: UserRole[];
 };
 
@@ -32,15 +34,15 @@ const adminLinks: DashboardLink[] = [
   {
     to: '/admin',
     icon: Shield,
-    label: 'لوحة الإدارة',
-    desc: 'صلاحيات كاملة',
+    labelKey: 'index.role.admin',
+    descKey: 'index.role.adminDesc',
     roles: [UserRole.ADMIN],
   },
   {
     to: '/reviewer',
     icon: FileCheck,
-    label: 'لوحة المراجع',
-    desc: 'مراجعة المستندات',
+    labelKey: 'index.role.reviewer',
+    descKey: 'index.role.reviewerDesc',
     roles: [UserRole.ADMIN, UserRole.REVIEWER],
   },
 ];
@@ -49,50 +51,50 @@ const roleLinks: DashboardLink[] = [
   {
     to: '/dashboard/guide',
     icon: Compass,
-    label: 'المرشد',
-    desc: 'إدارة الجولات',
+    labelKey: 'index.role.guide',
+    descKey: 'index.role.guideDesc',
     roles: [UserRole.GUIDE],
   },
   {
     to: '/dashboard/merchant',
     icon: Store,
-    label: 'التاجر',
-    desc: 'إدارة المنتجات',
+    labelKey: 'index.role.merchant',
+    descKey: 'index.role.merchantDesc',
     roles: [UserRole.MERCHANT],
   },
   {
     to: '/dashboard/driver',
     icon: Truck,
-    label: 'السائق',
-    desc: 'إدارة الرحلات',
+    labelKey: 'index.role.driver',
+    descKey: 'index.role.driverDesc',
     roles: [UserRole.DRIVER],
   },
   {
     to: '/dashboard/investor',
     icon: TrendingUp,
-    label: 'المستثمر',
-    desc: 'الفرص الاستثمارية',
+    labelKey: 'index.role.investor',
+    descKey: 'index.role.investorDesc',
     roles: [UserRole.INVESTOR],
   },
   {
     to: '/dashboard/tourist',
     icon: MapPinned,
-    label: 'السائح',
-    desc: 'خطط الرحلات',
+    labelKey: 'index.role.tourist',
+    descKey: 'index.role.touristDesc',
     roles: [UserRole.TOURIST],
   },
   {
     to: '/dashboard/student',
     icon: GraduationCap,
-    label: 'الطالب',
-    desc: 'الطلبات الأكاديمية',
+    labelKey: 'index.role.student',
+    descKey: 'index.role.studentDesc',
     roles: [UserRole.STUDENT],
   },
   {
     to: '/dashboard/resident',
     icon: Home,
-    label: 'المقيم',
-    desc: 'خدمات الحي',
+    labelKey: 'index.role.resident',
+    descKey: 'index.role.residentDesc',
     roles: [UserRole.RESIDENT],
   },
 ];
@@ -107,6 +109,7 @@ function filterLinks(links: DashboardLink[], role?: UserRole) {
 
 const Index = () => {
   const { user } = useAuth();
+  const { t } = useTranslation('home');
   const visibleAdminLinks = filterLinks(adminLinks, user?.role);
   const visibleRoleLinks = filterLinks(roleLinks, user?.role);
 
@@ -117,14 +120,14 @@ const Index = () => {
 
       {visibleAdminLinks.length > 0 && (
         <div className="container px-4 py-10">
-          <h2 className="mb-4 text-center text-2xl font-bold">لوحات التحكم الإدارية</h2>
+          <h2 className="mb-4 text-center text-2xl font-bold">{t('index.adminDashboards')}</h2>
           <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-4">
-            {visibleAdminLinks.map(({ to, icon: Icon, label, desc }) => (
+            {visibleAdminLinks.map(({ to, icon: Icon, labelKey, descKey }) => (
               <Link key={to} to={to} className="w-full sm:w-[280px]">
                 <Button variant="outline" className="flex h-24 w-full flex-col gap-2">
                   <Icon className="h-7 w-7 text-primary" />
-                  <span className="font-semibold">{label}</span>
-                  <span className="text-xs text-muted-foreground">{desc}</span>
+                  <span className="font-semibold">{t(labelKey)}</span>
+                  <span className="text-xs text-muted-foreground">{t(descKey)}</span>
                 </Button>
               </Link>
             ))}
@@ -134,14 +137,14 @@ const Index = () => {
 
       {visibleRoleLinks.length > 0 && (
         <div className="container px-4 pb-12">
-          <h2 className="mb-4 text-center text-2xl font-bold">لوحات الأدوار</h2>
+          <h2 className="mb-4 text-center text-2xl font-bold">{t('index.roleDashboards')}</h2>
           <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-4">
-            {visibleRoleLinks.map(({ to, icon: Icon, label, desc }) => (
+            {visibleRoleLinks.map(({ to, icon: Icon, labelKey, descKey }) => (
               <Link key={to} to={to} className="w-full sm:w-[260px]">
                 <Button variant="outline" className="flex h-24 w-full flex-col gap-1">
                   <Icon className="h-6 w-6 text-primary" />
-                  <span className="text-sm font-semibold">{label}</span>
-                  <span className="text-xs text-muted-foreground">{desc}</span>
+                  <span className="text-sm font-semibold">{t(labelKey)}</span>
+                  <span className="text-xs text-muted-foreground">{t(descKey)}</span>
                 </Button>
               </Link>
             ))}

@@ -3,7 +3,11 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
@@ -11,15 +15,24 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "resolveJsonModule": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@hena-wadeena/types": ["../../packages/types/src/index.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@hena-wadeena/types": [
+        "../../packages/types/src/index.ts"
+      ]
     },
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2020",
-    "types": ["vitest/globals"],
+    "types": [
+      "vitest/globals"
+    ],
     "useDefineForClassFields": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

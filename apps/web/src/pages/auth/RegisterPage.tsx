@@ -14,31 +14,19 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { z } from 'zod';
 import { ApiError } from '@/services/api';
 
+import { useTranslation } from 'react-i18next';
+
 const roles = [
-  { value: 'resident', label: 'مواطن', description: 'مستخدم عادي يبحث عن الخدمات' },
-  { value: 'merchant', label: 'تاجر', description: 'تاجر أو منتج محلي' },
-  { value: 'investor', label: 'مستثمر', description: 'مستثمر يبحث عن فرص' },
-  { value: 'tourist', label: 'سائح', description: 'زائر أو سائح' },
-  { value: 'student', label: 'طالب', description: 'طالب في الوادي الجديد' },
-  { value: 'driver', label: 'سائق', description: 'سائق نقل أو كاربول' },
-  { value: 'guide', label: 'مرشد سياحي', description: 'مرشد سياحي مرخص' },
+  { value: 'resident', labelKey: 'role.resident', descKey: 'role.residentDesc' },
+  { value: 'merchant', labelKey: 'role.merchant', descKey: 'role.merchantDesc' },
+  { value: 'investor', labelKey: 'role.investor', descKey: 'role.investorDesc' },
+  { value: 'tourist', labelKey: 'role.tourist', descKey: 'role.touristDesc' },
+  { value: 'student', labelKey: 'role.student', descKey: 'role.studentDesc' },
+  { value: 'driver', labelKey: 'role.driver', descKey: 'role.driverDesc' },
+  { value: 'guide', labelKey: 'role.guide', descKey: 'role.guideDesc' },
 ];
 
-const step1Schema = z
-  .object({
-    fullName: z.string().min(1, 'الاسم مطلوب').max(100, 'الاسم طويل جداً'),
-    email: z.string().min(1, 'البريد الإلكتروني مطلوب').email('بريد إلكتروني غير صالح'),
-    password: z.string().min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'كلمتا المرور غير متطابقتين',
-    path: ['confirmPassword'],
-  });
-
-const step2Schema = z.object({
-  role: z.string().min(1, 'يرجى اختيار نوع الحساب'),
-});
+// Schemas will be generated dynamically inside the component to access translations
 
 const fieldToStep: Record<string, 1 | 2> = {
   email: 1,
@@ -50,6 +38,7 @@ const fieldToStep: Record<string, 1 | 2> = {
 const RegisterPage = () => {
   const navigate = useNavigate();
   const auth = useAuth();
+  const { t } = useTranslation('auth');
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -61,6 +50,22 @@ const RegisterPage = () => {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+
+  const getStep1Schema = () => z
+    .object({
+      fullName: z.string().min(1, t('validation.nameRequired')).max(100, t('validation.nameTooLong')),
+      email: z.string().min(1, t('validation.emailRequired')).email(t('validation.emailInvalid')),
+      password: z.string().min(8, t('validation.passwordMin')),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.passwordMismatch'),
+      path: ['confirmPassword'],
+    });
+
+  const getStep2Schema = () => z.object({
+    role: z.string().min(1, t('validation.roleRequired')),
+  });
 
   const getFocusableField = (field: string) => {
     if (field === 'role') {
@@ -89,7 +94,7 @@ const RegisterPage = () => {
     e.preventDefault();
     setFormError(null);
 
-    const step2Result = step2Schema.safeParse({ role: formData.role });
+    const step2Result = getStep2Schema().safeParse({ role: formData.role });
     if (!step2Result.success) {
       const errs: Record<string, string> = {};
       step2Result.error.errors.forEach((err) => {
@@ -115,17 +120,17 @@ const RegisterPage = () => {
         role: formData.role,
       });
       if (result.status === 'pending_kyc') {
-        toast.success('تم إنشاء الحساب. أكمل رفع وثائق التحقق لتفعيل الحساب');
+        toast.success(t('register.kycRequired'));
         void navigate('/kyc/continue');
         return;
       }
-      toast.success('تم إنشاء الحساب بنجاح');
+      toast.success(t('register.success'));
       void navigate('/');
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         if (err.status === 409) {
           setStep(1);
-          setFieldErrors({ email: 'هذا البريد مسجل بالفعل' });
+          setFieldErrors({ email: t('register.emailTaken') });
           focusField('email');
           return;
         }
@@ -154,14 +159,14 @@ const RegisterPage = () => {
           }
         }
       }
-      setFormError(err instanceof Error ? err.message : 'فشل إنشاء الحساب');
+      setFormError(err instanceof Error ? err.message : t('register.error'));
     } finally {
       setIsLoading(false);
     }
   };
 
   const nextStep = () => {
-    const result = step1Schema.safeParse(formData);
+    const result = getStep1Schema().safeParse(formData);
     if (!result.success) {
       const errs: Record<string, string> = {};
       result.error.errors.forEach((err) => {
@@ -184,7 +189,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <Layout title="تسجيل حساب جديد">
+    <Layout title={t('register.title')}>
       <PageTransition>
         <section className="relative overflow-hidden py-10 md:py-14">
           <GradientMesh />
@@ -205,7 +210,7 @@ const RegisterPage = () => {
                       {step > currentStep ? <Check className="h-5 w-5" /> : currentStep}
                     </div>
                     <span className="hidden text-sm font-semibold sm:inline">
-                      {currentStep === 1 ? 'البيانات الأساسية' : 'نوع الحساب'}
+                      {currentStep === 1 ? t('register.step1') : t('register.step2')}
                     </span>
                     {currentStep < 2 ? <div className="h-px w-10 bg-border" /> : null}
                   </div>
@@ -216,9 +221,9 @@ const RegisterPage = () => {
             <SR delay={100}>
               <Card className="overflow-hidden rounded-2xl border-border/50 shadow-xl">
                 <CardHeader className="pb-2 text-center">
-                  <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
+                  <CardTitle className="text-2xl">{t('register.title')}</CardTitle>
                   <p className="text-muted-foreground">
-                    {step === 1 ? 'أدخل بياناتك الأساسية' : 'اختر نوع حسابك'}
+                    {step === 1 ? t('register.subtitle1') : t('register.subtitle2')}
                   </p>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -228,12 +233,12 @@ const RegisterPage = () => {
                     {step === 1 ? (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="fullName">الاسم الكامل *</Label>
+                          <Label htmlFor="fullName">{t('register.fullNameLabel')}</Label>
                           <div className="relative">
                             <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                               id="fullName"
-                              placeholder="أدخل اسمك الكامل"
+                              placeholder={t('register.fullNamePlaceholder')}
                               value={formData.fullName}
                               onChange={(e) => {
                                 setFormData({ ...formData, fullName: e.target.value });
@@ -253,13 +258,13 @@ const RegisterPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="email">البريد الإلكتروني *</Label>
+                          <Label htmlFor="email">{t('register.emailLabel')}</Label>
                           <div className="relative">
                             <Mail className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                               id="email"
                               type="email"
-                              placeholder="example@email.com"
+                              placeholder={t('register.emailPlaceholder')}
                               value={formData.email}
                               onChange={(e) => {
                                 setFormData({ ...formData, email: e.target.value });
@@ -280,13 +285,13 @@ const RegisterPage = () => {
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                           <div className="space-y-2">
-                            <Label htmlFor="password">كلمة المرور *</Label>
+                            <Label htmlFor="password">{t('register.passwordLabel')}</Label>
                             <div className="relative">
                               <Lock className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                               <Input
                                 id="password"
                                 type="password"
-                                placeholder="••••••••"
+                                placeholder={t('register.passwordPlaceholder')}
                                 value={formData.password}
                                 onChange={(e) => {
                                   setFormData({ ...formData, password: e.target.value });
@@ -305,13 +310,13 @@ const RegisterPage = () => {
                             <FieldErrorText id="password-error" message={fieldErrors.password} />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">تأكيد كلمة المرور *</Label>
+                            <Label htmlFor="confirmPassword">{t('register.confirmPasswordLabel')}</Label>
                             <div className="relative">
                               <Lock className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                               <Input
                                 id="confirmPassword"
                                 type="password"
-                                placeholder="••••••••"
+                                placeholder={t('register.confirmPasswordPlaceholder')}
                                 value={formData.confirmPassword}
                                 onChange={(e) => {
                                   setFormData({ ...formData, confirmPassword: e.target.value });
@@ -342,7 +347,7 @@ const RegisterPage = () => {
                           size="lg"
                           onClick={nextStep}
                         >
-                          التالي
+                          {t('register.next')}
                           <ArrowLeft className="h-4 w-4" />
                         </Button>
                       </div>
@@ -371,26 +376,26 @@ const RegisterPage = () => {
                                 }
                               }}
                             >
-                              <p className="font-medium text-foreground">{role.label}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{role.description}</p>
+                              <p className="font-medium text-foreground">{t(role.labelKey)}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{t(role.descKey)}</p>
                             </button>
                           ))}
                         </div>
                         <FieldErrorText id="role-error" message={fieldErrors.role} />
 
                         <div className="space-y-2 rounded-lg bg-muted/50 p-4">
-                          <h4 className="mb-3 font-semibold">ملخص البيانات</h4>
+                          <h4 className="mb-3 font-semibold">{t('register.summaryTitle')}</h4>
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">الاسم</span>
+                            <span className="text-muted-foreground">{t('register.summaryName')}</span>
                             <span>{formData.fullName}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">البريد</span>
+                            <span className="text-muted-foreground">{t('register.summaryEmail')}</span>
                             <span dir="ltr">{formData.email}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">نوع الحساب</span>
-                            <span>{roles.find((role) => role.value === formData.role)?.label ?? '—'}</span>
+                            <span className="text-muted-foreground">{t('register.summaryRole')}</span>
+                            <span>{formData.role ? t(roles.find((role) => role.value === formData.role)?.labelKey ?? '') : t('register.summaryEmpty')}</span>
                           </div>
                         </div>
 
@@ -402,10 +407,10 @@ const RegisterPage = () => {
                             onClick={() => setStep(1)}
                           >
                             <ArrowRight className="h-4 w-4" />
-                            السابق
+                            {t('register.previous')}
                           </Button>
                           <Button type="submit" className="flex-1" size="lg" disabled={isLoading}>
-                            {isLoading ? 'جاري التسجيل...' : 'إنشاء الحساب'}
+                            {isLoading ? t('register.submitting') : t('register.submit')}
                           </Button>
                         </div>
                       </div>
@@ -414,9 +419,9 @@ const RegisterPage = () => {
 
                   {step === 1 ? (
                     <p className="mt-4 text-center text-sm text-muted-foreground">
-                      لديك حساب بالفعل؟{' '}
+                      {t('register.hasAccount')}{' '}
                       <Link to="/login" className="font-medium text-primary hover:underline">
-                        تسجيل الدخول
+                        {t('login.submit')}
                       </Link>
                     </p>
                   ) : null}

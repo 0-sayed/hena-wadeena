@@ -1,0 +1,43 @@
+{
+  "title": "Identity Verification",
+  "loading": "Loading verification status...",
+  "loadError": "Unable to load verification session",
+  "cardTitle": "Complete Identity Verification",
+  "cardDescription": "Upload the required documents to activate {{name}}'s account",
+  "document": {
+    "NATIONAL_ID": "National ID",
+    "STUDENT_ID": "Student ID",
+    "GUIDE_LICENSE": "Guide License",
+    "COMMERCIAL_REGISTER": "Commercial Register",
+    "BUSINESS_DOCUMENT": "Business Document",
+    "label": "Document",
+    "selectFile": "Select File",
+    "uploadSuccess": "Document uploaded successfully",
+    "uploadError": "Unable to upload document",
+    "readError": "Unable to read file",
+    "typeError": "Select a PDF file or JPG/PNG/WebP image",
+    "sizeError": "File size must not exceed 5 MB",
+    "requiredError": "Select the file first"
+  },
+  "status": {
+    "pending": "Pending",
+    "under_review": "Under Review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "current": "Current Status: {{status}}",
+    "notSubmitted": "This document has not been uploaded yet",
+    "rejectionReason": "Rejection reason: {{reason}}"
+  },
+  "button": {
+    "submitting": "Uploading...",
+    "reUpload": "Re-upload",
+    "approved": "Approved",
+    "pendingReview": "Awaiting Review",
+    "upload": "Upload Document",
+    "backToLogin": "Back to Login"
+  },
+  "info": {
+    "title": "What happens after uploading?",
+    "description": "The documents will appear in the admin panel for review. The account will remain suspended until all required documents are approved."
+  }
+}

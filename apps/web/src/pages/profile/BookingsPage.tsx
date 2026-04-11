@@ -45,6 +45,7 @@ import { piastresToEgp } from '@/lib/format';
 import { UserRole } from '@hena-wadeena/types';
 import { ApiError, type Booking } from '@/services/api';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 type BookingAction = 'confirm' | 'start' | 'complete';
 type ReviewFormErrors = {
@@ -54,23 +55,23 @@ type ReviewFormErrors = {
 
 function getStatusTabs(language: AppLanguage) {
   return [
-    { key: undefined, label: pickLocalizedCopy(language, { ar: 'الكل', en: 'All' }) },
-    { key: 'pending', label: pickLocalizedCopy(language, { ar: 'في الانتظار', en: 'Pending' }) },
+    { key: undefined, label: t('bookings.tabs.all') },
+    { key: 'pending', label: t('transactions.status.pending') },
     {
       key: 'confirmed',
-      label: pickLocalizedCopy(language, { ar: 'مؤكد', en: 'Confirmed' }),
+      label: t('bookings.tabs.confirmed'),
     },
     {
       key: 'in_progress',
-      label: pickLocalizedCopy(language, { ar: 'جاري', en: 'In progress' }),
+      label: t('bookings.tabs.in_progress'),
     },
     {
       key: 'completed',
-      label: pickLocalizedCopy(language, { ar: 'مكتمل', en: 'Completed' }),
+      label: t('transactions.status.completed'),
     },
     {
       key: 'cancelled',
-      label: pickLocalizedCopy(language, { ar: 'ملغى', en: 'Cancelled' }),
+      label: t('bookings.tabs.cancelled'),
     },
   ] as const;
 }
@@ -90,39 +91,21 @@ function getActionDialogCopy(
   switch (action) {
     case 'confirm':
       return {
-        title: pickLocalizedCopy(language, { ar: 'تأكيد الحجز', en: 'Confirm booking' }),
-        description: pickLocalizedCopy(language, {
-          ar: 'هل تريد قبول هذا الحجز؟',
-          en: 'Do you want to accept this booking?',
-        }),
-        success: pickLocalizedCopy(language, {
-          ar: 'تم تأكيد الحجز',
-          en: 'Booking confirmed',
-        }),
+        title: t('bookings.dialogs.confirm.title'),
+        description: t('bookings.dialogs.confirm.description'),
+        success: t('bookings.dialogs.confirm.success'),
       };
     case 'start':
       return {
-        title: pickLocalizedCopy(language, { ar: 'بدء الجولة', en: 'Start tour' }),
-        description: pickLocalizedCopy(language, {
-          ar: 'هل تريد بدء هذه الجولة الآن؟',
-          en: 'Do you want to start this tour now?',
-        }),
-        success: pickLocalizedCopy(language, {
-          ar: 'تم بدء الجولة',
-          en: 'Tour started',
-        }),
+        title: t('bookings.dialogs.start.title'),
+        description: t('bookings.dialogs.start.description'),
+        success: t('bookings.dialogs.start.success'),
       };
     case 'complete':
       return {
-        title: pickLocalizedCopy(language, { ar: 'إكمال الجولة', en: 'Complete tour' }),
-        description: pickLocalizedCopy(language, {
-          ar: 'هل تريد تسجيل إكمال هذه الجولة؟',
-          en: 'Do you want to mark this tour as completed?',
-        }),
-        success: pickLocalizedCopy(language, {
-          ar: 'تم إكمال الجولة',
-          en: 'Tour completed',
-        }),
+        title: t('bookings.dialogs.complete.title'),
+        description: t('bookings.dialogs.complete.description'),
+        success: t('bookings.dialogs.complete.success'),
       };
   }
 }
@@ -137,10 +120,7 @@ const BookingsPage = () => {
   const isGuide = user?.role === UserRole.GUIDE;
   const statusTabs = getStatusTabs(appLanguage);
   const bookingStatusLabels = getBookingStatusLabels(appLanguage);
-  const fallbackErrorMessage = pickLocalizedCopy(appLanguage, {
-    ar: 'حدث خطأ',
-    en: 'Something went wrong',
-  });
+  const fallbackErrorMessage = t('bookings.fallbackError');
 
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
   const { data, isLoading, isError, refetch } = useMyBookings(
@@ -200,10 +180,7 @@ const BookingsPage = () => {
       {
         onSuccess: () => {
           toast.success(
-            pickLocalizedCopy(appLanguage, {
-              ar: 'تم إلغاء الحجز',
-              en: 'Booking cancelled',
-            }),
+            t('bookings.toasts.cancelled'),
           );
           setCancelTarget(null);
           setCancelReason('');
@@ -222,17 +199,11 @@ const BookingsPage = () => {
     const nextErrors: ReviewFormErrors = {};
 
     if (reviewRating === 0) {
-      nextErrors.rating = pickLocalizedCopy(appLanguage, {
-        ar: 'يرجى اختيار تقييم قبل الإرسال',
-        en: 'Please select a rating before submitting',
-      });
+      nextErrors.rating = t('Please select a rating before submitting');
     }
 
     if (!trimmedComment) {
-      nextErrors.comment = pickLocalizedCopy(appLanguage, {
-        ar: 'يرجى كتابة تعليق قبل الإرسال',
-        en: 'Please write a comment before submitting',
-      });
+      nextErrors.comment = t('Please write a comment before submitting');
     }
 
     setReviewErrors(nextErrors);
@@ -250,10 +221,7 @@ const BookingsPage = () => {
       {
         onSuccess: () => {
           toast.success(
-            pickLocalizedCopy(appLanguage, {
-              ar: 'شكراً على تقييمك!',
-              en: 'Thanks for your review!',
-            }),
+            t('bookings.dialogs.review.success'),
           );
           setReviewTarget(null);
           setReviewRating(0);
@@ -282,17 +250,11 @@ const BookingsPage = () => {
         <div className="mt-4 flex gap-2">
           <Button size="sm" onClick={() => setActionTarget({ id: booking.id, action: 'confirm' })}>
             <CheckCircle className="ms-1 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'قبول',
-              en: 'Accept',
-            })}
+            {t('bookings.actions.accept')}
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(booking.id)}>
             <XCircle className="ms-1 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'رفض',
-              en: 'Reject',
-            })}
+            {t('bookings.actions.reject')}
           </Button>
         </div>
       ) : (
@@ -303,10 +265,7 @@ const BookingsPage = () => {
           onClick={() => setCancelTarget(booking.id)}
         >
           <XCircle className="ms-1 h-4 w-4" />
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إلغاء',
-            en: 'Cancel',
-          })}
+          {t('topup.cancelBtn')}
         </Button>
       );
     }
@@ -320,24 +279,15 @@ const BookingsPage = () => {
             disabled={!isBookingDay}
             title={
               !isBookingDay
-                ? pickLocalizedCopy(appLanguage, {
-                    ar: 'يمكن بدء الجولة في يوم الحجز فقط',
-                    en: 'The tour can only be started on the booking day',
-                  })
+                ? t('bookings.tooltips.startTimeOnly')
                 : ''
             }
           >
             <Play className="ms-1 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'بدء الجولة',
-              en: 'Start tour',
-            })}
+            {t('bookings.dialogs.start.title')}
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(booking.id)}>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'إلغاء',
-              en: 'Cancel',
-            })}
+            {t('topup.cancelBtn')}
           </Button>
         </div>
       ) : (
@@ -347,10 +297,7 @@ const BookingsPage = () => {
           className="mt-4"
           onClick={() => setCancelTarget(booking.id)}
         >
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إلغاء',
-            en: 'Cancel',
-          })}
+          {t('topup.cancelBtn')}
         </Button>
       );
     }
@@ -360,16 +307,10 @@ const BookingsPage = () => {
         <div className="mt-4 flex gap-2">
           <Button size="sm" onClick={() => setActionTarget({ id: booking.id, action: 'complete' })}>
             <CheckCircle className="ms-1 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'إكمال الجولة',
-              en: 'Complete tour',
-            })}
+            {t('bookings.dialogs.complete.title')}
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setCancelTarget(booking.id)}>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'إلغاء',
-              en: 'Cancel',
-            })}
+            {t('topup.cancelBtn')}
           </Button>
         </div>
       );
@@ -396,7 +337,7 @@ const BookingsPage = () => {
           onClick={() => setReviewTarget({ bookingId: booking.id, guideId: booking.guideId })}
         >
           <Star className="ms-1 h-4 w-4" />
-          {pickLocalizedCopy(appLanguage, { ar: 'قيّم تجربتك', en: 'Rate your experience' })}
+          {t('bookings.dialogs.review.title')}
         </Button>
       );
     }
@@ -405,7 +346,7 @@ const BookingsPage = () => {
   };
 
   return (
-    <Layout title={pickLocalizedCopy(language, { ar: 'حجوزاتي', en: 'My Bookings' })}>
+    <Layout title={t('My Bookings')}>
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
@@ -416,10 +357,7 @@ const BookingsPage = () => {
                   <CalendarCheck className="h-7 w-7 text-primary" />
                 </div>
                 <h1 className="text-3xl font-bold md:text-4xl">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'حجوزاتي',
-                    en: 'My bookings',
-                  })}
+                  {t('bookings.title')}
                 </h1>
               </div>
             </SR>
@@ -448,16 +386,10 @@ const BookingsPage = () => {
                 <div className="space-y-4 py-12 text-center">
                   <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
                   <p className="text-lg text-muted-foreground">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'حدث خطأ أثناء تحميل الحجوزات',
-                      en: 'There was an error loading your bookings',
-                    })}
+                    {t('bookings.loadError')}
                   </p>
                   <Button variant="outline" onClick={() => void refetch()}>
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'إعادة المحاولة',
-                      en: 'Try again',
-                    })}
+                    {t('bookings.retryBtn')}
                   </Button>
                 </div>
               </SR>
@@ -466,17 +398,11 @@ const BookingsPage = () => {
                 <Card className="rounded-2xl">
                   <CardContent className="space-y-4 p-14 text-center">
                     <p className="text-lg text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'لا توجد حجوزات حتى الآن. ابدأ باستكشاف المرشدين السياحيين!',
-                        en: 'No bookings yet. Start exploring tour guides!',
-                      })}
+                      {t('bookings.emptyState')}
                     </p>
                     <Link to="/guides">
                       <Button variant="outline">
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'تصفّح المرشدين',
-                          en: 'Browse guides',
-                        })}
+                        {t('bookings.browseGuides')}
                       </Button>
                     </Link>
                   </CardContent>
@@ -491,10 +417,7 @@ const BookingsPage = () => {
                       ar: booking.packageTitleAr,
                       en: booking.packageTitleEn,
                     }) ||
-                    pickLocalizedCopy(appLanguage, {
-                      ar: 'باقة سياحية',
-                      en: 'Tour package',
-                    });
+                    t('bookings.packageTitle');
 
                   return (
                     <SR key={booking.id} delay={index * 60}>
@@ -544,10 +467,7 @@ const BookingsPage = () => {
                           )}
                           {booking.cancelReason && (
                             <p className="mt-3 rounded-lg bg-destructive/5 p-3 text-sm text-destructive">
-                              {pickLocalizedCopy(appLanguage, {
-                                ar: 'سبب الإلغاء:',
-                                en: 'Cancellation reason:',
-                              })}{' '}
+                              {t('bookings.cancellationReason')}{' '}
                               {booking.cancelReason}
                             </p>
                           )}
@@ -575,33 +495,21 @@ const BookingsPage = () => {
         <DialogContent className="sm:max-w-md" dir={direction}>
           <DialogHeader>
             <DialogTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'إلغاء الحجز',
-                en: 'Cancel booking',
-              })}
+              {t('bookings.dialogs.cancel.title')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'يرجى ذكر سبب الإلغاء',
-                en: 'Please share the cancellation reason',
-              })}
+              {t('bookings.dialogs.cancel.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label htmlFor="cancel-reason">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'سبب الإلغاء (مطلوب)',
-                en: 'Cancellation reason (Required)',
-              })}
+              {t('bookings.dialogs.cancel.label')}
             </Label>
             <Textarea
               id="cancel-reason"
               value={cancelReason}
               onChange={(event) => setCancelReason(event.target.value)}
-              placeholder={pickLocalizedCopy(appLanguage, {
-                ar: 'اكتب سبب الإلغاء...',
-                en: 'Write the cancellation reason...',
-              })}
+              placeholder={t('bookings.dialogs.cancel.placeholder')}
               maxLength={500}
               rows={3}
               className="mt-2"
@@ -616,10 +524,7 @@ const BookingsPage = () => {
               }}
               disabled={cancelMutation.isPending}
             >
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تراجع',
-                en: 'Back',
-              })}
+              {t('bookings.backBtn')}
             </Button>
             <Button
               variant="destructive"
@@ -627,10 +532,7 @@ const BookingsPage = () => {
               disabled={!cancelReason.trim() || cancelMutation.isPending}
             >
               {cancelMutation.isPending && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تأكيد الإلغاء',
-                en: 'Confirm cancellation',
-              })}
+              {t('bookings.dialogs.cancel.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -655,10 +557,7 @@ const BookingsPage = () => {
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setActionTarget(null)}>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تراجع',
-                en: 'Back',
-              })}
+              {t('bookings.backBtn')}
             </Button>
             <Button
               onClick={handleAction}
@@ -669,10 +568,7 @@ const BookingsPage = () => {
               {(confirmMutation.isPending ||
                 startMutation.isPending ||
                 completeMutation.isPending) && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تأكيد',
-                en: 'Confirm',
-              })}
+              {t('bookings.confirmBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -693,23 +589,17 @@ const BookingsPage = () => {
         <DialogContent className="sm:max-w-md" dir={direction}>
           <DialogHeader>
             <DialogTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'قيّم تجربتك', en: 'Rate your experience' })}
+              {t('bookings.dialogs.review.title')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'شاركنا رأيك في هذه الجولة',
-                en: 'Share your thoughts about this tour',
-              })}
+              {t('bookings.dialogs.review.description')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'التقييم',
-                  en: 'Rating',
-                })}
+                {t('bookings.dialogs.review.rating')}
               </Label>
               <div className="flex justify-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -743,10 +633,7 @@ const BookingsPage = () => {
 
             <div>
               <Label htmlFor="review-comment">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'التعليق',
-                  en: 'Comment',
-                })}
+                {t('bookings.dialogs.review.comment')}
               </Label>
               <Textarea
                 id="review-comment"
@@ -760,10 +647,7 @@ const BookingsPage = () => {
                   }
                   setReviewAlreadySubmitted(false);
                 }}
-                placeholder={pickLocalizedCopy(appLanguage, {
-                  ar: 'اكتب تعليقك هنا...',
-                  en: 'Write your comment here...',
-                })}
+                placeholder={t('bookings.dialogs.review.placeholder')}
                 maxLength={2000}
                 rows={3}
                 className="mt-2"
@@ -777,10 +661,7 @@ const BookingsPage = () => {
 
             {reviewAlreadySubmitted && (
               <p className="text-sm font-medium text-destructive">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لقد قيّمت هذا الحجز مسبقاً',
-                  en: "You've already reviewed this booking",
-                })}
+                {t('bookings.dialogs.review.alreadySubmitted')}
               </p>
             )}
           </div>
@@ -797,11 +678,11 @@ const BookingsPage = () => {
               }}
               disabled={createReviewMutation.isPending}
             >
-              {pickLocalizedCopy(appLanguage, { ar: 'تراجع', en: 'Back' })}
+              {t('bookings.backBtn')}
             </Button>
             <Button onClick={handleReview} disabled={createReviewMutation.isPending}>
               {createReviewMutation.isPending && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-              {pickLocalizedCopy(appLanguage, { ar: 'إرسال التقييم', en: 'Submit review' })}
+              {t('bookings.dialogs.review.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

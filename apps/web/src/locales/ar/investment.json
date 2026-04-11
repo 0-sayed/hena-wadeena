@@ -1,0 +1,127 @@
+{
+  "title": "الاستثمار",
+  "hero": {
+    "title": "فرص الاستثمار",
+    "subtitle": "اكتشف الفرص الاستثمارية في الوادي الجديد وتواصل مع الشركات الناشئة",
+    "searchPlaceholder": "ابحث عن فرص استثمارية...",
+    "badge": "فرص الاستثمار"
+  },
+  "tabs": {
+    "opportunities": "الفرص الاستثمارية",
+    "startups": "الشركات الناشئة"
+  },
+  "status": {
+    "available": "متاح",
+    "active": "نشط"
+  },
+  "sectors": {
+    "agriculture": "زراعة",
+    "tourism": "سياحة",
+    "industry": "صناعة",
+    "real_estate": "عقارات",
+    "services": "خدمات",
+    "technology": "تكنولوجيا",
+    "energy": "طاقة"
+  },
+  "card": {
+    "expectedReturn": "العائد المتوقع: {{pct}}%",
+    "investmentRange": "{{min}}-{{max}} مليون {{currency}}"
+  },
+  "startupDetails": {
+    "title": "تفاصيل الشركة الناشئة",
+    "backBtn": "العودة إلى الاستثمار",
+    "loadError": "تعذر تحميل بيانات الشركة الناشئة.",
+    "verified": "موثق",
+    "status": "الحالة",
+    "about": "نبذة عن الشركة",
+    "availableInfo": "البيانات المتاحة",
+    "category": "الفئة",
+    "district": "المنطقة",
+    "notSpecified": "غير محدد",
+    "lastUpdated": "آخر تحديث",
+    "relatedOfferings": "مجالات أو منتجات مرتبطة",
+    "contactInterest": "التواصل والاهتمام",
+    "sendInquiry": "إرسال استفسار",
+    "visitWebsite": "زيارة الموقع"
+  },
+  "contact": {
+    "title": "التواصل مع المستثمر",
+    "backBtn": "العودة",
+    "startupTitle": "تواصل مع شركة ناشئة",
+    "investmentTitle": "تواصل للاستثمار",
+    "intro": {
+      "loading": "جارٍ تحميل بيانات الشركة قبل إرسال الاستفسار.",
+      "target": "سيتم حفظ طلبك وإرساله مباشرة إلى صاحب الشركة {{name}}.",
+      "startup": "سيتم حفظ طلبك وإرساله مباشرة إلى صاحب الشركة الناشئة.",
+      "opportunity": "سيتم حفظ طلبك وإرساله مباشرة إلى مالك الفرصة الاستثمارية."
+    },
+    "form": {
+      "fullName": "الاسم الكامل",
+      "phone": "رقم الهاتف",
+      "email": "البريد الإلكتروني",
+      "company": "اسم الشركة",
+      "investorType": "نوع المستثمر",
+      "investorTypePlaceholder": "اختر نوع المستثمر",
+      "investmentRange": "النطاق الاستثماري المتوقع",
+      "investmentRangePlaceholder": "اختر النطاق",
+      "amount": "القيمة المقترحة (جنيه)",
+      "message": "رسالتك",
+      "messagePlaceholderStartup": "اشرح نوع الشراكة أو الاستثمار الذي ترغب في مناقشته مع هذه الشركة...",
+      "messagePlaceholderOpportunity": "اشرح اهتمامك بالفرصة أو طبيعة الشراكة التي تبحث عنها...",
+      "sendBtn": "إرسال الطلب",
+      "sendingBtn": "جارٍ الإرسال..."
+    },
+    "toast": {
+      "signIn": "سجل الدخول أولاً لإرسال الاستفسار",
+      "investorOnly": "هذه الميزة متاحة للمستثمرين والمسؤولين فقط",
+      "unavailableStartup": "الشركة غير متاحة حالياً",
+      "unavailableOpportunity": "الفرصة غير متاحة حالياً",
+      "fillRequired": "يرجى استكمال الاسم والبريد الإلكتروني والرسالة",
+      "loadError": "تعذر تحميل بيانات الشركة حالياً",
+      "ownStartup": "لا يمكنك إرسال استفسار إلى شركتك الخاصة",
+      "successStartup": "تم إرسال استفسارك إلى صاحب الشركة بنجاح",
+      "successOpportunity": "تم إرسال الاستفسار بنجاح، وسيظهر مباشرة في صندوق وارد مالك الفرصة",
+      "error": "تعذر إرسال الاستفسار"
+    },
+    "types": {
+      "individual": "مستثمر فردي",
+      "company": "شركة",
+      "fund": "صندوق استثماري",
+      "government": "مؤسسة حكومية",
+      "other": "أخرى"
+    },
+    "ranges": {
+      "under-1m": "أقل من مليون جنيه",
+      "1m-5m": "1-5 مليون جنيه",
+      "5m-10m": "5-10 مليون جنيه",
+      "10m-50m": "10-50 مليون جنيه",
+      "50m-plus": "أكثر من 50 مليون جنيه"
+    }
+  },
+  "details": {
+    "title": "تفاصيل الفرصة الاستثمارية",
+    "backBtn": "العودة للاستثمار",
+    "loadError": "تعذر تحميل بيانات الفرصة الاستثمارية.",
+    "retryBtn": "إعادة المحاولة",
+    "expectedReturn": "العائد المتوقع: {{pct}}%",
+    "projectDescription": "وصف المشروع",
+    "incentives": "الحوافز والمزايا",
+    "location": "موقع المشروع",
+    "typeLabel": "فرصة استثمارية",
+    "noCoordinates": "لا توجد إحداثيات متاحة لهذه الفرصة حالياً.",
+    "documents": "المستندات",
+    "attachedDocument": "مستند مرفق",
+    "open": "فتح",
+    "noDocuments": "لا توجد مستندات مرفقة حالياً.",
+    "loginToViewDocuments": "سجل الدخول كمستثمر أو مسؤول لعرض المستندات التفصيلية.",
+    "investmentTitle": "تفاصيل الاستثمار",
+    "requiredAmount": "حجم الاستثمار المطلوب",
+    "investmentCurrency": "ج.م",
+    "paybackPeriod": "فترة الاسترداد",
+    "paybackUnit": "سنة",
+    "inquiryBtn": "إرسال استفسار استثماري",
+    "contactInfo": "معلومات التواصل",
+    "noContact": "لا توجد بيانات تواصل متاحة حالياً.",
+    "loginToViewContact": "سجل الدخول كمستثمر أو مسؤول لعرض بيانات التواصل الكاملة."
+  }
+}

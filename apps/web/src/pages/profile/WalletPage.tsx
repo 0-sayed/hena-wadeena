@@ -13,9 +13,11 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { formatPrice } from '@/lib/format';
 import { getWalletSnapshot, parseEgpInputToPiasters, topUpWallet } from '@/lib/wallet-store';
+import { useTranslation } from 'react-i18next';
 
 const WalletPage = () => {
-  const { user } = useAuth();
+  const { t } = useTranslation('wallet');
+  const { user, language } = useAuth();
   const [wallet, setWallet] = useState<WalletType | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [topupAmount, setTopupAmount] = useState('');
@@ -50,7 +52,7 @@ const WalletPage = () => {
 
     const amountPiasters = parseEgpInputToPiasters(topupAmount);
     if (!amountPiasters || amountPiasters <= 0) {
-      toast.error('أدخل مبلغًا صحيحًا');
+      toast.error(t('topup.invalidAmount'));
       return;
     }
 
@@ -61,9 +63,9 @@ const WalletPage = () => {
       setTransactions(snapshot.transactions);
       setShowTopup(false);
       setTopupAmount('');
-      toast.success('تم شحن المحفظة بنجاح');
+      toast.success(t('topup.success'));
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'تعذر شحن المحفظة');
+      toast.error(error instanceof Error ? error.message : t('topup.error'));
     } finally {
       setLoading(false);
     }
@@ -77,7 +79,7 @@ const WalletPage = () => {
     );
 
   return (
-    <Layout title="المحفظة">
+    <Layout title={t('title')}>
       <PageTransition>
         <section className="relative py-14 md:py-20 overflow-hidden">
           <GradientMesh />
@@ -96,11 +98,11 @@ const WalletPage = () => {
                       <div className="h-16 w-16 mx-auto mb-5 rounded-2xl bg-primary/20 flex items-center justify-center">
                         <Wallet className="h-9 w-9 text-primary" />
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">الرصيد الحالي</p>
+                      <p className="text-sm text-muted-foreground mb-2">{t('balance.label')}</p>
                       <p className="text-6xl font-bold text-foreground">
                         {wallet ? formatPrice(wallet.balance) : '0'}
                       </p>
-                      <p className="text-lg text-muted-foreground mt-2">جنيه مصري</p>
+                      <p className="text-lg text-muted-foreground mt-2">{t('balance.currencyLine')}</p>
                       <div className="flex gap-3 justify-center mt-8">
                         <Button
                           onClick={() => setShowTopup((current) => !current)}
@@ -108,7 +110,7 @@ const WalletPage = () => {
                           className="h-14 px-8 rounded-xl hover:scale-[1.03] transition-transform"
                         >
                           <Plus className="h-5 w-5 me-2" />
-                          شحن المحفظة
+                          {t('topup.btn')}
                         </Button>
                       </div>
                     </>
@@ -121,7 +123,7 @@ const WalletPage = () => {
               <SR>
                 <Card className="border-primary/30 rounded-2xl">
                   <CardContent className="p-7 space-y-5">
-                    <h3 className="font-bold text-lg">شحن المحفظة</h3>
+                    <h3 className="font-bold text-lg">{t('topup.title')}</h3>
                     <div className="flex gap-2">
                       {[100, 250, 500, 1000].map((amt) => (
                         <Button
@@ -139,7 +141,7 @@ const WalletPage = () => {
                       type="number"
                       min="1"
                       step="0.01"
-                      placeholder="مبلغ آخر..."
+                      placeholder={t('topup.otherAmountPlaceholder')}
                       value={topupAmount}
                       onChange={(e) => setTopupAmount(e.target.value)}
                       className="h-12 rounded-xl"
@@ -150,14 +152,14 @@ const WalletPage = () => {
                         className="flex-1 h-12 rounded-xl hover:scale-[1.02] transition-transform"
                       >
                         <CreditCard className="h-5 w-5 me-2" />
-                        شحن الآن
+                        {t('topup.submitBtn')}
                       </Button>
                       <Button
                         variant="outline"
                         className="h-12 rounded-xl"
                         onClick={() => setShowTopup(false)}
                       >
-                        إلغاء
+                        {t('topup.cancelBtn')}
                       </Button>
                     </div>
                   </CardContent>
@@ -168,13 +170,13 @@ const WalletPage = () => {
             <SR delay={200}>
               <Card className="rounded-2xl">
                 <CardHeader>
-                  <CardTitle className="text-xl">سجل المعاملات</CardTitle>
+                  <CardTitle className="text-xl">{t('transactions.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {loading ? (
                     [1, 2, 3].map((i) => <Skeleton key={i} h="h-16" className="rounded-xl" />)
                   ) : transactions.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-10">لا توجد معاملات بعد</p>
+                    <p className="text-center text-muted-foreground py-10">{t('transactions.empty')}</p>
                   ) : (
                     transactions.map((tx) => (
                       <div
@@ -186,7 +188,7 @@ const WalletPage = () => {
                           <div>
                             <p className="font-semibold text-sm">{tx.description}</p>
                             <p className="text-xs text-muted-foreground">
-                              {new Date(tx.created_at).toLocaleDateString('ar-EG')}
+                              {new Date(tx.created_at).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
                             </p>
                           </div>
                         </div>
@@ -195,10 +197,12 @@ const WalletPage = () => {
                             className={`font-bold text-lg ${tx.direction === 'credit' ? 'text-green-600' : 'text-red-500'}`}
                           >
                             {tx.direction === 'credit' ? '+' : '-'}
-                            {formatPrice(tx.amount)} جنيه
+                            {formatPrice(tx.amount)} {t('transactions.currency')}
                           </p>
                           <Badge variant="outline" className="text-xs">
-                            {tx.status === 'completed' ? 'مكتمل' : 'معلق'}
+                            {tx.status === 'completed'
+                              ? t('transactions.status.completed')
+                              : t('transactions.status.pending')}
                           </Badge>
                         </div>
                       </div>

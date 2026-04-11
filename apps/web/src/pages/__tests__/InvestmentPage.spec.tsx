@@ -166,14 +166,14 @@ describe('InvestmentPage', () => {
       expect(screen.getByText('شركة تقنية ناشئة')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText('ابحث عن فرص استثمارية...'), {
+    fireEvent.change(screen.getByPlaceholderText('Search for investment opportunities...'), {
       target: { value: 'زرا' },
     });
 
     expect(screen.getByText('فرصة زراعية في الداخلة')).toBeInTheDocument();
     expect(screen.queryByText('شركة تقنية ناشئة')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'ابحث' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(mockNavigate).not.toHaveBeenCalledWith('/search?q=%D8%B2%D8%B1%D8%A7');
   });
@@ -185,7 +185,7 @@ describe('InvestmentPage', () => {
       expect(screen.getByText('شركة تقنية ناشئة')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText('ابحث عن فرص استثمارية...'), {
+    fireEvent.change(screen.getByPlaceholderText('Search for investment opportunities...'), {
       target: { value: 'الخارجه' },
     });
 

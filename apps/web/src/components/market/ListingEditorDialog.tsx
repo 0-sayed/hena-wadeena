@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,15 +20,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { DISTRICTS, districtLabel } from '@/lib/format';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import { type AppLanguage } from '@/lib/localization';
 import { type ListingFormState } from './listing-editor-form';
 
-const listingCategories = [
-  { value: 'shopping', ar: 'تسوق', en: 'Shopping' },
-  { value: 'service', ar: 'خدمات', en: 'Services' },
-  { value: 'healthcare', ar: 'رعاية صحية', en: 'Healthcare' },
-  { value: 'education', ar: 'تعليم', en: 'Education' },
-] as const;
+const listingCategoryValues = ['shopping', 'service', 'healthcare', 'education'] as const;
 
 type ListingEditorDialogProps = {
   appLanguage: AppLanguage;
@@ -48,27 +44,24 @@ export function ListingEditorDialog({
   onOpenChange,
   onSave,
 }: ListingEditorDialogProps) {
+  const { t } = useTranslation('market');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {form.id
-              ? pickLocalizedCopy(appLanguage, { ar: 'تعديل إعلان', en: 'Edit listing' })
-              : pickLocalizedCopy(appLanguage, { ar: 'إضافة إعلان جديد', en: 'Add a new listing' })}
+            {form.id ? t('listingEditor.titleEdit') : t('listingEditor.titleAdd')}
           </DialogTitle>
           <DialogDescription>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'أضف منتجاً أو خدمة مع السعر والموقع، ثم احفظ التغييرات لإظهارها في القائمة.',
-              en: 'Add a product or service with pricing and location, then save to update the listings table.',
-            })}
+            {t('listingEditor.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="listingTitle">
-              {pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}
+              {t('listingEditor.nameLabel')}
             </Label>
             <Input
               id="listingTitle"
@@ -82,7 +75,7 @@ export function ListingEditorDialog({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="listingPrice">
-                {pickLocalizedCopy(appLanguage, { ar: 'السعر (جنيه)', en: 'Price (EGP)' })}
+                {t('listingEditor.priceLabel')}
               </Label>
               <Input
                 id="listingPrice"
@@ -97,7 +90,7 @@ export function ListingEditorDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>{pickLocalizedCopy(appLanguage, { ar: 'التصنيف', en: 'Category' })}</Label>
+              <Label>{t('listingEditor.categoryLabel')}</Label>
               <Select
                 value={form.category}
                 onValueChange={(value) => onFormChange((prev) => ({ ...prev, category: value }))}
@@ -106,9 +99,9 @@ export function ListingEditorDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {listingCategories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {pickLocalizedCopy(appLanguage, category)}
+                  {listingCategoryValues.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(`categories.${value}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -118,7 +111,7 @@ export function ListingEditorDialog({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</Label>
+              <Label>{t('listingEditor.districtLabel')}</Label>
               <Select
                 value={form.district}
                 onValueChange={(value) => onFormChange((prev) => ({ ...prev, district: value }))}
@@ -138,7 +131,7 @@ export function ListingEditorDialog({
 
             <div className="space-y-2">
               <Label htmlFor="listingAddress">
-                {pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Address' })}
+                {t('listingEditor.addressLabel')}
               </Label>
               <Input
                 id="listingAddress"
@@ -152,7 +145,7 @@ export function ListingEditorDialog({
 
           <div className="space-y-2">
             <Label htmlFor="listingDescription">
-              {pickLocalizedCopy(appLanguage, { ar: 'الوصف', en: 'Description' })}
+              {t('listingEditor.descriptionLabel')}
             </Label>
             <Textarea
               id="listingDescription"
@@ -167,13 +160,13 @@ export function ListingEditorDialog({
           <div className="flex gap-3">
             <Button onClick={onSave} disabled={saving}>
               {saving
-                ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
+                ? t('listingEditor.saving')
                 : form.id
-                  ? pickLocalizedCopy(appLanguage, { ar: 'تحديث الإعلان', en: 'Update listing' })
-                  : pickLocalizedCopy(appLanguage, { ar: 'إضافة الإعلان', en: 'Add listing' })}
+                  ? t('listingEditor.updateBtn')
+                  : t('listingEditor.addBtn')}
             </Button>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {pickLocalizedCopy(appLanguage, { ar: 'إغلاق', en: 'Close' })}
+              {t('listingEditor.closeBtn')}
             </Button>
           </div>
         </div>

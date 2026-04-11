@@ -257,6 +257,19 @@ export const areaLabels: Record<AttractionArea, string> = {
   balat: 'بلاط',
 };
 
+const areaLabelsEn: Record<AttractionArea, string> = {
+  kharga: 'Kharga',
+  dakhla: 'Dakhla',
+  farafra: 'Farafra',
+  baris: 'Baris',
+  balat: 'Balat',
+};
+
+export function areaLabel(area: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? areaLabelsEn : areaLabels;
+  return labels[area as AttractionArea] ?? area;
+}
+
 export const bestSeasonLabels: Record<BestSeason, string> = {
   winter: 'الشتاء',
   summer: 'الصيف',
@@ -264,17 +277,51 @@ export const bestSeasonLabels: Record<BestSeason, string> = {
   all_year: 'طوال العام',
 };
 
+const bestSeasonLabelsEn: Record<BestSeason, string> = {
+  winter: 'Winter',
+  summer: 'Summer',
+  spring: 'Spring',
+  all_year: 'All Year',
+};
+
+export function bestSeasonLabel(season: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? bestSeasonLabelsEn : bestSeasonLabels;
+  return labels[season as BestSeason] ?? season;
+}
+
 export const bestTimeOfDayLabels: Record<BestTimeOfDay, string> = {
   morning: 'الصباح',
   evening: 'المساء',
   any: 'أي وقت',
 };
 
+const bestTimeOfDayLabelsEn: Record<BestTimeOfDay, string> = {
+  morning: 'Morning',
+  evening: 'Evening',
+  any: 'Any time',
+};
+
+export function bestTimeOfDayLabel(time: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? bestTimeOfDayLabelsEn : bestTimeOfDayLabels;
+  return labels[time as BestTimeOfDay] ?? time;
+}
+
 export const difficultyLabels: Record<Difficulty, string> = {
   easy: 'سهل',
   moderate: 'متوسط',
   hard: 'صعب',
 };
+
+const difficultyLabelsEn: Record<Difficulty, string> = {
+  easy: 'Easy',
+  moderate: 'Moderate',
+  hard: 'Hard',
+};
+
+export function difficultyLabel(diff: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? difficultyLabelsEn : difficultyLabels;
+  return labels[diff as Difficulty] ?? diff;
+}
 
 export const languageLabels: Record<string, string> = {
   [GuideLanguage.ARABIC]: 'العربية',
@@ -380,8 +427,18 @@ const jobCategoryLabels: Record<JobCategory, string> = {
   handicraft: 'صناعة يدوية',
 };
 
-export function jobCategoryLabel(category: string): string {
-  return jobCategoryLabels[category as JobCategory] ?? category;
+const jobCategoryLabelsEn: Record<JobCategory, string> = {
+  agriculture: 'Agriculture',
+  tourism: 'Tourism',
+  skilled_trade: 'Skilled Trade',
+  domestic: 'Domestic Services',
+  logistics: 'Logistics',
+  handicraft: 'Handicraft',
+};
+
+export function jobCategoryLabel(category: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? jobCategoryLabelsEn : jobCategoryLabels;
+  return labels[category as JobCategory] ?? category;
 }
 
 /** Select options for category — form use (no "all" entry) */
@@ -403,8 +460,17 @@ const jobStatusLabels: Record<JobStatus, string> = {
   expired: 'منتهي',
 };
 
-export function jobStatusLabel(status: string): string {
-  return jobStatusLabels[status as JobStatus] ?? status;
+const jobStatusLabelsEn: Record<JobStatus, string> = {
+  open: 'Open',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  expired: 'Expired',
+};
+
+export function jobStatusLabel(status: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? jobStatusLabelsEn : jobStatusLabels;
+  return labels[status as JobStatus] ?? status;
 }
 
 const applicationStatusLabels: Record<ApplicationStatus, string> = {
@@ -416,8 +482,18 @@ const applicationStatusLabels: Record<ApplicationStatus, string> = {
   completed: 'مكتمل',
 };
 
-export function applicationStatusLabel(status: string): string {
-  return applicationStatusLabels[status as ApplicationStatus] ?? status;
+const applicationStatusLabelsEn: Record<ApplicationStatus, string> = {
+  pending: 'Pending',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+};
+
+export function applicationStatusLabel(status: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? applicationStatusLabelsEn : applicationStatusLabels;
+  return labels[status as ApplicationStatus] ?? status;
 }
 
 const compensationTypeLabels: Record<CompensationType, string> = {
@@ -427,8 +503,16 @@ const compensationTypeLabels: Record<CompensationType, string> = {
   negotiable: 'قابل للتفاوض',
 };
 
-export function compensationTypeLabel(type: string): string {
-  return compensationTypeLabels[type as CompensationType] ?? type;
+const compensationTypeLabelsEn: Record<CompensationType, string> = {
+  fixed: 'Fixed amount',
+  daily: 'Daily',
+  per_kg: 'Per kg',
+  negotiable: 'Negotiable',
+};
+
+export function compensationTypeLabel(type: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? compensationTypeLabelsEn : compensationTypeLabels;
+  return labels[type as CompensationType] ?? type;
 }
 
 /** Select options for compensation type — form use (no "all" entry) */

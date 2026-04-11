@@ -70,9 +70,9 @@ describe('RegisterPage pending KYC flow', () => {
       target: { value: 'password123' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /التالي/i }));
-    fireEvent.click(screen.getByRole('button', { name: /مرشد سياحي/i }));
-    fireEvent.click(screen.getByRole('button', { name: /إنشاء الحساب/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Tour guide/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create account/i }));
 
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith({
@@ -93,12 +93,12 @@ describe('RegisterPage pending KYC flow', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /التالي/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
-    const emailInput = screen.getByLabelText('البريد الإلكتروني *');
-    const emailError = await screen.findByText('البريد الإلكتروني مطلوب');
+    const emailInput = screen.getByLabelText('Email address *');
+    const emailError = await screen.findByText('Email is required');
 
-    expect(screen.getByLabelText('الاسم الكامل *')).toHaveFocus();
+    expect(screen.getByLabelText('Full name *')).toHaveFocus();
     expect(emailInput).toHaveAttribute('aria-invalid', 'true');
     expect(emailInput).toHaveAttribute('aria-describedby', 'email-error');
     expect(emailError).toHaveAttribute('id', 'email-error');

@@ -25,6 +25,7 @@ import { useMyOpportunities } from '@/hooks/use-my-opportunities';
 import { useAuth } from '@/hooks/use-auth';
 import { formatPrice } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 const applicationStatusLabels: Record<string, { ar: string; en: string }> = {
   pending: { ar: 'قيد المراجعة', en: 'Pending' },
@@ -35,7 +36,7 @@ const applicationStatusLabels: Record<string, { ar: string; en: string }> = {
 };
 
 function formatAmountWithCurrency(value: number, language: AppLanguage): string {
-  return `${formatPrice(value)} ${pickLocalizedCopy(language, { ar: 'ج.م', en: 'EGP' })}`;
+  return `${formatPrice(value)} ${t('transactions.currency')}`;
 }
 
 function applicationStatusLabel(status: string, language: AppLanguage) {
@@ -44,6 +45,10 @@ function applicationStatusLabel(status: string, language: AppLanguage) {
 }
 
 export default function InvestorDashboard() {
+  const {
+    t
+  } = useTranslation(['wallet', 'dashboard', 'tourism', 'search', 'investment']);
+
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const { data: opportunities, isLoading: loadingOpportunities, error } = useMyOpportunities();
@@ -99,44 +104,29 @@ export default function InvestorDashboard() {
   return (
     <DashboardShell
       icon={TrendingUp}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة المستثمر', en: 'Investor dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'متابعة الفرص التي نشرتها والاهتمامات التي استلمتها أو أرسلتها',
-        en: 'Track the opportunities you published and the interest you received or sent',
-      })}
+      title={t('investor.title')}
+      subtitle={t('investor.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label={pickLocalizedCopy(appLanguage, {
-            ar: 'فرصي المنشورة',
-            en: 'My published opportunities',
-          })}
+          label={t('investor.stats.published')}
           value={loadingOpportunities ? '...' : stats.opportunities}
           icon={Briefcase}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, {
-            ar: 'استفسارات مستلمة',
-            en: 'Received inquiries',
-          })}
+          label={t('investor.stats.received')}
           value={loadingOpportunities ? '...' : stats.receivedApplications}
           icon={Inbox}
           variant="warning"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, {
-            ar: 'استفسارات مرسلة',
-            en: 'Sent inquiries',
-          })}
+          label={t('investor.stats.sent')}
           value={loadingMyInterests ? '...' : stats.sentApplications}
           icon={Mail}
           variant="success"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, {
-            ar: 'استفسارات الشركات',
-            en: 'Startup inquiries',
-          })}
+          label={t('investor.stats.startups')}
           value={loadingBusinesses || loadingStartupInquiries ? '...' : stats.startupInquiries}
           icon={Inbox}
           variant="warning"
@@ -147,10 +137,7 @@ export default function InvestorDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'فرصي الاستثمارية',
-                en: 'My investment opportunities',
-              })}
+              {t('investor.opportunities.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -162,33 +149,27 @@ export default function InvestorDashboard() {
               </div>
             ) : error ? (
               <p className="text-sm text-destructive">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'تعذر تحميل فرصك الاستثمارية',
-                  en: 'Unable to load your investment opportunities',
-                })}
+                {t('investor.opportunities.loadError')}
               </p>
             ) : !opportunities || opportunities.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لم تقم بإضافة فرص استثمارية بعد.',
-                  en: 'No investment opportunities yet.',
-                })}
+                {t('investor.opportunities.empty')}
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'الفرصة', en: 'Opportunity' })}
+                      {t('investor.submitted.table.opportunity')}
                     </TableHead>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'الموقع', en: 'Location' })}
+                      {t('attractions.locationTitle')}
                     </TableHead>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'الاستثمار', en: 'Investment' })}
+                      {t('types.opportunity')}
                     </TableHead>
                     <TableHead>
-                      {pickLocalizedCopy(appLanguage, { ar: 'الاهتمامات', en: 'Interest' })}
+                      {t('investor.opportunities.table.interest')}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -222,19 +203,13 @@ export default function InvestorDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'صندوق الوارد الاستثماري',
-                en: 'Investment inbox',
-              })}
+              {t('investor.inbox.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!selectedOpportunity ? (
               <p className="text-sm text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'اختر فرصة من الجدول لعرض الاستفسارات المستلمة عنها.',
-                  en: 'Choose an opportunity from the table to view received inquiries.',
-                })}
+                {t('investor.inbox.empty')}
               </p>
             ) : applicationsQuery.isLoading ? (
               <div className="space-y-3">
@@ -244,17 +219,11 @@ export default function InvestorDashboard() {
               </div>
             ) : applicationsQuery.isError ? (
               <p className="text-sm text-destructive">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'تعذر تحميل الاستفسارات المستلمة',
-                  en: 'Unable to load received inquiries',
-                })}
+                {t('investor.inbox.loadError')}
               </p>
             ) : receivedApplications.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لا توجد استفسارات مستلمة لهذه الفرصة حتى الآن.',
-                  en: 'No received inquiries for this opportunity yet.',
-                })}
+                {t('investor.inbox.noInquiries')}
               </p>
             ) : (
               <div className="space-y-4">
@@ -282,10 +251,7 @@ export default function InvestorDashboard() {
                         </LtrText>
                       ) : (
                         <span className="text-sm text-muted-foreground">
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'لا يوجد بريد إلكتروني',
-                            en: 'No email provided',
-                          })}
+                          {t('investor.inbox.noEmail')}
                         </span>
                       )}
                       <span className="rounded-full bg-muted px-3 py-1 text-xs">
@@ -294,16 +260,13 @@ export default function InvestorDashboard() {
                     </div>
                     {application.contactPhone && (
                       <p className="text-sm text-muted-foreground">
-                        {pickLocalizedCopy(appLanguage, { ar: 'الهاتف:', en: 'Phone:' })}{' '}
+                        {t('investor.inbox.phone')}{' '}
                         <LtrText>{application.contactPhone}</LtrText>
                       </p>
                     )}
                     {application.amountProposed != null && (
                       <p className="text-sm text-muted-foreground">
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'قيمة مقترحة:',
-                          en: 'Proposed amount:',
-                        })}{' '}
+                        {t('investor.inbox.proposedAmount')}{' '}
                         {formatAmountWithCurrency(application.amountProposed, appLanguage)}
                       </p>
                     )}
@@ -314,20 +277,14 @@ export default function InvestorDashboard() {
                       {application.contactEmail && (
                         <Button asChild size="sm" variant="outline">
                           <a href={`mailto:${application.contactEmail}`}>
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'رد عبر البريد',
-                              en: 'Reply by email',
-                            })}
+                            {t('investor.startupInbox.replyEmail')}
                           </a>
                         </Button>
                       )}
                       {application.contactPhone && (
                         <Button asChild size="sm" variant="secondary">
                           <a href={`tel:${application.contactPhone}`}>
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'اتصال مباشر',
-                              en: 'Call directly',
-                            })}
+                            {t('investor.startupInbox.callDirect')}
                           </a>
                         </Button>
                       )}
@@ -343,10 +300,7 @@ export default function InvestorDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'صندوق وارد الشركات الناشئة',
-              en: 'Startup inquiry inbox',
-            })}
+            {t('investor.startupInbox.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -358,24 +312,15 @@ export default function InvestorDashboard() {
             </div>
           ) : (myBusinesses?.length ?? 0) === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد شركات مسجلة على حسابك حتى الآن.',
-                en: 'No startups or businesses are registered on your account yet.',
-              })}
+              {t('investor.startupInbox.noBusinesses')}
             </p>
           ) : startupInquiriesError ? (
             <p className="text-sm text-destructive">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تعذر تحميل استفسارات الشركات حالياً.',
-                en: 'Unable to load startup inquiries right now.',
-              })}
+              {t('investor.startupInbox.loadError')}
             </p>
           ) : (startupInquiries?.data ?? []).length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد استفسارات واردة على شركاتك حتى الآن.',
-                en: 'No startup inquiries have arrived yet.',
-              })}
+              {t('investor.startupInbox.empty')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -385,7 +330,7 @@ export default function InvestorDashboard() {
                     <div>
                       <p className="font-semibold text-foreground">{inquiry.businessName}</p>
                       <p className="text-sm text-muted-foreground">
-                        {pickLocalizedCopy(appLanguage, { ar: 'من:', en: 'From:' })}{' '}
+                        {t('merchant.inbox.from')}{' '}
                         {inquiry.contactName}
                       </p>
                     </div>
@@ -398,20 +343,14 @@ export default function InvestorDashboard() {
                     {inquiry.contactEmail && (
                       <Button asChild size="sm" variant="outline">
                         <a href={`mailto:${inquiry.contactEmail}`}>
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'رد بالبريد',
-                            en: 'Reply by email',
-                          })}
+                          {t('investor.startupInbox.replyEmail')}
                         </a>
                       </Button>
                     )}
                     {inquiry.contactPhone && (
                       <Button asChild size="sm" variant="secondary">
                         <a href={`tel:${inquiry.contactPhone}`}>
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'اتصال مباشر',
-                            en: 'Call directly',
-                          })}
+                          {t('investor.startupInbox.callDirect')}
                         </a>
                       </Button>
                     )}
@@ -426,10 +365,7 @@ export default function InvestorDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'الاستفسارات التي أرسلتها',
-              en: 'Submitted inquiries',
-            })}
+            {t('investor.submitted.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -441,36 +377,27 @@ export default function InvestorDashboard() {
             </div>
           ) : myInterestsError ? (
             <p className="text-sm text-destructive">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تعذر تحميل الاستفسارات المرسلة',
-                en: 'Unable to load sent inquiries',
-              })}
+              {t('investor.submitted.loadError')}
             </p>
           ) : (myInterests?.data ?? []).length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لم ترسل استفسارات استثمارية بعد.',
-                en: 'No sent investment inquiries yet.',
-              })}
+              {t('investor.submitted.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'الفرصة', en: 'Opportunity' })}
+                    {t('investor.submitted.table.opportunity')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                    {t('startupDetails.status')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'القيمة المقترحة',
-                      en: 'Proposed amount',
-                    })}
+                    {t('investor.submitted.table.amount')}
                   </TableHead>
                   <TableHead>
-                    {pickLocalizedCopy(appLanguage, { ar: 'التفاصيل', en: 'Details' })}
+                    {t('driver.rides.detailsBtn')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -492,10 +419,7 @@ export default function InvestorDashboard() {
                         to={`/investment/opportunity/${application.opportunityId}`}
                         className="text-primary hover:underline"
                       >
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'عرض الفرصة',
-                          en: 'View opportunity',
-                        })}
+                        {t('investor.submitted.viewBtn')}
                       </Link>
                     </TableCell>
                   </TableRow>

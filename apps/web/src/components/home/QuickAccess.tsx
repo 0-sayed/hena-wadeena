@@ -1,55 +1,49 @@
 import { Link } from 'react-router';
 import { User, Wallet, Bell, CalendarCheck } from 'lucide-react';
-
+import { useTranslation } from 'react-i18next';
 import { SR } from '@/components/motion/ScrollReveal';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
-import { pickLocalizedCopy } from '@/lib/localization';
 
 const quickLinks = [
   {
     icon: User,
-    label: { ar: 'الملف الشخصي', en: 'Profile' },
+    labelKey: 'profile',
     href: '/profile',
     gradient: 'from-blue-500 to-blue-600',
   },
   {
     icon: Wallet,
-    label: { ar: 'المحفظة', en: 'Wallet' },
+    labelKey: 'wallet',
     href: '/wallet',
     gradient: 'from-green-500 to-emerald-600',
   },
   {
     icon: CalendarCheck,
-    label: { ar: 'حجوزاتي', en: 'My bookings' },
+    labelKey: 'bookings',
     href: '/bookings',
     gradient: 'from-purple-500 to-violet-600',
   },
   {
     icon: Bell,
-    label: { ar: 'الإشعارات', en: 'Notifications' },
+    labelKey: 'notifications',
     href: '/notifications',
     gradient: 'from-red-500 to-rose-600',
   },
 ];
 
 export function QuickAccess() {
-  const { user, language } = useAuth();
+  const { t } = useTranslation(['home', 'common']);
+  const { user } = useAuth();
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
 
   if (!user) return null;
 
-  const greeting = pickLocalizedCopy(language, {
-    ar: `مرحباً، ${user.full_name}`,
-    en: `Hello, ${user.full_name}`,
-  });
-  const subtitle = pickLocalizedCopy(language, {
-    ar: 'الوصول السريع لحسابك',
-    en: 'Quick access to your account',
-  });
+  const greeting = t('quickAccess.greeting', { name: user.full_name });
+  const subtitle = t('quickAccess.subtitle');
 
   return (
     <section className="bg-gradient-to-b from-background to-muted/30 py-10 sm:py-14">
@@ -81,7 +75,7 @@ export function QuickAccess() {
                       </Badge>
                     )}
                     <span className="text-sm font-semibold text-foreground">
-                      {pickLocalizedCopy(language, link.label)}
+                      {t(link.labelKey, { ns: 'common' })}
                     </span>
                   </CardContent>
                 </Card>

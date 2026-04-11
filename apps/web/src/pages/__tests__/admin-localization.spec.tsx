@@ -105,6 +105,13 @@ vi.mock('@/components/admin/DocumentViewerDialog', () => ({
   DocumentViewerDialog: () => <div>document-viewer</div>,
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { changeLanguage: vi.fn() },
+  }),
+}));
+
 vi.mock('@/hooks/use-auth', () => ({
   useAuth: () => ({
     language: 'en',
@@ -196,29 +203,29 @@ describe('Admin localization', () => {
   it('renders AdminOverview in English mode', () => {
     render(<AdminOverview />);
 
-    expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
-    expect(screen.getByText('Platform metrics and pending review queues')).toBeInTheDocument();
-    expect(screen.getByText('Total users')).toBeInTheDocument();
-    expect(screen.getByText('Pending KYC submissions')).toBeInTheDocument();
-    expect(screen.getByText('Pending points of interest')).toBeInTheDocument();
-    expect(screen.getByText('Announcements')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'New announcement' })).toBeInTheDocument();
-    expect(screen.getByText(/Updated:/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'overview.pageTitle' })).toBeInTheDocument();
+    expect(screen.getByText('overview.pageSubtitle')).toBeInTheDocument();
+    expect(screen.getByText('overview.stats.totalUsers')).toBeInTheDocument();
+    expect(screen.getByText('overview.stats.pendingKyc')).toBeInTheDocument();
+    expect(screen.getByText('overview.stats.pendingPois')).toBeInTheDocument();
+    expect(screen.getByText('overview.announcements.title')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'overview.announcements.newBtn' })).toBeInTheDocument();
+    expect(screen.getByText(/overview\.updated/)).toBeInTheDocument();
   });
 
   it('renders ReviewerDashboard and moderation tables in English mode', () => {
     render(<ReviewerDashboard />);
 
-    expect(screen.getByRole('heading', { name: 'Reviewer dashboard' })).toBeInTheDocument();
-    expect(screen.getByText('Track content and moderation items that need review')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Moderation and approvals' })).toBeInTheDocument();
-    expect(screen.getByText('Review pending requests and approve or reject them')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Listings/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Businesses/ })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'KYC submissions' })).toBeInTheDocument();
-    expect(screen.getByText('All')).toBeInTheDocument();
-    expect(screen.getByText('Document type')).toBeInTheDocument();
-    expect(screen.getByText('Submitted on')).toBeInTheDocument();
-    expect(screen.getByText('National ID')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'reviewer.dashboard.title' })).toBeInTheDocument();
+    expect(screen.getByText('reviewer.dashboard.subtitle')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'moderation.title' })).toBeInTheDocument();
+    expect(screen.getByText('moderation.subtitle')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /tabs.listings/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /tabs.businesses/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'moderation.kyc.title' })).toBeInTheDocument();
+    expect(screen.getByText('moderation.kyc.status.all')).toBeInTheDocument();
+    expect(screen.getByText('moderation.kyc.table.docType')).toBeInTheDocument();
+    expect(screen.getByText('moderation.kyc.table.submitted')).toBeInTheDocument();
+    expect(screen.getByText('moderation.kyc.doc.national_id')).toBeInTheDocument();
   });
 });

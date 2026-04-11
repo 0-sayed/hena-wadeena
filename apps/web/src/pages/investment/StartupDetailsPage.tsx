@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useBusiness } from '@/hooks/use-businesses';
 import { districtLabel, unitLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 function getSafeWebsiteUrl(website: string | null | undefined): string | null {
   if (!website) {
@@ -44,10 +45,7 @@ const StartupDetailsPage = () => {
           <div className="container px-4">
             <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
               <ArrowRight className="h-4 w-4" />
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'العودة إلى الاستثمار',
-                en: 'Back to investment',
-              })}
+              {t('details.backBtn')}
             </Button>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -70,16 +68,10 @@ const StartupDetailsPage = () => {
         <section className="py-8 md:py-12">
           <div className="container px-4 text-center">
             <p className="mb-4 text-lg text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تعذر تحميل بيانات الشركة الناشئة.',
-                en: 'Unable to load startup details.',
-              })}
+              {t('startupDetails.loadError')}
             </p>
             <Button onClick={() => void navigate('/investment')}>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'العودة إلى الاستثمار',
-                en: 'Back to investment',
-              })}
+              {t('details.backBtn')}
             </Button>
           </div>
         </section>
@@ -112,10 +104,7 @@ const StartupDetailsPage = () => {
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/investment')} className="mb-6">
             <ArrowRight className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'العودة إلى الاستثمار',
-              en: 'Back to investment',
-            })}
+            {t('details.backBtn')}
           </Button>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -141,10 +130,7 @@ const StartupDetailsPage = () => {
                         {isVerified && (
                           <Badge className="gap-1 bg-primary/10 text-primary">
                             <Shield className="h-3 w-3" />
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'موثق',
-                              en: 'Verified',
-                            })}
+                            {t('supplierDetails.verified')}
                           </Badge>
                         )}
                         <Badge variant="secondary">{startup.category}</Badge>
@@ -158,7 +144,7 @@ const StartupDetailsPage = () => {
                           </div>
                         )}
                         <div>
-                          {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}:{' '}
+                          {t('startupDetails.status')}:{' '}
                           {startup.status}
                         </div>
                       </div>
@@ -171,10 +157,7 @@ const StartupDetailsPage = () => {
                 <Card className="border-border/50">
                   <CardHeader>
                     <CardTitle className="text-lg">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'نبذة عن الشركة',
-                        en: 'About the startup',
-                      })}
+                      {t('startupDetails.about')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -186,44 +169,38 @@ const StartupDetailsPage = () => {
               <Card className="border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'البيانات المتاحة',
-                      en: 'Available information',
-                    })}
+                    {t('startupDetails.availableInfo')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-xl bg-muted/40 p-4">
                     <p className="text-sm text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}
+                      {t('prices.table.category')}
                     </p>
                     <p className="mt-1 font-semibold text-foreground">{startup.category}</p>
                   </div>
 
                   <div className="rounded-xl bg-muted/40 p-4">
                     <p className="text-sm text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}
+                      {t('listingEditor.districtLabel')}
                     </p>
                     <p className="mt-1 font-semibold text-foreground">
                       {startup.district
                         ? districtLabel(startup.district, appLanguage)
-                        : pickLocalizedCopy(appLanguage, {
-                            ar: 'غير محدد',
-                            en: 'Not specified',
-                          })}
+                        : t('startupDetails.notSpecified')}
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-muted/40 p-4">
                     <p className="text-sm text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                      {t('startupDetails.status')}
                     </p>
                     <p className="mt-1 font-semibold text-foreground">{startup.status}</p>
                   </div>
 
                   <div className="rounded-xl bg-muted/40 p-4">
                     <p className="text-sm text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث', en: 'Last updated' })}
+                      {t('startupDetails.lastUpdated')}
                     </p>
                     <p className="mt-1 font-semibold text-foreground">
                       {new Date(startup.updatedAt).toLocaleDateString(
@@ -238,10 +215,7 @@ const StartupDetailsPage = () => {
                 <Card className="border-border/50">
                   <CardHeader>
                     <CardTitle className="text-lg">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'مجالات أو منتجات مرتبطة',
-                        en: 'Related offerings',
-                      })}
+                      {t('startupDetails.relatedOfferings')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -271,10 +245,7 @@ const StartupDetailsPage = () => {
               <Card className="sticky top-20 border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'التواصل والاهتمام',
-                      en: 'Contact and interest',
-                    })}
+                    {t('startupDetails.contactInterest')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -287,10 +258,7 @@ const StartupDetailsPage = () => {
                       }
                     >
                       <Send className="ml-2 h-5 w-5" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'إرسال استفسار',
-                        en: 'Send inquiry',
-                      })}
+                      {t('contact.form.sendBtn')}
                     </Button>
                   ) : null}
 
@@ -328,10 +296,7 @@ const StartupDetailsPage = () => {
                       }}
                     >
                       <Globe className="ml-2 h-4 w-4" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'زيارة الموقع',
-                        en: 'Visit website',
-                      })}
+                      {t('suppliers.visitWebsite')}
                     </Button>
                   )}
                 </CardContent>

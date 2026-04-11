@@ -35,56 +35,52 @@ import {
   useVerifyListing,
 } from '@/hooks/use-admin';
 import { districtLabel, listingCategoryLabel } from '@/lib/format';
-import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 import type { KycSubmission } from '@/services/api';
-
-type LocalizedLabel = {
-  ar: string;
-  en: string;
-};
+import type { AppLanguage } from '@/lib/localization';
 
 const kycStatusConfig: Record<
   KycSubmission['status'],
   {
-    label: LocalizedLabel;
+    labelKey: string;
     variant: 'default' | 'secondary' | 'destructive' | 'outline';
     className?: string;
   }
 > = {
   pending: {
-    label: { ar: 'معلق', en: 'Pending' },
+    labelKey: 'moderation.kyc.status.pending',
     variant: 'secondary',
   },
   under_review: {
-    label: { ar: 'قيد المراجعة', en: 'Under review' },
+    labelKey: 'moderation.kyc.status.under_review',
     variant: 'outline',
     className: 'border-blue-500/40 text-blue-700 dark:text-blue-300',
   },
   approved: {
-    label: { ar: 'مقبول', en: 'Approved' },
+    labelKey: 'moderation.kyc.status.approved',
     variant: 'default',
     className: 'bg-green-600 text-white hover:bg-green-600',
   },
   rejected: {
-    label: { ar: 'مرفوض', en: 'Rejected' },
+    labelKey: 'moderation.kyc.status.rejected',
     variant: 'destructive',
   },
 };
 
-const kycFilterOptions: Array<{ value: 'all' | KycSubmission['status']; label: LocalizedLabel }> = [
-  { value: 'all', label: { ar: 'الكل', en: 'All' } },
-  { value: KycStatus.PENDING, label: { ar: 'معلق', en: 'Pending' } },
-  { value: KycStatus.UNDER_REVIEW, label: { ar: 'قيد المراجعة', en: 'Under review' } },
-  { value: KycStatus.APPROVED, label: { ar: 'مقبول', en: 'Approved' } },
-  { value: KycStatus.REJECTED, label: { ar: 'مرفوض', en: 'Rejected' } },
+const kycFilterOptions: Array<{ value: 'all' | KycSubmission['status']; labelKey: string }> = [
+  { value: 'all', labelKey: 'moderation.kyc.status.all' },
+  { value: KycStatus.PENDING, labelKey: 'moderation.kyc.status.pending' },
+  { value: KycStatus.UNDER_REVIEW, labelKey: 'moderation.kyc.status.under_review' },
+  { value: KycStatus.APPROVED, labelKey: 'moderation.kyc.status.approved' },
+  { value: KycStatus.REJECTED, labelKey: 'moderation.kyc.status.rejected' },
 ];
 
-const documentTypeLabels: Record<string, LocalizedLabel> = {
-  national_id: { ar: 'بطاقة الرقم القومي', en: 'National ID' },
-  student_id: { ar: 'بطاقة الطالب', en: 'Student ID' },
-  guide_license: { ar: 'رخصة الإرشاد', en: 'Guide license' },
-  commercial_register: { ar: 'السجل التجاري', en: 'Commercial register' },
-  business_document: { ar: 'مستند تجاري', en: 'Business document' },
+const documentTypeLabels: Record<string, string> = {
+  national_id: 'moderation.kyc.doc.national_id',
+  student_id: 'moderation.kyc.doc.student_id',
+  guide_license: 'moderation.kyc.doc.guide_license',
+  commercial_register: 'moderation.kyc.doc.commercial_register',
+  business_document: 'moderation.kyc.doc.business_document',
 };
 
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
@@ -110,9 +106,10 @@ function TableSkeleton({ cols }: { cols: number }) {
 
 export default function AdminModeration() {
   const { language } = useAuth();
+  const { t } = useTranslation('admin');
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
-  const currencyLabel = pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' });
+  const currencyLabel = t('bookings.currency');
 
   const [activeTab, setActiveTab] = useState('kyc');
   const [kycStatusFilter, setKycStatusFilter] = useState<'all' | KycSubmission['status']>('all');
@@ -184,16 +181,10 @@ export default function AdminModeration() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'المراجعة والموافقات',
-            en: 'Moderation and approvals',
-          })}
+          {t('moderation.title')}
         </h1>
         <p className="text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'مراجعة الطلبات المعلقة والموافقة عليها أو رفضها',
-            en: 'Review pending requests and approve or reject them',
-          })}
+          {t('moderation.subtitle')}
         </p>
       </div>
 
@@ -201,7 +192,7 @@ export default function AdminModeration() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="kyc" className="gap-2">
             <FileText className="h-4 w-4" />
-            KYC
+            {t('moderation.tabs.kyc')}
             {kycQuery.data && kycQuery.data.total > 0 && (
               <Badge variant="secondary" className={badgeCountSide}>
                 {kycQuery.data.total}
@@ -210,7 +201,7 @@ export default function AdminModeration() {
           </TabsTrigger>
           <TabsTrigger value="listings" className="gap-2">
             <ShoppingBag className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'الإعلانات', en: 'Listings' })}
+            {t('moderation.tabs.listings')}
             {listingsQuery.data && listingsQuery.data.total > 0 && (
               <Badge variant="secondary" className={badgeCountSide}>
                 {listingsQuery.data.total}
@@ -219,7 +210,7 @@ export default function AdminModeration() {
           </TabsTrigger>
           <TabsTrigger value="businesses" className="gap-2">
             <Store className="h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, { ar: 'الأنشطة التجارية', en: 'Businesses' })}
+            {t('moderation.tabs.businesses')}
             {businessesQuery.data && businessesQuery.data.total > 0 && (
               <Badge variant="secondary" className={badgeCountSide}>
                 {businessesQuery.data.total}
@@ -232,16 +223,10 @@ export default function AdminModeration() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'طلبات التحقق من الهوية',
-                  en: 'KYC submissions',
-                })}
+                {t('moderation.kyc.title')}
               </CardTitle>
               <CardDescription>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'جميع طلبات التحقق مع إمكانية التصفية حسب الحالة',
-                  en: 'All identity-verification submissions with status-based filtering',
-                })}
+                {t('moderation.kyc.desc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -253,45 +238,25 @@ export default function AdminModeration() {
                     variant={kycStatusFilter === option.value ? 'default' : 'outline'}
                     onClick={() => setKycStatusFilter(option.value)}
                   >
-                    {pickLocalizedCopy(appLanguage, option.label)}
+                    {t(option.labelKey)}
                   </Button>
                 ))}
               </div>
               {kycQuery.error ? (
                 <EmptyState
                   icon={AlertCircle}
-                  message={pickLocalizedCopy(appLanguage, {
-                    ar: 'فشل تحميل البيانات',
-                    en: 'Failed to load data',
-                  })}
+                  message={t('moderation.errorLoad')}
                 />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</TableHead>
-                      <TableHead>
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'نوع المستند',
-                          en: 'Document type',
-                        })}
-                      </TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
-                      <TableHead>
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'تاريخ التقديم',
-                          en: 'Submitted on',
-                        })}
-                      </TableHead>
-                      <TableHead>
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'آخر مراجعة',
-                          en: 'Last review',
-                        })}
-                      </TableHead>
-                      <TableHead className="w-40">
-                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
-                      </TableHead>
+                      <TableHead>{t('moderation.kyc.table.name')}</TableHead>
+                      <TableHead>{t('moderation.kyc.table.docType')}</TableHead>
+                      <TableHead>{t('moderation.kyc.table.status')}</TableHead>
+                      <TableHead>{t('moderation.kyc.table.submitted')}</TableHead>
+                      <TableHead>{t('moderation.kyc.table.reviewed')}</TableHead>
+                      <TableHead className="w-40">{t('moderation.kyc.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -304,14 +269,8 @@ export default function AdminModeration() {
                             icon={CheckCircle}
                             message={
                               kycStatusFilter === 'all'
-                                ? pickLocalizedCopy(appLanguage, {
-                                    ar: 'لا توجد طلبات تحقق حاليًا',
-                                    en: 'No KYC submissions right now',
-                                  })
-                                : pickLocalizedCopy(appLanguage, {
-                                    ar: `لا توجد طلبات بحالة "${pickLocalizedCopy(appLanguage, activeKycFilter?.label ?? { ar: '', en: '' })}"`,
-                                    en: `No submissions with status "${pickLocalizedCopy(appLanguage, activeKycFilter?.label ?? { ar: '', en: '' })}"`,
-                                  })
+                                ? t('moderation.kyc.noSubmissions')
+                                : t('moderation.kyc.noSubmissionsStatus', { status: t(activeKycFilter?.labelKey ?? '') })
                             }
                           />
                         </TableCell>
@@ -319,21 +278,19 @@ export default function AdminModeration() {
                     ) : (
                       kycQuery.data?.data.map((item) => {
                         const statusConfig = kycStatusConfig[item.status];
-                        const documentType = documentTypeLabels[item.documentType] ?? {
-                          ar: item.documentType,
-                          en: item.documentType,
-                        };
+                        const documentType = item.documentType;
+                        const documentTypeLabel = documentTypeLabels[documentType] ? t(documentTypeLabels[documentType]) : documentType;
 
                         return (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.fullName}</TableCell>
-                            <TableCell>{pickLocalizedCopy(appLanguage, documentType)}</TableCell>
+                            <TableCell>{documentTypeLabel}</TableCell>
                             <TableCell>
                               <Badge
                                 variant={statusConfig.variant}
                                 className={statusConfig.className}
                               >
-                                {pickLocalizedCopy(appLanguage, statusConfig.label)}
+                                {t(statusConfig.labelKey)}
                               </Badge>
                               {item.notes ? (
                                 <p className="mt-1 text-xs text-muted-foreground">{item.notes}</p>
@@ -344,11 +301,7 @@ export default function AdminModeration() {
                               {item.reviewedAt ? (
                                 <div className="space-y-1 text-sm">
                                   <p>
-                                    {item.reviewedByName ??
-                                      pickLocalizedCopy(appLanguage, {
-                                        ar: 'تمت المراجعة',
-                                        en: 'Reviewed',
-                                      })}
+                                    {item.reviewedByName ?? t('moderation.kyc.reviewedBy')}
                                   </p>
                                   <p className="text-muted-foreground">
                                     {formatDate(item.reviewedAt)}
@@ -356,10 +309,7 @@ export default function AdminModeration() {
                                 </div>
                               ) : (
                                 <span className="text-muted-foreground">
-                                  {pickLocalizedCopy(appLanguage, {
-                                    ar: 'لم تُراجع بعد',
-                                    en: 'Not reviewed yet',
-                                  })}
+                                  {t('moderation.kyc.notReviewed')}
                                 </span>
                               )}
                             </TableCell>
@@ -413,44 +363,24 @@ export default function AdminModeration() {
         <TabsContent value="listings">
           <Card>
             <CardHeader>
-              <CardTitle>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'الإعلانات المعلقة',
-                  en: 'Pending listings',
-                })}
-              </CardTitle>
-              <CardDescription>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'إعلانات تحتاج موافقة',
-                  en: 'Listings awaiting approval',
-                })}
-              </CardDescription>
+              <CardTitle>{t('moderation.listings.title')}</CardTitle>
+              <CardDescription>{t('moderation.listings.desc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {listingsQuery.error ? (
                 <EmptyState
                   icon={AlertCircle}
-                  message={pickLocalizedCopy(appLanguage, {
-                    ar: 'فشل تحميل البيانات',
-                    en: 'Failed to load data',
-                  })}
+                  message={t('moderation.errorLoad')}
                 />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Title' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}</TableHead>
-                      <TableHead>
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'تاريخ الإنشاء',
-                          en: 'Created on',
-                        })}
-                      </TableHead>
-                      <TableHead className="w-32">
-                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
-                      </TableHead>
+                      <TableHead>{t('moderation.listings.table.title')}</TableHead>
+                      <TableHead>{t('moderation.listings.table.category')}</TableHead>
+                      <TableHead>{t('moderation.listings.table.price')}</TableHead>
+                      <TableHead>{t('moderation.listings.table.created')}</TableHead>
+                      <TableHead className="w-32">{t('moderation.listings.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -461,10 +391,7 @@ export default function AdminModeration() {
                         <TableCell colSpan={5}>
                           <EmptyState
                             icon={CheckCircle}
-                            message={pickLocalizedCopy(appLanguage, {
-                              ar: 'لا توجد إعلانات معلقة',
-                              en: 'No pending listings',
-                            })}
+                            message={t('moderation.listings.noPending')}
                           />
                         </TableCell>
                       </TableRow>
@@ -472,11 +399,8 @@ export default function AdminModeration() {
                       listingsQuery.data?.data.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
-                            {pickLocalizedField(appLanguage, {
-                              ar: item.titleAr,
-                              en: item.titleEn,
-                            })}
-                          </TableCell>
+                              {item.titleAr && item.titleEn ? (appLanguage === 'ar' ? item.titleAr : item.titleEn) : (item.titleAr || item.titleEn)}
+                            </TableCell>
                           <TableCell>{listingCategoryLabel(item.category, appLanguage)}</TableCell>
                           <TableCell>
                             {(item.price / 100).toLocaleString(locale)} {currencyLabel}
@@ -517,44 +441,24 @@ export default function AdminModeration() {
         <TabsContent value="businesses">
           <Card>
             <CardHeader>
-              <CardTitle>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'الأنشطة التجارية المعلقة',
-                  en: 'Pending businesses',
-                })}
-              </CardTitle>
-              <CardDescription>
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'أنشطة تجارية تحتاج موافقة',
-                  en: 'Business entries awaiting approval',
-                })}
-              </CardDescription>
+              <CardTitle>{t('moderation.businesses.title')}</CardTitle>
+              <CardDescription>{t('moderation.businesses.desc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {businessesQuery.error ? (
                 <EmptyState
                   icon={AlertCircle}
-                  message={pickLocalizedCopy(appLanguage, {
-                    ar: 'فشل تحميل البيانات',
-                    en: 'Failed to load data',
-                  })}
+                  message={t('moderation.errorLoad')}
                 />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الفئة', en: 'Category' })}</TableHead>
-                      <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</TableHead>
-                      <TableHead>
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'تاريخ الإنشاء',
-                          en: 'Created on',
-                        })}
-                      </TableHead>
-                      <TableHead className="w-32">
-                        {pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}
-                      </TableHead>
+                      <TableHead>{t('moderation.businesses.table.name')}</TableHead>
+                      <TableHead>{t('moderation.businesses.table.category')}</TableHead>
+                      <TableHead>{t('moderation.businesses.table.district')}</TableHead>
+                      <TableHead>{t('moderation.businesses.table.created')}</TableHead>
+                      <TableHead className="w-32">{t('moderation.businesses.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -565,10 +469,7 @@ export default function AdminModeration() {
                         <TableCell colSpan={5}>
                           <EmptyState
                             icon={CheckCircle}
-                            message={pickLocalizedCopy(appLanguage, {
-                              ar: 'لا توجد أنشطة معلقة',
-                              en: 'No pending businesses',
-                            })}
+                            message={t('moderation.businesses.noPending')}
                           />
                         </TableCell>
                       </TableRow>
@@ -576,11 +477,8 @@ export default function AdminModeration() {
                       businessesQuery.data?.data.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
-                            {pickLocalizedField(appLanguage, {
-                              ar: item.nameAr,
-                              en: item.nameEn,
-                            })}
-                          </TableCell>
+                              {item.nameAr && item.nameEn ? (appLanguage === 'ar' ? item.nameAr : item.nameEn) : (item.nameAr || item.nameEn)}
+                            </TableCell>
                           <TableCell>{item.category}</TableCell>
                           <TableCell>
                             {item.district ? districtLabel(item.district, appLanguage) : '-'}
@@ -640,29 +538,15 @@ export default function AdminModeration() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تأكيد الرفض',
-                en: 'Confirm rejection',
-              })}
-            </DialogTitle>
+            <DialogTitle>{t('moderation.reject.title')}</DialogTitle>
             <DialogDescription>
               {rejectDialog?.type === 'listing'
-                ? pickLocalizedCopy(appLanguage, {
-                    ar: 'يرجى إدخال سبب الرفض (اختياري)',
-                    en: 'Add a rejection reason (optional)',
-                  })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'يرجى إدخال سبب الرفض (مطلوب)',
-                    en: 'Add a rejection reason (required)',
-                  })}
+                ? t('moderation.reject.descListing')
+                : t('moderation.reject.descOther')}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder={pickLocalizedCopy(appLanguage, {
-              ar: 'سبب الرفض...',
-              en: 'Rejection reason...',
-            })}
+            placeholder={t('moderation.reject.placeholder')}
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
           />
@@ -674,17 +558,14 @@ export default function AdminModeration() {
                 setRejectReason('');
               }}
             >
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+              {t('moderation.actions.cancel')}
             </Button>
             <Button
               variant="destructive"
               disabled={!rejectReason.trim() && rejectDialog?.type !== 'listing'}
               onClick={handleReject}
             >
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'تأكيد الرفض',
-                en: 'Confirm rejection',
-              })}
+              {t('moderation.reject.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -12,9 +12,9 @@ export function PageTransition({ children, className = '' }: PageTransitionProps
 export function GradientMesh({ className = '' }: { className?: string }) {
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
-      <div className="absolute -top-1/2 -left-1/4 w-[80%] h-[80%] rounded-full bg-primary/5 blur-3xl animate-meshFloat" />
-      <div className="absolute -bottom-1/3 -right-1/4 w-[60%] h-[60%] rounded-full bg-accent/5 blur-3xl animate-meshFloat2" />
-      <div className="absolute top-1/3 left-1/3 w-[40%] h-[40%] rounded-full bg-chart-3/3 blur-3xl animate-meshFloat3" />
+      <div className="absolute -top-1/2 -start-1/4 w-[80%] h-[80%] rounded-full bg-primary/5 blur-3xl animate-meshFloat" />
+      <div className="absolute -bottom-1/3 -end-1/4 w-[60%] h-[60%] rounded-full bg-accent/5 blur-3xl animate-meshFloat2" />
+      <div className="absolute top-1/3 start-1/3 w-[40%] h-[40%] rounded-full bg-chart-3/3 blur-3xl animate-meshFloat3" />
     </div>
   );
 }

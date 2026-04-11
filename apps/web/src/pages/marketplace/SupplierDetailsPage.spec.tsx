@@ -57,6 +57,10 @@ vi.mock('@/hooks/use-businesses', () => ({
   useBusiness: (id?: string) => mockUseBusiness(id),
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({ language: 'en', direction: 'ltr', user: null }),
+}));
+
 describe('SupplierDetailsPage', () => {
   it('keeps the commodities table aligned between headers and body cells', () => {
     mockUseBusiness.mockReturnValue({

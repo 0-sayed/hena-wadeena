@@ -15,20 +15,25 @@ import {
 import { useBusiness } from '@/hooks/use-businesses';
 import { districtLabel, unitLabel } from '@/lib/format';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+
 
 const SupplierDetailsPage = () => {
+  const { t } = useTranslation('marketplace');
+  const { language } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: business, isLoading, isError } = useBusiness(id);
 
   if (isLoading) {
     return (
-      <Layout title="تفاصيل المورد">
+      <Layout title={t('supplierDetails.title')}>
         <section className="py-8 md:py-12">
           <div className="container px-4">
             <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-6">
               <ArrowRight className="h-4 w-4" />
-              العودة للبورصة
+              {t('supplierDetails.backToMarket')}
             </Button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
@@ -46,11 +51,11 @@ const SupplierDetailsPage = () => {
 
   if (isError || !business) {
     return (
-      <Layout title="تفاصيل المورد">
+      <Layout title={t('supplierDetails.title')}>
         <section className="py-8 md:py-12">
           <div className="container px-4 text-center">
-            <p className="text-lg text-muted-foreground mb-4">لم يتم العثور على المورد</p>
-            <Button onClick={() => void navigate('/marketplace')}>العودة للبورصة</Button>
+            <p className="text-lg text-muted-foreground mb-4">{t('supplierDetails.loadError')}</p>
+            <Button onClick={() => void navigate('/marketplace')}>{t('supplierDetails.backToMarket')}</Button>
           </div>
         </section>
       </Layout>
@@ -58,14 +63,19 @@ const SupplierDetailsPage = () => {
   }
 
   const isVerified = business.verificationStatus === 'verified';
+  const businessName = (language === 'en' ? business.nameEn : business.nameAr) ?? business.nameAr ?? '';
+  const businessDescription = (language === 'en' 
+    ? (business.descriptionEn ?? business.description) 
+    : (business.descriptionAr ?? business.description)
+  ) ?? '';
 
   return (
-    <Layout title="تفاصيل المورد">
+    <Layout title={t('supplierDetails.title')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-6">
             <ArrowRight className="h-4 w-4" />
-            العودة للبورصة
+            {t('supplierDetails.backToMarket')}
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -80,11 +90,11 @@ const SupplierDetailsPage = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h1 className="text-2xl font-bold text-foreground">{business.nameAr}</h1>
+                        <h1 className="text-2xl font-bold text-foreground">{businessName}</h1>
                         {isVerified && (
                           <Badge className="bg-primary/10 text-primary gap-1">
                             <Shield className="h-3 w-3" />
-                            موثق
+                            {t('supplierDetails.verified')}
                           </Badge>
                         )}
                       </div>
@@ -92,14 +102,14 @@ const SupplierDetailsPage = () => {
                         {business.district && (
                           <div className="flex items-center gap-1">
                             <MapPin className="h-4 w-4 text-primary" />
-                            <span>{districtLabel(business.district)}</span>
+                            <span>{districtLabel(business.district, language)}</span>
                           </div>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2 mt-3">
                         {business.commodities.map((commodity) => (
                           <Badge key={commodity.id} variant="secondary">
-                            {commodity.nameAr}
+                            {(language === 'en' ? commodity.nameEn : commodity.nameAr) ?? commodity.nameAr ?? ''}
                           </Badge>
                         ))}
                       </div>
@@ -109,14 +119,14 @@ const SupplierDetailsPage = () => {
               </Card>
 
               {/* About */}
-              {(business.descriptionAr ?? business.description) && (
+              {businessDescription && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">عن المورد</CardTitle>
+                    <CardTitle className="text-lg">{t('supplierDetails.aboutTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground leading-relaxed">
-                      {business.descriptionAr ?? business.description}
+                      {businessDescription}
                     </p>
                   </CardContent>
                 </Card>
@@ -126,14 +136,14 @@ const SupplierDetailsPage = () => {
               {business.commodities.length > 0 && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">المنتجات</CardTitle>
+                    <CardTitle className="text-lg">{t('supplierDetails.productsTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table className="table-fixed">
                       <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent">
-                          <TableHead className="px-6 py-4 text-start">المنتج</TableHead>
-                          <TableHead className="px-6 py-4 text-start">الوحدة</TableHead>
+                          <TableHead className="px-6 py-4 text-start">{t('supplierDetails.table.product')}</TableHead>
+                          <TableHead className="px-6 py-4 text-start">{t('supplierDetails.table.unit')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -141,12 +151,12 @@ const SupplierDetailsPage = () => {
                           <TableRow key={commodity.id}>
                             <TableCell className="px-6 py-4 text-start">
                               <span className="font-medium text-foreground">
-                                {commodity.nameAr}
+                                {(language === 'en' ? commodity.nameEn : commodity.nameAr) ?? commodity.nameAr ?? ''}
                               </span>
                             </TableCell>
                             <TableCell className="px-6 py-4 text-start">
                               <span className="text-sm text-muted-foreground">
-                                {unitLabel(commodity.unit)}
+                                {unitLabel(commodity.unit, language)}
                               </span>
                             </TableCell>
                           </TableRow>
@@ -162,7 +172,7 @@ const SupplierDetailsPage = () => {
             <div className="space-y-6">
               <Card className="border-border/50 sticky top-20">
                 <CardHeader>
-                  <CardTitle className="text-lg">معلومات التواصل</CardTitle>
+                  <CardTitle className="text-lg">{t('supplierDetails.contactTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
@@ -186,7 +196,7 @@ const SupplierDetailsPage = () => {
                       <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-primary" />
                         <span className="text-sm">
-                          {districtLabel(business.district)}، الوادي الجديد
+                          {districtLabel(business.district, language)}{t('supplierDetails.regionSuffix')}
                         </span>
                       </div>
                     )}
@@ -196,10 +206,10 @@ const SupplierDetailsPage = () => {
                     <Button
                       className="w-full"
                       size="lg"
-                      onClick={() => alert(`للتواصل مع ${business.nameAr}: ${business.phone}`)}
+                      onClick={() => alert(t('supplierDetails.callAlert', { name: businessName, phone: business.phone }))}
                     >
                       <Phone className="h-5 w-5 ms-2" />
-                      اتصل الآن
+                      {t('supplierDetails.callBtn')}
                     </Button>
                   )}
 
@@ -210,7 +220,7 @@ const SupplierDetailsPage = () => {
                       onClick={() => window.open(business.website!, '_blank')}
                     >
                       <Globe className="h-4 w-4 ms-2" />
-                      زيارة الموقع
+                      {t('supplierDetails.visitWebsite')}
                     </Button>
                   )}
                 </CardContent>

@@ -161,12 +161,12 @@ describe('AccommodationInquiryPage', () => {
   it('submits the accommodation inquiry through the listing inquiries API', async () => {
     render(<AccommodationInquiryPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'طالب جامعي' }));
-    fireEvent.change(screen.getByLabelText('رسالتك'), {
+    fireEvent.click(screen.getByRole('button', { name: 'University Student' }));
+    fireEvent.change(screen.getByLabelText('Your Message'), {
       target: { value: 'أحتاج إلى السكن قرب الجامعة.' },
     });
 
-    fireEvent.submit(screen.getByRole('button', { name: 'إرسال الاستفسار' }).closest('form')!);
+    fireEvent.submit(screen.getByRole('button', { name: 'Send Inquiry' }).closest('form')!);
 
     await waitFor(() => {
       expect(mockSubmitInquiry).toHaveBeenCalledWith(
@@ -180,10 +180,10 @@ describe('AccommodationInquiryPage', () => {
     });
 
     expect(mockSubmitInquiry.mock.calls[0]?.[1]).toMatchObject({
-      message: expect.stringContaining('استفسار بخصوص السكن: سكن الواحة'),
+      message: expect.stringContaining('Inquiry regarding accommodation: سكن الواحة'),
     });
     expect(mockSubmitInquiry.mock.calls[0]?.[1]).toMatchObject({
-      message: expect.stringContaining('نوع المستأجر: طالب جامعي'),
+      message: expect.stringContaining('Tenant Type: University Student'),
     });
 
     await waitFor(() => {

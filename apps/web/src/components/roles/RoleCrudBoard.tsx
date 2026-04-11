@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export type MockEntity = {
   id: string;
@@ -37,6 +38,7 @@ export function RoleCrudBoard({
   entityLabel,
   initialItems,
 }: RoleCrudBoardProps) {
+  const { t } = useTranslation('common');
   const [items, setItems] = useState<MockEntity[]>(initialItems);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -114,7 +116,7 @@ export function RoleCrudBoard({
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">الإجمالي</CardTitle>
+            <CardTitle className="text-sm">{t('roleCrud.statsTotal')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{stats.total}</p>
@@ -122,7 +124,7 @@ export function RoleCrudBoard({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">نشط</CardTitle>
+            <CardTitle className="text-sm">{t('roleCrud.statsActive')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{stats.active}</p>
@@ -130,7 +132,7 @@ export function RoleCrudBoard({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">قيد التنفيذ</CardTitle>
+            <CardTitle className="text-sm">{t('roleCrud.statsPending')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{stats.pending}</p>
@@ -150,22 +152,22 @@ export function RoleCrudBoard({
               <Input
                 value={form.name}
                 onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder={`أدخل ${entityLabel}`}
+                placeholder={t('roleCrud.inputPlaceholder', { entity: entityLabel })}
               />
             </div>
             <div className="space-y-2">
-              <Label>ملاحظات</Label>
+              <Label>{t('roleCrud.notesLabel')}</Label>
               <Textarea
                 value={form.notes}
                 onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-                placeholder="ملاحظات إضافية"
+                placeholder={t('roleCrud.notesPlaceholder')}
               />
             </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={upsertItem} className="gap-2">
               <Plus className="h-4 w-4" />
-              {editingId ? 'تحديث' : 'إضافة'}
+              {editingId ? t('roleCrud.updateBtn') : t('roleCrud.addBtn')}
             </Button>
             {editingId && (
               <Button
@@ -175,7 +177,7 @@ export function RoleCrudBoard({
                   setForm(emptyForm);
                 }}
               >
-                إلغاء
+                {t('roleCrud.cancelBtn')}
               </Button>
             )}
           </div>
@@ -184,9 +186,9 @@ export function RoleCrudBoard({
             <TableHeader>
               <TableRow>
                 <TableHead>{entityLabel}</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>ملاحظات</TableHead>
-                <TableHead>إجراءات</TableHead>
+                <TableHead>{t('roleCrud.statusHeader')}</TableHead>
+                <TableHead>{t('roleCrud.notesHeader')}</TableHead>
+                <TableHead>{t('roleCrud.actionsHeader')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -204,10 +206,10 @@ export function RoleCrudBoard({
                       }
                     >
                       {item.status === 'active'
-                        ? 'نشط'
+                        ? t('roleCrud.statusActive')
                         : item.status === 'pending'
-                          ? 'قيد التنفيذ'
-                          : 'مؤرشف'}
+                          ? t('roleCrud.statusPending')
+                          : t('roleCrud.statusArchived')}
                     </Badge>
                   </TableCell>
                   <TableCell>{item.notes || '-'}</TableCell>
@@ -217,7 +219,7 @@ export function RoleCrudBoard({
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => toggleStatus(item.id)}>
-                        تبديل الحالة
+                        {t('roleCrud.toggleStatus')}
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => deleteItem(item.id)}>
                         <Trash2 className="h-4 w-4" />

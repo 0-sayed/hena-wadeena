@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
+import i18n from 'i18next';
 import { authAPI } from '@/services/api';
 import type { AuthFlowResponse, AuthUser, LoginRequest, RegisterRequest } from '@/services/api';
 import * as authManager from '@/services/auth-manager';
@@ -182,6 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir = direction;
     document.body.dir = direction;
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+
+    // Keep react-i18next in sync with the auth context language
+    if (i18n.language !== language) {
+      void i18n.changeLanguage(language);
+    }
   }, [direction, language]);
 
   const value = useMemo<AuthContextValue>(

@@ -41,9 +41,7 @@ import {
 import { formatRidePrice } from '@/lib/format';
 import { formatDateTimeShort } from '@/lib/dates';
 import { buildGoogleMapsLocationUrl } from '@/lib/maps';
-import type { AppLanguage } from '@/lib/localization';
-import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
-import { useDebouncedCallback } from '@/hooks/use-debounce';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import {
   usePois,
@@ -54,10 +52,12 @@ import {
   useCancelRide,
   useDeleteRide,
 } from '@/hooks/use-map';
+
 import type { Poi, PoiCategory, CarpoolRide, CarpoolPassenger } from '@/services/api';
 import { UserRole } from '@hena-wadeena/types';
 import { AREA_PRESETS, findArea, getAreaDisplayName, localizeAreaName } from '@/lib/area-presets';
 import { toast } from 'sonner';
+import { useDebouncedCallback } from '@/hooks/use-debounce';
 import heroLogistics from '@/assets/hero-logistics.jpg';
 
 const RIDE_CREATOR_ROLES = [UserRole.DRIVER, UserRole.ADMIN] as const;
@@ -75,62 +75,31 @@ const POI_CATEGORIES: { value: PoiCategory; label: string; color: string }[] = [
   { value: 'government', label: 'حكومي', color: '#dc2626' },
 ];
 
-const poiCategoryLabelsEn: Record<PoiCategory, string> = {
-  historical: 'Historical',
-  natural: 'Natural',
-  religious: 'Religious',
-  recreational: 'Recreational',
-  accommodation: 'Accommodation',
-  restaurant: 'Restaurant',
-  service: 'Services',
-  government: 'Government',
-};
-
-const rideStatusLabels: Record<CarpoolRide['status'], { ar: string; en: string }> = {
-  open: { ar: 'متاحة', en: 'Open' },
-  full: { ar: 'مكتملة المقاعد', en: 'Full' },
-  departed: { ar: 'غادرت', en: 'Departed' },
-  completed: { ar: 'مكتملة', en: 'Completed' },
-  cancelled: { ar: 'ملغاة', en: 'Cancelled' },
-};
-
-const passengerStatusLabels: Record<CarpoolPassenger['status'], { ar: string; en: string }> = {
-  requested: { ar: 'بانتظار التأكيد', en: 'Pending confirmation' },
-  confirmed: { ar: 'مؤكد', en: 'Confirmed' },
-  declined: { ar: 'مرفوض', en: 'Declined' },
-  cancelled: { ar: 'ملغي', en: 'Cancelled' },
-};
-
 function getCategoryColor(category: PoiCategory): string {
   return POI_CATEGORIES.find((c) => c.value === category)?.color ?? '#6b7280';
 }
 
-function getCategoryLabel(category: PoiCategory, language: AppLanguage = 'ar'): string {
-  const arabicLabel = POI_CATEGORIES.find((c) => c.value === category)?.label;
-
-  if (!arabicLabel) {
-    return category;
-  }
-
-  return language === 'en' ? (poiCategoryLabelsEn[category] ?? category) : arabicLabel;
+function getCategoryLabel(category: PoiCategory, t: (key: string) => string): string {
+  return t(`map.categories.${category}`, { defaultValue: category });
 }
 
-function getRideStatusLabel(status: CarpoolRide['status'], language: AppLanguage): string {
-  return pickLocalizedCopy(language, rideStatusLabels[status] ?? { ar: status, en: status });
+function getRideStatusLabel(status: CarpoolRide['status'], t: (key: string) => string): string {
+  return t(`rides.status.${status}`, { defaultValue: status });
 }
 
 function getPassengerStatusLabel(
   status: CarpoolPassenger['status'],
-  language: AppLanguage,
+  t: (key: string) => string,
 ): string {
-  return pickLocalizedCopy(language, passengerStatusLabels[status] ?? { ar: status, en: status });
+  return t(`rides.passengerStatus.${status}`, { defaultValue: status });
 }
 
 // ── Main Component ─────────────────────────────────────────────────
 
 const LogisticsPage = () => {
+  const { t } = useTranslation('logistics');
   const navigate = useNavigate();
-  const { user, isAuthenticated, direction, language: appLanguage } = useAuth();
+  const { user, isAuthenticated, direction, language } = useAuth();
   const sheetSide = direction === 'rtl' ? 'right' : 'left';
 
   // ── POI state ──
@@ -185,17 +154,14 @@ const LogisticsPage = () => {
     () =>
       (poisData?.data ?? []).map((poi) => ({
         id: poi.id,
-        name: pickLocalizedField(appLanguage, {
-          ar: poi.nameAr,
-          en: poi.nameEn,
-        }),
+        name: ((language === 'en' ? 'en' : 'ar') === 'en' ? poi.nameEn : poi.nameAr) ?? poi.nameAr ?? '',
         lat: poi.location.y,
         lng: poi.location.x,
-        type: getCategoryLabel(poi.category, appLanguage),
+        type: getCategoryLabel(poi.category, t),
         color: getCategoryColor(poi.category),
         image: poi.images?.[0],
       })),
-    [appLanguage, poisData],
+    [language, t, poisData],
   );
 
   const handleMarkerClick = useCallback((loc: MapLocation) => {
@@ -204,24 +170,13 @@ const LogisticsPage = () => {
 
   const handleNearMe = () => {
     if (!navigator.geolocation) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'المتصفح لا يدعم تحديد الموقع',
-          en: 'Your browser does not support location access',
-        }),
-      );
+      toast.error(t('map.browserLocationError'));
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => setGeoFilter({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () =>
-        toast.error(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'لم نتمكن من تحديد موقعك',
-            en: 'We could not determine your location',
-          }),
-        ),
+      () => toast.error(t('map.detectLocationError')),
     );
   };
 
@@ -246,12 +201,7 @@ const LogisticsPage = () => {
   const handleCancelRide = (rideId: string) => {
     cancelRide.mutate(rideId, {
       onSuccess: () =>
-        toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تم إلغاء الرحلة',
-            en: 'Ride cancelled',
-          }),
-        ),
+        toast.success(t('rides.toasts.cancelled')),
       onError: (error) => toast.error(error.message),
     });
   };
@@ -259,81 +209,49 @@ const LogisticsPage = () => {
   const handleActivateRide = (rideId: string) => {
     activateRide.mutate(rideId, {
       onSuccess: () =>
-        toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تمت إعادة تفعيل الرحلة',
-            en: 'Ride reactivated',
-          }),
-        ),
+        toast.success(t('rides.toasts.reactivated')),
       onError: (error) => toast.error(error.message),
     });
   };
 
   const handleDeleteRide = (rideId: string) => {
-    if (
-      !window.confirm(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'هل تريد حذف هذه الرحلة نهائياً؟',
-          en: 'Do you want to permanently delete this ride?',
-        }),
-      )
-    ) {
+    if (!window.confirm(t('rides.deleteConfirm'))) {
       return;
     }
 
     deleteRide.mutate(rideId, {
       onSuccess: () =>
-        toast.success(
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تم حذف الرحلة',
-            en: 'Ride deleted',
-          }),
-        ),
+        toast.success(t('rides.toasts.deleted')),
       onError: (error) => toast.error(error.message),
     });
   };
 
   return (
     <Layout
-      title={pickLocalizedCopy(appLanguage, {
-        ar: 'اللوجستيات والتنقل',
-        en: 'Logistics & Transport',
-      })}
+      title={t('hero.title')}
     >
       <PageTransition>
         {/* Hero */}
         <PageHero
           image={heroLogistics}
-          alt={pickLocalizedCopy(appLanguage, {
-            ar: 'الخريطة والتنقل',
-            en: 'Maps & transport',
-          })}
+          alt={t('hero.badge')}
         >
           <SR>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
               <MapIcon className="h-5 w-5 text-accent" />
               <span className="text-sm font-semibold text-card">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'الخريطة والتنقل',
-                  en: 'Maps & transport',
-                })}
+                {t('hero.badge')}
               </span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-card mb-5">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'الخريطة والتنقل',
-                en: 'Maps & transport',
-              })}
+              {t('hero.title')}
             </h1>
           </SR>
           <SR delay={200}>
             <p className="text-lg md:text-xl text-card/90 mb-10">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'استكشف معالم الوادي الجديد وشارك رحلتك مع الآخرين',
-                en: 'Discover New Valley landmarks and share your trip with others',
-              })}
+              {t('hero.subtitle')}
             </p>
           </SR>
         </PageHero>
@@ -349,30 +267,21 @@ const LogisticsPage = () => {
                     className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
                   >
                     <MapIcon className="h-4 w-4" />
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'استكشف الخريطة',
-                      en: 'Explore the map',
-                    })}
+                    {t('tabs.explore')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="carpool"
                     className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
                   >
                     <Car className="h-4 w-4" />
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'مشاركة الرحلات',
-                      en: 'Carpool rides',
-                    })}
+                    {t('tabs.carpool')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="local-transport"
                     className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
                   >
                     <Bus className="h-4 w-4" />
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'النقل المحلي',
-                      en: 'Local transport',
-                    })}
+                    {t('tabs.transport')}
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -385,10 +294,7 @@ const LogisticsPage = () => {
                     <div className="relative flex-1 min-w-[200px]">
                       <Search className="search-inline-icon-md absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder={pickLocalizedCopy(appLanguage, {
-                          ar: 'ابحث عن مكان...',
-                          en: 'Search for a place...',
-                        })}
+                        placeholder={t('map.searchPlaceholder')}
                         onChange={(e) => debouncedSetSearch(e.target.value)}
                         className="search-input-with-icon-md"
                       />
@@ -400,10 +306,7 @@ const LogisticsPage = () => {
                       onClick={handleNearMe}
                     >
                       <LocateFixed className="h-4 w-4 ms-1" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'بالقرب مني',
-                        en: 'Nearby',
-                      })}
+                      {t('map.nearbyBtn')}
                     </Button>
                     {geoFilter && (
                       <Button
@@ -412,10 +315,7 @@ const LogisticsPage = () => {
                         className="w-full sm:w-auto"
                         onClick={() => setGeoFilter(undefined)}
                       >
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'إلغاء الموقع',
-                          en: 'Clear location',
-                        })}
+                        {t('map.clearLocationBtn')}
                       </Button>
                     )}
                     {canSuggestPoi && (
@@ -424,19 +324,11 @@ const LogisticsPage = () => {
                         size="sm"
                         className="w-full sm:w-auto"
                         onClick={() =>
-                          toast.info(
-                            pickLocalizedCopy(appLanguage, {
-                              ar: 'ميزة اقتراح الأماكن قريباً',
-                              en: 'Place suggestions are coming soon',
-                            }),
-                          )
+                          toast.info(t('map.suggestPlaceToast'))
                         }
                       >
                         <Plus className="h-4 w-4 ms-1" />
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'اقترح مكان',
-                          en: 'Suggest a place',
-                        })}
+                        {t('map.suggestPlaceBtn')}
                       </Button>
                     )}
                   </div>
@@ -450,10 +342,7 @@ const LogisticsPage = () => {
                       className="cursor-pointer"
                       onClick={() => setSelectedCategory(undefined)}
                     >
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'الكل',
-                        en: 'All',
-                      })}
+                      {t('map.categories.all')}
                     </Badge>
                     {POI_CATEGORIES.map((cat) => (
                       <Badge
@@ -471,7 +360,7 @@ const LogisticsPage = () => {
                           )
                         }
                       >
-                        {getCategoryLabel(cat.value, appLanguage)}
+                        {getCategoryLabel(cat.value, t)}
                       </Badge>
                     ))}
                   </div>
@@ -500,20 +389,14 @@ const LogisticsPage = () => {
                           <div className="flex max-w-xl flex-col items-center gap-4 rounded-2xl border border-border/70 bg-background/80 px-6 py-7 text-center shadow-sm">
                             <MapPin className="h-10 w-10 text-muted-foreground/60" />
                             <p className="text-muted-foreground">
-                              {pickLocalizedCopy(appLanguage, {
-                                ar: 'لا توجد أماكن ضمن 50 كم من موقعك الحالي. اعرض جميع الأماكن في الوادي الجديد.',
-                                en: 'No places were found within 50 km of your current location. Showing all places in New Valley instead.',
-                              })}
+                              {t('map.noNearbyFound')}
                             </p>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setGeoFilter(undefined)}
                             >
-                              {pickLocalizedCopy(appLanguage, {
-                                ar: 'إلغاء الموقع',
-                                en: 'Clear location',
-                              })}
+                              {t('map.clearLocationBtn')}
                             </Button>
                           </div>
                         </div>
@@ -525,10 +408,7 @@ const LogisticsPage = () => {
                 {/* Results count */}
                 {poisData && (
                   <p className="text-sm text-muted-foreground">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: `${poisData.total} نتيجة`,
-                      en: `${poisData.total} results`,
-                    })}
+                    {t('map.resultsCount', { count: poisData.total })}
                   </p>
                 )}
 
@@ -539,7 +419,10 @@ const LogisticsPage = () => {
                 >
                   <SheetContent side={sheetSide} className="w-full sm:max-w-lg overflow-y-auto">
                     {selectedPoi && (
-                      <PoiDetailContent poi={selectedPoi} appLanguage={appLanguage} />
+                      <PoiDetailContent
+                        poi={selectedPoi}
+                        t={t}
+                      />
                     )}
                   </SheetContent>
                 </Sheet>
@@ -554,16 +437,13 @@ const LogisticsPage = () => {
                       <Select value={originArea} onValueChange={setOriginArea}>
                         <SelectTrigger>
                           <SelectValue
-                            placeholder={pickLocalizedCopy(appLanguage, {
-                              ar: 'من أين؟',
-                              en: 'Where from?',
-                            })}
+                            placeholder={t('form.from')}
                           />
                         </SelectTrigger>
                         <SelectContent>
                           {AREA_PRESETS.map((a) => (
                             <SelectItem key={a.id} value={a.id}>
-                              {getAreaDisplayName(a, appLanguage)}
+                              {getAreaDisplayName(a, language)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -571,16 +451,13 @@ const LogisticsPage = () => {
                       <Select value={destArea} onValueChange={setDestArea}>
                         <SelectTrigger>
                           <SelectValue
-                            placeholder={pickLocalizedCopy(appLanguage, {
-                              ar: 'إلى أين؟',
-                              en: 'Where to?',
-                            })}
+                            placeholder={t('form.to')}
                           />
                         </SelectTrigger>
                         <SelectContent>
                           {AREA_PRESETS.map((a) => (
                             <SelectItem key={a.id} value={a.id}>
-                              {getAreaDisplayName(a, appLanguage)}
+                              {getAreaDisplayName(a, language)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -600,10 +477,7 @@ const LogisticsPage = () => {
                               setRideDate('');
                             }}
                           >
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'مسح',
-                              en: 'Clear',
-                            })}
+                            {t('form.clear')}
                           </Button>
                         )}
                       </div>
@@ -615,30 +489,19 @@ const LogisticsPage = () => {
                 <SR delay={100}>
                   <div className="flex justify-between items-center">
                     <h3 className="text-2xl font-bold text-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'الرحلات المتاحة',
-                        en: 'Available rides',
-                      })}
+                      {t('rides.title')}
                     </h3>
                     <div className="flex gap-2">
                       {isAuthenticated && (
                         <Button variant="outline" onClick={() => setShowMyRides(true)}>
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'رحلاتي',
-                            en: 'My rides',
-                          })}
+                          {t('rides.myRidesBtn')}
                         </Button>
                       )}
                       <CanAccess roles={RIDE_CREATOR_ROLES}>
                         <Button
                           onClick={() => {
                             if (!isAuthenticated) {
-                              toast.error(
-                                pickLocalizedCopy(appLanguage, {
-                                  ar: 'يجب تسجيل الدخول أولاً',
-                                  en: 'You need to sign in first',
-                                }),
-                              );
+                              toast.error(t('rides.loginRequiredToast'));
                               void navigate('/login');
                               return;
                             }
@@ -646,10 +509,7 @@ const LogisticsPage = () => {
                           }}
                         >
                           <Car className="h-5 w-5 ms-2" />
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'أضف رحلتك',
-                            en: 'Add your ride',
-                          })}
+                          {t('rides.addRideBtn')}
                         </Button>
                       </CanAccess>
                     </div>
@@ -664,10 +524,7 @@ const LogisticsPage = () => {
                     <div className="text-center py-16">
                       <Car className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-lg text-muted-foreground">
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'لا توجد رحلات متاحة',
-                          en: 'No rides available right now',
-                        })}
+                        {t('rides.emptyState')}
                       </p>
                       <CanAccess roles={RIDE_CREATOR_ROLES}>
                         <Button
@@ -681,10 +538,7 @@ const LogisticsPage = () => {
                             void navigate('/logistics/create-ride');
                           }}
                         >
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'كن أول من يضيف رحلة',
-                            en: 'Be the first to add a ride',
-                          })}
+                          {t('rides.beFirstBtn')}
                         </Button>
                       </CanAccess>
                     </div>
@@ -695,7 +549,8 @@ const LogisticsPage = () => {
                       <RideCard
                         ride={ride}
                         onClick={() => void navigate(`/logistics/ride/${ride.id}`)}
-                        appLanguage={appLanguage}
+                        language={language}
+                        t={t}
                         actions={
                           user?.id === ride.driverId ? (
                             <RideManagementActions
@@ -703,7 +558,7 @@ const LogisticsPage = () => {
                               onCancel={handleCancelRide}
                               onActivate={handleActivateRide}
                               onDelete={handleDeleteRide}
-                              appLanguage={appLanguage}
+                              t={t}
                               disabled={
                                 cancelRide.isPending ||
                                 activateRide.isPending ||
@@ -722,15 +577,13 @@ const LogisticsPage = () => {
                   <SheetContent side={sheetSide} className="w-full sm:max-w-lg overflow-y-auto">
                     <SheetHeader>
                       <SheetTitle>
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'رحلاتي',
-                          en: 'My rides',
-                        })}
+                        {t('rides.myRidesBtn')}
                       </SheetTitle>
                     </SheetHeader>
                     <MyRidesContent
                       data={filteredMyRidesData}
-                      appLanguage={appLanguage}
+                      language={language}
+                      t={t}
                       onViewRide={(id) => {
                         setShowMyRides(false);
                         void navigate(`/logistics/ride/${id}`);
@@ -757,12 +610,11 @@ export default LogisticsPage;
 
 // ── Sub-Components ─────────────────────────────────────────────────
 
-function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLanguage }) {
-  const poiName = pickLocalizedField(appLanguage, {
-    ar: poi.nameAr,
-    en: poi.nameEn,
-  });
-  const secondaryName = appLanguage === 'ar' ? (poi.nameEn?.trim() ?? null) : null;
+function PoiDetailContent({ poi, t }: { poi: Poi; t: (key: string) => string }) {
+  const { language } = useAuth();
+  const appLanguage = language === 'en' ? 'en' : 'ar';
+  const poiName = (appLanguage === 'en' ? poi.nameEn : poi.nameAr) ?? poi.nameAr ?? '';
+  const secondaryName = language === 'ar' ? (poi.nameEn?.trim() ?? null) : null;
   const googleMapsUrl = buildGoogleMapsLocationUrl(poi.location.y, poi.location.x);
   const websiteLink = (() => {
     if (!poi.website) return null;
@@ -800,7 +652,7 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
               style={{ backgroundColor: getCategoryColor(poi.category) }}
               className="rounded-full px-3 py-1 text-white shadow-sm"
             >
-              {getCategoryLabel(poi.category, appLanguage)}
+              {getCategoryLabel(poi.category, t)}
             </Badge>
           </div>
         </SheetHeader>
@@ -814,10 +666,7 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
             <Star className="h-4 w-4 fill-current" />
             <span className="font-semibold">{Number(poi.ratingAvg).toFixed(1)}</span>
             <span className="text-sm">
-              {pickLocalizedCopy(appLanguage, {
-                ar: `(${poi.ratingCount} تقييم)`,
-                en: `(${poi.ratingCount} reviews)`,
-              })}
+              {t('map.poiDetails.reviews', { count: poi.ratingCount })}
             </span>
           </div>
         ) : null}
@@ -832,7 +681,7 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
               </div>
               <div className="space-y-1">
                 <p className="font-medium text-foreground">
-                  {pickLocalizedCopy(appLanguage, { ar: 'العنوان', en: 'Address' })}
+                  {t('map.poiDetails.address')}
                 </p>
                 <p className="leading-6 text-muted-foreground">{poi.address}</p>
               </div>
@@ -848,7 +697,7 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
               </div>
               <div className="space-y-1">
                 <p className="font-medium text-foreground">
-                  {pickLocalizedCopy(appLanguage, { ar: 'الهاتف', en: 'Phone' })}
+                  {t('map.poiDetails.phone')}
                 </p>
                 <a href={`tel:${poi.phone}`} className="text-primary hover:underline">
                   <LtrText>{poi.phone}</LtrText>
@@ -866,10 +715,7 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
               </div>
               <div className="min-w-0 space-y-1">
                 <p className="font-medium text-foreground">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'الموقع الإلكتروني',
-                    en: 'Website',
-                  })}
+                  {t('map.poiDetails.website')}
                 </p>
                 <a
                   href={websiteLink.href}
@@ -890,20 +736,14 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
           <Button className="flex-1" size="lg" asChild>
             <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4" />
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'افتح في Google Maps',
-                en: 'Open in Google Maps',
-              })}
+              {t('map.poiDetails.openInMaps')}
             </a>
           </Button>
           {websiteLink ? (
             <Button variant="outline" size="lg" className="flex-1" asChild>
               <a href={websiteLink.href} target="_blank" rel="noopener noreferrer">
                 <Globe className="h-4 w-4" />
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'زيارة الموقع',
-                  en: 'Visit website',
-                })}
+                {t('map.poiDetails.visitWebsite')}
               </a>
             </Button>
           ) : null}
@@ -918,14 +758,14 @@ function RideManagementActions({
   onCancel,
   onActivate,
   onDelete,
-  appLanguage,
+  t,
   disabled = false,
 }: {
   ride: CarpoolRide;
   onCancel: (rideId: string) => void;
   onActivate: (rideId: string) => void;
   onDelete: (rideId: string) => void;
-  appLanguage: AppLanguage;
+  t: (key: string) => string;
   disabled?: boolean;
 }) {
   const canDelete = ride.status === 'cancelled' || ride.status === 'completed';
@@ -943,26 +783,17 @@ function RideManagementActions({
           disabled={disabled}
           onClick={() => onCancel(ride.id)}
         >
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إلغاء الرحلة',
-            en: 'Cancel ride',
-          })}
+          {t('rides.actions.cancel')}
         </Button>
       )}
       {ride.status === 'cancelled' && (
         <Button size="sm" variant="outline" disabled={disabled} onClick={() => onActivate(ride.id)}>
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إعادة التفعيل',
-            en: 'Reactivate',
-          })}
+          {t('rides.actions.reactivate')}
         </Button>
       )}
       {canDelete && (
         <Button size="sm" variant="secondary" disabled={disabled} onClick={() => onDelete(ride.id)}>
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'حذف الرحلة',
-            en: 'Delete ride',
-          })}
+          {t('rides.actions.delete')}
         </Button>
       )}
     </div>
@@ -973,16 +804,18 @@ function RideCard({
   ride,
   onClick,
   actions,
-  appLanguage,
+  language,
+  t,
 }: {
   ride: CarpoolRide;
   onClick: () => void;
   actions?: ReactNode;
-  appLanguage: AppLanguage;
+  language: string;
+  t: (key: string) => string;
 }) {
   const available = ride.seatsTotal - ride.seatsTaken;
-  const originName = localizeAreaName(ride.originName, appLanguage);
-  const destinationName = localizeAreaName(ride.destinationName, appLanguage);
+  const originName = localizeAreaName(ride.originName, (language === 'en' ? 'en' : 'ar'));
+  const destinationName = localizeAreaName(ride.destinationName, (language === 'en' ? 'en' : 'ar'));
   return (
     <Card
       className="border-border/50 hover:border-primary/40 hover-lift rounded-2xl cursor-pointer"
@@ -999,13 +832,10 @@ function RideCard({
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
-                {formatDateTimeShort(ride.departureTime, appLanguage)}
+                {formatDateTimeShort(ride.departureTime, (language === 'en' ? 'en' : 'ar'))}
               </div>
               <Badge variant="secondary">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: `${available} مقاعد متاحة`,
-                  en: `${available} seats available`,
-                })}
+                {t('rides.seats', { count: available })}
               </Badge>
             </div>
             {ride.notes && (
@@ -1013,7 +843,7 @@ function RideCard({
             )}
           </div>
           <div className="text-3xl font-bold text-primary">
-            {formatRidePrice(ride.pricePerSeat, appLanguage)}
+            {formatRidePrice(ride.pricePerSeat, (language === 'en' ? 'en' : 'ar'))}
           </div>
         </div>
         {actions && <div className="mt-4 border-t pt-4">{actions}</div>}
@@ -1024,11 +854,13 @@ function RideCard({
 
 function MyRidesContent({
   data,
-  appLanguage,
+  language,
+  t,
   onViewRide,
 }: {
   data: { asDriver: CarpoolRide[]; asPassenger: CarpoolPassenger[] } | undefined;
-  appLanguage: AppLanguage;
+  language: string;
+  t: (key: string) => string;
   onViewRide: (id: string) => void;
 }) {
   if (!data) return <Skeleton h="h-20" className="mt-4" />;
@@ -1037,17 +869,11 @@ function MyRidesContent({
     <div className="space-y-6 pt-4">
       <div>
         <h4 className="font-semibold mb-3">
-          {pickLocalizedCopy(appLanguage, {
-            ar: `كسائق (${data.asDriver.length})`,
-            en: `As driver (${data.asDriver.length})`,
-          })}
+          {t('rides.userRides.asDriver', { count: data.asDriver.length })}
         </h4>
         {data.asDriver.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'لم تنشئ أي رحلات بعد',
-              en: 'You have not created any rides yet',
-            })}
+            {t('rides.userRides.noDriverRides')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -1060,16 +886,16 @@ function MyRidesContent({
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">
-                      {localizeAreaName(ride.originName, appLanguage)}
+                      {localizeAreaName(ride.originName, (language === 'en' ? 'en' : 'ar'))}
                       {' -> '}
-                      {localizeAreaName(ride.destinationName, appLanguage)}
+                      {localizeAreaName(ride.destinationName, (language === 'en' ? 'en' : 'ar'))}
                     </span>
                     <Badge variant="outline" className="text-xs">
-                      {getRideStatusLabel(ride.status, appLanguage)}
+                      {getRideStatusLabel(ride.status, t)}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatDateTimeShort(ride.departureTime, appLanguage)}
+                    {formatDateTimeShort(ride.departureTime, (language === 'en' ? 'en' : 'ar'))}
                   </p>
                 </CardContent>
               </Card>
@@ -1079,17 +905,11 @@ function MyRidesContent({
       </div>
       <div>
         <h4 className="font-semibold mb-3">
-          {pickLocalizedCopy(appLanguage, {
-            ar: `كراكب (${data.asPassenger.length})`,
-            en: `As passenger (${data.asPassenger.length})`,
-          })}
+          {t('rides.userRides.asPassenger', { count: data.asPassenger.length })}
         </h4>
         {data.asPassenger.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'لم تنضم لأي رحلات بعد',
-              en: 'You have not joined any rides yet',
-            })}
+            {t('rides.userRides.noPassengerRides')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -1101,13 +921,10 @@ function MyRidesContent({
               >
                 <CardContent className="p-3 flex items-center justify-between">
                   <span className="text-sm">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: `${p.seats} مقعد`,
-                      en: `${p.seats} ${p.seats === 1 ? 'seat' : 'seats'}`,
-                    })}
+                    {t('rides.userRides.passengerSeats', { count: p.seats })}
                   </span>
                   <Badge variant="outline" className="text-xs">
-                    {getPassengerStatusLabel(p.status, appLanguage)}
+                    {getPassengerStatusLabel(p.status, t)}
                   </Badge>
                 </CardContent>
               </Card>

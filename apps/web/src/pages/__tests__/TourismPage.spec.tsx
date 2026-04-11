@@ -14,6 +14,18 @@ vi.mock('@/hooks/use-auth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const texts: Record<string, string> = {
+        'home.searchPlaceholder': 'ابحث عن معالم أو مرشدين...',
+        'home.searchBtn': 'ابحث'
+      };
+      return texts[key] || key;
+    }
+  }),
+}));
+
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
 

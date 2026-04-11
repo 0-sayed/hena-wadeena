@@ -12,16 +12,18 @@ import { Skeleton } from '@/components/motion/Skeleton';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { useSearch } from '@/hooks/use-search';
 import type { SearchResult, SearchResultType } from '@hena-wadeena/types';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
 
-const typeConfig: Record<string, { label: string; color: string }> = {
-  listing: { label: 'إعلان', color: 'bg-orange-500/10 text-orange-600' },
-  opportunity: { label: 'استثمار', color: 'bg-yellow-500/10 text-yellow-600' },
-  business: { label: 'دليل أعمال', color: 'bg-blue-500/10 text-blue-600' },
-  user: { label: 'مستخدم', color: 'bg-purple-500/10 text-purple-600' },
-  guide: { label: 'مرشد', color: 'bg-green-500/10 text-green-600' },
-  attraction: { label: 'معلم سياحي', color: 'bg-teal-500/10 text-teal-600' },
-  package: { label: 'باقة', color: 'bg-pink-500/10 text-pink-600' },
-  poi: { label: 'مكان', color: 'bg-cyan-500/10 text-cyan-600' },
+const typeColors: Record<string, string> = {
+  listing: 'bg-orange-500/10 text-orange-600',
+  opportunity: 'bg-yellow-500/10 text-yellow-600',
+  business: 'bg-blue-500/10 text-blue-600',
+  user: 'bg-purple-500/10 text-purple-600',
+  guide: 'bg-green-500/10 text-green-600',
+  attraction: 'bg-teal-500/10 text-teal-600',
+  package: 'bg-pink-500/10 text-pink-600',
+  poi: 'bg-cyan-500/10 text-cyan-600',
 };
 
 function getResultUrl(result: SearchResult): string {
@@ -56,6 +58,8 @@ function getResultUrl(result: SearchResult): string {
 }
 
 const SearchResultsPage = () => {
+  const { t } = useTranslation('search');
+  const { language } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [inputValue, setInputValue] = useState(searchParams.get('q') ?? '');
   // Derive query directly from URL so it stays in sync when navigating from Header
@@ -106,7 +110,7 @@ const SearchResultsPage = () => {
   const availableTypes = useMemo(
     () =>
       typeFilter
-        ? (Object.keys(typeConfig) as SearchResultType[])
+        ? (Object.keys(typeColors) as SearchResultType[])
         : [...new Set(data?.data?.map((r) => r.type) ?? [])],
     [data, typeFilter],
   );
@@ -114,7 +118,7 @@ const SearchResultsPage = () => {
   const results = data?.data ?? [];
 
   return (
-    <Layout title="نتائج البحث">
+    <Layout title={t('title')}>
       <PageTransition>
         <section className="relative py-14 md:py-20 overflow-hidden">
           <GradientMesh />
@@ -123,9 +127,9 @@ const SearchResultsPage = () => {
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-5">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-semibold text-primary">بحث شامل</span>
+                  <span className="text-sm font-semibold text-primary">{t('comprehensiveSearch')}</span>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">بحث في المنصة</h1>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('mainHeading')}</h1>
               </div>
             </SR>
 
@@ -133,7 +137,7 @@ const SearchResultsPage = () => {
               <form onSubmit={handleSubmit} className="relative mb-8">
                 <Search className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
                 <Input
-                  placeholder="ابحث عن أماكن، مرشدين، فرص استثمارية..."
+                  placeholder={t('placeholder')}
                   value={inputValue}
                   onChange={(e) => handleInputChange(e.target.value)}
                   className="search-input-with-icon-lg h-16 text-lg rounded-2xl shadow-lg border-0 bg-card/90 backdrop-blur-sm"
@@ -152,7 +156,7 @@ const SearchResultsPage = () => {
                       className="rounded-lg hover:scale-[1.05] transition-transform"
                       onClick={() => filterByType(type)}
                     >
-                      {typeConfig[type]?.label ?? type}
+                      {t(`types.${type}`)}
                     </Button>
                   ))}
                 </div>
@@ -162,11 +166,11 @@ const SearchResultsPage = () => {
             {query && !isLoading && (
               <div className="flex items-center justify-between mb-5">
                 <p className="text-sm text-muted-foreground">
-                  {results.length} نتيجة لـ &quot;{query}&quot;
-                  {data?.hasMore && ' (يوجد المزيد)'}
+                  {t('resultsCount', { count: results.length, query })}
+                  {data?.hasMore && t('hasMore')}
                 </p>
                 {data?.sources && data.sources.length > 0 && (
-                  <p className="text-xs text-muted-foreground">من: {data.sources.join('، ')}</p>
+                  <p className="text-xs text-muted-foreground">{t('fromSources', { sources: data.sources.join('، ') })}</p>
                 )}
               </div>
             )}
@@ -182,10 +186,10 @@ const SearchResultsPage = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <Badge
-                                  className={typeConfig[r.type]?.color ?? ''}
+                                  className={typeColors[r.type] ?? ''}
                                   variant="outline"
                                 >
-                                  {typeConfig[r.type]?.label ?? r.type}
+                                  {t(`types.${r.type}`)}
                                 </Badge>
                                 {r.metadata.district && (
                                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -199,7 +203,7 @@ const SearchResultsPage = () => {
                                   </Badge>
                                 )}
                               </div>
-                              <h3 className="font-bold text-foreground text-lg">{r.title.ar}</h3>
+                              <h3 className="font-bold text-foreground text-lg">{(language === 'en' ? r.title.en : r.title.ar) ?? r.title.ar ?? ''}</h3>
                               <p className="text-sm text-muted-foreground mt-1">{r.snippet}</p>
                             </div>
                           </CardContent>
@@ -210,14 +214,14 @@ const SearchResultsPage = () => {
               {isError && (
                 <Card className="rounded-2xl">
                   <CardContent className="p-14 text-center text-muted-foreground text-lg">
-                    حدث خطأ أثناء البحث. حاول مرة أخرى.
+                    {t('error')}
                   </CardContent>
                 </Card>
               )}
               {query && !isLoading && !isError && results.length === 0 && (
                 <Card className="rounded-2xl">
                   <CardContent className="p-14 text-center text-muted-foreground text-lg">
-                    لا توجد نتائج. جرب كلمات بحث مختلفة.
+                    {t('empty')}
                   </CardContent>
                 </Card>
               )}

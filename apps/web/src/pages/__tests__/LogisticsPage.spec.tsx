@@ -90,9 +90,11 @@ vi.mock('@/components/ui/ltr-text', () => ({
   LtrText: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock('@/lib/localization', () => ({
-  pickLocalizedCopy: (_lang: string, copies: { ar: string; en: string }) => copies.ar,
-  pickLocalizedField: (_lang: string, fields: { ar: string; en?: string | null }) => fields.ar,
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { changeLanguage: vi.fn(), language: 'ar' },
+  }),
 }));
 
 vi.mock('@/lib/maps', () => ({
@@ -280,6 +282,7 @@ describe('LogisticsPage', () => {
       user: null,
       isAuthenticated: false,
       direction: 'rtl',
+      language: 'ar',
     });
     mockUsePois.mockReturnValue({
       data: { data: [samplePoi], total: 1 },
@@ -311,7 +314,7 @@ describe('LogisticsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'open poi' }));
 
-    const mapsLink = screen.getByRole('link', { name: /google maps/i });
+    const mapsLink = screen.getByRole('link', { name: 'map.poiDetails.openInMaps' });
     expect(mapsLink).toHaveAttribute('href', 'https://www.google.com/maps?q=25.451,30.546');
     expect(screen.getByText('مستشفى الخارجة العام')).toBeInTheDocument();
   });
@@ -321,10 +324,10 @@ describe('LogisticsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'open poi' }));
 
-    expect(screen.getByText('العنوان')).toBeInTheDocument();
-    expect(screen.getByText('الهاتف')).toBeInTheDocument();
-    expect(screen.getByText('الموقع الإلكتروني')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'زيارة الموقع' })).toBeInTheDocument();
+    expect(screen.getByText('map.poiDetails.address')).toBeInTheDocument();
+    expect(screen.getByText('map.poiDetails.phone')).toBeInTheDocument();
+    expect(screen.getByText('map.poiDetails.website')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'map.poiDetails.visitWebsite' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'مستشفى الخارجة العام' })).toBeInTheDocument();
   });
 
@@ -350,23 +353,21 @@ describe('LogisticsPage', () => {
 
     render(<LogisticsPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /بالقرب مني/i }));
+    fireEvent.click(screen.getByRole('button', { name: /map\.nearbyBtn/i }));
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
     const overlay = screen.getByTestId('nearby-empty-overlay');
     expect(overlay).toBeInTheDocument();
     expect(overlay.className).toContain('z-[1000]');
-    expect(overlay).toHaveTextContent(
-      'لا توجد أماكن ضمن 50 كم من موقعك الحالي. اعرض جميع الأماكن في الوادي الجديد.',
-    );
-    expect(screen.getAllByRole('button', { name: 'إلغاء الموقع' })).toHaveLength(2);
+    expect(overlay).toHaveTextContent('map.noNearbyFound');
+    expect(screen.getAllByRole('button', { name: 'map.clearLocationBtn' })).toHaveLength(2);
   });
 
   it('uses a distinct transport icon for the local transport tab', () => {
     render(<LogisticsPage />);
 
-    const carpoolTab = screen.getByRole('button', { name: 'مشاركة الرحلات' });
-    const localTransportTab = screen.getByRole('button', { name: 'النقل المحلي' });
+    const carpoolTab = screen.getByRole('button', { name: 'tabs.carpool' });
+    const localTransportTab = screen.getByRole('button', { name: 'tabs.transport' });
 
     expect(carpoolTab.querySelector('[data-testid="icon-car"]')).not.toBeNull();
     expect(localTransportTab.querySelector('[data-testid="icon-car"]')).toBeNull();
@@ -405,7 +406,7 @@ describe('LogisticsPage ride creation access', () => {
 
     render(<LogisticsPage />);
 
-    expect(screen.queryByRole('button', { name: /أضف رحلتك/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /rides\.addRideBtn/i })).not.toBeInTheDocument();
   });
 
   it('shows the add-trip action for drivers', () => {
@@ -418,6 +419,6 @@ describe('LogisticsPage ride creation access', () => {
 
     render(<LogisticsPage />);
 
-    expect(screen.getByRole('button', { name: /أضف رحلتك/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /rides\.addRideBtn/i })).toBeInTheDocument();
   });
 });

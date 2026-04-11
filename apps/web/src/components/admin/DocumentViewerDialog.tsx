@@ -9,8 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -28,7 +27,7 @@ export function DocumentViewerDialog({
   userName,
 }: DocumentViewerDialogProps) {
   const [zoom, setZoom] = useState(1);
-  const { language } = useAuth();
+  const { t } = useTranslation('admin');
 
   useEffect(() => {
     setZoom(1);
@@ -43,38 +42,14 @@ export function DocumentViewerDialog({
     ? documentUrl?.startsWith('data:image/') ?? false
     : /\.(jpg|jpeg|png|gif|webp)$/i.test(urlPath);
 
-  const title = pickLocalizedCopy(language, {
-    ar: 'عرض المستند',
-    en: 'View document',
-  });
-  const emptyState = pickLocalizedCopy(language, {
-    ar: 'لا يوجد مستند للعرض',
-    en: 'No document available',
-  });
-  const openInNewTab = pickLocalizedCopy(language, {
-    ar: 'فتح في تبويب جديد',
-    en: 'Open in new tab',
-  });
-  const download = pickLocalizedCopy(language, {
-    ar: 'تحميل',
-    en: 'Download',
-  });
-  const unsupportedFile = pickLocalizedCopy(language, {
-    ar: 'لا يمكن عرض هذا النوع من الملفات مباشرة',
-    en: 'This file type cannot be previewed directly',
-  });
-  const openFile = pickLocalizedCopy(language, {
-    ar: 'فتح الملف',
-    en: 'Open file',
-  });
-  const userDocumentDescription = pickLocalizedCopy(language, {
-    ar: `مستند ${userName}`,
-    en: `${userName} document`,
-  });
-  const previewTitle = pickLocalizedCopy(language, {
-    ar: 'معاينة المستند',
-    en: 'Document preview',
-  });
+  const title = t('documentViewer.title');
+  const emptyState = t('documentViewer.emptyState');
+  const openInNewTab = t('documentViewer.openInNewTab');
+  const download = t('documentViewer.download');
+  const unsupportedFile = t('documentViewer.unsupportedFile');
+  const openFile = t('documentViewer.openFile');
+  const userDocumentDescription = t('documentViewer.userDocument', { userName });
+  const previewTitle = t('documentViewer.previewTitle');
 
   const handleZoomIn = () => setZoom((currentZoom) => Math.min(currentZoom + 0.25, 3));
   const handleZoomOut = () => setZoom((currentZoom) => Math.max(currentZoom - 0.25, 0.5));

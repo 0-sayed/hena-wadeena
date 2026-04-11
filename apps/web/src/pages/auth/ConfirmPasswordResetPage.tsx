@@ -16,6 +16,7 @@ import { authAPI } from '@/services/api';
 import type { AuthFlowResponse } from '@/services/api';
 import * as authManager from '@/services/auth-manager';
 import * as kycSessionManager from '@/services/kyc-session-manager';
+import { useTranslation } from 'react-i18next';
 
 function isPendingKycResponse(
   response: AuthFlowResponse,
@@ -24,6 +25,7 @@ function isPendingKycResponse(
 }
 
 export default function ConfirmPasswordResetPage() {
+  const { t } = useTranslation('auth');
   const navigate = useNavigate();
   const auth = useAuth();
   const [formData, setFormData] = useState({
@@ -39,7 +41,7 @@ export default function ConfirmPasswordResetPage() {
     event.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setFormError('كلمتا المرور غير متطابقتين');
+      setFormError(t('validation.passwordMismatch'));
       return;
     }
 
@@ -55,7 +57,7 @@ export default function ConfirmPasswordResetPage() {
       if (isPendingKycResponse(response)) {
         authManager.clearTokens();
         kycSessionManager.setKycSessionToken(response.kyc_session_token);
-        toast.success('تم تحديث كلمة المرور. أكمل إجراءات التحقق للمتابعة');
+        toast.success(t('resetPasswordConfirm.kycRequired'));
         void navigate('/kyc/continue');
         return;
       }
@@ -63,17 +65,17 @@ export default function ConfirmPasswordResetPage() {
       kycSessionManager.clearKycSessionToken();
       authManager.setTokens(response.access_token, response.refresh_token);
       auth.updateUser(response.user);
-      toast.success('تمت إعادة تعيين كلمة المرور بنجاح');
+      toast.success(t('resetPasswordConfirm.success'));
       void navigate('/');
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'تعذر إكمال إعادة التعيين');
+      setFormError(error instanceof Error ? error.message : t('resetPasswordConfirm.error'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Layout title="تأكيد إعادة التعيين">
+    <Layout title={t('resetPasswordConfirm.title')}>
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-24">
           <GradientMesh />
@@ -84,16 +86,16 @@ export default function ConfirmPasswordResetPage() {
                   <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-lg">
                     <KeyRound className="h-10 w-10 text-primary" />
                   </div>
-                  <CardTitle className="text-2xl">تأكيد رمز OTP وكلمة المرور الجديدة</CardTitle>
+                  <CardTitle className="text-2xl">{t('resetPasswordConfirm.cardTitle')}</CardTitle>
                   <p className="mt-2 text-muted-foreground">
-                    أدخل البريد الإلكتروني والرمز وكلمة المرور الجديدة
+                    {t('resetPasswordConfirm.cardSubtitle')}
                   </p>
                 </CardHeader>
                 <CardContent className="px-8 pb-10 pt-8">
                   <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
                     {formError ? <FormErrorAlert message={formError} /> : null}
                     <div className="space-y-2">
-                      <Label htmlFor="email">البريد الإلكتروني</Label>
+                      <Label htmlFor="email">{t('resetPasswordConfirm.emailLabel')}</Label>
                       <Input
                         id="email"
                         type="email"
@@ -109,7 +111,7 @@ export default function ConfirmPasswordResetPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="otp">رمز OTP</Label>
+                      <Label htmlFor="otp">{t('resetPasswordConfirm.otpLabel')}</Label>
                       <Input
                         id="otp"
                         type="text"
@@ -131,7 +133,7 @@ export default function ConfirmPasswordResetPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                      <Label htmlFor="newPassword">{t('resetPasswordConfirm.newPasswordLabel')}</Label>
                       <Input
                         id="newPassword"
                         type="password"
@@ -149,7 +151,7 @@ export default function ConfirmPasswordResetPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">تأكيد كلمة المرور الجديدة</Label>
+                      <Label htmlFor="confirmPassword">{t('resetPasswordConfirm.confirmPasswordLabel')}</Label>
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -171,7 +173,7 @@ export default function ConfirmPasswordResetPage() {
                       className="h-14 w-full rounded-xl text-base"
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? 'جارٍ الحفظ...' : 'تأكيد إعادة التعيين'}
+                      {isSubmitting ? t('resetPasswordConfirm.submitting') : t('resetPasswordConfirm.submit')}
                     </Button>
                   </form>
                 </CardContent>

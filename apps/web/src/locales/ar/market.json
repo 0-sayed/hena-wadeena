@@ -1,0 +1,20 @@
+{
+    "listingEditor.titleEdit": "تعديل إعلان",
+    "listingEditor.titleAdd": "إضافة إعلان جديد",
+    "listingEditor.description": "أضف منتجاً أو خدمة مع السعر والموقع، ثم احفظ التغييرات لإظهارها في القائمة.",
+    "listingEditor.nameLabel": "الاسم",
+    "listingEditor.priceLabel": "السعر (جنيه)",
+    "listingEditor.categoryLabel": "التصنيف",
+    "listingEditor.districtLabel": "المنطقة",
+    "listingEditor.addressLabel": "العنوان",
+    "listingEditor.descriptionLabel": "الوصف",
+    "listingEditor.saving": "جارٍ الحفظ...",
+    "listingEditor.updateBtn": "تحديث الإعلان",
+    "listingEditor.addBtn": "إضافة الإعلان",
+    "listingEditor.closeBtn": "إغلاق",
+
+    "categories.shopping": "تسوق",
+    "categories.service": "خدمات",
+    "categories.healthcare": "رعاية صحية",
+    "categories.education": "تعليم"
+}

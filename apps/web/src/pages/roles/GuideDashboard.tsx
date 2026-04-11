@@ -24,6 +24,7 @@ import { districtLabel, formatPrice, languageLabel, specialtyLabel } from '@/lib
 import { getBookingStatusLabels } from '@/lib/booking-status';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
+import { useTranslation } from 'react-i18next';
 
 type MultiSelectOption = {
   value: string;
@@ -127,10 +128,14 @@ function splitCommaValues(value: string) {
 }
 
 function formatAmountWithCurrency(value: number, language: AppLanguage): string {
-  return `${formatPrice(value)} ${pickLocalizedCopy(language, { ar: 'ج.م', en: 'EGP' })}`;
+  return `${formatPrice(value)} ${t('transactions.currency')}`;
 }
 
 export default function GuideDashboard() {
+  const {
+    t
+  } = useTranslation(['wallet', 'guides', 'profile', 'marketplace', 'market', 'tourism', 'logistics', 'investment']);
+
   const queryClient = useQueryClient();
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
@@ -216,19 +221,13 @@ export default function GuideDashboard() {
     const basePrice = parseEgpInputToPiasters(guideForm.basePriceEgp);
     if (!guideForm.licenseNumber.trim()) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'رقم الترخيص مطلوب',
-          en: 'License number is required',
-        }),
+        t('dashboard.toasts.licenseRequired'),
       );
       return;
     }
     if (basePrice == null) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'أدخل سعرًا صحيحًا لليوم',
-          en: 'Enter a valid daily rate',
-        }),
+        t('dashboard.toasts.invalidDailyRate'),
       );
       return;
     }
@@ -253,23 +252,14 @@ export default function GuideDashboard() {
       await refreshGuideData();
       toast.success(
         guideProfile
-          ? pickLocalizedCopy(appLanguage, {
-              ar: 'تم تحديث ملف المرشد',
-              en: 'Guide profile updated',
-            })
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تم إنشاء ملف المرشد',
-              en: 'Guide profile created',
-            }),
+          ? t('dashboard.toasts.profileUpdated')
+          : t('dashboard.toasts.profileCreated'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حفظ ملف المرشد',
-              en: 'Unable to save the guide profile',
-            });
+          : t('dashboard.toasts.profileSaveError');
       toast.error(message);
     } finally {
       setSavingGuide(false);
@@ -283,37 +273,25 @@ export default function GuideDashboard() {
 
     if (!packageForm.titleAr.trim()) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'عنوان الباقة مطلوب',
-          en: 'Package title is required',
-        }),
+        t('dashboard.toasts.packageTitleRequired'),
       );
       return;
     }
     if (!Number.isFinite(durationHours) || durationHours <= 0) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'عدد الساعات غير صحيح',
-          en: 'Duration is invalid',
-        }),
+        t('dashboard.toasts.invalidDuration'),
       );
       return;
     }
     if (!Number.isFinite(maxPeople) || maxPeople <= 0) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'العدد الأقصى للأشخاص غير صحيح',
-          en: 'Max guests is invalid',
-        }),
+        t('dashboard.toasts.invalidMaxPeople'),
       );
       return;
     }
     if (price == null) {
       toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'سعر الباقة غير صحيح',
-          en: 'Package price is invalid',
-        }),
+        t('dashboard.toasts.invalidPrice'),
       );
       return;
     }
@@ -339,23 +317,14 @@ export default function GuideDashboard() {
       await refreshGuideData();
       toast.success(
         packageForm.id
-          ? pickLocalizedCopy(appLanguage, {
-              ar: 'تم تحديث الباقة',
-              en: 'Package updated',
-            })
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تمت إضافة الباقة',
-              en: 'Package added',
-            }),
+          ? t('dashboard.toasts.packageUpdated')
+          : t('dashboard.toasts.packageAdded'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حفظ الباقة',
-              en: 'Unable to save the package',
-            });
+          : t('dashboard.toasts.packageSaveError');
       toast.error(message);
     } finally {
       setSavingPackage(false);
@@ -370,19 +339,13 @@ export default function GuideDashboard() {
         setPackageForm(emptyPackageForm);
       }
       toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم حذف الباقة',
-          en: 'Package deleted',
-        }),
+        t('dashboard.toasts.packageDeleted'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حذف الباقة',
-              en: 'Unable to delete the package',
-            });
+          : t('dashboard.toasts.packageDeleteError');
       toast.error(message);
     }
   };
@@ -399,27 +362,18 @@ export default function GuideDashboard() {
       if (action === 'cancel') {
         await bookingsAPI.cancelBooking(
           bookingId,
-          pickLocalizedCopy(appLanguage, {
-            ar: 'تم الإلغاء من قبل المرشد',
-            en: 'Cancelled by the guide',
-          }),
+          t('dashboard.toasts.cancelledByGuide'),
         );
       }
       await refreshGuideData();
       toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم تحديث حالة الحجز',
-          en: 'Booking status updated',
-        }),
+        t('dashboard.toasts.bookingUpdated'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر تحديث الحجز',
-              en: 'Unable to update the booking',
-            });
+          : t('dashboard.toasts.bookingUpdateError');
       toast.error(message);
     } finally {
       setProcessingBookingId(null);
@@ -432,32 +386,29 @@ export default function GuideDashboard() {
   return (
     <DashboardShell
       icon={MapPinned}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة المرشد', en: 'Guide dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'إدارة الملف التعريفي والبرامج السياحية وطلبات الحجز',
-        en: 'Manage your profile, tour packages, and bookings',
-      })}
+      title={t('dashboard.title')}
+      subtitle={t('dashboard.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'الباقات', en: 'Packages' })}
+          label={t('dashboard.stats.packages')}
           value={isLoading ? '...' : stats.packages}
           icon={BookOpen}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'طلبات جديدة', en: 'New requests' })}
+          label={t('dashboard.stats.newRequests')}
           value={isLoading ? '...' : stats.pendingBookings}
           icon={CalendarCheck}
           variant="warning"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'حجوزات نشطة', en: 'Active bookings' })}
+          label={t('dashboard.stats.activeBookings')}
           value={isLoading ? '...' : stats.activeBookings}
           icon={MapPinned}
           variant="success"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'إجمالي الأرباح', en: 'Total earnings' })}
+          label={t('dashboard.stats.totalEarnings')}
           value={isLoading ? '...' : formatAmountWithCurrency(stats.earnings, appLanguage)}
           icon={Coins}
         />
@@ -468,17 +419,11 @@ export default function GuideDashboard() {
           <CardHeader>
             <CardTitle>
               {guideProfile
-                ? pickLocalizedCopy(appLanguage, { ar: 'ملف المرشد', en: 'Guide profile' })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'إنشاء ملف المرشد',
-                    en: 'Create guide profile',
-                  })}
+                ? t('dashboard.profile.titleEdit')
+                : t('dashboard.profile.titleCreate')}
             </CardTitle>
             <CardDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'حدّث بياناتك الأساسية كما ستظهر للزوار',
-                en: 'Update the core details visitors will see',
-              })}
+              {t('dashboard.profile.description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -492,10 +437,7 @@ export default function GuideDashboard() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="licenseNumber">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'رقم الترخيص',
-                      en: 'License number',
-                    })}
+                    {t('dashboard.profile.licenseNumber')}
                   </Label>
                   <Input
                     id="licenseNumber"
@@ -510,10 +452,7 @@ export default function GuideDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="basePrice">
-                    {pickLocalizedCopy(appLanguage, {
-                      ar: 'السعر اليومي (جنيه)',
-                      en: 'Daily rate (EGP)',
-                    })}
+                    {t('dashboard.profile.dailyRate')}
                   </Label>
                   <Input
                     id="basePrice"
@@ -531,7 +470,7 @@ export default function GuideDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bioAr">
-                    {pickLocalizedCopy(appLanguage, { ar: 'نبذة تعريفية', en: 'Bio' })}
+                    {t('dashboard.profile.bio')}
                   </Label>
                   <Textarea
                     id="bioAr"
@@ -546,11 +485,8 @@ export default function GuideDashboard() {
                   />
                 </div>
                 <MultiSelectField
-                  label={pickLocalizedCopy(appLanguage, { ar: 'اللغات', en: 'Languages' })}
-                  placeholder={pickLocalizedCopy(appLanguage, {
-                    ar: 'اختر اللغات المتاحة',
-                    en: 'Select supported languages',
-                  })}
+                  label={t('dashboard.profile.languages')}
+                  placeholder={t('dashboard.profile.languagesPlaceholder')}
                   options={languageOptions}
                   values={guideForm.languages}
                   onChange={(languages) =>
@@ -561,11 +497,8 @@ export default function GuideDashboard() {
                   }
                 />
                 <MultiSelectField
-                  label={pickLocalizedCopy(appLanguage, { ar: 'التخصصات', en: 'Specialties' })}
-                  placeholder={pickLocalizedCopy(appLanguage, {
-                    ar: 'اختر مجالات التخصص',
-                    en: 'Select specialties',
-                  })}
+                  label={t('dashboard.profile.specialties')}
+                  placeholder={t('dashboard.profile.specialtiesPlaceholder')}
                   options={specialtyOptions}
                   values={guideForm.specialties}
                   onChange={(specialties) =>
@@ -576,14 +509,8 @@ export default function GuideDashboard() {
                   }
                 />
                 <MultiSelectField
-                  label={pickLocalizedCopy(appLanguage, {
-                    ar: 'مناطق العمل',
-                    en: 'Areas of operation',
-                  })}
-                  placeholder={pickLocalizedCopy(appLanguage, {
-                    ar: 'اختر المناطق التي تعمل بها',
-                    en: 'Select operating areas',
-                  })}
+                  label={t('dashboard.profile.areas')}
+                  placeholder={t('dashboard.profile.areasPlaceholder')}
                   options={areaOptions}
                   values={guideForm.areasOfOperation}
                   onChange={(areasOfOperation) =>
@@ -595,16 +522,10 @@ export default function GuideDashboard() {
                 />
                 <Button onClick={() => void handleSaveGuide()} disabled={savingGuide}>
                   {savingGuide
-                    ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
+                    ? t('form.savingBtn')
                     : guideProfile
-                      ? pickLocalizedCopy(appLanguage, {
-                          ar: 'تحديث الملف',
-                          en: 'Update profile',
-                        })
-                      : pickLocalizedCopy(appLanguage, {
-                          ar: 'إنشاء الملف',
-                          en: 'Create profile',
-                        })}
+                      ? t('dashboard.profile.updateBtn')
+                      : t('dashboard.profile.createBtn')}
                 </Button>
               </>
             )}
@@ -615,23 +536,17 @@ export default function GuideDashboard() {
           <CardHeader>
             <CardTitle>
               {packageForm.id
-                ? pickLocalizedCopy(appLanguage, { ar: 'تعديل الباقة', en: 'Edit package' })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'إضافة باقة جديدة',
-                    en: 'Add a new package',
-                  })}
+                ? t('dashboard.package.titleEdit')
+                : t('dashboard.package.titleAdd')}
             </CardTitle>
             <CardDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'أنشئ برامجك السياحية وحدّث الأسعار والسعة',
-                en: 'Create tourism packages and keep prices and capacity up to date',
-              })}
+              {t('dashboard.package.description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="packageTitle">
-                {pickLocalizedCopy(appLanguage, { ar: 'عنوان الباقة', en: 'Package title' })}
+                {t('dashboard.package.formTitle')}
               </Label>
               <Input
                 id="packageTitle"
@@ -646,7 +561,7 @@ export default function GuideDashboard() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="packageDescription">
-                {pickLocalizedCopy(appLanguage, { ar: 'الوصف', en: 'Description' })}
+                {t('listingDetails.descriptionTitle')}
               </Label>
               <Textarea
                 id="packageDescription"
@@ -663,10 +578,7 @@ export default function GuideDashboard() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="durationHours">
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'الساعات',
-                    en: 'Duration (hours)',
-                  })}
+                  {t('dashboard.package.formDuration')}
                 </Label>
                 <Input
                   id="durationHours"
@@ -683,7 +595,7 @@ export default function GuideDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maxPeople">
-                  {pickLocalizedCopy(appLanguage, { ar: 'أقصى عدد', en: 'Max guests' })}
+                  {t('dashboard.package.formMaxPeople')}
                 </Label>
                 <Input
                   id="maxPeople"
@@ -700,7 +612,7 @@ export default function GuideDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="priceEgp">
-                  {pickLocalizedCopy(appLanguage, { ar: 'السعر (جنيه)', en: 'Price (EGP)' })}
+                  {t('listingEditor.priceLabel')}
                 </Label>
                 <Input
                   id="priceEgp"
@@ -719,14 +631,11 @@ export default function GuideDashboard() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="includes">
-                {pickLocalizedCopy(appLanguage, { ar: 'المتضمن', en: 'Included items' })}
+                {t('dashboard.package.formIncludes')}
               </Label>
               <Input
                 id="includes"
-                placeholder={pickLocalizedCopy(appLanguage, {
-                  ar: 'مواصلات, مرشد, وجبة خفيفة',
-                  en: 'transport, guide, snack',
-                })}
+                placeholder={t('dashboard.package.formIncludesPlaceholder')}
                 value={packageForm.includes}
                 onChange={(event) =>
                   setPackageForm((prev) => ({
@@ -739,23 +648,14 @@ export default function GuideDashboard() {
             <div className="flex gap-3">
               <Button onClick={() => void handleSavePackage()} disabled={savingPackage}>
                 {savingPackage
-                  ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الحفظ...', en: 'Saving...' })
+                  ? t('form.savingBtn')
                   : packageForm.id
-                    ? pickLocalizedCopy(appLanguage, {
-                        ar: 'تحديث الباقة',
-                        en: 'Update package',
-                      })
-                    : pickLocalizedCopy(appLanguage, {
-                        ar: 'إضافة الباقة',
-                        en: 'Add package',
-                      })}
+                    ? t('dashboard.package.saveBtnUpdate')
+                    : t('dashboard.package.saveBtnAdd')}
               </Button>
               {packageForm.id && (
                 <Button variant="outline" onClick={() => setPackageForm(emptyPackageForm)}>
-                  {pickLocalizedCopy(appLanguage, {
-                    ar: 'إلغاء التعديل',
-                    en: 'Cancel editing',
-                  })}
+                  {t('dashboard.package.cancelBtn')}
                 </Button>
               )}
             </div>
@@ -766,7 +666,7 @@ export default function GuideDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, { ar: 'الباقات الحالية', en: 'Current packages' })}
+            {t('dashboard.packagesList.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -778,17 +678,17 @@ export default function GuideDashboard() {
             </div>
           ) : myPackages.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, { ar: 'لم تقم بإضافة باقات بعد.', en: 'No packages yet.' })}
+              {t('dashboard.packagesList.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الباقة', en: 'Package' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'المدة', en: 'Duration' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعة', en: 'Capacity' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'السعر', en: 'Price' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}</TableHead>
+                  <TableHead>{t('booking.packageLabel')}</TableHead>
+                  <TableHead>{t('attractions.durationTitle')}</TableHead>
+                  <TableHead>{t('dashboard.packagesList.colCapacity')}</TableHead>
+                  <TableHead>{t('prices.table.price')}</TableHead>
+                  <TableHead>{t('dashboard.packagesList.colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -799,7 +699,7 @@ export default function GuideDashboard() {
                     </TableCell>
                     <TableCell>
                       {pkg.durationHours}{' '}
-                      {pickLocalizedCopy(appLanguage, { ar: 'ساعة', en: 'hours' })}
+                      {t('home.hourLabel')}
                     </TableCell>
                     <TableCell>{pkg.maxPeople}</TableCell>
                     <TableCell>{formatAmountWithCurrency(pkg.price, appLanguage)}</TableCell>
@@ -820,14 +720,14 @@ export default function GuideDashboard() {
                             })
                           }
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'تعديل', en: 'Edit' })}
+                          {t('booking.editBtn')}
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => void handleDeletePackage(pkg.id)}
                         >
-                          {pickLocalizedCopy(appLanguage, { ar: 'حذف', en: 'Delete' })}
+                          {t('transport.delete')}
                         </Button>
                       </div>
                     </TableCell>
@@ -841,12 +741,9 @@ export default function GuideDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{pickLocalizedCopy(appLanguage, { ar: 'طلبات الحجز', en: 'Bookings' })}</CardTitle>
+          <CardTitle>{t('dashboard.bookings.title')}</CardTitle>
           <CardDescription>
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'يمكنك تأكيد الحجز أو بدء الجولة أو إنهاؤها من هنا',
-              en: 'Confirm, start, or complete bookings from here',
-            })}
+            {t('dashboard.bookings.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -858,20 +755,17 @@ export default function GuideDashboard() {
             </div>
           ) : myBookings.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد حجوزات مرتبطة بك حاليًا.',
-                en: 'No bookings linked to you right now.',
-              })}
+              {t('dashboard.bookings.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الباقة', en: 'Package' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'التاريخ', en: 'Date' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الأشخاص', en: 'Guests' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الإجراءات', en: 'Actions' })}</TableHead>
+                  <TableHead>{t('booking.packageLabel')}</TableHead>
+                  <TableHead>{t('booking.dateLabel')}</TableHead>
+                  <TableHead>{t('dashboard.bookings.colGuests')}</TableHead>
+                  <TableHead>{t('startupDetails.status')}</TableHead>
+                  <TableHead>{t('dashboard.packagesList.colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -894,7 +788,7 @@ export default function GuideDashboard() {
                             onClick={() => void handleBookingAction(booking.id, 'confirm')}
                             disabled={processingBookingId === booking.id}
                           >
-                            {pickLocalizedCopy(appLanguage, { ar: 'تأكيد', en: 'Confirm' })}
+                            {t('bookings.confirmBtn')}
                           </Button>
                         )}
                         {booking.status === 'confirmed' && (
@@ -904,10 +798,7 @@ export default function GuideDashboard() {
                             onClick={() => void handleBookingAction(booking.id, 'start')}
                             disabled={processingBookingId === booking.id}
                           >
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'بدء الجولة',
-                              en: 'Start tour',
-                            })}
+                            {t('bookings.dialogs.start.title')}
                           </Button>
                         )}
                         {booking.status === 'in_progress' && (
@@ -917,10 +808,7 @@ export default function GuideDashboard() {
                             onClick={() => void handleBookingAction(booking.id, 'complete')}
                             disabled={processingBookingId === booking.id}
                           >
-                            {pickLocalizedCopy(appLanguage, {
-                              ar: 'إنهاء الجولة',
-                              en: 'Complete tour',
-                            })}
+                            {t('bookings.dialogs.complete.title')}
                           </Button>
                         )}
                         {!['completed', 'cancelled'].includes(booking.status) && (
@@ -930,7 +818,7 @@ export default function GuideDashboard() {
                             onClick={() => void handleBookingAction(booking.id, 'cancel')}
                             disabled={processingBookingId === booking.id}
                           >
-                            {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+                            {t('topup.cancelBtn')}
                           </Button>
                         )}
                       </div>

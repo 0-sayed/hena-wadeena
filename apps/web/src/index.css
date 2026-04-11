@@ -389,6 +389,14 @@ textarea {
   .reveal-right {
     transform: translateX(60px);
   }
+
+  /* RTL: flip horizontal reveal directions */
+  html[dir='rtl'] .reveal-left {
+    transform: translateX(60px);
+  }
+  html[dir='rtl'] .reveal-right {
+    transform: translateX(-60px);
+  }
   .reveal-scale {
     transform: scale(0.85);
     filter: blur(3px);
@@ -593,6 +601,14 @@ textarea {
       transform: translateX(100%);
     }
   }
+  @keyframes skeletonShimmerRtl {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
   .skeleton-shimmer {
     background: linear-gradient(
       90deg,
@@ -603,6 +619,9 @@ textarea {
       transparent 100%
     );
     animation: skeletonShimmer 1.8s ease-in-out infinite;
+  }
+  html[dir='rtl'] .skeleton-shimmer {
+    animation-name: skeletonShimmerRtl;
   }
 
   /* ── Shimmer overlay ────────────────────────────────── */

@@ -1,57 +1,56 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Sparkles, Mountain, ShoppingBag, Truck, TrendingUp, Users, Compass } from 'lucide-react';
 import { Link } from 'react-router';
-
+import { useTranslation } from 'react-i18next';
 import heroImage from '@/assets/hero-desert-oasis.jpg';
-import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy } from '@/lib/localization';
 
 const navCards = [
   {
     icon: Mountain,
-    label: { ar: 'السياحة', en: 'Tourism' },
-    desc: { ar: 'اكتشف المعالم', en: 'Discover places' },
+    labelKey: 'hero.card.tourism',
+    descKey: 'hero.card.tourismDesc',
     href: '/tourism',
     color: 'from-emerald-500 to-teal-600',
   },
   {
     icon: ShoppingBag,
-    label: { ar: 'البورصة', en: 'Marketplace' },
-    desc: { ar: 'أسعار اليوم', en: "Today's prices" },
+    labelKey: 'hero.card.marketplace',
+    descKey: 'hero.card.marketplaceDesc',
     href: '/marketplace',
     color: 'from-amber-500 to-orange-600',
   },
   {
     icon: Truck,
-    label: { ar: 'المواصلات', en: 'Transport' },
-    desc: { ar: 'خطوط وحجز', en: 'Routes & booking' },
+    labelKey: 'hero.card.transport',
+    descKey: 'hero.card.transportDesc',
     href: '/logistics',
     color: 'from-sky-500 to-blue-600',
   },
   {
     icon: TrendingUp,
-    label: { ar: 'الاستثمار', en: 'Investment' },
-    desc: { ar: 'فرص واعدة', en: 'Promising opportunities' },
+    labelKey: 'hero.card.investment',
+    descKey: 'hero.card.investmentDesc',
     href: '/investment',
     color: 'from-violet-500 to-purple-600',
   },
   {
     icon: Users,
-    label: { ar: 'المرشدين', en: 'Guides' },
-    desc: { ar: 'دليلك المحلي', en: 'Your local guide' },
+    labelKey: 'hero.card.guides',
+    descKey: 'hero.card.guidesDesc',
     href: '/guides',
     color: 'from-pink-500 to-rose-600',
   },
   {
     icon: Compass,
-    label: { ar: 'المعالم', en: 'Attractions' },
-    desc: { ar: 'أماكن مميزة', en: 'Featured places' },
+    labelKey: 'hero.card.attractions',
+    descKey: 'hero.card.attractionsDesc',
     href: '/tourism/attractions',
     color: 'from-cyan-500 to-indigo-600',
   },
 ] as const;
 
-function MobileQuickLinks({ language }: { language: 'ar' | 'en' }) {
+function MobileQuickLinks() {
+  const { t } = useTranslation('home');
   return (
     <div className="-mx-4 overflow-x-auto px-4 pb-2 md:hidden">
       <div className="flex snap-x snap-mandatory gap-3 pb-1">
@@ -67,10 +66,10 @@ function MobileQuickLinks({ language }: { language: 'ar' | 'en' }) {
                 <Icon className="h-5 w-5 text-white" strokeWidth={1.8} />
               </div>
               <div className="text-sm font-bold text-white">
-                {pickLocalizedCopy(language, item.label)}
+                {t(item.labelKey)}
               </div>
               <div className="mt-1 text-xs text-white/75">
-                {pickLocalizedCopy(language, item.desc)}
+                {t(item.descKey)}
               </div>
             </Link>
           );
@@ -80,7 +79,8 @@ function MobileQuickLinks({ language }: { language: 'ar' | 'en' }) {
   );
 }
 
-function CardDeck({ language }: { language: 'ar' | 'en' }) {
+function CardDeck() {
+  const { t } = useTranslation('home');
   const deckRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -216,10 +216,10 @@ function CardDeck({ language }: { language: 'ar' | 'en' }) {
                 </div>
                 <div className="text-center">
                   <div className="text-sm font-bold text-white sm:text-base">
-                    {pickLocalizedCopy(language, item.label)}
+                    {t(item.labelKey)}
                   </div>
                   <div className="mt-0.5 text-[11px] text-white/70 sm:text-xs">
-                    {pickLocalizedCopy(language, item.desc)}
+                    {t(item.descKey)}
                   </div>
                 </div>
               </div>
@@ -268,35 +268,9 @@ function Counter({ target, label, delay }: { target: number; label: string; dela
 }
 
 export function HeroSection() {
+  const { t } = useTranslation('home');
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const { language } = useAuth();
-  const copy =
-    language === 'en'
-      ? {
-          brandName: 'Hena Wadeena',
-          portalBadge: 'Official digital portal',
-          tagline: 'Explore. Connect. Invest.',
-          description:
-            'Your all-in-one gateway to New Valley, from transport and daily prices to investment opportunities and tourism.',
-          helper: 'Tap or hover over the cards to explore each section',
-          transportLines: 'transport routes',
-          localProducts: 'local products',
-          investmentOpportunities: 'investment opportunities',
-          heroImageAlt: 'New Valley',
-        }
-      : {
-          brandName: 'هُنَا وَادِينَا',
-          portalBadge: 'البوابة الرقمية الرسمية',
-          tagline: 'اكتشف. تواصل. استثمر.',
-          description:
-            'بوابتك الشاملة للوادي الجديد — من المواصلات والأسعار إلى فرص الاستثمار والسياحة. كل ما تحتاجه في مكان واحد.',
-          helper: 'المس أو مرّر على الكروت لاستكشاف الأقسام',
-          transportLines: 'خط مواصلات',
-          localProducts: 'منتج محلي',
-          investmentOpportunities: 'فرصة استثمارية',
-          heroImageAlt: 'الوادي الجديد',
-        };
 
   useEffect(() => {
     setLoaded(true);
@@ -333,7 +307,7 @@ export function HeroSection() {
       >
         <img
           src={heroImage}
-          alt={copy.heroImageAlt}
+          alt={t('hero.imageAlt')}
           className="h-[120%] w-full object-cover sm:h-[130%]"
         />
         <div className="absolute inset-0 bg-gradient-to-l from-foreground/85 via-foreground/65 to-foreground/40" />
@@ -358,34 +332,34 @@ export function HeroSection() {
         <div className="max-w-2xl">
           <div className="hero-reveal hero-d1 mb-8 inline-flex items-center gap-2 rounded-full glass px-5 py-2.5">
             <Sparkles className="h-5 w-5 animate-pulse text-accent" />
-            <span className="text-sm font-semibold text-card">{copy.portalBadge}</span>
+            <span className="text-sm font-semibold text-card">{t('hero.portalBadge')}</span>
           </div>
 
           <h1 className="hero-reveal hero-d2 mb-5 text-4xl font-bold leading-tight text-card sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
-            {copy.brandName}
+            {t('hero.brandName')}
             <span className="mt-3 block text-2xl text-accent sm:text-3xl md:text-4xl lg:text-5xl">
-              {copy.tagline}
+              {t('hero.tagline')}
             </span>
           </h1>
 
           <p className="hero-reveal hero-d3 mb-8 max-w-xl text-base leading-relaxed text-card/90 sm:mb-10 sm:text-lg md:text-xl">
-            {copy.description}
+            {t('hero.description')}
           </p>
 
           <div className="hero-reveal hero-d4 mb-5 md:hidden">
-            <MobileQuickLinks language={language} />
-            <p className="mt-3 text-center text-xs text-card/60">{copy.helper}</p>
+            <MobileQuickLinks />
+            <p className="mt-3 text-center text-xs text-card/60">{t('hero.helper')}</p>
           </div>
 
           <div className="hero-reveal hero-d4 mb-12 hidden md:block">
-            <CardDeck language={language} />
-            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">{copy.helper} ✨</p>
+            <CardDeck />
+            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">{t('hero.helper')} ✨</p>
           </div>
 
           <div className="hero-reveal hero-d5 grid max-w-xl grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:gap-12">
-            <Counter target={50} label={copy.transportLines} delay={900} />
-            <Counter target={200} label={copy.localProducts} delay={1200} />
-            <Counter target={30} label={copy.investmentOpportunities} delay={1500} />
+            <Counter target={50} label={t('hero.transportLines')} delay={900} />
+            <Counter target={200} label={t('hero.localProducts')} delay={1200} />
+            <Counter target={30} label={t('hero.investmentOpportunities')} delay={1500} />
           </div>
         </div>
       </div>

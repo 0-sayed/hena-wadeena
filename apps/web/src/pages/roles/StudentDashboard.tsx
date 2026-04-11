@@ -11,8 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { districtLabel, formatPrice, transactionLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
 export default function StudentDashboard() {
+  const {
+    t
+  } = useTranslation(['dashboard', 'tourism', 'wallet']);
+
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const { data, isLoading, error } = useMyBookings();
@@ -35,27 +40,24 @@ export default function StudentDashboard() {
   return (
     <DashboardShell
       icon={GraduationCap}
-      title={pickLocalizedCopy(appLanguage, { ar: 'لوحة الطالب', en: 'Student dashboard' })}
-      subtitle={pickLocalizedCopy(appLanguage, {
-        ar: 'متابعة السكن والحجوزات والخدمات الطلابية',
-        en: 'Track housing, bookings, and student services',
-      })}
+      title={t('student.title')}
+      subtitle={t('student.subtitle')}
     >
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'حجوزاتي', en: 'My bookings' })}
+          label={t('bookings.title')}
           value={isLoading ? '...' : stats.bookings}
           icon={CalendarCheck}
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'قادمة', en: 'Upcoming' })}
+          label={t('student.stats.upcoming')}
           value={isLoading ? '...' : stats.upcoming}
           icon={BookOpen}
           variant="warning"
         />
         <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'السكن', en: 'Housing' })}
-          value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
+          label={t('student.housingSearch.housingBadge')}
+          value={t('student.stats.browse')}
           icon={Home}
           variant="muted"
         />
@@ -67,18 +69,15 @@ export default function StudentDashboard() {
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
             <CardTitle>
-              {pickLocalizedCopy(appLanguage, { ar: 'البحث عن سكن', en: 'Find housing' })}
+              {t('student.housingSearch.title')}
             </CardTitle>
             <CardDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'أرخص 3 خيارات سكن متاحة حاليًا مع وصول سريع إلى صفحة السكن الكاملة',
-                en: 'The lowest-priced housing options available now with quick access to the full housing page',
-              })}
+              {t('student.housingSearch.description')}
             </CardDescription>
           </div>
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <Link to="/tourism/accommodation">
-              {pickLocalizedCopy(appLanguage, { ar: 'عرض جميع السكن', en: 'View all housing' })}
+              {t('student.housingSearch.viewAllBtn')}
               <ArrowLeft className="me-2 h-4 w-4" />
             </Link>
           </Button>
@@ -128,10 +127,7 @@ export default function StudentDashboard() {
                         <span className="truncate">
                           {districtLabel(
                             listing.district ??
-                              pickLocalizedCopy(appLanguage, {
-                                ar: 'غير محدد',
-                                en: 'Unknown',
-                              }),
+                              t('student.housingSearch.unknownDistrict'),
                             appLanguage,
                           )}
                         </span>
@@ -140,14 +136,14 @@ export default function StudentDashboard() {
                     <div className="shrink-0 text-start">
                       <p className="font-bold text-primary">
                         {formatPrice(listing.price)}{' '}
-                        {pickLocalizedCopy(appLanguage, { ar: 'ج.م', en: 'EGP' })}
+                        {t('transactions.currency')}
                       </p>
                       <p className="text-xs text-muted-foreground">{listing.priceUnit}</p>
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="secondary" className="text-xs">
-                      {pickLocalizedCopy(appLanguage, { ar: 'سكن', en: 'Housing' })}
+                      {t('student.housingSearch.housingBadge')}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
                       {transactionLabel(listing.transaction, appLanguage)}
@@ -158,10 +154,7 @@ export default function StudentDashboard() {
             ))
           ) : (
             <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد خيارات سكن منشورة حاليًا.',
-                en: 'No housing options are published right now.',
-              })}
+              {t('No housing options are published right now.')}
             </div>
           )}
         </CardContent>
@@ -170,25 +163,22 @@ export default function StudentDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pickLocalizedCopy(appLanguage, { ar: 'فرص العمل', en: 'Job opportunities' })}
+            {t('student.jobs.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'تصفح الوظائف المتاحة وتابع طلباتك.',
-              en: 'Browse available jobs and track your applications.',
-            })}
+            {t('student.jobs.description')}
           </p>
           <div className="flex gap-2">
             <Button asChild size="sm">
               <Link to="/jobs">
-                {pickLocalizedCopy(appLanguage, { ar: 'تصفح الوظائف', en: 'Browse jobs' })}
+                {t('student.jobs.browseJobs')}
               </Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link to="/jobs/my-applications">
-                {pickLocalizedCopy(appLanguage, { ar: 'طلباتي', en: 'My applications' })}
+                {t('student.jobs.myApplications')}
               </Link>
             </Button>
           </div>

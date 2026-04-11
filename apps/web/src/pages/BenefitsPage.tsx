@@ -17,9 +17,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import { useBenefits } from '@/hooks/use-benefits';
-import { pickLocalizedCopy } from '@/lib/localization';
 import type { BenefitInfo } from '@/services/api';
 import { getMatchedSlugs } from '@/lib/benefits-eligibility';
 import type { WizardAnswers, IncomeBracket, Employment } from '@/lib/benefits-eligibility';
@@ -61,8 +61,7 @@ const DEFAULT_ANSWERS: WizardAnswers = {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function BenefitsPage() {
-  const { language } = useAuth();
-  const lang = language === 'en' ? 'en' : 'ar';
+  const { t } = useTranslation('benefits');
 
   const [answers, setAnswers] = useState<WizardAnswers>(DEFAULT_ANSWERS);
   const [step, setStep] = useState(0);
@@ -108,16 +107,10 @@ export default function BenefitsPage() {
         <SR direction="up">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold">
-              {pickLocalizedCopy(lang, {
-                ar: 'مساعد المزايا الحكومية',
-                en: 'Government Benefits Navigator',
-              })}
+              {t('title')}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              {pickLocalizedCopy(lang, {
-                ar: 'أجب على أسئلة بسيطة لاكتشاف البرامج الحكومية التي تؤهّلك',
-                en: 'Answer a few questions to discover the government programs you qualify for',
-              })}
+              {t('subtitle')}
             </p>
           </div>
         </SR>
@@ -128,7 +121,6 @@ export default function BenefitsPage() {
             stepIndex={clampedStep}
             totalSteps={steps.length}
             answers={answers}
-            lang={lang}
             onAnswer={(key, value) => setAnswers((a) => ({ ...a, [key]: value }))}
             onNext={handleNext}
             onBack={clampedStep > 0 ? handleBack : undefined}
@@ -138,7 +130,6 @@ export default function BenefitsPage() {
             matched={matchedBenefits}
             isLoading={isLoading}
             isError={isError}
-            lang={lang}
             onRestart={handleRestart}
             onRetry={handleRetry}
           />
@@ -155,7 +146,6 @@ type WizardStepProps = {
   stepIndex: number;
   totalSteps: number;
   answers: WizardAnswers;
-  lang: 'ar' | 'en';
   onAnswer: (key: keyof WizardAnswers, value: WizardAnswers[keyof WizardAnswers]) => void;
   onNext: () => void;
   onBack?: () => void;
@@ -166,21 +156,18 @@ function WizardStep({
   stepIndex,
   totalSteps,
   answers,
-  lang,
   onAnswer,
   onNext,
   onBack,
 }: WizardStepProps) {
+  const { t } = useTranslation('benefits');
   return (
     <SR direction="up">
       <Card>
         <CardHeader>
           <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              {pickLocalizedCopy(lang, {
-                ar: `سؤال ${stepIndex + 1} من ${totalSteps}`,
-                en: `Question ${stepIndex + 1} of ${totalSteps}`,
-              })}
+              {t('wizard.questionXofY', { current: stepIndex + 1, total: totalSteps })}
             </span>
             <div className="flex gap-1">
               {Array.from({ length: totalSteps }).map((_, i) => (
@@ -193,20 +180,20 @@ function WizardStep({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <StepBody step={step} answers={answers} lang={lang} onAnswer={onAnswer} />
+          <StepBody step={step} answers={answers} onAnswer={onAnswer} />
           <div className="flex justify-between pt-2">
             {onBack ? (
               <Button variant="outline" onClick={onBack}>
                 <ChevronRight className="me-1 h-4 w-4" />
-                {pickLocalizedCopy(lang, { ar: 'السابق', en: 'Back' })}
+                {t('wizard.prev')}
               </Button>
             ) : (
               <div />
             )}
             <Button onClick={onNext}>
               {stepIndex < totalSteps - 1
-                ? pickLocalizedCopy(lang, { ar: 'التالي', en: 'Next' })
-                : pickLocalizedCopy(lang, { ar: 'عرض النتائج', en: 'Show results' })}
+                ? t('wizard.next')
+                : t('wizard.showResults')}
               <ChevronLeft className="ms-1 h-4 w-4" />
             </Button>
           </div>
@@ -221,19 +208,16 @@ function WizardStep({
 type StepBodyProps = {
   step: Step;
   answers: WizardAnswers;
-  lang: 'ar' | 'en';
   onAnswer: (key: keyof WizardAnswers, value: WizardAnswers[keyof WizardAnswers]) => void;
 };
 
-function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
+function StepBody({ step, answers, onAnswer }: StepBodyProps) {
+  const { t } = useTranslation('benefits');
   if (step.id === 'householdSize') {
     return (
       <div className="space-y-3">
         <p className="text-lg font-medium">
-          {pickLocalizedCopy(lang, {
-            ar: 'كم عدد أفراد أسرتك؟',
-            en: 'How many people are in your household?',
-          })}
+          {t('steps.householdSize.question')}
         </p>
         <div className="flex items-center gap-4">
           <Button
@@ -257,18 +241,15 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
   }
 
   if (step.id === 'incomeBracket') {
-    const options: { value: IncomeBracket; ar: string; en: string }[] = [
-      { value: 'low', ar: 'أقل من 1,500 ج.م شهريًا', en: 'Less than 1,500 EGP/month' },
-      { value: 'mid', ar: '1,500 – 3,000 ج.م شهريًا', en: '1,500 – 3,000 EGP/month' },
-      { value: 'high', ar: 'أكثر من 3,000 ج.م شهريًا', en: 'More than 3,000 EGP/month' },
+    const options: { value: IncomeBracket; key: string }[] = [
+      { value: 'low', key: 'steps.incomeBracket.low' },
+      { value: 'mid', key: 'steps.incomeBracket.mid' },
+      { value: 'high', key: 'steps.incomeBracket.high' },
     ];
     return (
       <div className="space-y-3">
         <p className="text-lg font-medium">
-          {pickLocalizedCopy(lang, {
-            ar: 'ما هو الدخل الشهري الإجمالي للأسرة؟',
-            en: "What is your household's total monthly income?",
-          })}
+          {t('steps.incomeBracket.question')}
         </p>
         <div className="grid gap-2">
           {options.map((opt) => (
@@ -277,7 +258,7 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
               onClick={() => onAnswer('incomeBracket', opt.value)}
               className={`rounded-lg border p-3 text-start transition-colors ${answers.incomeBracket === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
             >
-              {pickLocalizedCopy(lang, { ar: opt.ar, en: opt.en })}
+              {t(opt.key)}
             </button>
           ))}
         </div>
@@ -289,10 +270,7 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
     return (
       <div className="space-y-3">
         <p className="text-lg font-medium">
-          {pickLocalizedCopy(lang, {
-            ar: 'كم عمر رب الأسرة؟',
-            en: 'How old is the head of household?',
-          })}
+          {t('steps.headAge.question')}
         </p>
         <div className="flex items-center gap-4">
           <Button
@@ -305,7 +283,7 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
           <span className="w-16 text-center text-2xl font-bold">
             {answers.headAge}
             <span className="ms-1 text-sm font-normal text-muted-foreground">
-              {pickLocalizedCopy(lang, { ar: 'سنة', en: 'yrs' })}
+              {t('steps.headAge.suffix')}
             </span>
           </span>
           <Button
@@ -323,31 +301,24 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
   if (step.id === 'hasDisability') {
     return (
       <YesNoStep
-        question={pickLocalizedCopy(lang, {
-          ar: 'هل يوجد فرد معاق في الأسرة؟',
-          en: 'Does any household member have a disability?',
-        })}
+        question={t('steps.hasDisability.question')}
         value={answers.hasDisability}
-        lang={lang}
         onChange={(v) => onAnswer('hasDisability', v)}
       />
     );
   }
 
   if (step.id === 'employment') {
-    const options: { value: Employment; ar: string; en: string }[] = [
-      { value: 'employed', ar: 'موظف (حكومي أو خاص)', en: 'Employed (public or private)' },
-      { value: 'self_employed', ar: 'عمل حر أو تجاري', en: 'Self-employed or business owner' },
-      { value: 'unemployed', ar: 'عاطل عن العمل', en: 'Unemployed' },
-      { value: 'farmer', ar: 'مزارع', en: 'Farmer' },
+    const options: { value: Employment; key: string }[] = [
+      { value: 'employed', key: 'steps.employment.employed' },
+      { value: 'self_employed', key: 'steps.employment.self_employed' },
+      { value: 'unemployed', key: 'steps.employment.unemployed' },
+      { value: 'farmer', key: 'steps.employment.farmer' },
     ];
     return (
       <div className="space-y-3">
         <p className="text-lg font-medium">
-          {pickLocalizedCopy(lang, {
-            ar: 'ما هو الوضع الوظيفي لرب الأسرة؟',
-            en: "What is the head of household's employment status?",
-          })}
+          {t('steps.employment.question')}
         </p>
         <div className="grid gap-2">
           {options.map((opt) => (
@@ -356,7 +327,7 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
               onClick={() => onAnswer('employment', opt.value)}
               className={`rounded-lg border p-3 text-start transition-colors ${answers.employment === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
             >
-              {pickLocalizedCopy(lang, { ar: opt.ar, en: opt.en })}
+              {t(opt.key)}
             </button>
           ))}
         </div>
@@ -367,12 +338,8 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
   if (step.id === 'ownsLand') {
     return (
       <YesNoStep
-        question={pickLocalizedCopy(lang, {
-          ar: 'هل تمتلك أرضًا زراعية؟',
-          en: 'Do you own agricultural land?',
-        })}
+        question={t('steps.ownsLand.question')}
         value={answers.ownsLand}
-        lang={lang}
         onChange={(v) => onAnswer('ownsLand', v)}
       />
     );
@@ -386,14 +353,13 @@ function StepBody({ step, answers, lang, onAnswer }: StepBodyProps) {
 function YesNoStep({
   question,
   value,
-  lang,
   onChange,
 }: {
   question: string;
   value: boolean;
-  lang: 'ar' | 'en';
   onChange: (v: boolean) => void;
 }) {
+  const { t } = useTranslation('benefits');
   return (
     <div className="space-y-3">
       <p className="text-lg font-medium">{question}</p>
@@ -405,8 +371,8 @@ function YesNoStep({
             className={`rounded-lg border p-4 text-center transition-colors ${value === v ? 'border-primary bg-primary/5 font-semibold' : 'border-border hover:border-primary/50'}`}
           >
             {v
-              ? pickLocalizedCopy(lang, { ar: 'نعم', en: 'Yes' })
-              : pickLocalizedCopy(lang, { ar: 'لا', en: 'No' })}
+              ? t('common.yes')
+              : t('common.no')}
           </button>
         ))}
       </div>
@@ -420,17 +386,18 @@ function ResultsView({
   matched,
   isLoading,
   isError,
-  lang,
   onRestart,
   onRetry,
 }: {
   matched: BenefitInfo[];
   isLoading: boolean;
   isError: boolean;
-  lang: 'ar' | 'en';
   onRestart: () => void;
   onRetry: () => void;
 }) {
+  const { t } = useTranslation('benefits');
+  const { language } = useAuth();
+  const lang = language === 'en' ? 'en' : 'ar';
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -447,21 +414,15 @@ function ResultsView({
         <div className="text-center">
           <AlertCircle className="mx-auto mb-3 h-12 w-12 text-destructive" />
           <h2 className="text-xl font-bold">
-            {pickLocalizedCopy(lang, {
-              ar: 'تعذّر تحميل البيانات',
-              en: 'Could not load benefit data',
-            })}
+            {t('results.loadingError')}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {pickLocalizedCopy(lang, {
-              ar: 'حدث خطأ أثناء جلب البيانات. يرجى المحاولة مجدداً.',
-              en: 'Something went wrong while fetching benefits. Please try again.',
-            })}
+            {t('results.loadingErrorSub')}
           </p>
         </div>
         <div className="text-center">
           <Button variant="outline" onClick={onRetry}>
-            {pickLocalizedCopy(lang, { ar: 'إعادة المحاولة', en: 'Try again' })}
+            {t('results.tryAgain')}
           </Button>
         </div>
       </SR>
@@ -473,22 +434,15 @@ function ResultsView({
       <div className="text-center">
         <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-green-500" />
         <h2 className="text-xl font-bold">
-          {matched.length > 0
-            ? pickLocalizedCopy(lang, {
-                ar: `وجدنا ${matched.length} برنامج تؤهّلك للتقديم`,
-                en: `You qualify for ${matched.length} program${matched.length !== 1 ? 's' : ''}`,
-              })
-            : pickLocalizedCopy(lang, {
-                ar: 'لم نجد برامج تطابق بياناتك الآن',
-                en: 'No matching programs found at this time',
-              })}
+          {matched.length > 0 ? (
+            t('results.matchCount', { count: matched.length })
+          ) : (
+            t('results.matchCount_zero')
+          )}
         </h2>
         {matched.length === 0 && (
           <p className="mt-2 text-sm text-muted-foreground">
-            {pickLocalizedCopy(lang, {
-              ar: 'يمكنك التواصل مع مكتب التضامن الاجتماعي بالخارجة للمزيد من المعلومات',
-              en: 'You can contact the Social Affairs office in Kharga for more information',
-            })}
+            {t('results.contactOffice')}
           </p>
         )}
       </div>
@@ -499,7 +453,7 @@ function ResultsView({
 
       <div className="text-center">
         <Button variant="outline" onClick={onRestart}>
-          {pickLocalizedCopy(lang, { ar: 'إعادة الاختبار', en: 'Start over' })}
+          {t('wizard.restart')}
         </Button>
       </div>
     </SR>
@@ -509,6 +463,7 @@ function ResultsView({
 // ── BenefitCard ──────────────────────────────────────────────────────────────
 
 function BenefitCard({ benefit, lang }: { benefit: BenefitInfo; lang: 'ar' | 'en' }) {
+  const { t } = useTranslation('benefits');
   const name = lang === 'ar' ? benefit.nameAr : benefit.nameEn;
 
   return (
@@ -526,7 +481,7 @@ function BenefitCard({ benefit, lang }: { benefit: BenefitInfo; lang: 'ar' | 'en
         <div>
           <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             <FileText className="h-4 w-4 text-primary" />
-            {pickLocalizedCopy(lang, { ar: 'المستندات المطلوبة', en: 'Required documents' })}
+            {t('card.requiredDocs')}
           </p>
           <ul className="space-y-1">
             {benefit.documentsAr.map((doc, i) => (

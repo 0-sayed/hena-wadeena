@@ -99,19 +99,19 @@ describe('ConfirmPasswordResetPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'user@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('رمز OTP'), {
+    fireEvent.change(screen.getByLabelText('OTP Code'), {
       target: { value: '123456' },
     });
-    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('New Password'), {
       target: { value: 'newpassword123' },
     });
-    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('Confirm New Password'), {
       target: { value: 'newpassword123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'تأكيد إعادة التعيين' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Reset' }));
 
     await waitFor(() =>
       expect(mockConfirmPasswordReset).toHaveBeenCalledWith({
@@ -133,22 +133,22 @@ describe('ConfirmPasswordResetPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'user@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('رمز OTP'), {
+    fireEvent.change(screen.getByLabelText('OTP Code'), {
       target: { value: '123456' },
     });
-    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('New Password'), {
       target: { value: 'newpassword123' },
     });
-    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+    fireEvent.change(screen.getByLabelText('Confirm New Password'), {
       target: { value: 'different-password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'تأكيد إعادة التعيين' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Reset' }));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('كلمتا المرور غير متطابقتين');
+    expect(alert).toHaveTextContent('Passwords do not match');
     expect(alert).toHaveFocus();
     expect(mockConfirmPasswordReset).not.toHaveBeenCalled();
   });

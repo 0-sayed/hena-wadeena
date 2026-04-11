@@ -15,10 +15,10 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminStats } from '@/hooks/use-admin';
+import { useTranslation } from 'react-i18next';
 
 interface StatCardProps {
   title: string;
@@ -77,8 +77,8 @@ function StatCardSkeleton() {
 
 export default function AdminOverview() {
   const { language } = useAuth();
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
-  const locale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
+  const { t } = useTranslation('admin');
+  const locale = language === 'en' ? 'en-US' : 'ar-EG';
   const { data: stats, isLoading, error } = useAdminStats();
 
   if (error) {
@@ -86,10 +86,7 @@ export default function AdminOverview() {
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <p className="text-lg text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'فشل تحميل الإحصائيات',
-            en: 'Failed to load statistics',
-          })}
+          {t('overview.loadError')}
         </p>
       </div>
     );
@@ -99,13 +96,10 @@ export default function AdminOverview() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          {pickLocalizedCopy(appLanguage, { ar: 'نظرة عامة', en: 'Overview' })}
+          {t('overview.pageTitle')}
         </h1>
         <p className="text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'إحصائيات المنصة وحالة الطلبات المعلقة',
-            en: 'Platform metrics and pending review queues',
-          })}
+          {t('overview.pageSubtitle')}
         </p>
       </div>
 
@@ -120,56 +114,38 @@ export default function AdminOverview() {
         ) : stats ? (
           <>
             <StatCard
-              title={pickLocalizedCopy(appLanguage, { ar: 'إجمالي المستخدمين', en: 'Total users' })}
+              title={t('overview.stats.totalUsers')}
               value={stats.users.total}
               icon={Users}
-              description={pickLocalizedCopy(appLanguage, {
-                ar: `+${stats.users.newLast30Days} هذا الشهر`,
-                en: `+${stats.users.newLast30Days} this month`,
-              })}
+              description={t('overview.stats.newUsersMonth', { count: stats.users.newLast30Days })}
               href="/admin/users"
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'طلبات KYC المعلقة',
-                en: 'Pending KYC submissions',
-              })}
+              title={t('overview.stats.pendingKyc')}
               value={stats.kyc.pending}
               icon={FileCheck}
               href="/admin/moderation"
               variant={stats.kyc.pending > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'إعلانات تحتاج مراجعة',
-                en: 'Listings awaiting review',
-              })}
+              title={t('overview.stats.listingsReview')}
               value={stats.listings.unverified}
               icon={ShoppingBag}
               href="/admin/moderation"
               variant={stats.listings.unverified > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'نقاط اهتمام معلقة',
-                en: 'Pending points of interest',
-              })}
+              title={t('overview.stats.pendingPois')}
               value={stats.pois.pending}
               icon={MapPin}
               href="/admin/map"
               variant={stats.pois.pending > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'إدارة معرفة الذكاء الاصطناعي',
-                en: 'AI knowledge management',
-              })}
+              title={t('overview.stats.aiManagement')}
               value="RAG"
               icon={Bot}
-              description={pickLocalizedCopy(appLanguage, {
-                ar: 'حوّل التقارير الطويلة إلى فقرات RAG منظّمة مع إدارة ملفات PDF المرجعية',
-                en: 'Compose curated RAG sections and manage reference PDFs',
-              })}
+              description={t('overview.stats.aiDescription')}
               href="/admin/ai"
             />
           </>
@@ -187,52 +163,31 @@ export default function AdminOverview() {
         ) : stats ? (
           <>
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'المرشدون النشطون',
-                en: 'Active guides',
-              })}
+              title={t('overview.stats.activeGuides')}
               value={stats.guides.active}
               icon={CheckCircle}
-              description={pickLocalizedCopy(appLanguage, {
-                ar: `${stats.guides.verified} موثق`,
-                en: `${stats.guides.verified} verified`,
-              })}
+              description={t('overview.stats.verifiedCount', { count: stats.guides.verified })}
               href="/admin/guides"
               variant="success"
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'الحجوزات المعلقة',
-                en: 'Pending bookings',
-              })}
+              title={t('overview.stats.pendingBookings')}
               value={stats.bookings.pending}
               icon={Clock}
               href="/admin/guides"
               variant={stats.bookings.pending > 0 ? 'warning' : 'default'}
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'إجمالي الإعلانات',
-                en: 'Total listings',
-              })}
+              title={t('overview.stats.totalListings')}
               value={stats.listings.total}
               icon={ShoppingBag}
-              description={pickLocalizedCopy(appLanguage, {
-                ar: `${stats.listings.verified} موثق`,
-                en: `${stats.listings.verified} verified`,
-              })}
+              description={t('overview.stats.verifiedCount', { count: stats.listings.verified })}
             />
             <StatCard
-              title={pickLocalizedCopy(appLanguage, {
-                ar: 'فرص الاستثمار',
-                en: 'Investment opportunities',
-              })}
+              title={t('overview.stats.investments')}
               value={stats.investments.total}
               icon={TrendingUp}
-              description={pickLocalizedCopy(appLanguage, {
-                ar: `${stats.investments.totalApplications} طلب`,
-                en: `${stats.investments.totalApplications} applications`,
-              })}
+              description={t('overview.stats.investmentApps', { count: stats.investments.totalApplications })}
             />
           </>
         ) : null}
@@ -243,18 +198,15 @@ export default function AdminOverview() {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-primary" />
-              {pickLocalizedCopy(appLanguage, { ar: 'إدارة الإعلانات', en: 'Announcements' })}
+              {t('overview.announcements.title')}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'أنشئ إعلاناً جديداً أو انتقل إلى صفحة الإدارة لتعديل أي إعلان وحذفه.',
-                en: 'Create a new listing or jump to the management page to edit and delete any announcement.',
-              })}
+              {t('overview.announcements.desc')}
             </p>
           </div>
           <Button asChild>
             <Link to="/admin/listings?dialog=new">
-              {pickLocalizedCopy(appLanguage, { ar: 'إعلان جديد', en: 'New announcement' })}
+              {t('overview.announcements.newBtn')}
             </Link>
           </Button>
         </CardHeader>
@@ -262,14 +214,11 @@ export default function AdminOverview() {
 
       {stats?.meta && (
         <p className="text-xs text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, { ar: 'آخر تحديث:', en: 'Updated:' })}{' '}
+          {t('overview.updated')}{' '}
           {new Date(stats.meta.cachedAt).toLocaleString(locale)}
           {stats.meta.degraded && (
             <span className="me-2 text-yellow-500">
-              {pickLocalizedCopy(appLanguage, {
-                ar: '(بعض البيانات غير متاحة)',
-                en: '(Some data is unavailable)',
-              })}
+              {t('overview.degraded')}
             </span>
           )}
         </p>

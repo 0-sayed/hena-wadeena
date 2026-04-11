@@ -6,9 +6,10 @@ import { Bus, ExternalLink, MapPin, Pencil, Phone, Plus, Trash2, Upload } from '
 import { toast } from 'sonner';
 import { BusinessLogo } from '@/components/business/BusinessLogo';
 import { useBusinesses } from '@/hooks/use-businesses';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
-import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
+
 import { districtLabel, DISTRICTS } from '@/lib/format';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { LtrText } from '@/components/ui/ltr-text';
@@ -73,6 +74,7 @@ function readFileAsDataUrl(file: File, errorMessage: string): Promise<string> {
 }
 
 export function LocalTransportTab() {
+  const { t } = useTranslation(['logistics', 'common']);
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { user, language: appLanguage } = useAuth();
@@ -121,23 +123,13 @@ export function LocalTransportTab() {
     if (!file) return;
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اختر صورة بصيغة JPG أو PNG أو WebP',
-          en: 'Choose a JPG, PNG, or WebP image',
-        }),
-      );
+      toast.error(t('transport.toast.imageType'));
       event.target.value = '';
       return;
     }
 
     if (file.size > MAX_LOGO_BYTES) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'حجم الشعار يجب ألا يتجاوز 2 ميجابايت',
-          en: 'Logo size must not exceed 2 MB',
-        }),
-      );
+      toast.error(t('transport.toast.imageSize'));
       event.target.value = '';
       return;
     }
@@ -145,26 +137,15 @@ export function LocalTransportTab() {
     try {
       const logoUrl = await readFileAsDataUrl(
         file,
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تعذر قراءة الشعار',
-          en: 'Could not read the logo file',
-        }),
+        t('transport.toast.readError'),
       );
       setForm((prev) => ({ ...prev, logoUrl }));
-      toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم رفع الشعار وسيظهر بعد الحفظ',
-          en: 'Logo uploaded and will appear after saving',
-        }),
-      );
+      toast.success(t('transport.toast.uploaded'));
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر قراءة الشعار',
-              en: 'Could not read the logo file',
-            });
+          : t('transport.toast.readError');
       toast.error(message);
     } finally {
       event.target.value = '';
@@ -177,32 +158,17 @@ export function LocalTransportTab() {
 
   const handleSaveCompany = async () => {
     if (!form.nameAr.trim()) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اسم الشركة مطلوب',
-          en: 'Company name is required',
-        }),
-      );
+      toast.error(t('transport.toast.nameReq'));
       return;
     }
 
     if (!form.district) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اختر المنطقة',
-          en: 'Select a district',
-        }),
-      );
+      toast.error(t('transport.toast.districtReq'));
       return;
     }
 
     if (form.bookingLink.trim() && !/^https?:\/\//i.test(form.bookingLink.trim())) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'رابط الحجز يجب أن يبدأ بـ http:// أو https://',
-          en: 'Booking link must start with http:// or https://',
-        }),
-      );
+      toast.error(t('transport.toast.linkInvalid'));
       return;
     }
 
@@ -230,23 +196,14 @@ export function LocalTransportTab() {
       setForm(emptyTransportForm);
       toast.success(
         form.id
-          ? pickLocalizedCopy(appLanguage, {
-              ar: 'تم تحديث شركة النقل',
-              en: 'Transport company updated',
-            })
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تمت إضافة شركة النقل',
-              en: 'Transport company added',
-            }),
+          ? t('transport.toast.updated')
+          : t('transport.toast.added'),
       );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حفظ شركة النقل',
-              en: 'Could not save the transport company',
-            });
+          : t('transport.toast.saveError');
       toast.error(message);
     } finally {
       setSaving(false);
@@ -255,12 +212,7 @@ export function LocalTransportTab() {
 
   const handleDeleteCompany = async (companyId: string) => {
     if (
-      !window.confirm(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'هل تريد حذف شركة النقل هذه؟',
-          en: 'Do you want to delete this transport company?',
-        }),
-      )
+      !window.confirm(t('transport.toast.deleteConfirm'))
     ) {
       return;
     }
@@ -268,20 +220,12 @@ export function LocalTransportTab() {
     try {
       await businessesAPI.remove(companyId);
       refreshCompanies();
-      toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم حذف شركة النقل',
-          en: 'Transport company deleted',
-        }),
-      );
+      toast.success(t('transport.toast.deleted'));
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر حذف شركة النقل',
-              en: 'Could not delete the transport company',
-            });
+          : t('transport.toast.deleteError');
       toast.error(message);
     }
   };
@@ -291,25 +235,16 @@ export function LocalTransportTab() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-2xl font-bold text-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'شركات النقل المحلي',
-              en: 'Local transport companies',
-            })}
+            {t('transport.title')}
           </h3>
           <p className="text-muted-foreground">
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'دليل شركات النقل والحافلات داخل الوادي الجديد مع روابط الحجز وبيانات التواصل.',
-              en: 'Directory of transport and bus companies across New Valley with booking links and contact details.',
-            })}
+            {t('transport.desc')}
           </p>
         </div>
         {canManageCompanies && (
           <Button onClick={openCreateDialog}>
             <Plus className="ms-2 h-4 w-4" />
-            {pickLocalizedCopy(appLanguage, {
-              ar: 'إضافة شركة نقل',
-              en: 'Add transport company',
-            })}
+            {t('transport.addBtn')}
           </Button>
         )}
       </div>
@@ -325,10 +260,7 @@ export function LocalTransportTab() {
           <CardContent className="py-14 text-center">
             <Bus className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
             <p className="text-muted-foreground">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'لا توجد شركات نقل محلية مسجلة حالياً.',
-                en: 'No local transport companies are listed yet.',
-              })}
+              {t('transport.empty')}
             </p>
           </CardContent>
         </Card>
@@ -338,10 +270,7 @@ export function LocalTransportTab() {
             <Card key={company.id} className="rounded-2xl border-border/60">
               <CardContent className="space-y-4 p-6">
                 {(() => {
-                  const companyName = pickLocalizedField(appLanguage, {
-                    ar: company.nameAr,
-                    en: company.nameEn,
-                  });
+                  const companyName = (appLanguage === 'en' ? company.nameEn : company.nameAr) ?? company.nameAr ?? '';
                   const generalInfo =
                     appLanguage === 'ar'
                       ? company.descriptionAr?.trim() ?? company.description?.trim() ?? ''
@@ -368,10 +297,7 @@ export function LocalTransportTab() {
                 {company.description && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'المقر',
-                        en: 'Headquarters',
-                      })}
+                      {t('transport.headquarters')}
                     </p>
                     <p className="text-sm text-foreground">{company.description}</p>
                   </div>
@@ -380,10 +306,7 @@ export function LocalTransportTab() {
                 {generalInfo && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'نبذة عامة',
-                        en: 'General information',
-                      })}
+                      {t('transport.generalInfo')}
                     </p>
                     <p className="text-sm text-foreground">{generalInfo}</p>
                   </div>
@@ -402,10 +325,7 @@ export function LocalTransportTab() {
                     <Button asChild className="flex-1">
                       <a href={company.website} target="_blank" rel="noreferrer">
                         <ExternalLink className="ms-2 h-4 w-4" />
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'رابط الحجز',
-                          en: 'Booking link',
-                        })}
+                        {t('transport.bookingLink')}
                       </a>
                     </Button>
                   )}
@@ -415,10 +335,7 @@ export function LocalTransportTab() {
                   <div className="flex gap-2 border-t pt-4">
                     <Button variant="outline" size="sm" onClick={() => openEditDialog(company)}>
                       <Pencil className="ms-2 h-4 w-4" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'تعديل',
-                        en: 'Edit',
-                      })}
+                      {t('transport.edit')}
                     </Button>
                     <Button
                       variant="destructive"
@@ -426,10 +343,7 @@ export function LocalTransportTab() {
                       onClick={() => void handleDeleteCompany(company.id)}
                     >
                       <Trash2 className="ms-2 h-4 w-4" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'حذف',
-                        en: 'Delete',
-                      })}
+                      {t('transport.delete')}
                     </Button>
                   </div>
                 )}
@@ -453,30 +367,18 @@ export function LocalTransportTab() {
           <DialogHeader>
             <DialogTitle>
               {form.id
-                ? pickLocalizedCopy(appLanguage, {
-                    ar: 'تعديل شركة النقل',
-                    en: 'Edit transport company',
-                  })
-                : pickLocalizedCopy(appLanguage, {
-                    ar: 'إضافة شركة نقل',
-                    en: 'Add transport company',
-                  })}
+                ? t('transport.dialog.titleEdit')
+                : t('transport.dialog.titleAdd')}
             </DialogTitle>
             <DialogDescription>
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'أضف بيانات الحجز والتواصل والشعار لتظهر مباشرة داخل تبويب النقل المحلي.',
-                en: 'Add booking details, contact information, and a logo so the company appears directly in the local transport tab.',
-              })}
+              {t('transport.dialog.desc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="transportName">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'اسم الشركة',
-                  en: 'Company name',
-                })}
+                {t('transport.form.name')}
               </Label>
               <Input
                 id="transportName"
@@ -485,7 +387,7 @@ export function LocalTransportTab() {
               />
             </div>
             <div className="space-y-2">
-              <Label>{pickLocalizedCopy(appLanguage, { ar: 'المنطقة', en: 'District' })}</Label>
+              <Label>{t('transport.form.district')}</Label>
               <Select
                 value={form.district}
                 onValueChange={(value) => updateField('district', value)}
@@ -504,10 +406,7 @@ export function LocalTransportTab() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="transportHeadquarters">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'المقر',
-                  en: 'Headquarters',
-                })}
+                {t('transport.headquarters')}
               </Label>
               <Input
                 id="transportHeadquarters"
@@ -517,10 +416,7 @@ export function LocalTransportTab() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="transportBooking">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'رابط الحجز',
-                  en: 'Booking link',
-                })}
+                {t('transport.bookingLink')}
               </Label>
               <Input
                 id="transportBooking"
@@ -531,10 +427,7 @@ export function LocalTransportTab() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="transportContact">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'بيانات التواصل',
-                  en: 'Contact information',
-                })}
+                {t('transport.form.contact')}
               </Label>
               <Input
                 id="transportContact"
@@ -546,10 +439,7 @@ export function LocalTransportTab() {
 
           <div className="space-y-2">
             <Label htmlFor="transportInfo">
-              {pickLocalizedCopy(appLanguage, {
-                ar: 'معلومات عامة',
-                en: 'General information',
-              })}
+              {t('transport.generalInfo')}
             </Label>
             <Textarea
               id="transportInfo"
@@ -561,13 +451,10 @@ export function LocalTransportTab() {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>{pickLocalizedCopy(appLanguage, { ar: 'الشعار', en: 'Logo' })}</Label>
+              <Label>{t('transport.form.logo')}</Label>
               <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                 <Upload className="ms-2 h-4 w-4" />
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'رفع الشعار',
-                  en: 'Upload logo',
-                })}
+                {t('transport.form.uploadLogo')}
               </Button>
             </div>
             <input
@@ -588,33 +475,21 @@ export function LocalTransportTab() {
               />
             ) : (
               <p className="text-sm text-muted-foreground">
-                {pickLocalizedCopy(appLanguage, {
-                  ar: 'لم يتم رفع شعار بعد.',
-                  en: 'No logo uploaded yet.',
-                })}
+                {t('transport.form.noLogo')}
               </p>
             )}
           </div>
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
-              {pickLocalizedCopy(appLanguage, { ar: 'إلغاء', en: 'Cancel' })}
+              {t('common:cancelBtn')}
             </Button>
             <Button onClick={() => void handleSaveCompany()} disabled={saving}>
               {saving
-                ? pickLocalizedCopy(appLanguage, {
-                    ar: 'جارٍ الحفظ...',
-                    en: 'Saving...',
-                  })
+                ? t('common:roleCrud.saveBtn', { defaultValue: 'Saving...' }) 
                 : form.id
-                  ? pickLocalizedCopy(appLanguage, {
-                      ar: 'تحديث الشركة',
-                      en: 'Update company',
-                    })
-                  : pickLocalizedCopy(appLanguage, {
-                      ar: 'إضافة الشركة',
-                      en: 'Add company',
-                    })}
+                  ? t('transport.form.updateBtn')
+                  : t('transport.form.addBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>

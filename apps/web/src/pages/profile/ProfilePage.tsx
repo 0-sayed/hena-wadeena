@@ -19,11 +19,11 @@ import {
 import { toast } from 'sonner';
 import { authAPI } from '@/services/api';
 import type { AuthUser } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 
 type ProfileFormState = {
   full_name: string;
@@ -38,32 +38,7 @@ type ProfileErrors = Partial<Record<keyof ProfileFormState, string>>;
 const PHONE_REGEX = /^\+?[0-9\s-]{7,20}$/;
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
-const roleLabels: Record<string, { ar: string; en: string }> = {
-  admin: { ar: 'مدير', en: 'Admin' },
-  tourist: { ar: 'سائح', en: 'Tourist' },
-  investor: { ar: 'مستثمر', en: 'Investor' },
-  merchant: { ar: 'تاجر', en: 'Merchant' },
-  guide: { ar: 'مرشد سياحي', en: 'Tour guide' },
-  student: { ar: 'طالب', en: 'Student' },
-  driver: { ar: 'سائق', en: 'Driver' },
-  resident: { ar: 'مقيم', en: 'Resident' },
-  moderator: { ar: 'منسق', en: 'Moderator' },
-  reviewer: { ar: 'مراجع', en: 'Reviewer' },
-};
-
-const statusLabels: Record<string, { ar: string; en: string }> = {
-  active: { ar: 'نشط', en: 'Active' },
-  suspended: { ar: 'معلّق', en: 'Suspended' },
-  inactive: { ar: 'غير نشط', en: 'Inactive' },
-  pending: { ar: 'قيد المراجعة', en: 'Pending' },
-  pending_kyc: { ar: 'بانتظار التحقق', en: 'Pending KYC' },
-  rejected: { ar: 'مرفوض', en: 'Rejected' },
-};
-
-const interfaceLanguageLabels: Record<'ar' | 'en', { ar: string; en: string }> = {
-  ar: { ar: 'العربية', en: 'Arabic' },
-  en: { ar: 'English', en: 'English' },
-};
+// Role and status labels moved to translation files
 
 function buildFormState(user: AuthUser): ProfileFormState {
   return {
@@ -75,52 +50,25 @@ function buildFormState(user: AuthUser): ProfileFormState {
   };
 }
 
-function getRoleLabel(role: string, language: AppLanguage): string {
-  const labels = roleLabels[role];
-  return labels ? pickLocalizedCopy(language, labels) : role;
-}
+// Labels are handled via t() hook in the component
 
-function getStatusLabel(status: string, language: AppLanguage): string {
-  const labels = statusLabels[status];
-  return labels ? pickLocalizedCopy(language, labels) : status;
-}
-
-function getInterfaceLanguageLabel(value: 'ar' | 'en', language: AppLanguage): string {
-  return pickLocalizedCopy(language, interfaceLanguageLabels[value]);
-}
-
-function validateProfileForm(formData: ProfileFormState, language: AppLanguage): ProfileErrors {
+function validateProfileForm(formData: ProfileFormState, t: (key: string) => string): ProfileErrors {
   const errors: ProfileErrors = {};
 
   if (!formData.full_name.trim()) {
-    errors.full_name = pickLocalizedCopy(language, {
-      ar: 'الاسم الكامل مطلوب',
-      en: 'Full name is required',
-    });
+    errors.full_name = t('validation.fullNameRequired');
   } else if (formData.full_name.trim().length < 3) {
-    errors.full_name = pickLocalizedCopy(language, {
-      ar: 'الاسم الكامل يجب أن يكون 3 أحرف على الأقل',
-      en: 'Full name must be at least 3 characters',
-    });
+    errors.full_name = t('validation.fullNameMin');
   }
 
   if (!formData.email.trim()) {
-    errors.email = pickLocalizedCopy(language, {
-      ar: 'البريد الإلكتروني مطلوب',
-      en: 'Email is required',
-    });
+    errors.email = t('validation.emailRequired');
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(formData.email.trim())) {
-    errors.email = pickLocalizedCopy(language, {
-      ar: 'أدخل بريدًا إلكترونيًا صحيحًا',
-      en: 'Enter a valid email address',
-    });
+    errors.email = t('validation.emailInvalid');
   }
 
   if (formData.phone.trim() && !PHONE_REGEX.test(formData.phone.trim())) {
-    errors.phone = pickLocalizedCopy(language, {
-      ar: 'أدخل رقم هاتف صحيحًا',
-      en: 'Enter a valid phone number',
-    });
+    errors.phone = t('validation.phoneInvalid');
   }
 
   return errors;
@@ -144,8 +92,8 @@ function readFileAsDataUrl(file: File, errorMessage: string): Promise<string> {
 }
 
 const ProfilePage = () => {
-  const { user, isLoading, updateUser, language } = useAuth();
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const { t } = useTranslation('profile');
+  const { user, isLoading, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -165,7 +113,7 @@ const ProfilePage = () => {
   }, [user]);
 
   const handleSave = async () => {
-    const validationErrors = validateProfileForm(formData, appLanguage);
+    const validationErrors = validateProfileForm(formData, t);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
@@ -181,20 +129,12 @@ const ProfilePage = () => {
 
       updateUser(updatedUser);
       setEditing(false);
-      toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم تحديث الملف الشخصي بنجاح',
-          en: 'Profile updated successfully',
-        }),
-      );
+      toast.success(t('toast.updateSuccess'));
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر تحديث الملف الشخصي',
-              en: 'Unable to update the profile',
-            });
+          : t('toast.updateError');
       toast.error(message);
     } finally {
       setSaving(false);
@@ -206,23 +146,13 @@ const ProfilePage = () => {
     if (!file) return;
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'اختر صورة بصيغة JPG أو PNG أو WebP',
-          en: 'Choose a JPG, PNG, or WebP image',
-        }),
-      );
+      toast.error(t('toast.imageType'));
       event.target.value = '';
       return;
     }
 
     if (file.size > MAX_AVATAR_BYTES) {
-      toast.error(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'حجم الصورة يجب ألا يتجاوز 5 ميجابايت',
-          en: 'Image size must not exceed 5 MB',
-        }),
-      );
+      toast.error(t('toast.imageSize'));
       event.target.value = '';
       return;
     }
@@ -230,29 +160,18 @@ const ProfilePage = () => {
     try {
       const avatarUrl = await readFileAsDataUrl(
         file,
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تعذر قراءة الصورة',
-          en: 'Unable to read the image',
-        }),
+        t('toast.imageReadError'),
       );
 
       setFormData((prev) => ({ ...prev, avatar_url: avatarUrl }));
       setEditing(true);
       setErrors((prev) => ({ ...prev, avatar_url: undefined }));
-      toast.success(
-        pickLocalizedCopy(appLanguage, {
-          ar: 'تم تجهيز الصورة. احفظ التغييرات لتحديث الملف الشخصي',
-          en: 'Image is ready. Save the changes to update your profile',
-        }),
-      );
+      toast.success(t('toast.imageReady'));
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر قراءة الصورة',
-              en: 'Unable to read the image',
-            });
+          : t('toast.imageReadError');
       toast.error(message);
     } finally {
       event.target.value = '';
@@ -261,7 +180,7 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <Layout title={pickLocalizedCopy(language, { ar: 'الملف الشخصي', en: 'Profile' })}>
+      <Layout title={t('title')}>
         <div className="container max-w-2xl space-y-6 py-20">
           <Skeleton h="h-64" className="rounded-2xl" />
           <Skeleton h="h-48" className="rounded-2xl" />
@@ -272,19 +191,16 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <Layout title={pickLocalizedCopy(language, { ar: 'الملف الشخصي', en: 'Profile' })}>
+      <Layout title={t('title')}>
         <div className="container max-w-2xl py-20 text-center text-muted-foreground">
-          {pickLocalizedCopy(appLanguage, {
-            ar: 'لا يمكن تحميل الملف الشخصي حاليًا.',
-            en: 'The profile cannot be loaded right now.',
-          })}
+          {t('loadError')}
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout title={pickLocalizedCopy(language, { ar: 'الملف الشخصي', en: 'Profile' })}>
+    <Layout title={t('title')}>
       <PageTransition>
         <section className="relative overflow-hidden py-14 md:py-20">
           <GradientMesh />
@@ -323,13 +239,13 @@ const ProfilePage = () => {
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <Badge variant="secondary" className="px-3 py-1 text-sm">
                       <Shield className="ms-1 h-3.5 w-3.5" />
-                      {getRoleLabel(user.role, appLanguage)}
+                      {t(`roles.${user.role}`)}
                     </Badge>
                     <Badge
                       variant={user.status === 'active' ? 'default' : 'destructive'}
                       className="px-3 py-1 text-sm"
                     >
-                      {getStatusLabel(user.status, appLanguage)}
+                      {t(`status.${user.status}`)}
                     </Badge>
                   </div>
                 </div>
@@ -339,10 +255,7 @@ const ProfilePage = () => {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'الاسم الكامل',
-                            en: 'Full name',
-                          })}
+                          {t('form.fullName')}
                         </Label>
                         <Input
                           id="name"
@@ -361,10 +274,7 @@ const ProfilePage = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'البريد الإلكتروني',
-                            en: 'Email',
-                          })}
+                          {t('form.email')}
                         </Label>
                         <Input
                           id="email"
@@ -382,10 +292,7 @@ const ProfilePage = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'رقم الهاتف',
-                            en: 'Phone number',
-                          })}
+                          {t('form.phone')}
                         </Label>
                         <Input
                           id="phone"
@@ -402,10 +309,7 @@ const ProfilePage = () => {
                       </div>
                       <div className="space-y-2">
                         <Label>
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'اللغة',
-                            en: 'Language',
-                          })}
+                          {t('form.language')}
                         </Label>
                         <Select
                           value={formData.language}
@@ -421,12 +325,11 @@ const ProfilePage = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="ar">
-                              {pickLocalizedCopy(appLanguage, {
-                                ar: 'العربية',
-                                en: 'Arabic',
-                              })}
+                              {t('languages.ar')}
                             </SelectItem>
-                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="en">
+                              {t('languages.en')}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -437,14 +340,8 @@ const ProfilePage = () => {
                           className="transition-transform hover:scale-[1.02]"
                         >
                           {saving
-                            ? pickLocalizedCopy(appLanguage, {
-                                ar: 'جارٍ الحفظ...',
-                                en: 'Saving...',
-                              })
-                            : pickLocalizedCopy(appLanguage, {
-                                ar: 'حفظ التغييرات',
-                                en: 'Save changes',
-                              })}
+                            ? t('form.savingBtn')
+                            : t('form.saveBtn')}
                         </Button>
                         <Button
                           variant="outline"
@@ -455,10 +352,7 @@ const ProfilePage = () => {
                           }}
                           disabled={saving}
                         >
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'إلغاء',
-                            en: 'Cancel',
-                          })}
+                          {t('form.cancelBtn')}
                         </Button>
                       </div>
                     </div>
@@ -467,37 +361,22 @@ const ProfilePage = () => {
                       {[
                         {
                           icon: Mail,
-                          label: pickLocalizedCopy(appLanguage, {
-                            ar: 'البريد الإلكتروني',
-                            en: 'Email',
-                          }),
+                          label: t('form.email'),
                           value: user.email,
                           ltr: true,
                         },
                         {
                           icon: Phone,
-                          label: pickLocalizedCopy(appLanguage, {
-                            ar: 'رقم الهاتف',
-                            en: 'Phone number',
-                          }),
+                          label: t('form.phone'),
                           value:
                             user.phone ||
-                            pickLocalizedCopy(appLanguage, {
-                              ar: 'غير مضاف',
-                              en: 'Not provided',
-                            }),
+                            t('notProvided'),
                           ltr: !!user.phone,
                         },
                         {
                           icon: Globe,
-                          label: pickLocalizedCopy(appLanguage, {
-                            ar: 'اللغة',
-                            en: 'Language',
-                          }),
-                          value: getInterfaceLanguageLabel(
-                            user.language === 'en' ? 'en' : 'ar',
-                            appLanguage,
-                          ),
+                          label: t('form.language'),
+                          value: t(`languages.${user.language === 'en' ? 'en' : 'ar'}`),
                           ltr: false,
                         },
                       ].map(({ icon: Icon, label, value, ltr }) => (
@@ -526,10 +405,7 @@ const ProfilePage = () => {
                         variant="outline"
                       >
                         <Edit2 className="ms-2 h-4 w-4" />
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'تعديل الملف الشخصي',
-                          en: 'Edit profile',
-                        })}
+                        {t('form.editBtn')}
                       </Button>
                       <Button
                         asChild
@@ -538,10 +414,7 @@ const ProfilePage = () => {
                       >
                         <Link to="/profile/change-password">
                           <Shield className="ms-2 h-4 w-4" />
-                          {pickLocalizedCopy(appLanguage, {
-                            ar: 'تغيير كلمة المرور',
-                            en: 'Change password',
-                          })}
+                          {t('form.changePasswordBtn')}
                         </Link>
                       </Button>
                     </div>

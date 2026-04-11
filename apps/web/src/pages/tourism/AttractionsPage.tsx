@@ -17,16 +17,24 @@ import {
 import { useAttractions } from '@/hooks/use-attractions';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import {
+  attractionTypeLabel,
   attractionTypeLabels,
+  areaLabel,
   areaLabels,
   formatRating,
   type AttractionType,
   type AttractionArea,
 } from '@/lib/format';
 import type { AttractionFilters } from '@/services/api';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import type { AppLanguage } from '@/lib/localization';
 
 const AttractionsPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('tourism');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const [filters, setFilters] = useState<Omit<AttractionFilters, 'page' | 'limit'>>({});
 
   const {
@@ -62,22 +70,22 @@ const AttractionsPage = () => {
   };
 
   return (
-    <Layout title="المعالم السياحية">
+    <Layout title={t('attractions.pageTitle')}>
       {/* Hero Section */}
       <section className="relative py-12 md:py-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-background" />
         <div className="container relative px-4">
           <Button variant="ghost" onClick={() => void navigate('/tourism')} className="mb-6">
             <ArrowRight className="h-4 w-4" />
-            العودة للسياحة
+            {t('attractions.backToTourism')}
           </Button>
 
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              المعالم السياحية
+              {t('attractions.pageTitle')}
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
-              استكشف أجمل المعالم الأثرية والطبيعية في الوادي الجديد والواحات المصرية
+              {t('attractions.heroSubtitle')}
             </p>
 
             {/* Search & Filter */}
@@ -85,21 +93,21 @@ const AttractionsPage = () => {
               <div className="relative flex-1">
                 <Search className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="ابحث عن معلم سياحي..."
+                  placeholder={t('attractions.searchPlaceholder')}
                   className="search-input-with-icon-md h-12"
                   onChange={handleSearchChange}
                 />
               </div>
               <Select onValueChange={handleTypeChange} defaultValue="all">
                 <SelectTrigger className="h-12 w-40">
-                  <SelectValue placeholder="النوع" />
+                  <SelectValue placeholder={t('attractions.typeLabel')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع الأنواع</SelectItem>
-                  {(Object.entries(attractionTypeLabels) as [AttractionType, string][]).map(
-                    ([value, label]) => (
+                  <SelectItem value="all">{t('attractions.allTypes')}</SelectItem>
+                  {(Object.keys(attractionTypeLabels) as AttractionType[]).map(
+                    (value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {attractionTypeLabel(value, appLanguage)}
                       </SelectItem>
                     ),
                   )}
@@ -107,14 +115,14 @@ const AttractionsPage = () => {
               </Select>
               <Select onValueChange={handleAreaChange} defaultValue="all">
                 <SelectTrigger className="h-12 w-40">
-                  <SelectValue placeholder="المنطقة" />
+                  <SelectValue placeholder={t('attractions.areaLabel')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع المناطق</SelectItem>
-                  {(Object.entries(areaLabels) as [AttractionArea, string][]).map(
-                    ([value, label]) => (
+                  <SelectItem value="all">{t('attractions.allAreas')}</SelectItem>
+                  {(Object.keys(areaLabels) as AttractionArea[]).map(
+                    (value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {areaLabel(value, appLanguage)}
                       </SelectItem>
                     ),
                   )}
@@ -137,15 +145,15 @@ const AttractionsPage = () => {
           ) : isError ? (
             <div className="text-center py-12 space-y-4">
               <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
-              <p className="text-muted-foreground text-lg">حدث خطأ أثناء تحميل المعالم السياحية</p>
+              <p className="text-muted-foreground text-lg">{t('attractions.loadError')}</p>
               <Button variant="outline" onClick={() => void refetch()}>
-                إعادة المحاولة
+                {t('attractions.retryBtn')}
               </Button>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between mb-6">
-                <p className="text-muted-foreground">عرض {attractions.length} معلم سياحي</p>
+                <p className="text-muted-foreground">{t('attractions.displayCount', { count: attractions.length })}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -158,29 +166,29 @@ const AttractionsPage = () => {
                     <div className="aspect-[4/3] overflow-hidden relative">
                       <img
                         src={attraction.thumbnail ?? '/placeholder.jpg'}
-                        alt={attraction.nameAr}
+                        alt={(appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ?? attraction.nameAr ?? ''}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <Badge className="absolute top-4 end-4 bg-card/90 text-foreground backdrop-blur-sm">
-                        {attractionTypeLabels[attraction.type]}
+                        {attractionTypeLabel(attraction.type, appLanguage)}
                       </Badge>
                     </div>
                     <CardContent className="p-5">
                       <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                        {attraction.nameAr}
+                        {(appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ?? attraction.nameAr ?? ''}
                       </h3>
                       <p className="text-muted-foreground mb-4 line-clamp-2">
-                        {attraction.descriptionAr}
+                        {(appLanguage === 'en' ? attraction.descriptionEn : attraction.descriptionAr) ?? attraction.descriptionAr ?? ''}
                       </p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                         <div className="flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
-                          {areaLabels[attraction.area]}
+                          {areaLabel(attraction.area, appLanguage)}
                         </div>
                         {attraction.durationHours && (
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {attraction.durationHours} ساعة
+                            {t('attractions.hours', { hours: attraction.durationHours })}
                           </div>
                         )}
                       </div>
@@ -190,7 +198,7 @@ const AttractionsPage = () => {
                           <span className="font-medium">{formatRating(attraction.ratingAvg)}</span>
                         </div>
                         <Button variant="outline" size="sm">
-                          عرض التفاصيل
+                          {t('attractions.viewDetailsBtn')}
                         </Button>
                       </div>
                     </CardContent>
@@ -201,7 +209,7 @@ const AttractionsPage = () => {
               {attractions.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground text-lg">
-                    لم يتم العثور على نتائج مطابقة لبحثك
+                    {t('attractions.noResults')}
                   </p>
                 </div>
               )}

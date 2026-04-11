@@ -17,7 +17,6 @@ import { TrendBadge } from '@/components/market/TrendBadge';
 import { usePriceIndex } from '@/hooks/use-price-index';
 import { useAuth } from '@/hooks/use-auth';
 import { formatPrice, unitLabel } from '@/lib/format';
-import { pickLocalizedField } from '@/lib/localization';
 
 export function PriceSnapshot() {
   const { data: entries, isLoading } = usePriceIndex({ region: 'kharga', price_type: 'retail' }, 6);
@@ -107,10 +106,7 @@ export function PriceSnapshot() {
                         >
                           <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
                             <span className="font-semibold text-foreground">
-                              {pickLocalizedField(language, {
-                                ar: entry.commodity.nameAr,
-                                en: entry.commodity.nameEn,
-                              })}
+                              {(language === 'en' ? entry.commodity.nameEn : entry.commodity.nameAr) ?? entry.commodity.nameAr ?? ''}
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-4 sm:px-6 sm:py-5">
