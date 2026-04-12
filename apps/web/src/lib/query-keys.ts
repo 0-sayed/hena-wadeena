@@ -67,6 +67,8 @@ export const queryKeys = {
     carpool: (filters?: Record<string, unknown>) => ['map', 'carpool', filters] as const,
     ride: (id: string) => ['map', 'carpool', id] as const,
     myRides: () => ['map', 'my-rides'] as const,
+    statusBoard: (page: number, search?: string, status?: string) =>
+      ['map', 'status-board', page, search ?? '', status ?? ''] as const,
   },
   search: {
     results: (query: string, filters?: Record<string, unknown>) =>
@@ -133,5 +135,8 @@ export const queryKeys = {
     myPosts: () => ['jobs', 'my-posts'] as const,
     reviews: () => ['jobs', 'reviews'] as const,
     userReviews: (userId: string) => ['jobs', 'reviews', userId] as const,
+  },
+  desertTrips: {
+    byBooking: (bookingId: string) => ['desert-trips', 'booking', bookingId] as const,
   },
 };
