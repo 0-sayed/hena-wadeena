@@ -96,13 +96,14 @@ export const commodities = [
 /** Showcase: 5 months of price data per commodity × 3 price types × 5 regions */
 export function generatePriceSnapshots() {
   const regions = ['kharga', 'dakhla', 'farafra', 'baris', 'balat'];
-  const months = [
-    new Date('2025-11-01'),
-    new Date('2025-12-01'),
-    new Date('2026-01-01'),
-    new Date('2026-02-01'),
-    new Date('2026-03-01'),
-  ];
+  // Generate dates relative to now so all chart periods (7d, 30d, 90d, 1y) have data
+  const daysAgo = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+  const months = [daysAgo(3), daysAgo(18), daysAgo(48), daysAgo(78), daysAgo(108)];
   // Base retail prices in piasters per unit
   const basePrices: Record<string, number> = {
     [COMMODITY.CM01]: 8000, // dates: 80 EGP/kg

@@ -18,10 +18,12 @@ export interface SeedListing {
     | 'transport'
     | 'education'
     | 'healthcare'
-    | 'shopping';
+    | 'shopping'
+    | 'agricultural_produce';
   price: number;
   district: string;
   address: string;
+  images?: [string, string];
   slug: string;
   status: 'active';
   isVerified: boolean;
@@ -126,6 +128,25 @@ const L37 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567837';
 const L38 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567838';
 const L39 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567839';
 const L40 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567840';
+const L43 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567843';
+const L44 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567844';
+const L45 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567845';
+const L46 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567846';
+const L47 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567847';
+const L48 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567848';
+const L49 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567849';
+
+export interface SeedProduceListingDetails {
+  listingId: string;
+  commodityType: string;
+  quantityKg: string;
+  harvestDate: string;
+  storageType: string;
+  certifications: string[];
+  preferredBuyer: string;
+  contactPhone: string;
+  contactWhatsapp: string;
+}
 
 /** Showcase layer: additional listings */
 export const showcaseListings: SeedListing[] = [
@@ -879,6 +900,155 @@ export const showcaseListings: SeedListing[] = [
     lon: 28.98,
   },
 
+  // ── Agricultural produce (7 showcase products) ─────────────────────
+  {
+    id: L43,
+    ownerId: USER.RESIDENT_MOHAMED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'تمور سيوي من مزرعة الخارجة',
+    titleEn: 'Siwi Dates from Kharga Farm',
+    description:
+      'تمور سيوي جاهزة للبيع من موسم حديث. الفرز والتعبئة متاحان حسب طلب المشتري، والكمية مناسبة لتجار الجملة ومحلات المنتجات المحلية.',
+    category: 'agricultural_produce',
+    price: 9500,
+    district: 'kharga',
+    address: 'منطقة بولاق الزراعية، الخارجة',
+    images: ['/images/seed/commodity-dates.jpg', '/images/seed/aSzaYMxRWjE.jpg'],
+    slug: 'siwi-dates-kharga-farm',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.452,
+    lon: 30.57,
+  },
+  {
+    id: L44,
+    ownerId: USER.MERCHANT_KHALED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'زيتون أخضر من بلاط',
+    titleEn: 'Green Olives from Balat',
+    description:
+      'زيتون أخضر طازج من مزارع بلاط، مناسب للتخليل والتعبئة. يمكن الاتفاق على الشحن داخل مراكز الوادي الجديد.',
+    category: 'agricultural_produce',
+    price: 8700,
+    district: 'balat',
+    address: 'قرية تنيدة، بلاط',
+    images: ['/images/seed/commodity-olives.jpg', '/images/seed/commodity-olive-oil.jpg'],
+    slug: 'green-olives-balat',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.56,
+    lon: 29.27,
+  },
+  {
+    id: L45,
+    ownerId: USER.RESIDENT_MOHAMED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'قمح محلي من الداخلة',
+    titleEn: 'Local Wheat from Dakhla',
+    description:
+      'قمح محلي نظيف من حصاد الداخلة، مخزن في شون جافة ومتاح للتوريد بالكميات الكبيرة للمطاحن والتجار.',
+    category: 'agricultural_produce',
+    price: 1450,
+    district: 'dakhla',
+    address: 'موط، الداخلة',
+    images: ['/images/seed/commodity-wheat.jpg', '/images/seed/aSzaYMxRWjE.jpg'],
+    slug: 'local-wheat-dakhla',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.51,
+    lon: 28.98,
+  },
+  {
+    id: L46,
+    ownerId: USER.MERCHANT_KHALED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'مانجو واحات من الفرافرة',
+    titleEn: 'Oasis Mangoes from Farafra',
+    description:
+      'مانجو طازجة من مزارع الفرافرة، منتقاة للبيع المباشر للتجار ومحلات الفاكهة. الكمية متاحة للحجز قبل النقل.',
+    category: 'agricultural_produce',
+    price: 7200,
+    district: 'farafra',
+    address: 'طريق الواحة، الفرافرة',
+    images: ['/images/seed/commodity-mangoes.jpg', '/images/seed/sl71uVi8xxM.jpg'],
+    slug: 'oasis-mangoes-farafra',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 27.06,
+    lon: 27.98,
+  },
+  {
+    id: L47,
+    ownerId: USER.RESIDENT_MOHAMED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'فول سوداني من باريس',
+    titleEn: 'Peanuts from Baris',
+    description:
+      'فول سوداني جاف ومفرز من مزارع باريس، مناسب للتجار والمصانع الصغيرة. السعر بالكيلو وقابل للتفاوض حسب الكمية.',
+    category: 'agricultural_produce',
+    price: 5600,
+    district: 'baris',
+    address: 'قرية بغداد، باريس',
+    images: ['/images/seed/commodity-peanuts.jpg', '/images/seed/aSzaYMxRWjE.jpg'],
+    slug: 'peanuts-baris',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 24.65,
+    lon: 30.58,
+  },
+  {
+    id: L48,
+    ownerId: USER.MERCHANT_KHALED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'كمون بلدي من الخارجة',
+    titleEn: 'Local Cumin from Kharga',
+    description:
+      'كمون بلدي عطري من زراعات الخارجة، مجفف ومعبأ في أجولة نظيفة. مناسب للعطارة وتجار التوابل.',
+    category: 'agricultural_produce',
+    price: 16500,
+    district: 'kharga',
+    address: 'قرية المنيرة، الخارجة',
+    images: ['/images/seed/commodity-cumin.jpg', '/images/seed/aSzaYMxRWjE.jpg'],
+    slug: 'local-cumin-kharga',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.48,
+    lon: 30.62,
+  },
+  {
+    id: L49,
+    ownerId: USER.RESIDENT_MOHAMED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'برتقال مزارع الداخلة',
+    titleEn: 'Dakhla Farm Oranges',
+    description:
+      'برتقال طازج من مزارع الداخلة، مناسب للبيع بالجملة والتجزئة. يمكن تجهيز العبوات حسب طلب المشتري.',
+    category: 'agricultural_produce',
+    price: 3600,
+    district: 'dakhla',
+    address: 'قرية القصر، الداخلة',
+    images: ['/images/seed/commodity-oranges.jpg', '/images/seed/sl71uVi8xxM.jpg'],
+    slug: 'dakhla-farm-oranges',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.68,
+    lon: 28.88,
+  },
+
   // ── Pending verification (admin moderation demo) ─────────────────────
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567841',
@@ -919,5 +1089,85 @@ export const showcaseListings: SeedListing[] = [
     isPublished: false,
     lat: 25.495,
     lon: 28.975,
+  },
+];
+
+export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
+  {
+    listingId: L43,
+    commodityType: 'dates',
+    quantityKg: '2400.00',
+    harvestDate: '2026-03-20',
+    storageType: 'تعبئة كراتين في مخزن جاف',
+    certifications: ['فرز يدوي'],
+    preferredBuyer: 'تجار جملة ومحلات منتجات محلية',
+    contactPhone: '+201001234501',
+    contactWhatsapp: '+201001234501',
+  },
+  {
+    listingId: L44,
+    commodityType: 'olives',
+    quantityKg: '1800.00',
+    harvestDate: '2026-03-15',
+    storageType: 'أجولة مهواة',
+    certifications: ['مزرعة موثقة'],
+    preferredBuyer: 'مصانع تخليل وتجار جملة',
+    contactPhone: '+201001234502',
+    contactWhatsapp: '+201001234502',
+  },
+  {
+    listingId: L45,
+    commodityType: 'wheat',
+    quantityKg: '6000.00',
+    harvestDate: '2026-03-28',
+    storageType: 'شون جافة',
+    certifications: ['محصول محلي'],
+    preferredBuyer: 'مطاحن وتجار حبوب',
+    contactPhone: '+201001234503',
+    contactWhatsapp: '+201001234503',
+  },
+  {
+    listingId: L46,
+    commodityType: 'mangoes',
+    quantityKg: '950.00',
+    harvestDate: '2026-04-02',
+    storageType: 'عبوات بلاستيكية مهواة',
+    certifications: ['قطف حديث'],
+    preferredBuyer: 'محلات فاكهة وتجار تجزئة',
+    contactPhone: '+201001234504',
+    contactWhatsapp: '+201001234504',
+  },
+  {
+    listingId: L47,
+    commodityType: 'peanuts',
+    quantityKg: '3200.00',
+    harvestDate: '2026-03-10',
+    storageType: 'أجولة خيش',
+    certifications: ['مجفف ومفرز'],
+    preferredBuyer: 'مصانع صغيرة وتجار جملة',
+    contactPhone: '+201001234505',
+    contactWhatsapp: '+201001234505',
+  },
+  {
+    listingId: L48,
+    commodityType: 'cumin',
+    quantityKg: '700.00',
+    harvestDate: '2026-03-18',
+    storageType: 'أجولة محكمة',
+    certifications: ['تجفيف طبيعي'],
+    preferredBuyer: 'عطارة وتجار توابل',
+    contactPhone: '+201001234506',
+    contactWhatsapp: '+201001234506',
+  },
+  {
+    listingId: L49,
+    commodityType: 'oranges',
+    quantityKg: '2100.00',
+    harvestDate: '2026-03-25',
+    storageType: 'أقفاص بلاستيكية',
+    certifications: ['فرز حسب الحجم'],
+    preferredBuyer: 'تجار فاكهة ومحلات تجزئة',
+    contactPhone: '+201001234507',
+    contactWhatsapp: '+201001234507',
   },
 ];
