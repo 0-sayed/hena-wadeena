@@ -8,6 +8,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -24,8 +25,8 @@ import { ChangeRoleDto, ChangeStatusDto, QueryUsersDto } from './dto';
 @Roles(UserRole.ADMIN)
 export class AdminUsersController {
   constructor(
-    private readonly usersService: UsersService,
-    private readonly adminUsersService: AdminUsersService,
+    @Inject(UsersService) private readonly usersService: UsersService,
+    @Inject(AdminUsersService) private readonly adminUsersService: AdminUsersService,
   ) {}
 
   @Get()
