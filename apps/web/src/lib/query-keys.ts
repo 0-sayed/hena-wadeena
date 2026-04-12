@@ -45,6 +45,7 @@ export const queryKeys = {
       ['market', 'commodities', id, 'price-history', params] as const,
     businesses: (filters?: Record<string, unknown>) => ['market', 'businesses', filters] as const,
     business: (id: string) => ['market', 'businesses', id] as const,
+    priceAlerts: () => ['market', 'price-alerts'] as const,
   },
   bookings: {
     mine: (filters?: Record<string, unknown>) =>

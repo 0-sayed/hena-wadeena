@@ -840,6 +840,7 @@ export interface Listing {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  produceDetails?: ProduceDetailsResponse | null;
 }
 
 export interface ListingUpsertRequest {
@@ -863,6 +864,51 @@ export interface ListingUpsertRequest {
   tags?: string[];
   contact?: Record<string, unknown>;
   openingHours?: string;
+  produce_details?: ProduceDetails;
+}
+
+export interface PriceAlertSubscription {
+  id: string;
+  commodityId: string;
+  thresholdPrice: number; // piasters
+  direction: 'above' | 'below';
+  isActive: boolean;
+  lastTriggeredAt: string | null;
+  createdAt: string;
+}
+
+export interface CreatePriceAlertRequest {
+  commodityId: string;
+  thresholdPrice: number; // piasters
+  direction: 'above' | 'below';
+}
+
+export interface UpdatePriceAlertRequest {
+  thresholdPrice?: number;
+  direction?: 'above' | 'below';
+}
+
+export interface ProduceDetails {
+  commodity_type: 'dates' | 'olives' | 'wheat' | 'other';
+  storage_type: 'field' | 'warehouse' | 'cold_storage';
+  preferred_buyer: 'any' | 'wholesaler' | 'exporter' | 'local';
+  quantity_kg?: number;
+  harvest_date?: string; // YYYY-MM-DD
+  certifications?: Array<'organic' | 'gap' | 'other'>;
+  contact_phone?: string;
+  contact_whatsapp?: string;
+}
+
+// Camel-case shape returned by the NestJS API (response only)
+export interface ProduceDetailsResponse {
+  commodityType: 'dates' | 'olives' | 'wheat' | 'other';
+  storageType: string;
+  preferredBuyer: string;
+  quantityKg?: string | null;
+  harvestDate?: string | null;
+  certifications?: string[];
+  contactPhone?: string | null;
+  contactWhatsapp?: string | null;
 }
 
 export interface ListingInquiry {
@@ -898,6 +944,7 @@ export interface ReplyListingInquiryRequest {
 export const listingsAPI = {
   getAll: (params?: {
     category?: string;
+    commodity_type?: string;
     district?: string;
     limit?: number;
     offset?: number;
@@ -905,6 +952,7 @@ export const listingsAPI = {
   }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
+    if (params?.commodity_type) qs.set('commodity_type', params.commodity_type);
     if (params?.district) qs.set('area', params.district);
     if (params?.limit != null) qs.set('limit', String(params.limit));
     if (params?.offset != null) qs.set('offset', String(params.offset));
@@ -959,6 +1007,21 @@ export const listingInquiriesAPI = {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
+};
+
+export const priceAlertsAPI = {
+  list: () => apiFetchWithRefresh<PriceAlertSubscription[]>('/price-alerts'),
+  create: (body: CreatePriceAlertRequest) =>
+    apiFetchWithRefresh<PriceAlertSubscription>('/price-alerts', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: UpdatePriceAlertRequest) =>
+    apiFetchWithRefresh<PriceAlertSubscription>(`/price-alerts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) => apiFetchWithRefresh<void>(`/price-alerts/${id}`, { method: 'DELETE' }),
 };
 
 // ── Investment ──────────────────────────────────────────────────────────────
@@ -1693,6 +1756,7 @@ export interface AdminListingFilters {
   status?: 'draft' | 'active' | 'suspended';
   is_verified?: boolean;
   owner_id?: string;
+  category?: string;
   sort?: 'created_at|asc' | 'created_at|desc' | 'price|asc' | 'price|desc';
 }
 
@@ -1859,6 +1923,7 @@ export const adminAPI = {
         status: params?.status,
         is_verified: params?.is_verified,
         owner_id: params?.owner_id,
+        category: params?.category,
         sort: params?.sort,
         offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
         limit: params?.limit,
