@@ -17,13 +17,14 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
+import { SQL, and, arrayContains, asc, desc, eq, gte, isNull, lte, ne, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { getTableColumns } from 'drizzle-orm/utils';
 
 import type { FeatureListingDto } from '../admin/dto/feature-listing.dto';
 import type { QueryAdminListingsDto } from '../admin/dto/query-admin-listings.dto';
 import type { VerifyListingDto } from '../admin/dto/verify-listing.dto';
+import { buildPrefixTsQuery } from '../business-directory/business-directory.service';
 import { listings } from '../db/schema/listings';
 import { produceListingDetails } from '../db/schema/produce-listing-details';
 
@@ -189,6 +190,13 @@ export class ListingsService {
       );
     }
 
+    if (query.q) {
+      const prefixQuery = buildPrefixTsQuery(query.q);
+      if (prefixQuery) {
+        conditions.push(sql`${listings.searchVector} @@ to_tsquery('simple', ${prefixQuery})`);
+      }
+    }
+
     return andRequired(...conditions);
   }
 
@@ -209,6 +217,9 @@ export class ListingsService {
     }
     if (query.category !== undefined) {
       conditions.push(eq(listings.category, query.category as never));
+    }
+    if (query.category_ne !== undefined) {
+      conditions.push(ne(listings.category, query.category_ne as never));
     }
 
     return andRequired(...conditions);

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   Area,
   CartesianGrid,
@@ -30,7 +30,7 @@ interface ChartPoint {
 
 function formatChartDate(v: string, fmt: string): string {
   try {
-    return format(new Date(v), fmt);
+    return format(parseISO(v), fmt);
   } catch {
     return v;
   }
@@ -39,14 +39,18 @@ function formatChartDate(v: string, fmt: string): string {
 const tickFormatter = (v: string) => formatChartDate(v, 'dd/MM');
 
 function toChartPoints(data: PriceHistoryEntry[]): ChartPoint[] {
-  return data.map((d) => ({
-    date: d.date,
-    avgPrice: d.avgPrice,
-    minPrice: d.minPrice,
-    maxPrice: d.maxPrice,
-    bandValue: d.maxPrice - d.minPrice,
-    sampleCount: d.sampleCount,
-  }));
+  return data.map((d) => {
+    const rawBand = d.maxPrice - d.minPrice;
+    const bandValue = Number.isFinite(rawBand) && rawBand > 0 ? rawBand : 0;
+    return {
+      date: d.date,
+      avgPrice: d.avgPrice,
+      minPrice: d.minPrice,
+      maxPrice: d.maxPrice,
+      bandValue,
+      sampleCount: d.sampleCount,
+    };
+  });
 }
 
 interface CustomTooltipProps {

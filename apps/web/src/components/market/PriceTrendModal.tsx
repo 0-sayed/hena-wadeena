@@ -41,7 +41,7 @@ export function PriceTrendModal({ commodity, onClose, region }: PriceTrendModalP
     price_type: priceType,
   });
 
-  const entries = response?.data ?? [];
+  const entries = useMemo(() => response?.data ?? [], [response?.data]);
   const unit = (response?.commodity.unit ?? 'kg') as CommodityUnit;
 
   const stats = useMemo(() => {

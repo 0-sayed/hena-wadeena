@@ -949,6 +949,7 @@ export const listingsAPI = {
     limit?: number;
     offset?: number;
     sort?: string;
+    q?: string;
   }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
@@ -957,6 +958,7 @@ export const listingsAPI = {
     if (params?.limit != null) qs.set('limit', String(params.limit));
     if (params?.offset != null) qs.set('offset', String(params.offset));
     if (params?.sort) qs.set('sort', params.sort);
+    if (params?.q) qs.set('q', params.q);
     const query = qs.toString();
     return apiFetch<{
       data: Listing[];
@@ -1757,6 +1759,7 @@ export interface AdminListingFilters {
   is_verified?: boolean;
   owner_id?: string;
   category?: string;
+  category_ne?: string;
   sort?: 'created_at|asc' | 'created_at|desc' | 'price|asc' | 'price|desc';
 }
 
@@ -1924,6 +1927,7 @@ export const adminAPI = {
         is_verified: params?.is_verified,
         owner_id: params?.owner_id,
         category: params?.category,
+        category_ne: params?.category_ne,
         sort: params?.sort,
         offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
         limit: params?.limit,

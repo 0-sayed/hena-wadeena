@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminListings } from '@/hooks/use-admin';
 import { useAuth } from '@/hooks/use-auth';
-import { districtLabel, formatPrice, produceCommodityTypeLabels } from '@/lib/format';
+import { districtLabel, formatPrice, produceCommodityTypeLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { queryKeys } from '@/lib/query-keys';
 import { parseEgpInputToPiasters } from '@/lib/wallet-store';
@@ -80,6 +80,7 @@ export default function AdminListings() {
     page,
     limit: PAGE_SIZE,
     sort: 'created_at|desc',
+    category_ne: 'agricultural_produce',
   });
 
   const produceListingsQuery = useAdminListings({
@@ -89,10 +90,7 @@ export default function AdminListings() {
     category: 'agricultural_produce',
   });
 
-  // Exclude produce from the regular tab (server paginates all; filter client-side)
-  const listings = (listingsQuery.data?.data ?? []).filter(
-    (l) => l.category !== 'agricultural_produce',
-  );
+  const listings = listingsQuery.data?.data ?? [];
   const total = listingsQuery.data?.total ?? 0;
   const hasMore = listingsQuery.data?.hasMore ?? false;
   const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
@@ -116,9 +114,21 @@ export default function AdminListings() {
     ];
     if (unseenIds.length === 0) return;
 
-    void Promise.all(
+    // TODO: replace with a bulk `adminAPI.getUsers({ ids: [...] })` endpoint once available to
+    // avoid N sequential per-row requests. Using allSettled so one failed lookup does not drop
+    // the whole batch.
+    void Promise.allSettled(
       unseenIds.map((id) => adminAPI.getUser(id).then((u) => [id, u.fullName] as const)),
-    ).then((entries) => setOwnerNames((prev) => ({ ...prev, ...Object.fromEntries(entries) })));
+    ).then((results) => {
+      const entries = results
+        .filter(
+          (r): r is PromiseFulfilledResult<readonly [string, string]> => r.status === 'fulfilled',
+        )
+        .map((r) => r.value);
+      if (entries.length > 0) {
+        setOwnerNames((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    });
   }, [listings, produceListings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -636,8 +646,10 @@ export default function AdminListings() {
                         </TableCell>
                         <TableCell>
                           {listing.produceDetails?.commodityType
-                            ? (produceCommodityTypeLabels[listing.produceDetails.commodityType] ??
-                              listing.produceDetails.commodityType)
+                            ? produceCommodityTypeLabel(
+                                listing.produceDetails.commodityType,
+                                appLanguage,
+                              )
                             : '-'}
                         </TableCell>
                         <TableCell>

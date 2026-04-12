@@ -9,6 +9,7 @@ export function useListings(params?: {
   limit?: number;
   offset?: number;
   sort?: string;
+  q?: string;
 }) {
   return useQuery({
     queryKey: queryKeys.market.listings(params),

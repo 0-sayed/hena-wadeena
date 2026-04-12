@@ -86,7 +86,11 @@ const PricesPage = () => {
     id: string;
     name: string;
   } | null>(null);
-  const [trendCommodity, setTrendCommodity] = useState<{ id: string; name: string } | null>(null);
+  const [trendCommodity, setTrendCommodity] = useState<{
+    id: string;
+    name: string;
+    region?: string;
+  } | null>(null);
 
   function handleBellClick(commodityId: string, name: string) {
     if (!isAuthenticated) {
@@ -133,11 +137,45 @@ const PricesPage = () => {
   }, [currentPage, isLoading, totalPages]);
 
   const { data: summary, isLoading: isSummaryLoading } = usePriceSummary();
-  const movers = [...entries]
-    .filter((entry) => entry.changePercent !== null && entry.changePercent !== 0)
-    .sort((a, b) => Math.abs(b.changePercent ?? 0) - Math.abs(a.changePercent ?? 0));
-  const gainers = movers.filter((mover) => (mover.changePercent ?? 0) > 0).slice(0, 5);
-  const losers = movers.filter((mover) => (mover.changePercent ?? 0) < 0).slice(0, 5);
+  // Top movers: prefer the global market summary. Fall back to the current
+  // entries (which carry region info) if the summary bucket is empty, so the
+  // UI stays populated while still reflecting the latest page.
+  type MoverCard = {
+    commodity: { id: string; nameAr: string };
+    changePercent: number;
+    region?: string;
+  };
+
+  const summaryGainers: MoverCard[] = (summary?.topMovers ?? [])
+    .filter((m) => m.direction === 'up' && (m.changePercent ?? 0) > 0)
+    .slice(0, 5)
+    .map((m) => ({ commodity: m.commodity, changePercent: m.changePercent ?? 0 }));
+  const summaryLosers: MoverCard[] = (summary?.topMovers ?? [])
+    .filter((m) => m.direction === 'down' && (m.changePercent ?? 0) < 0)
+    .slice(0, 5)
+    .map((m) => ({ commodity: m.commodity, changePercent: m.changePercent ?? 0 }));
+
+  const entryGainers: MoverCard[] = [...entries]
+    .filter((e) => (e.changePercent ?? 0) > 0)
+    .sort((a, b) => (b.changePercent ?? 0) - (a.changePercent ?? 0))
+    .slice(0, 5)
+    .map((e) => ({
+      commodity: { id: e.commodity.id, nameAr: e.commodity.nameAr },
+      changePercent: e.changePercent ?? 0,
+      region: e.region,
+    }));
+  const entryLosers: MoverCard[] = [...entries]
+    .filter((e) => (e.changePercent ?? 0) < 0)
+    .sort((a, b) => (a.changePercent ?? 0) - (b.changePercent ?? 0))
+    .slice(0, 5)
+    .map((e) => ({
+      commodity: { id: e.commodity.id, nameAr: e.commodity.nameAr },
+      changePercent: e.changePercent ?? 0,
+      region: e.region,
+    }));
+
+  const gainers = summaryGainers.length > 0 ? summaryGainers : entryGainers;
+  const losers = summaryLosers.length > 0 ? summaryLosers : entryLosers;
 
   const risingCount = entries.filter((e) => (e.changePercent ?? 0) > 0).length;
   const fallingCount = entries.filter((e) => (e.changePercent ?? 0) < 0).length;
@@ -231,21 +269,23 @@ const PricesPage = () => {
                   ) : (
                     gainers.map((mover) => (
                       <div
-                        key={`${mover.commodity.id}-${mover.region}-${mover.priceType}-up`}
+                        key={`${mover.commodity.id}-${mover.region ?? 'all'}-up`}
                         className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/50"
                       >
                         <div className="flex min-w-0 items-center gap-2">
                           <span className="truncate font-medium">{mover.commodity.nameAr}</span>
-                          <Badge
-                            variant="outline"
-                            className="shrink-0 text-xs font-medium"
-                            aria-label={`مدينة المنتج الأكثر ارتفاعا ${districtLabel(mover.region)}`}
-                          >
-                            {districtLabel(mover.region)}
-                          </Badge>
+                          {mover.region && (
+                            <Badge
+                              variant="outline"
+                              aria-label={`مدينة المنتج الأكثر ارتفاعا ${districtLabel(mover.region)}`}
+                              className="shrink-0 text-xs"
+                            >
+                              {districtLabel(mover.region)}
+                            </Badge>
+                          )}
                         </div>
                         <Badge className="shrink-0 bg-primary/10 text-primary">
-                          +{mover.changePercent ?? 0}%
+                          +{mover.changePercent}%
                         </Badge>
                       </div>
                     ))
@@ -270,21 +310,23 @@ const PricesPage = () => {
                   ) : (
                     losers.map((mover) => (
                       <div
-                        key={`${mover.commodity.id}-${mover.region}-${mover.priceType}-down`}
+                        key={`${mover.commodity.id}-${mover.region ?? 'all'}-down`}
                         className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/50"
                       >
                         <div className="flex min-w-0 items-center gap-2">
                           <span className="truncate font-medium">{mover.commodity.nameAr}</span>
-                          <Badge
-                            variant="outline"
-                            className="shrink-0 text-xs font-medium"
-                            aria-label={`مدينة المنتج الأكثر انخفاضا ${districtLabel(mover.region)}`}
-                          >
-                            {districtLabel(mover.region)}
-                          </Badge>
+                          {mover.region && (
+                            <Badge
+                              variant="outline"
+                              aria-label={`مدينة المنتج الأكثر انخفاضا ${districtLabel(mover.region)}`}
+                              className="shrink-0 text-xs"
+                            >
+                              {districtLabel(mover.region)}
+                            </Badge>
+                          )}
                         </div>
                         <Badge className="shrink-0 bg-destructive/10 text-destructive">
-                          {mover.changePercent ?? 0}%
+                          {mover.changePercent}%
                         </Badge>
                       </div>
                     ))
@@ -358,6 +400,7 @@ const PricesPage = () => {
                             setTrendCommodity({
                               id: entry.commodity.id,
                               name: entry.commodity.nameAr,
+                              region: entry.region,
                             })
                           }
                         >
@@ -485,7 +528,7 @@ const PricesPage = () => {
       <PriceTrendModal
         commodity={trendCommodity}
         onClose={() => setTrendCommodity(null)}
-        region={regionFilter as NvDistrict | undefined}
+        region={trendCommodity?.region as NvDistrict | undefined}
       />
     </Layout>
   );

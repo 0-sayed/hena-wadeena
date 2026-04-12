@@ -56,7 +56,7 @@ export function PriceAlertSheet({
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen && !isAuthenticated) {
-      void navigate('/auth/login');
+      void navigate('/login');
       return;
     }
     onOpenChange(nextOpen);

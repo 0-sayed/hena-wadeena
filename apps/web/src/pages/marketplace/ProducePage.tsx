@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useDebounce } from '@/hooks/use-debounce';
 import { ArrowRight, Leaf, MapPin, Search, Plus, Phone } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -33,31 +34,17 @@ const ProducePage = () => {
   const [district, setDistrict] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const debouncedSearch = useDebounce(searchQuery.trim(), 300);
 
   const { data, isLoading, isError, refetch } = useListings({
     category: 'agricultural_produce',
     commodity_type: commodityType === 'all' ? undefined : commodityType,
     district: district === 'all' ? undefined : district,
+    q: debouncedSearch || undefined,
     limit: 48,
   });
 
-  const listings = useMemo(() => {
-    const items = data?.data ?? [];
-    const normalizedSearch = searchQuery.trim();
-    if (!normalizedSearch) return items;
-    return items.filter((listing) => {
-      const haystack = [
-        listing.titleAr,
-        listing.titleEn ?? '',
-        listing.description ?? '',
-        listing.address ?? '',
-        listing.district ?? '',
-      ]
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(normalizedSearch.toLowerCase());
-    });
-  }, [data, searchQuery]);
+  const listings = data?.data ?? [];
 
   return (
     <Layout title="منتجات زراعية">

@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -121,6 +121,26 @@ export function ProduceListingSheet({
   const [contactPhone, setContactPhone] = useState(() => pd?.contactPhone ?? '');
   const [contactWhatsapp, setContactWhatsapp] = useState(() => pd?.contactWhatsapp ?? '');
 
+  // Re-seed form state whenever the sheet opens or the initial listing changes.
+  // Without this, canceling and reopening the same flow leaves stale edits.
+  useEffect(() => {
+    if (!open) return;
+    const details = initialListing?.produceDetails;
+    setTitleAr(initialListing?.titleAr ?? '');
+    setTransaction((initialListing?.transaction as 'sale' | 'rent') ?? 'sale');
+    setPriceEgp(initialListing ? String(initialListing.price / 100) : '');
+    setDistrict(initialListing?.district ?? '');
+    setImageUrls(initialListing?.images ?? []);
+    setCommodityType(details?.commodityType ?? 'dates');
+    setQuantityKg(details?.quantityKg ?? '');
+    setHarvestDate(details?.harvestDate ?? '');
+    setStorageType((details?.storageType as ProduceDetails['storage_type']) ?? 'field');
+    setCertifications((details?.certifications as CertificationType[]) ?? []);
+    setPreferredBuyer((details?.preferredBuyer as ProduceDetails['preferred_buyer']) ?? 'any');
+    setContactPhone(details?.contactPhone ?? '');
+    setContactWhatsapp(details?.contactWhatsapp ?? '');
+  }, [open, initialListing]);
+
   const createMutation = useMutation({
     mutationFn: listingsAPI.create,
     onSuccess: () => {
@@ -182,7 +202,7 @@ export function ProduceListingSheet({
       commodity_type: commodityType,
       storage_type: storageType,
       preferred_buyer: preferredBuyer,
-      quantity_kg: quantityKg ? parseInt(quantityKg, 10) : undefined,
+      quantity_kg: quantityKg ? Number(quantityKg) : undefined,
       harvest_date: harvestDate || undefined,
       certifications: certifications.length > 0 ? certifications : undefined,
       contact_phone: contactPhone || undefined,
