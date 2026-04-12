@@ -207,6 +207,9 @@ export class ListingsService {
     if (query.owner_id !== undefined) {
       conditions.push(eq(listings.ownerId, query.owner_id));
     }
+    if (query.category !== undefined) {
+      conditions.push(eq(listings.category, query.category as never));
+    }
 
     return andRequired(...conditions);
   }
@@ -247,7 +250,7 @@ export class ListingsService {
     return listing;
   }
 
-  async create(dto: CreateListingDto, ownerId: string): Promise<Listing> {
+  async create(dto: CreateListingDto, ownerId: string, isAdmin = false): Promise<Listing> {
     const baseTitle = dto.titleEn ?? dto.titleAr;
     let slug = slugify(baseTitle);
 
@@ -287,7 +290,8 @@ export class ListingsService {
       id,
       ownerId,
       slug,
-      status: 'draft' as const,
+      status: (isAdmin ? 'active' : 'draft') as InsertListing['status'],
+      isVerified: isAdmin,
       location: locationExpr as unknown as InsertListing['location'],
     };
 

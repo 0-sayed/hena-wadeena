@@ -379,6 +379,22 @@ describe('ListingsService', () => {
       // transaction is not used for non-produce listings
       expect(mockDb.insert).toHaveBeenCalledTimes(1);
     });
+
+    it('should create listing with status=active and isVerified=true when caller is admin', async () => {
+      mockDb.returning.mockResolvedValueOnce([
+        { ...mockListing, status: 'active', isVerified: true },
+      ]);
+
+      await service.create(createDto as never, 'admin-uuid-001', true);
+
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'active',
+          isVerified: true,
+          ownerId: 'admin-uuid-001',
+        }),
+      );
+    });
   });
 
   // -------------------------------------------------------------------------

@@ -89,7 +89,7 @@ export class ListingsController {
   @Post()
   @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   create(@Body() dto: CreateListingDto, @CurrentUser() user: JwtPayload) {
-    return this.listingsService.create(dto, user.sub);
+    return this.listingsService.create(dto, user.sub, (user.role as UserRole) === UserRole.ADMIN);
   }
 
   // --- Owner routes: update + delete (admin bypasses ownership check) ---
