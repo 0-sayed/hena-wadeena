@@ -6,6 +6,7 @@ import {
   districtLabel,
   categoryLabel,
   unitLabel,
+  producePriceUnitLabel,
   jobCategoryLabel,
   jobStatusLabel,
   applicationStatusLabel,
@@ -95,6 +96,17 @@ describe('unitLabel', () => {
 
   it('returns input for unknown unit', () => {
     expect(unitLabel('unknown')).toBe('unknown');
+  });
+});
+
+describe('producePriceUnitLabel', () => {
+  it('maps commodity units to Arabic', () => {
+    expect(producePriceUnitLabel('kg')).toBe('كجم');
+    expect(producePriceUnitLabel('ton')).toBe('طن');
+  });
+
+  it('falls back to kilograms when the listing unit contains a currency code', () => {
+    expect(producePriceUnitLabel('EGP')).toBe('كجم');
   });
 });
 
