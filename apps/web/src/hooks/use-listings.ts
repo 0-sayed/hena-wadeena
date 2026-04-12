@@ -4,6 +4,7 @@ import { listingsAPI } from '@/services/api';
 
 export function useListings(params?: {
   category?: string;
+  commodity_type?: string;
   district?: string;
   limit?: number;
   offset?: number;
