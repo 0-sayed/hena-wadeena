@@ -1,6 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { TrendingUp, TrendingDown, Minus, Search, BarChart3, ArrowRight } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Search,
+  BarChart3,
+  ArrowRight,
+  Bell,
+  BellRing,
+} from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { usePriceAlerts } from '@/hooks/use-price-alerts';
+import { PriceAlertSheet } from '@/components/market/PriceAlertSheet';
 import { TrendBadge } from '@/components/market/TrendBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,8 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useNavigate } from 'react-router';
-import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
-import { LoadMoreButton } from '@/components/LoadMoreButton';
+import { usePriceIndexPage, usePriceSummary } from '@/hooks/use-price-index';
 import {
   formatPrice,
   districtLabel,
@@ -33,34 +44,100 @@ import {
   CATEGORY_OPTIONS,
 } from '@/lib/format';
 import { Skeleton, TableRowSkeleton } from '@/components/motion/Skeleton';
+import { PriceTrendModal } from '@/components/market/PriceTrendModal';
+import type { NvDistrict } from '@hena-wadeena/types';
+
+const PRICE_TABLE_PAGE_SIZE = 20;
+type PageToken = number | 'ellipsis-start' | 'ellipsis-end';
+
+function getVisiblePageTokens(currentPage: number, totalPages: number): PageToken[] {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+  const visiblePages = [...pages]
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+
+  return visiblePages.flatMap((page, index) => {
+    const previous = visiblePages[index - 1];
+    if (previous != null && page - previous > 1) {
+      return [
+        page - previous === 2
+          ? previous + 1
+          : (`ellipsis-${page === totalPages ? 'end' : 'start'}` as PageToken),
+        page,
+      ];
+    }
+    return [page];
+  });
+}
 
 const PricesPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { data: priceAlerts = [] } = usePriceAlerts();
+  const alertedCommodityIds = useMemo(
+    () => new Set(priceAlerts.map((a) => a.commodityId)),
+    [priceAlerts],
+  );
+  const [alertSheetCommodity, setAlertSheetCommodity] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [trendCommodity, setTrendCommodity] = useState<{ id: string; name: string } | null>(null);
+
+  function handleBellClick(commodityId: string, name: string) {
+    if (!isAuthenticated) {
+      void navigate('/auth/login');
+      return;
+    }
+    setAlertSheetCommodity({ id: commodityId, name });
+  }
+
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const regionFilter = selectedCity === 'all' ? undefined : selectedCity;
 
-  const {
-    data: entries,
-    total: totalProducts,
-    isLoading,
-    hasNextPage: pricesHasNext,
-    isFetchingNextPage: pricesFetchingNext,
-    fetchNextPage: pricesFetchNext,
-  } = usePriceIndex(
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [regionFilter, selectedCategory, searchQuery]);
+
+  const priceIndex = usePriceIndexPage(
     {
       category: selectedCategory,
       region: regionFilter,
       price_type: 'retail',
     },
-    100,
+    currentPage,
+    PRICE_TABLE_PAGE_SIZE,
   );
+  const entries = priceIndex.data?.data ?? [];
+  const totalProducts = priceIndex.data?.total ?? 0;
+  const isLoading = priceIndex.isLoading;
+  const isFetching = priceIndex.isFetching;
+  const totalPages = Math.max(1, Math.ceil(totalProducts / PRICE_TABLE_PAGE_SIZE));
+  const visiblePageTokens = useMemo(
+    () => getVisiblePageTokens(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
+
+  useEffect(() => {
+    if (!isLoading && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, isLoading, totalPages]);
+
   const { data: summary, isLoading: isSummaryLoading } = usePriceSummary();
-  const topMovers = summary?.topMovers ?? [];
-  const gainers = topMovers.filter((m) => m.direction === 'up');
-  const losers = topMovers.filter((m) => m.direction === 'down');
+  const movers = [...entries]
+    .filter((entry) => entry.changePercent !== null && entry.changePercent !== 0)
+    .sort((a, b) => Math.abs(b.changePercent ?? 0) - Math.abs(a.changePercent ?? 0));
+  const gainers = movers.filter((mover) => (mover.changePercent ?? 0) > 0).slice(0, 5);
+  const losers = movers.filter((mover) => (mover.changePercent ?? 0) < 0).slice(0, 5);
 
   const risingCount = entries.filter((e) => (e.changePercent ?? 0) > 0).length;
   const fallingCount = entries.filter((e) => (e.changePercent ?? 0) < 0).length;
@@ -71,6 +148,8 @@ const PricesPage = () => {
       e.commodity.nameAr.includes(searchQuery) ||
       categoryLabel(e.commodity.category).includes(searchQuery),
   );
+  const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * PRICE_TABLE_PAGE_SIZE + 1;
+  const pageEnd = Math.min(currentPage * PRICE_TABLE_PAGE_SIZE, totalProducts);
 
   return (
     <Layout title="أسعار السوق">
@@ -145,17 +224,32 @@ const PricesPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {gainers.map((mover) => (
-                    <div
-                      key={mover.commodity.id}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
-                    >
-                      <span className="font-medium">{mover.commodity.nameAr}</span>
-                      <Badge className="bg-primary/10 text-primary">
-                        +{mover.changePercent ?? 0}%
-                      </Badge>
-                    </div>
-                  ))}
+                  {gainers.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                      لا توجد منتجات صاعدة حاليا
+                    </p>
+                  ) : (
+                    gainers.map((mover) => (
+                      <div
+                        key={`${mover.commodity.id}-${mover.region}-${mover.priceType}-up`}
+                        className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/50"
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate font-medium">{mover.commodity.nameAr}</span>
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 text-xs font-medium"
+                            aria-label={`مدينة المنتج الأكثر ارتفاعا ${districtLabel(mover.region)}`}
+                          >
+                            {districtLabel(mover.region)}
+                          </Badge>
+                        </div>
+                        <Badge className="shrink-0 bg-primary/10 text-primary">
+                          +{mover.changePercent ?? 0}%
+                        </Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -169,17 +263,32 @@ const PricesPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {losers.map((mover) => (
-                    <div
-                      key={mover.commodity.id}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
-                    >
-                      <span className="font-medium">{mover.commodity.nameAr}</span>
-                      <Badge className="bg-destructive/10 text-destructive">
-                        {mover.changePercent ?? 0}%
-                      </Badge>
-                    </div>
-                  ))}
+                  {losers.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                      لا توجد منتجات هابطة حاليا
+                    </p>
+                  ) : (
+                    losers.map((mover) => (
+                      <div
+                        key={`${mover.commodity.id}-${mover.region}-${mover.priceType}-down`}
+                        className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/50"
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate font-medium">{mover.commodity.nameAr}</span>
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 text-xs font-medium"
+                            aria-label={`مدينة المنتج الأكثر انخفاضا ${districtLabel(mover.region)}`}
+                          >
+                            {districtLabel(mover.region)}
+                          </Badge>
+                        </div>
+                        <Badge className="shrink-0 bg-destructive/10 text-destructive">
+                          {mover.changePercent ?? 0}%
+                        </Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -227,7 +336,7 @@ const PricesPage = () => {
           {/* Price Table */}
           <Card className="border-border/50">
             <CardContent className="p-0">
-              <Table className="table-fixed">
+              <Table className="min-w-[48rem] table-fixed">
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="px-6 py-4">المنتج</TableHead>
@@ -235,13 +344,23 @@ const PricesPage = () => {
                     <TableHead className="px-6 py-4">المدينة</TableHead>
                     <TableHead className="px-6 py-4">السعر</TableHead>
                     <TableHead className="px-6 py-4">التغير</TableHead>
+                    <TableHead className="w-16 px-6 py-4" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading
-                    ? Array.from({ length: 8 }).map((_, i) => <TableRowSkeleton key={i} cols={5} />)
+                    ? Array.from({ length: 8 }).map((_, i) => <TableRowSkeleton key={i} cols={6} />)
                     : filteredProducts.map((entry) => (
-                        <TableRow key={entry.commodity.id} className="hover:bg-muted/30">
+                        <TableRow
+                          key={`${entry.commodity.id}-${entry.region}`}
+                          className="hover:bg-muted/30 cursor-pointer"
+                          onClick={() =>
+                            setTrendCommodity({
+                              id: entry.commodity.id,
+                              name: entry.commodity.nameAr,
+                            })
+                          }
+                        >
                           <TableCell className="px-6 py-4 text-start">
                             <span className="font-medium text-foreground">
                               {entry.commodity.nameAr}
@@ -268,6 +387,23 @@ const PricesPage = () => {
                           <TableCell className="px-6 py-4 text-start">
                             <TrendBadge changePercent={entry.changePercent} size="sm" showSign />
                           </TableCell>
+                          <TableCell className="py-4 pe-8 ps-4 text-start">
+                            <button
+                              type="button"
+                              aria-label={`تنبيه سعر ${entry.commodity.nameAr}`}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBellClick(entry.commodity.id, entry.commodity.nameAr);
+                              }}
+                            >
+                              {alertedCommodityIds.has(entry.commodity.id) ? (
+                                <BellRing className="h-4 w-4 text-primary" />
+                              ) : (
+                                <Bell className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          </TableCell>
                         </TableRow>
                       ))}
                 </TableBody>
@@ -275,11 +411,60 @@ const PricesPage = () => {
             </CardContent>
           </Card>
 
-          <LoadMoreButton
-            hasNextPage={pricesHasNext}
-            isFetchingNextPage={pricesFetchingNext}
-            fetchNextPage={pricesFetchNext}
-          />
+          {totalProducts > PRICE_TABLE_PAGE_SIZE && (
+            <div className="mt-6 flex flex-col items-center justify-between gap-3 md:flex-row">
+              <p className="text-sm text-muted-foreground">
+                عرض {pageStart}-{pageEnd} من {totalProducts} منتج
+              </p>
+              <nav
+                aria-label="ترقيم صفحات جدول الأسعار"
+                className="flex flex-wrap items-center justify-center gap-2"
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1 || isFetching}
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                >
+                  السابق
+                </Button>
+                {visiblePageTokens.map((token) =>
+                  typeof token === 'number' ? (
+                    <Button
+                      key={token}
+                      type="button"
+                      variant={token === currentPage ? 'default' : 'outline'}
+                      size="sm"
+                      aria-label={`صفحة ${token}`}
+                      aria-current={token === currentPage ? 'page' : undefined}
+                      disabled={isFetching}
+                      onClick={() => setCurrentPage(token)}
+                    >
+                      {token}
+                    </Button>
+                  ) : (
+                    <span
+                      key={token}
+                      aria-hidden="true"
+                      className="px-2 text-sm text-muted-foreground"
+                    >
+                      ...
+                    </span>
+                  ),
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages || isFetching}
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                >
+                  التالي
+                </Button>
+              </nav>
+            </div>
+          )}
 
           <p className="text-center text-sm text-muted-foreground mt-4">
             {summary?.lastUpdated
@@ -288,6 +473,20 @@ const PricesPage = () => {
           </p>
         </div>
       </section>
+
+      {alertSheetCommodity && (
+        <PriceAlertSheet
+          commodityId={alertSheetCommodity.id}
+          commodityName={alertSheetCommodity.name}
+          open={!!alertSheetCommodity}
+          onOpenChange={(open) => !open && setAlertSheetCommodity(null)}
+        />
+      )}
+      <PriceTrendModal
+        commodity={trendCommodity}
+        onClose={() => setTrendCommodity(null)}
+        region={regionFilter as NvDistrict | undefined}
+      />
     </Layout>
   );
 };
