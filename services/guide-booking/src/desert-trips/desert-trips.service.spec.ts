@@ -32,7 +32,7 @@ const mockTrip = {
   expectedArrivalAt: new Date('2026-04-10T14:00:00Z'),
   destinationName: 'White Desert',
   emergencyContact: '+201012345678',
-  rangerStationId: null,
+  rangerStationName: null,
   checkedInAt: null,
   alertTriggeredAt: null,
   gpsBreadcrumbs: [],
