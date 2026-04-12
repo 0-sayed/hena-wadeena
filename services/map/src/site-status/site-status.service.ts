@@ -14,6 +14,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { pointsOfInterest, siteStatusUpdates, siteStewards } from '../db/schema/index';
 import { isUniqueViolation } from '../utils/db';
+import { escapeLike } from '../utils/query';
 
 import type { CreateStatusDto } from './dto';
 
@@ -102,8 +103,8 @@ export class SiteStatusService {
 
     const searchCondition = params.search
       ? or(
-          ilike(pointsOfInterest.nameAr, `%${params.search}%`),
-          ilike(pointsOfInterest.nameEn, `%${params.search}%`),
+          ilike(pointsOfInterest.nameAr, `%${escapeLike(params.search)}%`),
+          ilike(pointsOfInterest.nameEn, `%${escapeLike(params.search)}%`),
         )
       : undefined;
 

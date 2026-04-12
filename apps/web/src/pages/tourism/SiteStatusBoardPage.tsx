@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
 import { PageHero } from '@/components/layout/PageHero';
 import { Search, MapPin, AlertCircle, ArrowRight } from 'lucide-react';
@@ -9,8 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { mapAPI } from '@/services/api';
-import { queryKeys } from '@/lib/query-keys';
+import { useStatusBoard } from '@/hooks/use-map';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy } from '@/lib/localization';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
@@ -28,10 +26,7 @@ function SiteStatusBoardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: queryKeys.map.statusBoard(page, search, statusFilter),
-    queryFn: () => mapAPI.getStatusBoard(page, 12, search || undefined, statusFilter),
-  });
+  const { data, isLoading, isError } = useStatusBoard(page, search, statusFilter ?? 'all');
 
   const handleSearch = useDebouncedCallback((value: string) => {
     setSearch(value);
@@ -72,7 +67,7 @@ function SiteStatusBoardPage() {
       </PageHero>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
+        <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto]">
           <div className="relative">
             <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -81,6 +76,26 @@ function SiteStatusBoardPage() {
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
+          <select
+            aria-label={pickLocalizedCopy(language, { ar: 'تصفية الحالة', en: 'Filter status' })}
+            value={statusFilter ?? ''}
+            onChange={(e) => {
+              setStatusFilter(e.target.value || undefined);
+              setPage(1);
+            }}
+            className="h-10 rounded-md border bg-background px-3 text-sm"
+          >
+            <option value="">
+              {pickLocalizedCopy(language, { ar: 'كل الحالات', en: 'All statuses' })}
+            </option>
+            <option value="open">{pickLocalizedCopy(language, { ar: 'مفتوح', en: 'Open' })}</option>
+            <option value="limited">
+              {pickLocalizedCopy(language, { ar: 'جزئي', en: 'Limited' })}
+            </option>
+            <option value="closed">
+              {pickLocalizedCopy(language, { ar: 'مغلق', en: 'Closed' })}
+            </option>
+          </select>
         </div>
 
         {isLoading && (

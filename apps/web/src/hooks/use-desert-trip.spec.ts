@@ -37,7 +37,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/lib/query-keys', () => ({
   queryKeys: {
     desertTrips: {
-      byBooking: (id: string) => ['desert-trips', id] as const,
+      byBooking: (id: string) => ['desert-trips', 'booking', id] as const,
     },
   },
 }));
@@ -129,7 +129,7 @@ describe('useRegisterDesertTrip', () => {
       {},
       vars,
     );
-    expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['desert-trips', 'b1'] });
+    expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['desert-trips', 'booking', 'b1'] });
   });
 });
 
@@ -150,6 +150,6 @@ describe('useCheckInDesertTrip', () => {
     await (
       capturedMutationOptions.onSuccess as (data: unknown, bookingId: string) => Promise<void>
     )({}, 'b1');
-    expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['desert-trips', 'b1'] });
+    expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['desert-trips', 'booking', 'b1'] });
   });
 });

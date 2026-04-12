@@ -80,7 +80,7 @@ export function DesertTripPanel({ bookingId, isGuide, language }: DesertTripPane
   return (
     <div>
       <TripStatusCard trip={trip} language={language} />
-      {isGuide && trip.status === 'pending' && (
+      {isGuide && ['pending', 'overdue', 'alert_sent'].includes(trip.status) && (
         <Button
           onClick={handleCheckIn}
           disabled={checkIn.isPending}
