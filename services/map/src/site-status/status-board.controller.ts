@@ -11,6 +11,11 @@ export class StatusBoardController {
   @Public()
   @Get('status-board')
   getStatusBoard(@Query() query: StatusBoardQueryDto) {
-    return this.siteStatusService.getStatusBoard({ page: query.page, limit: query.limit });
+    return this.siteStatusService.getStatusBoard({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      status: query.status,
+    });
   }
 }

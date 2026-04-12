@@ -40,6 +40,7 @@ import {
   useCompleteBooking,
 } from '@/hooks/use-bookings';
 import { useMyReviewedBookingIds, useCreateReview } from '@/hooks/use-reviews';
+import { DesertTripPanel } from '@/components/desert-trip/DesertTripPanel';
 import { getBookingStatusLabels } from '@/lib/booking-status';
 import { piastresToEgp } from '@/lib/format';
 import { UserRole } from '@hena-wadeena/types';
@@ -80,7 +81,10 @@ function formatPeopleCount(count: number, language: AppLanguage): string {
     return `${count} ${count === 1 ? 'person' : 'people'}`;
   }
 
-  return `${count} أشخاص`;
+  if (count === 1) return 'شخص واحد';
+  if (count === 2) return 'شخصان';
+  if (count <= 10) return `${count} أشخاص`;
+  return `${count} شخصاً`;
 }
 
 function getActionDialogCopy(
@@ -466,19 +470,26 @@ const BookingsPage = () => {
                 <Card className="rounded-2xl">
                   <CardContent className="space-y-4 p-14 text-center">
                     <p className="text-lg text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'لا توجد حجوزات حتى الآن. ابدأ باستكشاف المرشدين السياحيين!',
-                        en: 'No bookings yet. Start exploring tour guides!',
-                      })}
+                      {isGuide
+                        ? pickLocalizedCopy(appLanguage, {
+                            ar: 'لا توجد حجوزات حتى الآن. ستظهر هنا بمجرد أن يحجز أحد معك.',
+                            en: 'No bookings yet. They will appear here once someone books with you.',
+                          })
+                        : pickLocalizedCopy(appLanguage, {
+                            ar: 'لا توجد حجوزات حتى الآن. ابدأ باستكشاف المرشدين السياحيين!',
+                            en: 'No bookings yet. Start exploring tour guides!',
+                          })}
                     </p>
-                    <Link to="/guides">
-                      <Button variant="outline">
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'تصفّح المرشدين',
-                          en: 'Browse guides',
-                        })}
-                      </Button>
-                    </Link>
+                    {!isGuide && (
+                      <Link to="/guides">
+                        <Button variant="outline">
+                          {pickLocalizedCopy(appLanguage, {
+                            ar: 'تصفّح المرشدين',
+                            en: 'Browse guides',
+                          })}
+                        </Button>
+                      </Link>
+                    )}
                   </CardContent>
                 </Card>
               </SR>
@@ -552,6 +563,13 @@ const BookingsPage = () => {
                             </p>
                           )}
                           {renderActions(booking)}
+                          {['pending', 'confirmed', 'in_progress'].includes(booking.status) && (
+                            <DesertTripPanel
+                              bookingId={booking.id}
+                              isGuide={isGuide}
+                              language={appLanguage}
+                            />
+                          )}
                         </CardContent>
                       </Card>
                     </SR>
@@ -607,7 +625,7 @@ const BookingsPage = () => {
               className="mt-2"
             />
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -653,7 +671,7 @@ const BookingsPage = () => {
                 : null}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setActionTarget(null)}>
               {pickLocalizedCopy(appLanguage, {
                 ar: 'تراجع',
@@ -785,7 +803,7 @@ const BookingsPage = () => {
             )}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => {

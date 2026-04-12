@@ -127,6 +127,10 @@ vi.mock('@/hooks/use-reviews', () => ({
   useCreateReview: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock('@/components/desert-trip/DesertTripPanel', () => ({
+  DesertTripPanel: () => null,
+}));
+
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
