@@ -4,7 +4,6 @@ import { Layout } from '@/components/layout/Layout';
 import {
   TrendingUp,
   TrendingDown,
-  Minus,
   Search,
   BarChart3,
   ArrowRight,
@@ -180,10 +179,6 @@ const PricesPage = () => {
   const gainers = summaryGainers.length > 0 ? summaryGainers : entryGainers;
   const losers = summaryLosers.length > 0 ? summaryLosers : entryLosers;
 
-  const risingCount = entries.filter((e) => (e.changePercent ?? 0) > 0).length;
-  const fallingCount = entries.filter((e) => (e.changePercent ?? 0) < 0).length;
-  const stableCount = entries.filter((e) => (e.changePercent ?? 0) === 0).length;
-
   const filteredProducts = entries;
   const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * PRICE_TABLE_PAGE_SIZE + 1;
   const pageEnd = Math.min(currentPage * PRICE_TABLE_PAGE_SIZE, totalProducts);
@@ -212,39 +207,16 @@ const PricesPage = () => {
         <div className="container px-4">
           {/* Quick Stats */}
           {isLoading || isSummaryLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} h="h-24" className="rounded-xl" />
-              ))}
+            <div className="grid grid-cols-1 gap-4 mb-8 max-w-xs">
+              <Skeleton h="h-24" className="rounded-xl" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 gap-4 mb-8 max-w-xs">
               <Card className="border-border/50">
                 <CardContent className="p-4 text-center">
                   <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
                   <p className="text-2xl font-bold">{totalProducts}</p>
                   <p className="text-sm text-muted-foreground">منتج متاح</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{risingCount}</p>
-                  <p className="text-sm text-muted-foreground">منتج صاعد</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <TrendingDown className="h-8 w-8 text-destructive mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{fallingCount}</p>
-                  <p className="text-sm text-muted-foreground">منتج هابط</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Minus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{stableCount}</p>
-                  <p className="text-sm text-muted-foreground">منتج مستقر</p>
                 </CardContent>
               </Card>
             </div>

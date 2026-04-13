@@ -1,6 +1,6 @@
 # PR #127 — feat: price alerts, produce listings page, and price trend charts
 
-> Generated: 2026-04-12 | Branch: worktree-f16-price-alerts-produce-listings-ui | Last updated: 2026-04-13 14:00
+> Generated: 2026-04-12 | Branch: worktree-f16-price-alerts-produce-listings-ui | Last updated: 2026-04-13 15:00
 
 ## Worth Fixing
 
@@ -192,6 +192,22 @@
   >
   > ---
   > *Was this helpful? React with 👍 or 👎 to provide feedback.*
+
+- [x] Seed produce listing details use freetext Arabic strings for enum fields — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M56bh-7 -->
+  > **services/market/src/db/seed-data/listings.ts:1101**
+  >
+  > 🔴 **`showcaseProduceListingDetails` entries use Arabic freetext for `storageType`, `certifications`, and `preferredBuyer` instead of enum values**
+  >
+  > All 7 entries in `showcaseProduceListingDetails` set these fields to Arabic strings (e.g. `storageType: 'تعبئة كراتين في مخزن جاف'`, `certifications: ['فرز يدوي']`, `preferredBuyer: 'تجار جملة ومحلات منتجات محلية'`). The `create-listing.schema.ts` schema enforces strict Zod enums: `storage_type: z.enum(['field','warehouse','cold_storage'])`, `certifications: z.array(z.enum(['organic','gap','other']))`, and `preferred_buyer: z.enum(['any','wholesaler','exporter','local'])`. Since the seed bypasses DTO validation (direct Drizzle inserts), these invalid strings reach the database. This causes the same downstream problems as the commodity type issue: labels, filters, and queries that expect valid enum values will break or fall back to the raw string.
+  >
+  > Additionally, the `SeedProduceListingDetails` interface declares these fields as bare `string`, hiding the type error. Tighten the interface to literal union types matching the schema enums.
+
+- [x] Rising/falling/stable stat cards computed from page subset, inconsistent with server total — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M56bh_T -->
+  > **apps/web/src/pages/marketplace/PricesPage.tsx:183**
+  >
+  > 🟡 **`risingCount`, `fallingCount`, `stableCount` are derived from the current page's 20 entries but displayed alongside `totalProducts` (server total)**
+  >
+  > Lines 183–185 compute counts by filtering `entries` (the current page, max 20 items). These are then shown in stat cards next to `totalProducts`, which reflects the server total (e.g. 100). Users see "8 rising / 5 falling / 7 stable" summing to 20, contradicting the "100 products" card above. The `getPriceSummary` API (`commodity-prices.service.ts:getPriceSummary`) returns `topMovers` (top 5 only) and category averages but no per-direction counts, so there's no server source for accurate rising/falling/stable totals without a backend change.
 
 ## Not Worth Fixing
 

@@ -138,12 +138,12 @@ const L49 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567849';
 
 export interface SeedProduceListingDetails {
   listingId: string;
-  commodityType: string;
+  commodityType: 'dates' | 'olives' | 'wheat' | 'other';
   quantityKg: string;
   harvestDate: string;
-  storageType: string;
-  certifications: string[];
-  preferredBuyer: string;
+  storageType: 'field' | 'warehouse' | 'cold_storage';
+  certifications: ('organic' | 'gap' | 'other')[];
+  preferredBuyer: 'any' | 'wholesaler' | 'exporter' | 'local';
   contactPhone: string;
   contactWhatsapp: string;
 }
@@ -1098,9 +1098,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'dates',
     quantityKg: '2400.00',
     harvestDate: '2026-03-20',
-    storageType: 'تعبئة كراتين في مخزن جاف',
-    certifications: ['فرز يدوي'],
-    preferredBuyer: 'تجار جملة ومحلات منتجات محلية',
+    storageType: 'warehouse',
+    certifications: ['other'],
+    preferredBuyer: 'wholesaler',
     contactPhone: '+201001234501',
     contactWhatsapp: '+201001234501',
   },
@@ -1109,9 +1109,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'olives',
     quantityKg: '1800.00',
     harvestDate: '2026-03-15',
-    storageType: 'أجولة مهواة',
-    certifications: ['مزرعة موثقة'],
-    preferredBuyer: 'مصانع تخليل وتجار جملة',
+    storageType: 'warehouse',
+    certifications: ['other'],
+    preferredBuyer: 'wholesaler',
     contactPhone: '+201001234502',
     contactWhatsapp: '+201001234502',
   },
@@ -1120,9 +1120,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'wheat',
     quantityKg: '6000.00',
     harvestDate: '2026-03-28',
-    storageType: 'شون جافة',
-    certifications: ['محصول محلي'],
-    preferredBuyer: 'مطاحن وتجار حبوب',
+    storageType: 'warehouse',
+    certifications: ['other'],
+    preferredBuyer: 'wholesaler',
     contactPhone: '+201001234503',
     contactWhatsapp: '+201001234503',
   },
@@ -1131,9 +1131,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'other',
     quantityKg: '950.00',
     harvestDate: '2026-04-02',
-    storageType: 'عبوات بلاستيكية مهواة',
-    certifications: ['قطف حديث'],
-    preferredBuyer: 'محلات فاكهة وتجار تجزئة',
+    storageType: 'field',
+    certifications: ['other'],
+    preferredBuyer: 'local',
     contactPhone: '+201001234504',
     contactWhatsapp: '+201001234504',
   },
@@ -1142,9 +1142,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'other',
     quantityKg: '3200.00',
     harvestDate: '2026-03-10',
-    storageType: 'أجولة خيش',
-    certifications: ['مجفف ومفرز'],
-    preferredBuyer: 'مصانع صغيرة وتجار جملة',
+    storageType: 'warehouse',
+    certifications: ['other'],
+    preferredBuyer: 'wholesaler',
     contactPhone: '+201001234505',
     contactWhatsapp: '+201001234505',
   },
@@ -1153,9 +1153,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'other',
     quantityKg: '700.00',
     harvestDate: '2026-03-18',
-    storageType: 'أجولة محكمة',
-    certifications: ['تجفيف طبيعي'],
-    preferredBuyer: 'عطارة وتجار توابل',
+    storageType: 'warehouse',
+    certifications: ['other'],
+    preferredBuyer: 'local',
     contactPhone: '+201001234506',
     contactWhatsapp: '+201001234506',
   },
@@ -1164,9 +1164,9 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
     commodityType: 'other',
     quantityKg: '2100.00',
     harvestDate: '2026-03-25',
-    storageType: 'أقفاص بلاستيكية',
-    certifications: ['فرز حسب الحجم'],
-    preferredBuyer: 'تجار فاكهة ومحلات تجزئة',
+    storageType: 'cold_storage',
+    certifications: ['other'],
+    preferredBuyer: 'local',
     contactPhone: '+201001234507',
     contactWhatsapp: '+201001234507',
   },
