@@ -188,7 +188,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       key: 'jobs',
       href: '/jobs',
       label: labels.jobs,
-      matcher: (pathname) => pathname.startsWith('/jobs'),
+      matcher: (pathname) => pathname === '/jobs' || pathname.startsWith('/jobs/'),
     },
   ];
 }

@@ -40,9 +40,7 @@ export class JobApplicationsController {
 
   @Get(':id/applications')
   getApplications(@Param('id', ParseUUIDPipe) jobId: string, @CurrentUser() _user: JwtPayload) {
-    // Poster-only: service doesn't enforce this — controller documents intent.
-    // Full poster enforcement can be added when needed (requires job lookup).
-    return this.jobApplicationsService.findApplicationsForJob(jobId);
+    return this.jobApplicationsService.findApplicationsForJob(jobId, _user.sub);
   }
 
   @Patch(':id/applications/:appId')

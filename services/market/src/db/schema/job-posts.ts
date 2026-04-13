@@ -28,6 +28,10 @@ export const jobPosts = marketSchema.table(
   (t) => [
     check('job_posts_compensation_non_negative', sql`${t.compensation} >= 0`),
     check('job_posts_slots_positive', sql`${t.slots} >= 1`),
+    check(
+      'job_posts_valid_date_range',
+      sql`${t.startsAt} IS NULL OR ${t.endsAt} IS NULL OR ${t.endsAt} >= ${t.startsAt}`,
+    ),
     index('idx_job_posts_poster_id').on(t.posterId),
     index('idx_job_posts_status').on(t.status),
     index('idx_job_posts_category').on(t.category),

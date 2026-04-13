@@ -10,7 +10,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { and, eq, getTableColumns, inArray, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, inArray, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { firstValueFrom } from 'rxjs';
 
@@ -58,6 +58,9 @@ export class JobApplicationsService {
     if (!job) throw new NotFoundException('Job post not found');
     if (job.status !== 'open')
       throw new ConflictException('This job is no longer accepting applications');
+    // Fix 1: Poster cannot apply to their own job
+    if (job.posterId === applicantId)
+      throw new ForbiddenException('لا يمكنك التقدم لوظيفتك الخاصة');
 
     // Check for an existing application (unique constraint on applicant+job)
     const [existing] = await this.db
@@ -69,10 +72,11 @@ export class JobApplicationsService {
     if (existing) {
       if (existing.status === 'withdrawn') {
         // Re-activate the withdrawn application
+        // Fix 2: Also guard on current status to prevent re-activating a non-withdrawn row in a race
         const [reactivated] = await this.db
           .update(jobApplications)
           .set({ status: 'pending', noteAr: dto.noteAr ?? existing.noteAr, resolvedAt: null })
-          .where(eq(jobApplications.id, existing.id))
+          .where(and(eq(jobApplications.id, existing.id), eq(jobApplications.status, 'withdrawn')))
           .returning();
         if (!reactivated) throw new ConflictException('Failed to re-activate application');
         return reactivated;
@@ -80,12 +84,13 @@ export class JobApplicationsService {
       throw new ConflictException('You have already applied for this job');
     }
 
-    const app = firstOrThrow(
-      await this.db
-        .insert(jobApplications)
-        .values({ jobId, applicantId, status: 'pending', noteAr: dto.noteAr })
-        .returning(),
-    );
+    // Fix 3: Use onConflictDoNothing to guard against duplicate-apply race condition
+    const [app] = await this.db
+      .insert(jobApplications)
+      .values({ jobId, applicantId, status: 'pending', noteAr: dto.noteAr })
+      .onConflictDoNothing({ target: [jobApplications.applicantId, jobApplications.jobId] })
+      .returning();
+    if (!app) throw new ConflictException('You have already applied for this job');
 
     this.redisStreams
       .publish(EVENTS.JOB_APPLICATION_RECEIVED, { jobId, applicantId, appId: app.id })
@@ -96,7 +101,16 @@ export class JobApplicationsService {
     return app;
   }
 
-  async findApplicationsForJob(jobId: string): Promise<PaginatedResponse<JobApplication>> {
+  // Fix 4: Require callerId and enforce poster-only access
+  async findApplicationsForJob(
+    jobId: string,
+    callerId: string,
+  ): Promise<PaginatedResponse<JobApplication>> {
+    const job = await this.jobPostsService.findRaw(jobId);
+    if (!job) throw new NotFoundException('Job post not found');
+    if (job.posterId !== callerId)
+      throw new ForbiddenException('Only the job poster can view applications');
+
     const items = await this.db
       .select()
       .from(jobApplications)
@@ -117,7 +131,11 @@ export class JobApplicationsService {
           jobTitle: jobPosts.title,
         })
         .from(jobApplications)
-        .innerJoin(jobPosts, eq(jobApplications.jobId, jobPosts.id))
+        // Fix 5: Exclude soft-deleted job posts
+        .innerJoin(
+          jobPosts,
+          and(eq(jobApplications.jobId, jobPosts.id), isNull(jobPosts.deletedAt)),
+        )
         .where(whereClause)
         .limit(query.limit)
         .offset(query.offset),
@@ -155,30 +173,54 @@ export class JobApplicationsService {
       throw new ConflictException(`Invalid transition: ${app.status} → ${dto.status}`);
     }
 
-    // Slots enforcement (only when accepting)
-    if (dto.status === 'accepted') {
-      const [countResult] = await this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(jobApplications)
-        .where(
-          and(
-            eq(jobApplications.jobId, jobId),
-            inArray(jobApplications.status, ['accepted', 'in_progress']),
-          ),
-        )
-        .execute();
-      if ((countResult?.count ?? 0) >= job.slots) {
-        throw new ConflictException('All slots for this job are filled');
-      }
+    // Fix 8a: Transfer payment BEFORE committing status — if transfer fails, DB stays unchanged
+    if (dto.status === 'completed') {
+      await this.transferWalletForJob(
+        job.posterId,
+        app.applicantId,
+        job.compensation,
+        jobId,
+        appId,
+      );
     }
 
-    // Concurrent-safe update — WHERE clause includes current status
-    const [updated] = await this.db
-      .update(jobApplications)
-      .set({ status: dto.status, resolvedAt: new Date() })
-      .where(and(eq(jobApplications.id, appId), eq(jobApplications.status, app.status)))
-      .returning();
-    if (!updated) throw new ConflictException('Application state changed concurrently');
+    // Fix 6 + Fix 7: Slot enforcement with 'completed' included, wrapped in a transaction
+    let updated: typeof jobApplications.$inferSelect;
+
+    if (dto.status === 'accepted') {
+      const txResult = await this.db.transaction(async (tx) => {
+        const [countResult] = await tx
+          .select({ count: sql<number>`count(*)::int` })
+          .from(jobApplications)
+          .where(
+            and(
+              eq(jobApplications.jobId, jobId),
+              // Fix 6: Include 'completed' in slot count
+              inArray(jobApplications.status, ['accepted', 'in_progress', 'completed']),
+            ),
+          )
+          .execute();
+        if ((countResult?.count ?? 0) >= job.slots) {
+          throw new ConflictException('All slots for this job are filled');
+        }
+        const [u] = await tx
+          .update(jobApplications)
+          .set({ status: dto.status, resolvedAt: new Date() })
+          .where(and(eq(jobApplications.id, appId), eq(jobApplications.status, app.status)))
+          .returning();
+        if (!u) throw new ConflictException('Application state changed concurrently');
+        return u;
+      });
+      updated = txResult;
+    } else {
+      const [u] = await this.db
+        .update(jobApplications)
+        .set({ status: dto.status, resolvedAt: new Date() })
+        .where(and(eq(jobApplications.id, appId), eq(jobApplications.status, app.status)))
+        .returning();
+      if (!u) throw new ConflictException('Application state changed concurrently');
+      updated = u;
+    }
 
     // Post-transition side effects
     if (dto.status === 'accepted') {
@@ -194,18 +236,12 @@ export class JobApplicationsService {
     }
 
     if (dto.status === 'completed') {
+      // Fix 8c: wallet transfer moved before the DB update; only fire the event here
       this.redisStreams
         .publish(EVENTS.JOB_COMPLETED, { appId, applicantId: app.applicantId, jobId })
         .catch((err) => {
           this.logger.error('JOB_COMPLETED event failed', err);
         });
-      await this.transferWalletForJob(
-        job.posterId,
-        app.applicantId,
-        job.compensation,
-        jobId,
-        appId,
-      );
     }
 
     return updated;
@@ -325,7 +361,8 @@ export class JobApplicationsService {
           jobTitle: jobPosts.title,
         })
         .from(jobReviews)
-        .innerJoin(jobPosts, eq(jobReviews.jobId, jobPosts.id))
+        // Fix 9: Exclude soft-deleted job posts
+        .innerJoin(jobPosts, and(eq(jobReviews.jobId, jobPosts.id), isNull(jobPosts.deletedAt)))
         .where(whereClause)
         .limit(query.limit)
         .offset(query.offset),
@@ -340,6 +377,8 @@ export class JobApplicationsService {
 
   // --- Private helpers ---
 
+  // Fix 8a: Remove try/catch — let HTTP errors propagate so a failed transfer
+  // prevents the caller from committing the 'completed' status update.
   private async transferWalletForJob(
     posterId: string,
     applicantId: string,
@@ -359,15 +398,10 @@ export class JobApplicationsService {
       idempotencyKey: `job:${jobId}:app:${appId}`,
     };
 
-    try {
-      await firstValueFrom(
-        this.httpService.post(`${this.identityUrl}/api/v1/internal/wallet/transfer`, payload, {
-          headers: { 'x-internal-secret': process.env.INTERNAL_SECRET ?? '' },
-        }),
-      );
-    } catch (err) {
-      // Log and continue — state is already committed; wallet can be reconciled.
-      this.logger.error(`Wallet transfer failed for job ${jobId} app ${appId}`, err);
-    }
+    await firstValueFrom(
+      this.httpService.post(`${this.identityUrl}/api/v1/internal/wallet/transfer`, payload, {
+        headers: { 'x-internal-secret': process.env.INTERNAL_SECRET ?? '' },
+      }),
+    );
   }
 }

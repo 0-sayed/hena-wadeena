@@ -9,7 +9,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { SQL, and, eq, isNull, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { jobPosts } from '../db/schema/job-posts';
@@ -82,7 +82,13 @@ export class JobPostsService {
     const filters = this.buildFilters(query);
 
     const [items, total] = await Promise.all([
-      this.db.select().from(jobPosts).where(filters).limit(query.limit).offset(query.offset),
+      this.db
+        .select()
+        .from(jobPosts)
+        .where(filters)
+        .orderBy(desc(jobPosts.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
       this.countJobs(filters),
     ]);
 
@@ -107,7 +113,13 @@ export class JobPostsService {
   async findMyPosts(posterId: string, query: QueryJobsDto): Promise<PaginatedResponse<JobPost>> {
     const filters = andRequired(eq(jobPosts.posterId, posterId), isNull(jobPosts.deletedAt));
     const [items, countResult] = await Promise.all([
-      this.db.select().from(jobPosts).where(filters).limit(query.limit).offset(query.offset),
+      this.db
+        .select()
+        .from(jobPosts)
+        .where(filters)
+        .orderBy(desc(jobPosts.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(jobPosts)
@@ -133,8 +145,13 @@ export class JobPostsService {
     if (dto.slots !== undefined) updates.slots = dto.slots;
     if (dto.startsAt !== undefined) updates.startsAt = new Date(dto.startsAt);
     if (dto.endsAt !== undefined) updates.endsAt = new Date(dto.endsAt);
+    updates.updatedAt = new Date();
     return firstOrThrow(
-      await this.db.update(jobPosts).set(updates).where(eq(jobPosts.id, id)).returning(),
+      await this.db
+        .update(jobPosts)
+        .set(updates)
+        .where(and(eq(jobPosts.id, id), isNull(jobPosts.deletedAt)))
+        .returning(),
     );
   }
 
@@ -142,6 +159,9 @@ export class JobPostsService {
     const job = await this.findById(id);
     if (job.posterId !== callerId)
       throw new ForbiddenException('Only the poster can delete this job');
-    await this.db.update(jobPosts).set({ deletedAt: new Date() }).where(eq(jobPosts.id, id));
+    await this.db
+      .update(jobPosts)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(jobPosts.id, id));
   }
 }

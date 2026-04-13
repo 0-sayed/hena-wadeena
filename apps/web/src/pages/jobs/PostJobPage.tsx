@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateJobMutation } from '@/hooks/use-jobs';
 import { JOB_CATEGORY_OPTIONS, COMPENSATION_TYPE_OPTIONS, DISTRICTS } from '@/lib/format';
-import type { JobCategory, CompensationType } from '@/lib/format';
+import { JobCategory, CompensationType } from '@/lib/format';
 import { parseCompensationToPiasters, parseSlots } from '@/pages/jobs/job-form.utils';
 
 type FormState = {
@@ -36,10 +36,10 @@ const empty: FormState = {
   title: '',
   descriptionAr: '',
   descriptionEn: '',
-  category: 'agriculture',
+  category: JobCategory.AGRICULTURE,
   area: 'kharga',
   compensationEgp: '',
-  compensationType: 'fixed',
+  compensationType: CompensationType.FIXED,
   slots: '1',
   startsAt: '',
   endsAt: '',
@@ -53,6 +53,8 @@ export default function PostJobPage() {
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  const toIsoDateTime = (date: string) => `${date}T00:00:00.000Z`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,8 +88,8 @@ export default function PostJobPage() {
         compensation,
         compensationType: form.compensationType,
         slots,
-        startsAt: form.startsAt || undefined,
-        endsAt: form.endsAt || undefined,
+        startsAt: form.startsAt ? toIsoDateTime(form.startsAt) : undefined,
+        endsAt: form.endsAt ? toIsoDateTime(form.endsAt) : undefined,
       });
       toast.success('تم نشر الوظيفة بنجاح');
       void navigate(`/jobs/${job.id}`);

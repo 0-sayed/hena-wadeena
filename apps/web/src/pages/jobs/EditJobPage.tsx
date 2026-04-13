@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { useJob, useUpdateJobMutation } from '@/hooks/use-jobs';
 import { JOB_CATEGORY_OPTIONS, COMPENSATION_TYPE_OPTIONS, DISTRICTS } from '@/lib/format';
-import type { JobCategory, CompensationType } from '@/lib/format';
+import { JobCategory, CompensationType } from '@/lib/format';
 import { parseCompensationToPiasters, parseSlots } from '@/pages/jobs/job-form.utils';
 
 type FormState = {
@@ -63,6 +63,8 @@ export default function EditJobPage() {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
+  const toIsoDateTime = (date: string) => `${date}T00:00:00.000Z`;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
@@ -96,8 +98,8 @@ export default function EditJobPage() {
         compensation,
         compensationType: form.compensationType,
         slots,
-        startsAt: form.startsAt || undefined,
-        endsAt: form.endsAt || undefined,
+        startsAt: form.startsAt ? toIsoDateTime(form.startsAt) : undefined,
+        endsAt: form.endsAt ? toIsoDateTime(form.endsAt) : undefined,
       });
       toast.success('تم تحديث الوظيفة');
       void navigate(`/jobs/${id ?? ''}`);
@@ -106,22 +108,22 @@ export default function EditJobPage() {
     }
   }
 
-  if (isLoading || !form) {
+  if (isError || (!isLoading && !job)) {
     return (
       <Layout title="تعديل الوظيفة">
-        <div className="container py-10 space-y-4">
-          <Skeleton className="h-10 w-32 rounded-xl" />
-          <Skeleton className="h-64 rounded-2xl" />
+        <div className="container py-20 text-center">
+          <p className="text-muted-foreground">تعذر تحميل الوظيفة.</p>
         </div>
       </Layout>
     );
   }
 
-  if (isError || !job) {
+  if (isLoading || !form || !job) {
     return (
       <Layout title="تعديل الوظيفة">
-        <div className="container py-20 text-center">
-          <p className="text-muted-foreground">تعذر تحميل الوظيفة.</p>
+        <div className="container py-10 space-y-4">
+          <Skeleton className="h-10 w-32 rounded-xl" />
+          <Skeleton className="h-64 rounded-2xl" />
         </div>
       </Layout>
     );

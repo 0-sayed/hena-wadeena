@@ -36,7 +36,11 @@ export default function JobDetailPage() {
 
   const { data: job, isLoading, isError, refetch } = useJob(id);
   const posterProfiles = usePublicUsers(job ? [job.posterId] : []);
-  const { data: myAppsData } = useMyApplications(isAuthenticated);
+  const {
+    data: myAppsData,
+    isLoading: isLoadingMyApps,
+    isError: isMyAppsError,
+  } = useMyApplications(isAuthenticated);
 
   const myApplication = myAppsData?.data?.find(
     (app) => app.jobId === id && app.status !== 'withdrawn',
@@ -101,7 +105,13 @@ export default function JobDetailPage() {
     );
   }
 
-  const canApply = isAuthenticated && !isPoster && job.status === 'open' && !myApplication;
+  const canApply =
+    isAuthenticated &&
+    !isPoster &&
+    job.status === 'open' &&
+    !isLoadingMyApps &&
+    !isMyAppsError &&
+    !myApplication;
 
   return (
     <Layout title="تفاصيل الوظيفة">

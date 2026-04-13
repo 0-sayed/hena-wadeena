@@ -29,9 +29,11 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
 function ApplicationRow({
   app,
   workerRatings,
+  reviewsReady,
 }: {
   app: JobApplication;
   workerRatings: { applicationId: string }[];
+  reviewsReady: boolean;
 }) {
   const withdrawMutation = useWithdrawApplicationMutation(app.jobId);
   const [showReview, setShowReview] = useState(false);
@@ -81,7 +83,7 @@ function ApplicationRow({
             {withdrawMutation.isPending ? 'جارٍ...' : 'سحب الطلب'}
           </Button>
         )}
-        {app.status === 'completed' && !hasRated && !showReview && (
+        {reviewsReady && app.status === 'completed' && !hasRated && !showReview && (
           <Button size="sm" variant="outline" onClick={() => setShowReview(true)}>
             تقييم صاحب العمل
           </Button>
@@ -106,7 +108,7 @@ function ApplicationRow({
 export default function MyApplicationsPage() {
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useMyApplications(true);
-  const { data: myReviews } = useUserReviews(user?.id, 'reviewer');
+  const { data: myReviews, isLoading: isLoadingReviews } = useUserReviews(user?.id, 'reviewer');
   const apps = data?.data ?? [];
 
   const workerRatings = (myReviews?.data ?? []).filter(
@@ -154,7 +156,12 @@ export default function MyApplicationsPage() {
           ) : (
             <div className="space-y-3">
               {apps.map((app) => (
-                <ApplicationRow key={app.id} app={app} workerRatings={workerRatings} />
+                <ApplicationRow
+                  key={app.id}
+                  app={app}
+                  workerRatings={workerRatings}
+                  reviewsReady={!isLoadingReviews}
+                />
               ))}
             </div>
           )}

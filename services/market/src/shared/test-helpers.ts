@@ -10,6 +10,7 @@ interface MockDbChain {
   offset: MockFn;
   insert: MockFn;
   values: MockFn;
+  onConflictDoNothing: MockFn;
   returning: MockFn;
   update: MockFn;
   set: MockFn;
@@ -41,6 +42,7 @@ export function createMockDb(): MockDbChain {
   chain.offset = vi.fn().mockReturnValue(chain);
   chain.insert = vi.fn().mockReturnValue(chain);
   chain.values = vi.fn().mockReturnValue(chain);
+  chain.onConflictDoNothing = vi.fn().mockReturnValue(chain);
   chain.returning = vi.fn().mockResolvedValue([]);
   chain.update = vi.fn().mockReturnValue(chain);
   chain.set = vi.fn().mockReturnValue(chain);
