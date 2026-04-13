@@ -16,12 +16,20 @@ import {
   priceSnapshots,
   reviews,
 } from './schema/index.js';
+import { jobApplications } from './schema/job-applications.js';
+import { jobPosts } from './schema/job-posts.js';
+import { jobReviews } from './schema/job-reviews.js';
 import { benefitInfoData } from './seed-data/benefits.js';
 import { showcaseBusinessCommodities } from './seed-data/business-commodities.js';
 import { showcaseBusinesses } from './seed-data/business-directories.js';
 import { commodities as commodityData, generatePriceSnapshots } from './seed-data/commodities.js';
 import { showcaseInvestmentApplications } from './seed-data/investment-applications.js';
 import { essentialInvestments, showcaseInvestments } from './seed-data/investments.js';
+import {
+  essentialJobApplications,
+  essentialJobPosts,
+  essentialJobReviews,
+} from './seed-data/jobs.js';
 import { showcaseListingInquiries } from './seed-data/listing-inquiries.js';
 import { essentialListings, showcaseListings } from './seed-data/listings.js';
 import { generatePriceSnapshotData } from './seed-data/price-snapshots.js';
@@ -307,11 +315,33 @@ async function main() {
     .onConflictDoNothing()
     .returning({ id: benefitInfo.id });
 
+  // Jobs — always seeded (essential + showcase)
+  const jobPostsResult = await db
+    .insert(jobPosts)
+    .values(essentialJobPosts)
+    .onConflictDoNothing()
+    .returning({ id: jobPosts.id });
+
+  const jobApplicationsResult = await db
+    .insert(jobApplications)
+    .values(essentialJobApplications)
+    .onConflictDoNothing()
+    .returning({ id: jobApplications.id });
+
+  const jobReviewsResult = await db
+    .insert(jobReviews)
+    .values(essentialJobReviews)
+    .onConflictDoNothing()
+    .returning({ id: jobReviews.id });
+
   logSummary('market', layer, {
     commodities: commodityResult.length,
     listings: listingResult.length,
     investments: investmentResult.length,
     benefits: benefitsResult.length,
+    jobPosts: jobPostsResult.length,
+    jobApplications: jobApplicationsResult.length,
+    jobReviews: jobReviewsResult.length,
     ...(layer === 'showcase' && {
       businesses: businessCount,
       commodityPriceSnapshots: priceCount,
