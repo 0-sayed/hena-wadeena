@@ -1,29 +1,32 @@
-import { CompensationType, JobCategory } from '@hena-wadeena/types';
 import { z } from 'zod';
 
-const jobCategories = Object.values(JobCategory) as [string, ...string[]];
-const compensationTypes = Object.values(CompensationType) as [string, ...string[]];
+import { COMPENSATION_TYPES, JOB_CATEGORIES } from '../../jobs/jobs.types';
 
-export const createJobPostSchema = z
-  .object({
-    title: z.string().min(3).max(255),
-    descriptionAr: z.string().min(10),
-    descriptionEn: z.string().optional(),
-    category: z.enum(jobCategories),
-    area: z.string(),
-    compensation: z.number().int().min(0),
-    compensationType: z.enum(compensationTypes),
-    slots: z.number().int().min(1),
-    startsAt: z.iso.datetime().optional(),
-    endsAt: z.iso.datetime().optional(),
-  })
-  .refine(
-    (data) => {
-      if (!data.startsAt || !data.endsAt) return true;
-      return new Date(data.endsAt).getTime() >= new Date(data.startsAt).getTime();
-    },
-    {
-      path: ['endsAt'],
-      message: 'endsAt must be on or after startsAt',
-    },
-  );
+export const jobPostBaseSchema = z.object({
+  title: z.string().min(3).max(255),
+  descriptionAr: z.string().min(10),
+  descriptionEn: z.string().optional(),
+  category: z.enum(JOB_CATEGORIES),
+  area: z.string(),
+  compensation: z.number().int().min(0),
+  compensationType: z.enum(COMPENSATION_TYPES),
+  slots: z.number().int().min(1),
+  startsAt: z.iso.datetime().optional(),
+  endsAt: z.iso.datetime().optional(),
+});
+
+const validateDateRange = (data: { startsAt?: string; endsAt?: string }) => {
+  if (!data.startsAt || !data.endsAt) return true;
+  return new Date(data.endsAt).getTime() >= new Date(data.startsAt).getTime();
+};
+
+const dateRangeError = {
+  path: ['endsAt'],
+  message: 'endsAt must be on or after startsAt',
+};
+
+export const createJobPostSchema = jobPostBaseSchema.refine(validateDateRange, dateRangeError);
+
+export const updateJobPostSchema = jobPostBaseSchema
+  .partial()
+  .refine(validateDateRange, dateRangeError);

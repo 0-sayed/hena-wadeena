@@ -40,10 +40,10 @@ export class JobPostsService {
           title: dto.title,
           descriptionAr: dto.descriptionAr,
           descriptionEn: dto.descriptionEn ?? null,
-          category: dto.category as InsertJobPost['category'],
+          category: dto.category,
           area: dto.area,
           compensation: dto.compensation,
-          compensationType: dto.compensationType as InsertJobPost['compensationType'],
+          compensationType: dto.compensationType,
           slots: dto.slots,
           startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
           endsAt: dto.endsAt ? new Date(dto.endsAt) : undefined,
@@ -137,11 +137,11 @@ export class JobPostsService {
     if (dto.title !== undefined) updates.title = dto.title;
     if (dto.descriptionAr !== undefined) updates.descriptionAr = dto.descriptionAr;
     if (dto.descriptionEn !== undefined) updates.descriptionEn = dto.descriptionEn;
-    if (dto.category !== undefined) updates.category = dto.category as InsertJobPost['category'];
+    if (dto.category !== undefined) updates.category = dto.category;
     if (dto.area !== undefined) updates.area = dto.area;
     if (dto.compensation !== undefined) updates.compensation = dto.compensation;
     if (dto.compensationType !== undefined)
-      updates.compensationType = dto.compensationType as InsertJobPost['compensationType'];
+      updates.compensationType = dto.compensationType;
     if (dto.slots !== undefined) updates.slots = dto.slots;
     if (dto.startsAt !== undefined) updates.startsAt = new Date(dto.startsAt);
     if (dto.endsAt !== undefined) updates.endsAt = new Date(dto.endsAt);
