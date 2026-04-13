@@ -24,6 +24,10 @@ import type {
   BestSeason,
   BestTimeOfDay,
   Difficulty,
+  JobCategory,
+  JobStatus,
+  ApplicationStatus,
+  CompensationType,
 } from '@/lib/format';
 import { apiFetchWithRefresh } from './auth-manager';
 
@@ -1910,4 +1914,134 @@ export const benefitsAPI = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+};
+
+// ── Employment Board ─────────────────────────────────────────────────────────
+
+export type ReviewDirection = 'worker_rates_poster' | 'poster_rates_worker';
+
+export interface JobPost {
+  id: string;
+  posterId: string;
+  title: string;
+  descriptionAr: string;
+  descriptionEn: string | null;
+  category: JobCategory;
+  area: string;
+  compensation: number; // piasters
+  compensationType: CompensationType;
+  slots: number;
+  status: JobStatus;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+}
+
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  applicantId: string;
+  noteAr: string | null;
+  status: ApplicationStatus;
+  appliedAt: string;
+  resolvedAt: string | null;
+  jobTitle?: string;
+}
+
+export interface JobReview {
+  id: string;
+  jobId: string;
+  applicationId: string;
+  reviewerId: string;
+  revieweeId: string;
+  direction: ReviewDirection;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export const jobsAPI = {
+  getAll: (params?: {
+    category?: string;
+    area?: string;
+    compensationType?: string;
+    offset?: number;
+    limit?: number;
+  }) => apiFetch<PaginatedResponse<JobPost>>(`/jobs${toQueryString(params)}`),
+
+  getById: (id: string) => apiFetch<JobPost>(`/jobs/${id}`),
+
+  create: (body: {
+    title: string;
+    descriptionAr: string;
+    descriptionEn?: string;
+    category: JobCategory;
+    area: string;
+    compensation: number;
+    compensationType: CompensationType;
+    slots?: number;
+    startsAt?: string;
+    endsAt?: string;
+  }) => apiFetchWithRefresh<JobPost>('/jobs', { method: 'POST', body: JSON.stringify(body) }),
+
+  apply: (jobId: string, body: { noteAr?: string }) =>
+    apiFetchWithRefresh<JobApplication>(`/jobs/${jobId}/apply`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getApplications: (jobId: string) =>
+    apiFetchWithRefresh<PaginatedResponse<JobApplication>>(`/jobs/${jobId}/applications`),
+
+  updateApplication: (jobId: string, appId: string, body: { status: ApplicationStatus }) =>
+    apiFetchWithRefresh<JobApplication>(`/jobs/${jobId}/applications/${appId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  withdrawApplication: (jobId: string, appId: string) =>
+    apiFetchWithRefresh<void>(`/jobs/${jobId}/applications/${appId}`, { method: 'DELETE' }),
+
+  submitReview: (
+    jobId: string,
+    appId: string,
+    body: { direction: string; rating: number; comment?: string },
+  ) =>
+    apiFetchWithRefresh<JobReview>(`/jobs/${jobId}/applications/${appId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getUserReviews: (userId: string, role?: 'reviewer' | 'reviewee') =>
+    apiFetch<PaginatedResponse<JobReview>>(
+      `/users/${userId}/job-reviews${role ? `?role=${role}` : ''}`,
+    ),
+
+  getMyApplications: () =>
+    apiFetchWithRefresh<PaginatedResponse<JobApplication>>('/jobs/my-applications'),
+
+  getMyPosts: () => apiFetchWithRefresh<PaginatedResponse<JobPost>>('/jobs/my-posts'),
+
+  updateJob: (
+    id: string,
+    body: Partial<{
+      title: string;
+      descriptionAr: string;
+      descriptionEn: string;
+      category: JobCategory;
+      area: string;
+      compensation: number;
+      compensationType: CompensationType;
+      slots: number;
+      status: JobStatus;
+      startsAt: string;
+      endsAt: string;
+    }>,
+  ) =>
+    apiFetchWithRefresh<JobPost>(`/jobs/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  deleteJob: (id: string) => apiFetchWithRefresh<void>(`/jobs/${id}`, { method: 'DELETE' }),
 };

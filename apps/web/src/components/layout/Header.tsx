@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
   Bell,
+  Briefcase,
   CalendarCheck,
   ChevronDown,
   Languages,
@@ -37,6 +38,8 @@ type HeaderCopy = {
   accountMenu: string;
   beta: string;
   bookings: string;
+  myApplications: string;
+  myPosts: string;
   brand: string;
   inquiries: string;
   languageSwitchArabicError: string;
@@ -64,6 +67,8 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
     accountMenu: 'قائمة الحساب',
     beta: 'تجريبي',
     bookings: 'حجوزاتي',
+    myApplications: 'طلباتي الوظيفية',
+    myPosts: 'وظائفي المنشورة',
     brand: 'هُنَا وَادِينَا',
     inquiries: 'استفسارات الإعلانات',
     languageSwitchArabicError: 'تعذر التبديل إلى العربية',
@@ -86,6 +91,8 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
     accountMenu: 'Account menu',
     beta: 'Beta',
     bookings: 'My bookings',
+    myApplications: 'My job applications',
+    myPosts: 'My job posts',
     brand: 'Hena Wadeena',
     inquiries: 'Marketplace inquiries',
     languageSwitchArabicError: 'Could not switch to Arabic',
@@ -117,6 +124,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           marketplace: 'Marketplace',
           logistics: 'Logistics',
           investment: 'Investment',
+          jobs: 'Jobs',
         }
       : {
           home: 'الرئيسية',
@@ -126,6 +134,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           marketplace: 'البورصة',
           logistics: 'اللوجستيات',
           investment: 'الاستثمار',
+          jobs: 'التوظيف',
         };
 
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
@@ -174,6 +183,12 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       href: '/investment',
       label: labels.investment,
       matcher: (pathname) => pathname.startsWith('/investment'),
+    },
+    {
+      key: 'jobs',
+      href: '/jobs',
+      label: labels.jobs,
+      matcher: (pathname) => pathname.startsWith('/jobs'),
     },
   ];
 }
@@ -458,6 +473,22 @@ export function Header() {
                           {copy.inquiries}
                         </Link>
                         <Link
+                          to="/jobs/my-applications"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                        >
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          {copy.myApplications}
+                        </Link>
+                        <Link
+                          to="/jobs/my-posts"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                        >
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          {copy.myPosts}
+                        </Link>
+                        <Link
                           to="/wallet"
                           onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
@@ -633,6 +664,22 @@ export function Header() {
                     >
                       <MessageSquare className="h-5 w-5 text-muted-foreground" />
                       {copy.inquiries}
+                    </Link>
+                    <Link
+                      to="/jobs/my-applications"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                    >
+                      <Briefcase className="h-5 w-5 text-muted-foreground" />
+                      {copy.myApplications}
+                    </Link>
+                    <Link
+                      to="/jobs/my-posts"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                    >
+                      <Briefcase className="h-5 w-5 text-muted-foreground" />
+                      {copy.myPosts}
                     </Link>
                     <Link
                       to="/wallet"

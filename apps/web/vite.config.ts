@@ -10,6 +10,8 @@ export default defineConfig({
       overlay: false,
     },
     proxy: {
+      // Market service (:8002) — must precede /api/v1/users (identity) to win for job-reviews sub-route
+      '^/api/v1/users/[^/]+/job-reviews': { target: 'http://localhost:8002', changeOrigin: true },
       // Identity service (:8001)
       '/api/v1/auth': { target: 'http://localhost:8001', changeOrigin: true },
       '/api/v1/users': { target: 'http://localhost:8001', changeOrigin: true },
@@ -18,6 +20,8 @@ export default defineConfig({
       '/api/v1/notifications': { target: 'http://localhost:8001', changeOrigin: true },
       '/api/v1/saved-items': { target: 'http://localhost:8001', changeOrigin: true },
       '/api/v1/search': { target: 'http://localhost:8001', changeOrigin: true },
+      // Market service (:8002) — jobs
+      '/api/v1/jobs': { target: 'http://localhost:8002', changeOrigin: true },
       // Market service (:8002)
       '/api/v1/listings': { target: 'http://localhost:8002', changeOrigin: true },
       '/api/v1/market': { target: 'http://localhost:8002', changeOrigin: true },
