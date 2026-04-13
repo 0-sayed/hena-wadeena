@@ -10,7 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { useAuth } from '@/hooks/use-auth';
-import { useJob, useMyApplications, useApplyMutation } from '@/hooks/use-jobs';
+import {
+  useJob,
+  useMyApplications,
+  useApplyMutation,
+  useDeleteJobMutation,
+} from '@/hooks/use-jobs';
 import { usePublicUsers } from '@/hooks/use-users';
 import { pickLocalizedField } from '@/lib/localization';
 import {
@@ -31,7 +36,11 @@ export default function JobDetailPage() {
 
   const { data: job, isLoading, isError, refetch } = useJob(id);
   const posterProfiles = usePublicUsers(job ? [job.posterId] : []);
-  const { data: myAppsData } = useMyApplications(isAuthenticated);
+  const {
+    data: myAppsData,
+    isLoading: isLoadingMyApps,
+    isError: isMyAppsError,
+  } = useMyApplications(isAuthenticated);
 
   const myApplication = myAppsData?.data?.find(
     (app) => app.jobId === id && app.status !== 'withdrawn',
@@ -39,6 +48,19 @@ export default function JobDetailPage() {
   const isPoster = user?.id === job?.posterId;
 
   const applyMutation = useApplyMutation(id ?? '');
+  const deleteMutation = useDeleteJobMutation();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  async function handleDelete() {
+    if (!id) return;
+    try {
+      await deleteMutation.mutateAsync(id);
+      toast.success('تم حذف الوظيفة');
+      void navigate('/jobs/my-posts');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'تعذر حذف الوظيفة');
+    }
+  }
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [noteAr, setNoteAr] = useState('');
 
@@ -83,7 +105,13 @@ export default function JobDetailPage() {
     );
   }
 
-  const canApply = isAuthenticated && !isPoster && job.status === 'open' && !myApplication;
+  const canApply =
+    isAuthenticated &&
+    !isPoster &&
+    job.status === 'open' &&
+    !isLoadingMyApps &&
+    !isMyAppsError &&
+    !myApplication;
 
   return (
     <Layout title="تفاصيل الوظيفة">
@@ -231,6 +259,39 @@ export default function JobDetailPage() {
                     <Button asChild variant="outline" className="w-full">
                       <Link to="/jobs/my-posts">إدارة الطلبات</Link>
                     </Button>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to={`/jobs/${id ?? ''}/edit`}>تعديل الوظيفة</Link>
+                    </Button>
+                    {!showDeleteConfirm ? (
+                      <Button
+                        variant="outline"
+                        className="w-full text-destructive hover:bg-destructive/10"
+                        onClick={() => setShowDeleteConfirm(true)}
+                      >
+                        حذف الوظيفة
+                      </Button>
+                    ) : (
+                      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 space-y-2">
+                        <p className="text-sm text-destructive">هل أنت متأكد من حذف هذه الوظيفة؟</p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => void handleDelete()}
+                            disabled={deleteMutation.isPending}
+                          >
+                            {deleteMutation.isPending ? 'جارٍ...' : 'تأكيد الحذف'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowDeleteConfirm(false)}
+                          >
+                            إلغاء
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}

@@ -29,9 +29,11 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
 function ApplicationRow({
   app,
   workerRatings,
+  reviewsReady,
 }: {
   app: JobApplication;
   workerRatings: { applicationId: string }[];
+  reviewsReady: boolean;
 }) {
   const withdrawMutation = useWithdrawApplicationMutation(app.jobId);
   const [showReview, setShowReview] = useState(false);
@@ -56,7 +58,7 @@ function ApplicationRow({
             to={`/jobs/${app.jobId}`}
             className="font-semibold text-foreground hover:text-primary transition-colors"
           >
-            الوظيفة #{app.jobId.slice(0, 8)}
+            {app.jobTitle ?? `الوظيفة #${app.jobId.slice(0, 8)}`}
           </Link>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span>تقدمت في {new Date(app.appliedAt).toLocaleDateString('ar-EG')}</span>
@@ -81,7 +83,7 @@ function ApplicationRow({
             {withdrawMutation.isPending ? 'جارٍ...' : 'سحب الطلب'}
           </Button>
         )}
-        {app.status === 'completed' && !hasRated && !showReview && (
+        {reviewsReady && app.status === 'completed' && !hasRated && !showReview && (
           <Button size="sm" variant="outline" onClick={() => setShowReview(true)}>
             تقييم صاحب العمل
           </Button>
@@ -92,6 +94,7 @@ function ApplicationRow({
         <ReviewForm
           jobId={app.jobId}
           appId={app.id}
+          direction="worker_rates_poster"
           label="تقييم صاحب العمل"
           onDone={() => setShowReview(false)}
         />
@@ -105,10 +108,12 @@ function ApplicationRow({
 export default function MyApplicationsPage() {
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useMyApplications(true);
-  const { data: myReviews } = useUserReviews(user?.id);
+  const { data: myReviews, isLoading: isLoadingReviews } = useUserReviews(user?.id, 'reviewer');
   const apps = data?.data ?? [];
 
-  const workerRatings = (myReviews ?? []).filter((r) => r.direction === 'worker_rates_poster');
+  const workerRatings = (myReviews?.data ?? []).filter(
+    (r) => r.direction === 'worker_rates_poster',
+  );
 
   if (isLoading) {
     return (
@@ -151,7 +156,12 @@ export default function MyApplicationsPage() {
           ) : (
             <div className="space-y-3">
               {apps.map((app) => (
-                <ApplicationRow key={app.id} app={app} workerRatings={workerRatings} />
+                <ApplicationRow
+                  key={app.id}
+                  app={app}
+                  workerRatings={workerRatings}
+                  reviewsReady={!isLoadingReviews}
+                />
               ))}
             </div>
           )}

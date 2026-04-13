@@ -231,3 +231,24 @@ export enum AlertDirection {
   ABOVE = 'above',
   BELOW = 'below',
 }
+
+export enum JobCategory {
+  AGRICULTURE = 'agriculture',
+  TOURISM = 'tourism',
+  SKILLED_TRADE = 'skilled_trade',
+  DOMESTIC = 'domestic',
+  LOGISTICS = 'logistics',
+  HANDICRAFT = 'handicraft',
+}
+
+export enum CompensationType {
+  FIXED = 'fixed',
+  DAILY = 'daily',
+  PER_KG = 'per_kg',
+  NEGOTIABLE = 'negotiable',
+}
+
+export enum ReviewDirection {
+  WORKER_RATES_POSTER = 'worker_rates_poster',
+  POSTER_RATES_WORKER = 'poster_rates_worker',
+}

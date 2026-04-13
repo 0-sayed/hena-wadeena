@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateJobMutation } from '@/hooks/use-jobs';
+import { useAuth } from '@/hooks/use-auth';
+import { useJob, useUpdateJobMutation } from '@/hooks/use-jobs';
 import { JOB_CATEGORY_OPTIONS, COMPENSATION_TYPE_OPTIONS, DISTRICTS } from '@/lib/format';
 import { JobCategory, CompensationType } from '@/lib/format';
 import { parseCompensationToPiasters, parseSlots } from '@/pages/jobs/job-form.utils';
@@ -32,32 +34,40 @@ type FormState = {
   endsAt: string;
 };
 
-const empty: FormState = {
-  title: '',
-  descriptionAr: '',
-  descriptionEn: '',
-  category: JobCategory.AGRICULTURE,
-  area: 'kharga',
-  compensationEgp: '',
-  compensationType: CompensationType.FIXED,
-  slots: '1',
-  startsAt: '',
-  endsAt: '',
-};
-
-export default function PostJobPage() {
+export default function EditJobPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState<FormState>(empty);
-  const createMutation = useCreateJobMutation();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { data: job, isLoading, isError } = useJob(id);
+  const updateMutation = useUpdateJobMutation(id ?? '');
+
+  const [form, setForm] = useState<FormState | null>(null);
+
+  useEffect(() => {
+    if (!job) return;
+    setForm({
+      title: job.title,
+      descriptionAr: job.descriptionAr,
+      descriptionEn: job.descriptionEn ?? '',
+      category: job.category,
+      area: job.area,
+      compensationEgp: String(job.compensation / 100),
+      compensationType: job.compensationType,
+      slots: String(job.slots),
+      startsAt: job.startsAt ? job.startsAt.slice(0, 10) : '',
+      endsAt: job.endsAt ? job.endsAt.slice(0, 10) : '',
+    });
+  }, [job]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
   const toIsoDateTime = (date: string) => `${date}T00:00:00.000Z`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form) return;
 
     if (!form.title.trim()) {
       toast.error('عنوان الوظيفة مطلوب');
@@ -79,7 +89,7 @@ export default function PostJobPage() {
     }
 
     try {
-      const job = await createMutation.mutateAsync({
+      await updateMutation.mutateAsync({
         title: form.title.trim(),
         descriptionAr: form.descriptionAr.trim(),
         descriptionEn: form.descriptionEn.trim() || undefined,
@@ -91,18 +101,49 @@ export default function PostJobPage() {
         startsAt: form.startsAt ? toIsoDateTime(form.startsAt) : undefined,
         endsAt: form.endsAt ? toIsoDateTime(form.endsAt) : undefined,
       });
-      toast.success('تم نشر الوظيفة بنجاح');
-      void navigate(`/jobs/${job.id}`);
+      toast.success('تم تحديث الوظيفة');
+      void navigate(`/jobs/${id ?? ''}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر نشر الوظيفة');
+      toast.error(err instanceof Error ? err.message : 'تعذر تحديث الوظيفة');
     }
   }
 
+  if (isError || (!isLoading && !job)) {
+    return (
+      <Layout title="تعديل الوظيفة">
+        <div className="container py-20 text-center">
+          <p className="text-muted-foreground">تعذر تحميل الوظيفة.</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isLoading || !form || !job) {
+    return (
+      <Layout title="تعديل الوظيفة">
+        <div className="container py-10 space-y-4">
+          <Skeleton className="h-10 w-32 rounded-xl" />
+          <Skeleton className="h-64 rounded-2xl" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (job.posterId !== user?.id) {
+    return (
+      <Layout title="تعديل الوظيفة">
+        <div className="container py-20 text-center">
+          <p className="text-muted-foreground">غير مصرح لك بتعديل هذه الوظيفة.</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout title="نشر وظيفة">
+    <Layout title="تعديل الوظيفة">
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
-          <h1 className="mb-8 text-2xl font-bold text-foreground">نشر وظيفة جديدة</h1>
+          <h1 className="mb-8 text-2xl font-bold text-foreground">تعديل الوظيفة</h1>
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
             <Card className="border-border/50">
               <CardHeader>
@@ -248,14 +289,14 @@ export default function PostJobPage() {
             </Card>
 
             <div className="flex gap-3">
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'جارٍ النشر...' : 'نشر الوظيفة'}
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                disabled={createMutation.isPending}
-                onClick={() => void navigate('/jobs')}
+                disabled={updateMutation.isPending}
+                onClick={() => void navigate(`/jobs/${id ?? ''}`)}
               >
                 إلغاء
               </Button>

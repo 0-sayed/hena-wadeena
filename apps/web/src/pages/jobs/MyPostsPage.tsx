@@ -49,8 +49,9 @@ function ApplicantRow({
 }) {
   const updateMutation = useUpdateApplicationMutation(jobId);
   const [showReview, setShowReview] = useState(false);
+  const [submittedReview, setSubmittedReview] = useState(false);
 
-  const hasRated = posterRatings.some((r) => r.applicationId === app.id);
+  const hasRated = submittedReview || posterRatings.some((r) => r.applicationId === app.id);
   const initials = profile?.full_name ? getInitials(profile.full_name) : '?';
 
   async function updateStatus(newStatus: 'accepted' | 'rejected' | 'in_progress' | 'completed') {
@@ -126,8 +127,12 @@ function ApplicantRow({
         <ReviewForm
           jobId={jobId}
           appId={app.id}
+          direction="poster_rates_worker"
           label="تقييم العامل"
-          onDone={() => setShowReview(false)}
+          onDone={() => {
+            setShowReview(false);
+            setSubmittedReview(true);
+          }}
         />
       )}
     </div>
@@ -203,10 +208,12 @@ export default function MyPostsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useMyPosts(true);
-  const { data: myReviews } = useUserReviews(user?.id);
+  const { data: myReviews } = useUserReviews(user?.id, 'reviewer');
   const jobs = data?.data ?? [];
 
-  const posterRatings = (myReviews ?? []).filter((r) => r.direction === 'poster_rates_worker');
+  const posterRatings = (myReviews?.data ?? []).filter(
+    (r) => r.direction === 'poster_rates_worker',
+  );
 
   if (isLoading) {
     return (

@@ -2358,6 +2358,7 @@ export interface JobApplication {
   status: ApplicationStatus;
   appliedAt: string;
   resolvedAt: string | null;
+  jobTitle?: string;
 }
 
 export interface JobReview {
@@ -2414,18 +2415,48 @@ export const jobsAPI = {
   withdrawApplication: (jobId: string, appId: string) =>
     apiFetchWithRefresh<void>(`/jobs/${jobId}/applications/${appId}`, { method: 'DELETE' }),
 
-  submitReview: (jobId: string, appId: string, body: { rating: number; comment?: string }) =>
+  submitReview: (
+    jobId: string,
+    appId: string,
+    body: { direction: string; rating: number; comment?: string },
+  ) =>
     apiFetchWithRefresh<JobReview>(`/jobs/${jobId}/applications/${appId}/reviews`, {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
-  getUserReviews: (userId: string) => apiFetch<JobReview[]>(`/users/${userId}/job-reviews`),
+  getUserReviews: (userId: string, role?: 'reviewer' | 'reviewee') =>
+    apiFetch<PaginatedResponse<JobReview>>(
+      `/users/${userId}/job-reviews${role ? `?role=${role}` : ''}`,
+    ),
 
   getMyApplications: () =>
     apiFetchWithRefresh<PaginatedResponse<JobApplication>>('/jobs/my-applications'),
 
   getMyPosts: () => apiFetchWithRefresh<PaginatedResponse<JobPost>>('/jobs/my-posts'),
+
+  updateJob: (
+    id: string,
+    body: Partial<{
+      title: string;
+      descriptionAr: string;
+      descriptionEn: string;
+      category: JobCategory;
+      area: string;
+      compensation: number;
+      compensationType: CompensationType;
+      slots: number;
+      status: JobStatus;
+      startsAt: string;
+      endsAt: string;
+    }>,
+  ) =>
+    apiFetchWithRefresh<JobPost>(`/jobs/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  deleteJob: (id: string) => apiFetchWithRefresh<void>(`/jobs/${id}`, { method: 'DELETE' }),
 };
 
 // ── Desert Trips (Guide Safety) ─────────────────────────────────────────────

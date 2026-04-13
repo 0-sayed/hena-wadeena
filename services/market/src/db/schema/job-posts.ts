@@ -1,6 +1,6 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { sql } from 'drizzle-orm';
-import { check, date, index, integer, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { check, index, integer, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { compensationTypeEnum, jobCategoryEnum, jobStatusEnum } from '../enums';
 import { marketSchema } from '../schema';
@@ -19,14 +19,19 @@ export const jobPosts = marketSchema.table(
     compensationType: compensationTypeEnum('compensation_type').notNull(),
     slots: integer().default(1).notNull(),
     status: jobStatusEnum().default('open').notNull(),
-    startsAt: date('starts_at'),
-    endsAt: date('ends_at'),
+    startsAt: timestamp('starts_at', { withTimezone: true }),
+    endsAt: timestamp('ends_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
     check('job_posts_compensation_non_negative', sql`${t.compensation} >= 0`),
     check('job_posts_slots_positive', sql`${t.slots} >= 1`),
+    check(
+      'job_posts_valid_date_range',
+      sql`${t.startsAt} IS NULL OR ${t.endsAt} IS NULL OR ${t.endsAt} >= ${t.startsAt}`,
+    ),
     index('idx_job_posts_poster_id').on(t.posterId),
     index('idx_job_posts_status').on(t.status),
     index('idx_job_posts_category').on(t.category),

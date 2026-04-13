@@ -6,7 +6,8 @@ import type {
   PriceType,
   TransactionType,
 } from '@hena-wadeena/types';
-import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
+import { GuideLanguage, GuideSpecialty, JobCategory, CompensationType } from '@hena-wadeena/types';
+export { JobCategory, CompensationType } from '@hena-wadeena/types';
 export { piastresToEgp } from '@hena-wadeena/types';
 import type { AppLanguage } from './localization';
 
@@ -399,13 +400,6 @@ export function specialtyLabel(value: string, language: AppLanguage = 'ar'): str
 
 // ── Job Board label maps ────────────────────────────────────────────────────
 
-export type JobCategory =
-  | 'agriculture'
-  | 'tourism'
-  | 'skilled_trade'
-  | 'domestic'
-  | 'logistics'
-  | 'handicraft';
 export type JobStatus = 'open' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
 export type ApplicationStatus =
   | 'pending'
@@ -414,7 +408,6 @@ export type ApplicationStatus =
   | 'withdrawn'
   | 'in_progress'
   | 'completed';
-export type CompensationType = 'fixed' | 'daily' | 'per_kg' | 'negotiable';
 
 const jobCategoryLabels: Record<JobCategory, string> = {
   agriculture: 'زراعة',

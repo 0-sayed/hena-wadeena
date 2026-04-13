@@ -55,10 +55,13 @@ export function useMyPosts(isAuthenticated = true) {
   });
 }
 
-export function useUserReviews(userId: string | undefined) {
+export function useUserReviews(
+  userId: string | undefined,
+  role: 'reviewer' | 'reviewee' = 'reviewee',
+) {
   return useQuery({
-    queryKey: queryKeys.jobs.userReviews(userId ?? ''),
-    queryFn: () => jobsAPI.getUserReviews(userId!),
+    queryKey: [...queryKeys.jobs.userReviews(userId ?? ''), role] as const,
+    queryFn: () => jobsAPI.getUserReviews(userId!, role),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
   });
@@ -110,10 +113,32 @@ export function useWithdrawApplicationMutation(jobId: string) {
   });
 }
 
+export function useUpdateJobMutation(jobId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Parameters<typeof jobsAPI.updateJob>[1]) => jobsAPI.updateJob(jobId, body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(jobId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.myPosts() });
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
+}
+
+export function useDeleteJobMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => jobsAPI.deleteJob(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
+}
+
 export function useSubmitReviewMutation(jobId: string, appId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { rating: number; comment?: string }) =>
+    mutationFn: (body: { direction: string; rating: number; comment?: string }) =>
       jobsAPI.submitReview(jobId, appId, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.reviews() });

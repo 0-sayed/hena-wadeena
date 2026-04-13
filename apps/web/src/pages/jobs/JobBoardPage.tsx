@@ -26,6 +26,7 @@ import {
   DISTRICTS_WITH_ALL,
 } from '@/lib/format';
 import { UserRole } from '@hena-wadeena/types';
+import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import type { JobPost } from '@/services/api';
 
 const CATEGORY_BADGE_COLOR: Record<string, string> = {
@@ -72,7 +73,8 @@ function JobCard({ job, onClick }: { job: JobPost; onClick: () => void }) {
 export default function JobBoardPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, language } = useAuth();
+  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const canPost =
     user?.role === UserRole.MERCHANT ||
     user?.role === UserRole.FARMER ||
@@ -109,14 +111,16 @@ export default function JobBoardPage() {
   }
 
   return (
-    <Layout title="لوحة التوظيف">
+    <Layout title={pickLocalizedCopy(appLanguage, { ar: 'لوحة التوظيف', en: 'Employment Board' })}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           {/* Header */}
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Briefcase className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl">لوحة التوظيف</h1>
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+                {pickLocalizedCopy(appLanguage, { ar: 'لوحة التوظيف', en: 'Employment Board' })}
+              </h1>
             </div>
             {canPost && (
               <Button onClick={() => void navigate('/jobs/post')}>

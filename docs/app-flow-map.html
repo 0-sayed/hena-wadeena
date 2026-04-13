@@ -1,0 +1,2416 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hena Wadeena — Complete App Flow Map</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #0d1117;
+        color: #e6edf3;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+      }
+      #sidebar {
+        width: 236px;
+        min-width: 236px;
+        background: #161b22;
+        border-right: 1px solid #30363d;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #sidebar-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+      }
+      #sidebar-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      #sidebar-scroll::-webkit-scrollbar-thumb {
+        background: #30363d;
+        border-radius: 2px;
+      }
+      .sb-section {
+        margin-bottom: 14px;
+      }
+      .sb-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7d8590;
+        margin-bottom: 5px;
+      }
+      .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .preset-btn,
+      .role-btn {
+        background: #21262d;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        border-radius: 5px;
+        padding: 5px 9px;
+        font-size: 11px;
+        cursor: pointer;
+        text-align: left;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+      }
+      .preset-btn:hover,
+      .role-btn:hover {
+        background: #30363d;
+        border-color: #58a6ff;
+      }
+      .preset-btn.active,
+      .role-btn.active {
+        background: #1c2d3e;
+        border-color: #58a6ff;
+        color: #58a6ff;
+      }
+      .domain-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 0;
+        cursor: pointer;
+        font-size: 11px;
+        color: #c9d1d9;
+      }
+      .domain-item input {
+        accent-color: #58a6ff;
+        cursor: pointer;
+        width: 13px;
+        height: 13px;
+      }
+      .domain-item:hover {
+        color: #e6edf3;
+      }
+      #node-info {
+        padding: 10px;
+        border-top: 1px solid #30363d;
+        min-height: 110px;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+      .ni-empty {
+        font-size: 12px;
+        color: #7d8590;
+        text-align: center;
+        padding: 18px 0;
+      }
+      .ni-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e6edf3;
+        margin-bottom: 3px;
+      }
+      .ni-route {
+        font-size: 10px;
+        color: #7d8590;
+        font-family: monospace;
+        margin-bottom: 6px;
+      }
+      .ni-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 10px;
+        margin-bottom: 5px;
+      }
+      .badge-public {
+        background: #1d3461;
+        color: #58a6ff;
+        border: 1px solid #58a6ff;
+      }
+      .badge-auth {
+        background: #1a3a2a;
+        color: #3fb950;
+        border: 1px solid #3fb950;
+      }
+      .badge-role {
+        background: #2d1b4e;
+        color: #bc8cff;
+        border: 1px solid #bc8cff;
+      }
+      .badge-admin {
+        background: #3a1c1c;
+        color: #f85149;
+        border: 1px solid #f85149;
+      }
+      .badge-global {
+        background: #2a1f14;
+        color: #f0883e;
+        border: 1px solid #f0883e;
+      }
+      .ni-desc {
+        font-size: 11px;
+        color: #8b949e;
+        line-height: 1.5;
+        margin-bottom: 5px;
+      }
+      .ni-features {
+        margin-top: 5px;
+      }
+      .ni-feat-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7d8590;
+        margin-bottom: 3px;
+      }
+      .ni-feat-item {
+        font-size: 11px;
+        color: #8b949e;
+        padding: 1px 0;
+      }
+      .ni-feat-item::before {
+        content: '· ';
+        color: #444c56;
+      }
+      .ni-roles {
+        font-size: 10px;
+        color: #7d8590;
+        margin-bottom: 5px;
+      }
+      .ni-tabs {
+        margin-top: 6px;
+      }
+      .ni-tab-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #d29922;
+        margin-bottom: 3px;
+      }
+      .ni-tab-item {
+        font-size: 11px;
+        color: #8b949e;
+        padding: 1px 0;
+      }
+      .ni-tab-item::before {
+        content: '⇥ ';
+        color: #d29922;
+        font-size: 9px;
+      }
+      .flow-btn {
+        background: #21262d;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        border-radius: 5px;
+        padding: 6px 9px;
+        font-size: 11px;
+        cursor: pointer;
+        text-align: left;
+        transition: background 0.12s;
+        width: 100%;
+        margin-bottom: 3px;
+        display: block;
+      }
+      .flow-btn:hover {
+        background: #30363d;
+      }
+      .flow-btn.active {
+        background: #1a2538;
+      }
+      .flow-btn-name {
+        font-weight: 600;
+        display: block;
+        font-size: 11px;
+      }
+      .flow-btn-desc {
+        font-size: 10px;
+        color: #7d8590;
+        display: block;
+        margin-top: 2px;
+        line-height: 1.35;
+      }
+      .flow-btn-steps {
+        font-size: 9px;
+        color: #444c56;
+        display: block;
+        margin-top: 2px;
+      }
+      #flow-clear-btn {
+        background: #2d1b1b;
+        border: 1px solid #f85149;
+        color: #f85149;
+        border-radius: 5px;
+        padding: 5px 8px;
+        font-size: 10px;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 6px;
+        transition: background 0.12s;
+        text-align: left;
+        display: none;
+      }
+      #flow-clear-btn:hover {
+        background: #3a1c1c;
+      }
+      #canvas-wrap {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #0d1117;
+      }
+      #svg-canvas {
+        cursor: grab;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      #svg-canvas.panning {
+        cursor: grabbing;
+      }
+      #zoom-controls {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        z-index: 10;
+      }
+      .zoom-btn {
+        background: #21262d;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        font-size: 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.12s;
+      }
+      .zoom-btn:hover {
+        background: #30363d;
+      }
+      #legend {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 7px;
+        padding: 9px 12px;
+        font-size: 11px;
+        z-index: 10;
+      }
+      .leg-title {
+        font-weight: 600;
+        color: #7d8590;
+        margin-bottom: 5px;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .leg-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 3px;
+        color: #8b949e;
+        font-size: 11px;
+      }
+      .leg-box {
+        width: 11px;
+        height: 11px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+      .leg-dline {
+        width: 22px;
+        height: 0;
+        flex-shrink: 0;
+        border-top: 2px solid;
+      }
+      .leg-sline {
+        width: 22px;
+        height: 0;
+        flex-shrink: 0;
+        border-top: 1.5px solid;
+      }
+      #stat-bar {
+        position: absolute;
+        top: 8px;
+        right: 16px;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 5px;
+        padding: 5px 10px;
+        font-size: 10px;
+        color: #7d8590;
+        z-index: 10;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sidebar">
+      <div id="sidebar-scroll">
+        <div class="sb-section">
+          <div class="sb-label">Presets</div>
+          <div class="btn-group" id="preset-btns"></div>
+        </div>
+        <div class="sb-section">
+          <div class="sb-label">Role Filter</div>
+          <div class="btn-group" id="role-btns"></div>
+        </div>
+        <div class="sb-section">
+          <div class="sb-label">Domains</div>
+          <div id="domain-checks"></div>
+        </div>
+        <div class="sb-section">
+          <div class="sb-label">User Flows</div>
+          <div id="flow-btns"></div>
+        </div>
+      </div>
+      <div id="node-info"></div>
+    </div>
+
+    <div id="canvas-wrap">
+      <svg id="svg-canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="stat-bar"></div>
+      <div id="zoom-controls">
+        <button class="zoom-btn" id="btn-zin" title="Zoom in">+</button>
+        <button class="zoom-btn" id="btn-zreset" title="Reset view">⌂</button>
+        <button class="zoom-btn" id="btn-zout" title="Zoom out">−</button>
+      </div>
+      <div id="legend">
+        <div class="leg-title">Access Level</div>
+        <div class="leg-row">
+          <div class="leg-box" style="background: #1d3461; border: 1px solid #58a6ff"></div>
+          Public
+        </div>
+        <div class="leg-row">
+          <div class="leg-box" style="background: #1a3a2a; border: 1px solid #3fb950"></div>
+          Auth required
+        </div>
+        <div class="leg-row">
+          <div class="leg-box" style="background: #2d1b4e; border: 1px solid #bc8cff"></div>
+          Role-gated
+        </div>
+        <div class="leg-row">
+          <div class="leg-box" style="background: #3a1c1c; border: 1px solid #f85149"></div>
+          Admin only
+        </div>
+        <div class="leg-row">
+          <div class="leg-box" style="background: #2a1f14; border: 1px solid #f0883e"></div>
+          Global widget
+        </div>
+        <div class="leg-title" style="margin-top: 7px">Connections</div>
+        <div class="leg-row">
+          <div class="leg-sline" style="border-color: #58a6ff"></div>
+          Navigate
+        </div>
+        <div class="leg-row">
+          <div class="leg-dline" style="border-color: #3fb950; border-style: dashed"></div>
+          Auth gate
+        </div>
+        <div class="leg-row">
+          <div class="leg-dline" style="border-color: #bc8cff; border-style: dashed"></div>
+          Role gate
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const NW = 156,
+        NH = 44,
+        GAP = NW + 14;
+
+      const DOMAINS = [
+        'home',
+        'auth',
+        'tourism',
+        'guides',
+        'marketplace',
+        'logistics',
+        'investment',
+        'jobs',
+        'benefits',
+        'search',
+        'profile',
+        'dashboard',
+        'admin',
+      ];
+
+      const ACCESS_STYLE = {
+        public: { fill: '#1d3461', stroke: '#58a6ff' },
+        auth: { fill: '#1a3a2a', stroke: '#3fb950' },
+        role: { fill: '#2d1b4e', stroke: '#bc8cff' },
+        admin: { fill: '#3a1c1c', stroke: '#f85149' },
+        global: { fill: '#2a1f14', stroke: '#f0883e' },
+      };
+
+      const CONN_STYLE = {
+        nav: { stroke: '#58a6ff', dash: 'none', w: 1.5 },
+        auth: { stroke: '#3fb950', dash: '6,3', w: 1.5 },
+        role: { stroke: '#bc8cff', dash: '5,4', w: 1.5 },
+      };
+
+      // ── ROW Y POSITIONS ────────────────────────────────────────────────────────────
+      const ROW = {
+        home: 40,
+        public: 180,
+        auth: 320,
+        actions: 460,
+        profile: 600,
+        dashboards: 740,
+        admin: 880,
+      };
+
+      // ── NODES ─────────────────────────────────────────────────────────────────────
+      const nodes = [
+        // ── HOME ──────────────────────────────────────────────────────────────────
+        {
+          id: 'home',
+          label: 'Home',
+          route: '/',
+          domain: 'home',
+          access: 'public',
+          desc: 'Landing page for New Valley Governorate platform.',
+          features: [
+            'Hero banner',
+            'Quick-access cards for all services',
+            'News & announcements',
+            'Overview of all platform capabilities',
+          ],
+        },
+
+        // ── AI CHAT (global widget – floats on every page) ────────────────────────
+        {
+          id: 'ai-chat',
+          label: 'AI Assistant',
+          route: '[floating widget]',
+          domain: 'home',
+          access: 'global',
+          desc: 'AI-powered chatbot available site-wide. Answers questions about tourism, services, and platform features.',
+          features: [
+            'Persistent chat sessions',
+            'Domain-specific Q&A',
+            'Source citations',
+            'Create / continue sessions',
+            'Close session',
+          ],
+        },
+
+        // ── AUTH ──────────────────────────────────────────────────────────────────
+        {
+          id: 'login',
+          label: 'Login',
+          route: '/login',
+          domain: 'auth',
+          access: 'public',
+          desc: 'User sign-in.',
+          features: ['Email + password', 'JWT access + refresh tokens', 'Redirect after login'],
+        },
+        {
+          id: 'register',
+          label: 'Register',
+          route: '/register',
+          domain: 'auth',
+          access: 'public',
+          desc: 'New user registration — pick one of 9 roles.',
+          features: [
+            'Role picker: Tourist, Resident, Student, Guide, Merchant, Driver, Investor, Farmer',
+            'Personal info',
+            'Triggers KYC for professional roles',
+          ],
+        },
+        {
+          id: 'kyc',
+          label: 'KYC / Onboarding',
+          route: '/kyc/continue',
+          domain: 'auth',
+          access: 'public',
+          desc: 'Identity verification after registration (required for Guide, Merchant, Driver, Investor, Student, Farmer).',
+          features: [
+            'Document upload',
+            'ID scan',
+            'Awaiting admin approval state',
+            'KycVerifiedGuard — blocks certain actions until approved',
+          ],
+        },
+        {
+          id: 'pw-request',
+          label: 'Reset Password Request',
+          route: '/password-reset/request',
+          domain: 'auth',
+          access: 'public',
+          desc: 'Request a password reset email.',
+          features: ['Email input', 'Rate-limited', 'Send reset link'],
+        },
+        {
+          id: 'pw-confirm',
+          label: 'Confirm Password Reset',
+          route: '/password-reset/confirm',
+          domain: 'auth',
+          access: 'public',
+          desc: 'Set a new password via token from email.',
+          features: ['Token validation', 'New password + confirm'],
+        },
+
+        // ── TOURISM ───────────────────────────────────────────────────────────────
+        {
+          id: 'tourism',
+          label: 'Tourism Hub',
+          route: '/tourism',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Main tourism landing page with 4 tabs.',
+          tabs: ['Attractions tab', 'Guides tab', 'Tour Packages tab', 'Accommodations tab'],
+          features: [
+            'Featured section per tab (6 items)',
+            'All-items grid with Load More',
+            'Cross-tab search',
+          ],
+        },
+        {
+          id: 'attractions',
+          label: 'Attractions',
+          route: '/tourism/attractions',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Browse tourist attractions in New Valley.',
+          features: ['Map view', 'List/grid view', 'Category filter', 'Search', 'Ratings'],
+        },
+        {
+          id: 'attraction-detail',
+          label: 'Attraction Detail',
+          route: '/tourism/attraction/:slug',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Full detail page for one attraction.',
+          features: [
+            'Photo gallery',
+            'Description',
+            'Location map',
+            'Nearby attractions',
+            'Ratings',
+            'Book a guide CTA',
+          ],
+        },
+        {
+          id: 'packages',
+          label: 'Tour Packages',
+          route: '/tourism/packages',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Browse curated tour packages created by guides.',
+          features: [
+            'Package grid',
+            'Duration & price',
+            'Included attractions',
+            'Guide profile link',
+            'Book button',
+          ],
+        },
+        {
+          id: 'accom-list',
+          label: 'Accommodation',
+          route: '/tourism/accommodation',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Browse available accommodation options.',
+          features: ['List/grid view', 'Price range filter', 'Type filter', 'Location'],
+        },
+        {
+          id: 'accom-detail',
+          label: 'Accommodation Detail',
+          route: '/tourism/accommodation/:id',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Single accommodation listing.',
+          features: ['Photos', 'Amenities', 'Price per night', 'Availability', 'Inquire button'],
+        },
+        {
+          id: 'accom-inquiry',
+          label: 'Accommodation Inquiry',
+          route: '/tourism/accommodation-inquiry/:id',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Contact an accommodation host directly.',
+          features: ['Check-in/out dates', 'Guest count', 'Message', 'Contact info'],
+        },
+
+        // ── GUIDES ────────────────────────────────────────────────────────────────
+        {
+          id: 'guides',
+          label: 'Guides',
+          route: '/guides',
+          domain: 'guides',
+          access: 'public',
+          desc: 'Browse all certified local tour guides.',
+          features: [
+            'Language filter',
+            'Specialty filter',
+            'Rating sort',
+            'Availability',
+            'ETAA-certified badge',
+          ],
+        },
+        {
+          id: 'guide-detail',
+          label: 'Guide Profile',
+          route: '/guides/:id',
+          domain: 'guides',
+          access: 'public',
+          desc: 'Public guide profile with packages and reviews.',
+          features: [
+            'Bio & certifications',
+            'Languages',
+            'My packages list',
+            'Guest reviews',
+            'Book button',
+          ],
+        },
+        {
+          id: 'book-package',
+          label: 'Book Package / Guide',
+          route: '/tourism/book-package/:packageId',
+          domain: 'guides',
+          access: 'role',
+          roles: ['TOURIST', 'STUDENT', 'INVESTOR', 'RESIDENT'],
+          desc: 'Book a guide or tour package. Requires auth + eligible role.',
+          features: [
+            'Package details',
+            'Date/time picker',
+            'Group size',
+            'Wallet payment',
+            'Booking confirmation',
+          ],
+        },
+        {
+          id: 'my-bookings',
+          label: 'My Bookings',
+          route: '/bookings',
+          domain: 'guides',
+          access: 'auth',
+          desc: 'All user bookings: guides, packages, accommodation.',
+          features: [
+            'Upcoming / past',
+            'Booking status machine',
+            'Cancel booking',
+            'Review guide after completion',
+            'View desert trip',
+          ],
+        },
+        {
+          id: 'desert-trip',
+          label: 'Desert Trip Tracker',
+          route: '/bookings/:id/desert-trip',
+          domain: 'tourism',
+          access: 'role',
+          roles: ['GUIDE', 'TOURIST'],
+          desc: 'Live GPS tracking for active desert tours. Guide sends breadcrumbs; tourist watches in real-time.',
+          features: [
+            'Live breadcrumb map',
+            'Check-in milestones',
+            'Emergency contact data',
+            'Overdue alert system (DESERT_TRIP_OVERDUE event)',
+            'View-only for tourist',
+          ],
+        },
+        {
+          id: 'guide-dashboard',
+          label: 'Guide Dashboard',
+          route: '/dashboard/guide',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['GUIDE'],
+          desc: 'Guide home — manage profile, packages, and incoming bookings.',
+          features: [
+            'Booking requests (pending → confirm → start → complete)',
+            'My packages CRUD',
+            'Availability calendar',
+            'Earnings summary',
+            'Upload profile photos',
+            'Reply to guest reviews',
+          ],
+        },
+
+        // ── MARKETPLACE ───────────────────────────────────────────────────────────
+        {
+          id: 'marketplace',
+          label: 'Marketplace',
+          route: '/marketplace',
+          domain: 'marketplace',
+          access: 'public',
+          desc: 'Two-tab marketplace: Price Board + Supplier Directory.',
+          tabs: [
+            'Price Board tab — commodity prices filtered by city',
+            'Supplier Directory tab — business grid with search + add-supplier (admin)',
+          ],
+          features: [
+            'Location filter',
+            'Real-time price table',
+            'Supplier card grid',
+            'Admin: create supplier modal',
+          ],
+        },
+        {
+          id: 'listing-detail',
+          label: 'Listing Detail',
+          route: '/marketplace/ads/:id',
+          domain: 'marketplace',
+          access: 'public',
+          desc: 'Single produce/land/business listing.',
+          features: [
+            'Photos',
+            'Description',
+            'Price',
+            'Seller info',
+            'Nearby listings',
+            'Inquire button',
+          ],
+        },
+        {
+          id: 'prices',
+          label: 'Commodity Prices',
+          route: '/marketplace/prices',
+          domain: 'marketplace',
+          access: 'public',
+          desc: 'Live commodity price index for New Valley.',
+          features: [
+            'Price table by city',
+            'Price history chart (7d/30d/90d/1y)',
+            'Top movers',
+            'Category averages',
+            'Price alerts button',
+          ],
+        },
+        {
+          id: 'supplier-detail',
+          label: 'Supplier Detail',
+          route: '/marketplace/supplier/:id',
+          domain: 'marketplace',
+          access: 'public',
+          desc: 'Business / supplier profile.',
+          features: ['Business info', 'Linked commodities', 'Listings', 'Contact', 'Location map'],
+        },
+        {
+          id: 'listing-inquiry',
+          label: 'Send Listing Inquiry',
+          route: '/marketplace/inquiry/:id',
+          domain: 'marketplace',
+          access: 'auth',
+          desc: 'Send a purchase/interest inquiry for a listing.',
+          features: ['Message', 'Offer price', 'Contact info', 'Submit'],
+        },
+        {
+          id: 'listing-inquiries',
+          label: 'My Listing Inquiries',
+          route: '/marketplace/inquiries',
+          domain: 'marketplace',
+          access: 'auth',
+          desc: 'Manage sent and received listing inquiries.',
+          features: ['Sent inquiries', 'Received inquiries', 'Reply thread', 'Mark read'],
+        },
+        {
+          id: 'price-alerts',
+          label: 'Price Alert Settings',
+          route: '/marketplace/prices#alerts',
+          domain: 'marketplace',
+          access: 'auth',
+          desc: 'Subscribe to commodity price threshold alerts.',
+          features: [
+            'Select commodity',
+            'Set price threshold',
+            'Direction: above / below',
+            'Active alerts list',
+            'Delete alerts',
+          ],
+        },
+        {
+          id: 'merchant-dashboard',
+          label: 'Merchant Dashboard',
+          route: '/dashboard/merchant',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['MERCHANT'],
+          desc: 'Merchant home — listings, businesses, and inquiries.',
+          features: [
+            'Stat cards: total businesses / listings / inquiries',
+            'My businesses table',
+            'My listings table (create listing modal)',
+            'Received inquiries inbox',
+            'Pending verification badge',
+          ],
+        },
+
+        // ── LOGISTICS ─────────────────────────────────────────────────────────────
+        {
+          id: 'logistics',
+          label: 'Transport & Logistics',
+          route: '/logistics',
+          domain: 'logistics',
+          access: 'public',
+          desc: 'Carpool and shared transport rides in New Valley.',
+          features: [
+            'Available rides list',
+            'Route + departure time',
+            'Available seats',
+            'Driver profile',
+          ],
+        },
+        {
+          id: 'ride-detail',
+          label: 'Ride Detail',
+          route: '/logistics/ride/:id',
+          domain: 'logistics',
+          access: 'public',
+          desc: 'Details for a carpool/transport ride.',
+          features: [
+            'Route origin → destination',
+            'Departure time',
+            'Driver info',
+            'Seats available',
+            'Join ride (auth)',
+            'Passenger list (driver-only)',
+          ],
+        },
+        {
+          id: 'create-ride',
+          label: 'Create Ride',
+          route: '/logistics/create-ride',
+          domain: 'logistics',
+          access: 'role',
+          roles: ['DRIVER', 'ADMIN'],
+          desc: 'Post a new carpool or transport ride.',
+          features: [
+            'Origin + destination',
+            'Date/time',
+            'Seat count',
+            'Price per seat',
+            'Activate / cancel controls',
+          ],
+        },
+        {
+          id: 'driver-dashboard',
+          label: 'Driver Dashboard',
+          route: '/dashboard/driver',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['DRIVER'],
+          desc: 'Driver home — manage rides and passengers.',
+          features: [
+            'My active rides',
+            'Pending join requests (confirm / decline passengers)',
+            'Past rides',
+            'Earnings',
+          ],
+        },
+
+        // ── INVESTMENT ────────────────────────────────────────────────────────────
+        {
+          id: 'investment',
+          label: 'Investment Hub',
+          route: '/investment',
+          domain: 'investment',
+          access: 'public',
+          desc: 'Two-tab hub: Opportunities + Startups.',
+          tabs: [
+            'Opportunities tab — investment projects by sector (7 sectors)',
+            'Startups tab — early-stage companies seeking investment',
+          ],
+          features: ['Sector filter', 'Featured opportunities', 'Search', 'Link to detail pages'],
+        },
+        {
+          id: 'invest-detail',
+          label: 'Opportunity Detail',
+          route: '/investment/opportunity/:id',
+          domain: 'investment',
+          access: 'public',
+          desc: 'Single investment opportunity with role-gated content.',
+          features: [
+            'Description & sector',
+            'Incentives/benefits card',
+            'Interactive location map',
+            'Documents (INVESTOR/ADMIN only)',
+            'Sticky sidebar: investment details',
+            'Contact section (INVESTOR/ADMIN only)',
+          ],
+        },
+        {
+          id: 'startup-detail',
+          label: 'Startup Detail',
+          route: '/investment/startups/:id',
+          domain: 'investment',
+          access: 'public',
+          desc: 'Startup profile seeking investment.',
+          features: [
+            'Company profile',
+            'Team',
+            'Funding stage',
+            'Business model',
+            'Contact investor button',
+          ],
+        },
+        {
+          id: 'invest-contact',
+          label: 'Investment Contact',
+          route: '/investment/contact/:id',
+          domain: 'investment',
+          access: 'public',
+          desc: 'Contact / EOI submission for an opportunity.',
+          features: [
+            'Inquiry form',
+            'Attachments',
+            'Submit expression of interest (KYC verified guard)',
+          ],
+        },
+        {
+          id: 'invest-apply',
+          label: 'My Investment Applications',
+          route: '/investment/applications',
+          domain: 'investment',
+          access: 'role',
+          roles: ['INVESTOR', 'MERCHANT'],
+          desc: 'Track submitted investment interest applications.',
+          features: [
+            'Application list with status',
+            'Withdraw application',
+            'Document upload per application',
+          ],
+        },
+        {
+          id: 'investor-dashboard',
+          label: 'Investor Dashboard',
+          route: '/dashboard/investor',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['INVESTOR'],
+          desc: 'Investor hub — interactive dashboard with 4 linked panels.',
+          features: [
+            'Stat cards: my opportunities / received inquiries / sent inquiries / startup inquiries',
+            'My opportunities table (click row → loads applications in adjacent panel)',
+            'Investment inbox (inquiries received)',
+            'Startup inquiry inbox',
+            'Submitted applications table',
+          ],
+        },
+
+        // ── JOBS ──────────────────────────────────────────────────────────────────
+        {
+          id: 'jobs',
+          label: 'Job Board',
+          route: '/jobs',
+          domain: 'jobs',
+          access: 'public',
+          desc: 'Employment listings: agriculture, tourism, skilled trades, domestic, logistics, handicraft.',
+          features: [
+            'Search',
+            'Category filter (6 types)',
+            'Area filter (New Valley districts)',
+            'Compensation type filter',
+            'Pagination via URL query params',
+          ],
+        },
+        {
+          id: 'job-detail',
+          label: 'Job Detail',
+          route: '/jobs/:id',
+          domain: 'jobs',
+          access: 'public',
+          desc: 'Single job posting.',
+          features: [
+            'Job description (AR/EN)',
+            'Requirements',
+            'Employer info + rating',
+            'Slots remaining',
+            'Apply button',
+            'Public reviews of employer',
+          ],
+        },
+        {
+          id: 'my-applications',
+          label: 'My Job Applications',
+          route: '/jobs/my-applications',
+          domain: 'jobs',
+          access: 'auth',
+          desc: 'Track all your job applications with inline review forms.',
+          features: [
+            'Status: pending / accepted / rejected / in_progress / completed',
+            'Withdraw application',
+            'Inline review form: rate employer after job completion (worker_rates_poster)',
+            'Application accordion with status-driven action buttons',
+          ],
+        },
+        {
+          id: 'my-posts',
+          label: 'My Job Posts',
+          route: '/jobs/my-posts',
+          domain: 'jobs',
+          access: 'auth',
+          desc: 'Manage jobs you posted as an employer. Accordion layout.',
+          features: [
+            'Expandable accordion rows — click to reveal applicants',
+            'Accept / reject / progress applicants',
+            'Inline review form: rate worker after completion (poster_rates_worker)',
+            'Job status: open → in_progress → completed / cancelled / expired',
+          ],
+        },
+        {
+          id: 'post-job',
+          label: 'Post a Job',
+          route: '/jobs/post',
+          domain: 'jobs',
+          access: 'auth',
+          desc: 'Create a new job listing.',
+          features: [
+            'Title',
+            'Description (AR + EN)',
+            'Category (6 options)',
+            'Area/district',
+            'Compensation type + amount',
+            'Slots',
+            'Start and end dates',
+          ],
+        },
+        {
+          id: 'edit-job',
+          label: 'Edit Job',
+          route: '/jobs/:id/edit',
+          domain: 'jobs',
+          access: 'auth',
+          desc: 'Edit or close an existing job listing.',
+          features: ['Update any field', 'Cancel/close job', 'Delete listing'],
+        },
+
+        // ── BENEFITS ──────────────────────────────────────────────────────────────
+        {
+          id: 'benefits',
+          label: 'Benefits Navigator',
+          route: '/benefits',
+          domain: 'benefits',
+          access: 'public',
+          desc: 'Government benefits and social services directory.',
+          features: [
+            'Category browse',
+            'Eligibility info',
+            'Required documents',
+            'Ministry / department',
+            'Enrollment instructions',
+            'Admin: update benefit info',
+          ],
+        },
+
+        // ── SEARCH ────────────────────────────────────────────────────────────────
+        {
+          id: 'search',
+          label: 'Global Search',
+          route: '/search',
+          domain: 'search',
+          access: 'public',
+          desc: 'Full-text unified search across all platform content.',
+          features: [
+            'Type filter: listing / opportunity / business / user / guide / attraction / package / poi',
+            'Location filter',
+            'Relevance ranking',
+            'Federated results from all 4 backend services',
+          ],
+        },
+
+        // ── PROFILE ───────────────────────────────────────────────────────────────
+        {
+          id: 'profile',
+          label: 'My Profile',
+          route: '/profile',
+          domain: 'profile',
+          access: 'auth',
+          desc: 'View and edit personal account info. Toggle between view-mode and edit-mode.',
+          features: [
+            'View mode: email, phone, language, role badge, status badge',
+            'Edit mode: name, email, phone, language, avatar upload',
+            'Change Password link',
+            'KYC status indicator',
+          ],
+        },
+        {
+          id: 'change-password',
+          label: 'Change Password',
+          route: '/profile/change-password',
+          domain: 'profile',
+          access: 'auth',
+          desc: 'Change your account password.',
+          features: ['Current password', 'New password', 'Confirm new password'],
+        },
+        {
+          id: 'wallet',
+          label: 'Wallet',
+          route: '/wallet',
+          domain: 'profile',
+          access: 'auth',
+          desc: 'In-platform digital wallet for all transactions.',
+          features: [
+            'Current balance',
+            'Top-up wallet',
+            'Transaction history (WalletRefType: booking / job / topup / refund / deduction)',
+            'Direction: credit / debit',
+            'Used for booking payments',
+          ],
+        },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          route: '/notifications',
+          domain: 'profile',
+          access: 'auth',
+          desc: 'Notification center with real-time unread count badge.',
+          features: [
+            'All notifications list',
+            'Unread count badge in header',
+            'Mark single as read',
+            'Mark all as read',
+            'Filter by type: booking events / KYC events / reviews / system',
+          ],
+        },
+        {
+          id: 'suggest-poi',
+          label: 'Suggest a POI',
+          route: '/map/pois [POST]',
+          domain: 'search',
+          access: 'role',
+          roles: ['RESIDENT', 'GUIDE', 'MERCHANT'],
+          desc: 'Submit a new Point of Interest (attraction, landmark, service) for admin approval.',
+          features: [
+            'POI name + category',
+            'Coordinates (map picker)',
+            'Description',
+            'Photos',
+            'Pending approval state → admin reviews in Admin: Map',
+          ],
+        },
+
+        // ── ROLE DASHBOARDS ───────────────────────────────────────────────────────
+        {
+          id: 'tourist-dashboard',
+          label: 'Tourist Dashboard',
+          route: '/dashboard/tourist',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['TOURIST'],
+          desc: 'Tourist home — bookings, saved attractions, reviews.',
+          features: [
+            'My bookings overview',
+            'Upcoming desert trips',
+            'Written reviews',
+            'Saved/bookmarked places',
+          ],
+        },
+        {
+          id: 'student-dashboard',
+          label: 'Student Dashboard',
+          route: '/dashboard/student',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['STUDENT'],
+          desc: 'Student home — job opportunities, benefits, bookings.',
+          features: [
+            'Relevant job listings',
+            'Applied jobs status',
+            'Benefits eligibility',
+            'Bookings',
+          ],
+        },
+        {
+          id: 'resident-dashboard',
+          label: 'Resident Dashboard',
+          route: '/dashboard/resident',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['RESIDENT'],
+          desc: 'Resident home — local services, listings, benefits. Residents can also create listings.',
+          features: [
+            'My listings (RESIDENT can create listings)',
+            'Benefit applications',
+            'Suggest POI access',
+            'Community updates',
+            'Local service links',
+          ],
+        },
+        {
+          id: 'farmer-dashboard',
+          label: 'Farmer Dashboard',
+          route: '/dashboard/farmer',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['FARMER'],
+          desc: 'Farmer home — agricultural well log management and water monitoring for New Valley.',
+          features: [
+            'Submit well log: district / water depth / pump hours / solar data',
+            'Well log history list',
+            'Monthly summary (WellMonthlySummaryDto)',
+            'Solar estimate',
+            'Area summary by NvDistrict (Kharga / Dakhla / Farafra / Baris / Balat)',
+          ],
+        },
+        {
+          id: 'reviewer-dashboard',
+          label: 'Reviewer Dashboard',
+          route: '/reviewer',
+          domain: 'dashboard',
+          access: 'role',
+          roles: ['REVIEWER', 'ADMIN'],
+          desc: 'Content moderation queue for reviewers.',
+          features: [
+            'Pending content list',
+            'Approve / reject listings',
+            'KYC document review',
+            'Flag reports',
+            'Moderation history',
+          ],
+        },
+
+        // ── ADMIN ─────────────────────────────────────────────────────────────────
+        {
+          id: 'admin',
+          label: 'Admin Overview',
+          route: '/admin/overview',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Admin hub with 6 sidebar sections. Shows platform-wide stats.',
+          features: [
+            'Stat cards (8): total users / pending KYC / listings awaiting review / pending POIs / active guides / pending bookings / total listings / investment opportunities',
+            'Clickable stat cards linking to relevant sub-pages',
+            'Last update timestamp',
+          ],
+        },
+        {
+          id: 'admin-users',
+          label: 'Admin: Users',
+          route: '/admin/users',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Full user management with search, role change, and status management.',
+          features: [
+            'Debounced search (300ms)',
+            'Role filter',
+            'Status filter',
+            'Actions dropdown: change role / change status (Activate/Suspend/Ban)',
+            'Pagination',
+          ],
+        },
+        {
+          id: 'admin-user-detail',
+          label: 'Admin: User Detail',
+          route: '/admin/users/:id',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Deep-dive single user management.',
+          features: [
+            'Profile header with role/status badges',
+            'KYC documents card',
+            'Activity / audit log',
+            'Reset password dialog (generates temp password)',
+            'Confirm dialogs before destructive actions',
+          ],
+        },
+        {
+          id: 'admin-moderation',
+          label: 'Admin: Moderation',
+          route: '/admin/moderation',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Content moderation + KYC review queue.',
+          features: [
+            'Pending listings — verify / feature / reject',
+            'KYC submissions — approve / reject with reason',
+            'Unified moderation queue from all services',
+          ],
+        },
+        {
+          id: 'admin-guides',
+          label: 'Admin: Guides',
+          route: '/admin/guides',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Verify and manage guide profiles and certifications.',
+          features: [
+            'Guide list with verification status',
+            'Approve / reject guide application',
+            'ETAA (Egyptian Tourism Authority) verification',
+            'Suspend / reinstate guide',
+          ],
+        },
+        {
+          id: 'admin-map',
+          label: 'Admin: Map & POIs',
+          route: '/admin/map',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Manage map Points of Interest and cultural site stewardship.',
+          features: [
+            'Pending POI approval queue',
+            'Approve / reject user-submitted POIs',
+            'Assign site stewards (manage access per POI)',
+            'Remove stewards',
+            'Category management',
+          ],
+        },
+        {
+          id: 'admin-crops',
+          label: 'Admin: Commodities',
+          route: '/admin/crops',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Manage commodity catalog and price data.',
+          features: [
+            'Commodity list',
+            'Add commodity',
+            'Activate / deactivate',
+            'Batch price update',
+            'Individual price CRUD',
+            'Price history management',
+          ],
+        },
+        {
+          id: 'admin-investment',
+          label: 'Admin: Investment',
+          route: '/admin/investment',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Review and manage investment opportunities and interest applications.',
+          features: [
+            'All investment interest submissions',
+            'Approve / reject applications',
+            'Approve / feature investment opportunities',
+            'Investment opportunity moderation queue',
+          ],
+        },
+        {
+          id: 'admin-ai',
+          label: 'Admin: AI Docs',
+          route: '/admin/ai',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Manage AI knowledge base — upload PDFs, feed curated text, monitor ingestion batches.',
+          features: [
+            'Upload & parse PDF documents',
+            'Feed curated knowledge entries',
+            'Monitor ingestion batch status',
+            'Delete / manage indexed documents',
+            'Trigger knowledge base rebuild',
+          ],
+        },
+        {
+          id: 'site-status',
+          label: 'Site Status Board',
+          route: '/tourism/sites',
+          domain: 'tourism',
+          access: 'public',
+          desc: 'Real-time operational status of tourist sites posted by verified stewards.',
+          features: [
+            'Live open / closed / limited-access status',
+            'Steward-posted notes and validity window',
+            'Paginated status board for all sites',
+            'Linked to POI map entries',
+          ],
+        },
+      ];
+
+      // ── LAYOUT ─────────────────────────────────────────────────────────────────────
+      const LAYOUT = {
+        // HOME (top center)
+        home: { x: 2020, y: ROW.home },
+        'ai-chat': { x: 2200, y: ROW.home },
+
+        // PUBLIC ROW (y=180) — left to right by domain
+        tourism: { x: 30, y: ROW.public },
+        attractions: { x: 30 + GAP, y: ROW.public },
+        'attraction-detail': { x: 30 + GAP * 2, y: ROW.public },
+        packages: { x: 30 + GAP * 3, y: ROW.public },
+        'accom-list': { x: 30 + GAP * 4, y: ROW.public },
+        'accom-detail': { x: 30 + GAP * 5, y: ROW.public },
+        'accom-inquiry': { x: 30 + GAP * 6, y: ROW.public },
+        guides: { x: 30 + GAP * 7 + 10, y: ROW.public },
+        'guide-detail': { x: 30 + GAP * 8 + 10, y: ROW.public },
+        marketplace: { x: 30 + GAP * 9 + 20, y: ROW.public },
+        'listing-detail': { x: 30 + GAP * 10 + 20, y: ROW.public },
+        prices: { x: 30 + GAP * 11 + 20, y: ROW.public },
+        'supplier-detail': { x: 30 + GAP * 12 + 20, y: ROW.public },
+        logistics: { x: 30 + GAP * 13 + 30, y: ROW.public },
+        'ride-detail': { x: 30 + GAP * 14 + 30, y: ROW.public },
+        investment: { x: 30 + GAP * 15 + 40, y: ROW.public },
+        'invest-detail': { x: 30 + GAP * 16 + 40, y: ROW.public },
+        'startup-detail': { x: 30 + GAP * 17 + 40, y: ROW.public },
+        'invest-contact': { x: 30 + GAP * 18 + 40, y: ROW.public },
+        jobs: { x: 30 + GAP * 19 + 50, y: ROW.public },
+        'job-detail': { x: 30 + GAP * 20 + 50, y: ROW.public },
+        benefits: { x: 30 + GAP * 21 + 60, y: ROW.public },
+        search: { x: 30 + GAP * 22 + 70, y: ROW.public },
+
+        // AUTH ROW (y=320)
+        login: { x: 30, y: ROW.auth },
+        register: { x: 30 + GAP, y: ROW.auth },
+        kyc: { x: 30 + GAP * 2, y: ROW.auth },
+        'pw-request': { x: 30 + GAP * 3, y: ROW.auth },
+        'pw-confirm': { x: 30 + GAP * 4, y: ROW.auth },
+
+        // ACTIONS ROW (y=460)
+        'book-package': { x: 30, y: ROW.actions },
+        'my-bookings': { x: 30 + GAP, y: ROW.actions },
+        'desert-trip': { x: 30 + GAP * 2, y: ROW.actions },
+        wallet: { x: 30 + GAP * 3 + 10, y: ROW.actions },
+        'listing-inquiry': { x: 30 + GAP * 4 + 10, y: ROW.actions },
+        'listing-inquiries': { x: 30 + GAP * 5 + 10, y: ROW.actions },
+        'create-ride': { x: 30 + GAP * 6 + 20, y: ROW.actions },
+        'invest-apply': { x: 30 + GAP * 7 + 20, y: ROW.actions },
+        'my-applications': { x: 30 + GAP * 8 + 30, y: ROW.actions },
+        'my-posts': { x: 30 + GAP * 9 + 30, y: ROW.actions },
+        'post-job': { x: 30 + GAP * 11 + 30, y: ROW.actions },
+        'edit-job': { x: 30 + GAP * 12 + 30, y: ROW.actions },
+        'price-alerts': { x: 30 + GAP * 13 + 40, y: ROW.actions },
+        'suggest-poi': { x: 30 + GAP * 14 + 40, y: ROW.actions },
+
+        // PROFILE ROW (y=600)
+        profile: { x: 30, y: ROW.profile },
+        'change-password': { x: 30 + GAP, y: ROW.profile },
+        notifications: { x: 30 + GAP * 2, y: ROW.profile },
+
+        // DASHBOARDS ROW (y=740)
+        'tourist-dashboard': { x: 30, y: ROW.dashboards },
+        'student-dashboard': { x: 30 + GAP, y: ROW.dashboards },
+        'resident-dashboard': { x: 30 + GAP * 2, y: ROW.dashboards },
+        'farmer-dashboard': { x: 30 + GAP * 3, y: ROW.dashboards },
+        'guide-dashboard': { x: 30 + GAP * 4 + 10, y: ROW.dashboards },
+        'merchant-dashboard': { x: 30 + GAP * 5 + 10, y: ROW.dashboards },
+        'driver-dashboard': { x: 30 + GAP * 6 + 10, y: ROW.dashboards },
+        'investor-dashboard': { x: 30 + GAP * 7 + 20, y: ROW.dashboards },
+        'reviewer-dashboard': { x: 30 + GAP * 8 + 20, y: ROW.dashboards },
+
+        // ADMIN ROW (y=880)
+        admin: { x: 30, y: ROW.admin },
+        'admin-users': { x: 30 + GAP, y: ROW.admin },
+        'admin-user-detail': { x: 30 + GAP * 2, y: ROW.admin },
+        'admin-moderation': { x: 30 + GAP * 3, y: ROW.admin },
+        'admin-guides': { x: 30 + GAP * 4, y: ROW.admin },
+        'admin-map': { x: 30 + GAP * 5, y: ROW.admin },
+        'admin-crops': { x: 30 + GAP * 6, y: ROW.admin },
+        'admin-investment': { x: 30 + GAP * 7, y: ROW.admin },
+        'admin-ai': { x: 30 + GAP * 8, y: ROW.admin },
+
+        // TOURISM extra (appended after search)
+        'site-status': { x: 30 + GAP * 23 + 80, y: ROW.public },
+      };
+
+      nodes.forEach((n) => {
+        const p = LAYOUT[n.id] || { x: 100, y: 100 };
+        n.x = p.x;
+        n.y = p.y;
+        n.w = NW;
+        n.h = NH;
+      });
+
+      // ── CONNECTIONS ───────────────────────────────────────────────────────────────
+      const connections = [
+        // Home → section hubs
+        { from: 'home', to: 'tourism', type: 'nav' },
+        { from: 'home', to: 'guides', type: 'nav' },
+        { from: 'home', to: 'marketplace', type: 'nav' },
+        { from: 'home', to: 'logistics', type: 'nav' },
+        { from: 'home', to: 'investment', type: 'nav' },
+        { from: 'home', to: 'jobs', type: 'nav' },
+        { from: 'home', to: 'benefits', type: 'nav' },
+        { from: 'home', to: 'search', type: 'nav' },
+        { from: 'home', to: 'login', type: 'nav' },
+
+        // Auth flow
+        { from: 'login', to: 'register', type: 'nav' },
+        { from: 'login', to: 'pw-request', type: 'nav' },
+        { from: 'register', to: 'kyc', type: 'auth' },
+        { from: 'pw-request', to: 'pw-confirm', type: 'auth' },
+
+        // Tourism tree
+        { from: 'tourism', to: 'attractions', type: 'nav' },
+        { from: 'tourism', to: 'packages', type: 'nav' },
+        { from: 'tourism', to: 'accom-list', type: 'nav' },
+        { from: 'attractions', to: 'attraction-detail', type: 'nav' },
+        { from: 'accom-list', to: 'accom-detail', type: 'nav' },
+        { from: 'accom-detail', to: 'accom-inquiry', type: 'nav' },
+        { from: 'attraction-detail', to: 'book-package', type: 'role' },
+        { from: 'packages', to: 'book-package', type: 'role' },
+        { from: 'book-package', to: 'my-bookings', type: 'nav' },
+        { from: 'my-bookings', to: 'desert-trip', type: 'role' },
+
+        // Guides
+        { from: 'guides', to: 'guide-detail', type: 'nav' },
+        { from: 'guide-detail', to: 'book-package', type: 'role' },
+
+        // Marketplace tree
+        { from: 'marketplace', to: 'listing-detail', type: 'nav' },
+        { from: 'marketplace', to: 'prices', type: 'nav' },
+        { from: 'marketplace', to: 'supplier-detail', type: 'nav' },
+        { from: 'listing-detail', to: 'listing-inquiry', type: 'auth' },
+        { from: 'listing-inquiry', to: 'listing-inquiries', type: 'nav' },
+        { from: 'prices', to: 'price-alerts', type: 'auth' },
+
+        // Logistics
+        { from: 'logistics', to: 'ride-detail', type: 'nav' },
+        { from: 'logistics', to: 'create-ride', type: 'role' },
+        { from: 'create-ride', to: 'ride-detail', type: 'nav' },
+
+        // Investment
+        { from: 'investment', to: 'invest-detail', type: 'nav' },
+        { from: 'investment', to: 'startup-detail', type: 'nav' },
+        { from: 'invest-detail', to: 'invest-contact', type: 'nav' },
+        { from: 'startup-detail', to: 'invest-contact', type: 'nav' },
+        { from: 'invest-contact', to: 'invest-apply', type: 'role' },
+
+        // Jobs
+        { from: 'jobs', to: 'job-detail', type: 'nav' },
+        { from: 'job-detail', to: 'my-applications', type: 'auth' },
+        { from: 'jobs', to: 'post-job', type: 'auth' },
+        { from: 'jobs', to: 'my-posts', type: 'auth' },
+        { from: 'my-posts', to: 'edit-job', type: 'nav' },
+
+        // Profile
+        { from: 'profile', to: 'change-password', type: 'nav' },
+        { from: 'profile', to: 'notifications', type: 'nav' },
+        { from: 'profile', to: 'wallet', type: 'nav' },
+
+        // Dashboards from action pages
+        { from: 'my-bookings', to: 'guide-dashboard', type: 'role' },
+        { from: 'listing-inquiries', to: 'merchant-dashboard', type: 'role' },
+        { from: 'create-ride', to: 'driver-dashboard', type: 'role' },
+        { from: 'invest-apply', to: 'investor-dashboard', type: 'role' },
+
+        // Admin
+        { from: 'admin', to: 'admin-users', type: 'nav' },
+        { from: 'admin', to: 'admin-moderation', type: 'nav' },
+        { from: 'admin', to: 'admin-guides', type: 'nav' },
+        { from: 'admin', to: 'admin-map', type: 'nav' },
+        { from: 'admin', to: 'admin-crops', type: 'nav' },
+        { from: 'admin', to: 'admin-investment', type: 'nav' },
+        { from: 'admin-users', to: 'admin-user-detail', type: 'nav' },
+        { from: 'suggest-poi', to: 'admin-map', type: 'role' },
+
+        // Site Status Board
+        { from: 'tourism', to: 'site-status', type: 'nav' },
+        { from: 'suggest-poi', to: 'site-status', type: 'nav' },
+
+        // Admin AI
+        { from: 'admin', to: 'admin-ai', type: 'nav' },
+      ];
+
+      // ── PRESETS ───────────────────────────────────────────────────────────────────
+      const PRESETS = [
+        { id: 'all', label: 'Full Map', domains: DOMAINS, role: null },
+        {
+          id: 'public',
+          label: 'Public Pages',
+          domains: [
+            'home',
+            'tourism',
+            'guides',
+            'marketplace',
+            'logistics',
+            'investment',
+            'jobs',
+            'benefits',
+            'search',
+          ],
+          role: null,
+        },
+        {
+          id: 'tourist',
+          label: 'Tourist Journey',
+          domains: [
+            'home',
+            'auth',
+            'tourism',
+            'guides',
+            'marketplace',
+            'search',
+            'profile',
+            'dashboard',
+          ],
+          role: 'TOURIST',
+        },
+        {
+          id: 'guide',
+          label: 'Guide Journey',
+          domains: ['home', 'auth', 'guides', 'tourism', 'profile', 'dashboard'],
+          role: 'GUIDE',
+        },
+        {
+          id: 'merchant',
+          label: 'Merchant Journey',
+          domains: ['home', 'auth', 'marketplace', 'jobs', 'profile', 'dashboard'],
+          role: 'MERCHANT',
+        },
+        {
+          id: 'driver',
+          label: 'Driver Journey',
+          domains: ['home', 'auth', 'logistics', 'profile', 'dashboard'],
+          role: 'DRIVER',
+        },
+        {
+          id: 'investor',
+          label: 'Investor Journey',
+          domains: ['home', 'auth', 'investment', 'marketplace', 'profile', 'dashboard'],
+          role: 'INVESTOR',
+        },
+        {
+          id: 'farmer',
+          label: 'Farmer Journey',
+          domains: ['home', 'auth', 'marketplace', 'profile', 'dashboard'],
+          role: 'FARMER',
+        },
+        {
+          id: 'jobs-only',
+          label: 'Jobs Flow',
+          domains: ['home', 'auth', 'jobs', 'profile'],
+          role: null,
+        },
+        {
+          id: 'admin',
+          label: 'Admin View',
+          domains: ['home', 'auth', 'admin', 'profile'],
+          role: 'ADMIN',
+        },
+      ];
+
+      const FLOWS = [
+        {
+          id: 'tourist-books',
+          label: 'Tourist Books a Tour',
+          desc: 'Check site status → browse guide → book package → pay → track desert trip',
+          color: '#58a6ff',
+          steps: [
+            'home',
+            'tourism',
+            'site-status',
+            'guides',
+            'guide-detail',
+            'book-package',
+            'wallet',
+            'my-bookings',
+            'desert-trip',
+          ],
+        },
+        {
+          id: 'new-user',
+          label: 'New User Registers',
+          desc: 'Sign up → verify identity → start using the platform',
+          color: '#3fb950',
+          steps: ['home', 'login', 'register', 'kyc', 'profile'],
+        },
+        {
+          id: 'find-job',
+          label: 'Find & Apply for a Job',
+          desc: 'Browse listings → apply → track application status',
+          color: '#f0883e',
+          steps: ['home', 'jobs', 'job-detail', 'my-applications'],
+        },
+        {
+          id: 'post-hire',
+          label: 'Post a Job & Hire',
+          desc: 'Post job → review applicants → complete & rate worker',
+          color: '#d29922',
+          steps: ['home', 'login', 'post-job', 'my-posts', 'edit-job'],
+        },
+        {
+          id: 'investor-flow',
+          label: 'Investor Applies',
+          desc: 'Register → KYC → browse → submit investment application',
+          color: '#bc8cff',
+          steps: [
+            'home',
+            'register',
+            'kyc',
+            'investment',
+            'invest-detail',
+            'invest-contact',
+            'invest-apply',
+            'investor-dashboard',
+          ],
+        },
+        {
+          id: 'driver-ride',
+          label: 'Driver Posts a Ride',
+          desc: 'Register → KYC → post ride → confirm passengers',
+          color: '#f85149',
+          steps: ['home', 'register', 'kyc', 'logistics', 'create-ride', 'driver-dashboard'],
+        },
+        {
+          id: 'farmer-logs',
+          label: 'Farmer Logs a Well',
+          desc: 'Register → KYC → submit well data → view history',
+          color: '#56d364',
+          steps: ['home', 'register', 'kyc', 'farmer-dashboard'],
+        },
+        {
+          id: 'merchant-listing',
+          label: 'Merchant Lists a Product',
+          desc: 'Register → KYC → create listing → handle inquiries',
+          color: '#e3b341',
+          steps: [
+            'home',
+            'register',
+            'kyc',
+            'merchant-dashboard',
+            'listing-detail',
+            'listing-inquiries',
+          ],
+        },
+        {
+          id: 'reset-password',
+          label: 'Reset Password',
+          desc: 'Request reset email → confirm new password',
+          color: '#8b949e',
+          steps: ['login', 'pw-request', 'pw-confirm'],
+        },
+        {
+          id: 'admin-kyc',
+          label: 'Admin Reviews KYC',
+          desc: 'Login → user list → inspect → approve/reject documents',
+          color: '#ff7b72',
+          steps: ['home', 'login', 'admin', 'admin-users', 'admin-user-detail', 'admin-moderation'],
+        },
+        {
+          id: 'guide-onboarding',
+          label: 'Guide Onboards',
+          desc: 'Register → KYC → create guide profile → add package → go live',
+          color: '#79c0ff',
+          steps: ['home', 'register', 'kyc', 'guide-dashboard', 'guides', 'guide-detail'],
+        },
+        {
+          id: 'admin-ai-ingest',
+          label: 'Admin Feeds AI Knowledge',
+          desc: 'Upload government PDFs → monitor ingestion → chatbot answers improve',
+          color: '#d2a8ff',
+          steps: ['home', 'login', 'admin', 'admin-ai', 'ai-chat'],
+        },
+        {
+          id: 'resident-daily',
+          label: 'Resident Daily Use',
+          desc: 'Login → search services → browse benefits → ask AI → check wallet',
+          color: '#58a6ff',
+          steps: ['home', 'login', 'search', 'benefits', 'ai-chat', 'wallet', 'notifications'],
+        },
+        {
+          id: 'carpool-passenger',
+          label: 'Passenger Joins a Ride',
+          desc: 'Browse rides → view details → request seat → track journey',
+          color: '#e8765c',
+          steps: ['home', 'logistics', 'ride-detail', 'profile', 'notifications'],
+        },
+        {
+          id: 'job-completion',
+          label: 'Job Completed & Reviewed',
+          desc: 'Employer marks complete → both parties rate each other → reviews published',
+          color: '#7ee787',
+          steps: ['my-posts', 'my-applications', 'profile'],
+        },
+      ];
+
+      const ALL_ROLES = [
+        'TOURIST',
+        'RESIDENT',
+        'STUDENT',
+        'FARMER',
+        'GUIDE',
+        'MERCHANT',
+        'DRIVER',
+        'INVESTOR',
+        'REVIEWER',
+        'ADMIN',
+      ];
+
+      const ROLE_ACCESS = {
+        TOURIST: ['public', 'auth'],
+        RESIDENT: ['public', 'auth'],
+        STUDENT: ['public', 'auth'],
+        FARMER: ['public', 'auth', 'role'],
+        GUIDE: ['public', 'auth', 'role'],
+        MERCHANT: ['public', 'auth', 'role'],
+        DRIVER: ['public', 'auth', 'role'],
+        INVESTOR: ['public', 'auth', 'role'],
+        REVIEWER: ['public', 'auth', 'role'],
+        ADMIN: ['public', 'auth', 'role', 'admin', 'global'],
+      };
+
+      // ── STATE ─────────────────────────────────────────────────────────────────────
+      const S = {
+        zoom: 0.3,
+        pan: { x: 14, y: 14 },
+        selected: null,
+        activePreset: 'all',
+        activeRole: null,
+        activeFlow: null,
+        visibleDomains: new Set(DOMAINS),
+        dragging: false,
+        dragStart: { x: 0, y: 0 },
+        panStart: { x: 0, y: 0 },
+      };
+
+      // ── RENDER ────────────────────────────────────────────────────────────────────
+      const SVGNS = 'http://www.w3.org/2000/svg';
+      const svg = document.getElementById('svg-canvas');
+      const CANVAS_W = 4500,
+        CANVAS_H = 980;
+
+      function mkEl(tag) {
+        return document.createElementNS(SVGNS, tag);
+      }
+
+      function nodeVisible(n) {
+        if (!S.visibleDomains.has(n.domain)) return false;
+        if (n.access === 'global') return true;
+        if (S.activeRole) {
+          const allowed = ROLE_ACCESS[S.activeRole] || [];
+          if (!allowed.includes(n.access)) return false;
+          if (n.access === 'role' && n.roles) {
+            if (!n.roles.includes(S.activeRole) && S.activeRole !== 'ADMIN') return false;
+          }
+        }
+        return true;
+      }
+
+      function cubicPath(x1, y1, x2, y2) {
+        const mid = (y1 + y2) / 2;
+        return `M${x1},${y1} C${x1},${mid} ${x2},${mid} ${x2},${y2}`;
+      }
+
+      function render() {
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        svg.setAttribute('width', String(CANVAS_W * S.zoom));
+        svg.setAttribute('height', String(CANVAS_H * S.zoom));
+        svg.setAttribute('viewBox', `0 0 ${CANVAS_W} ${CANVAS_H}`);
+
+        // defs — arrowhead markers
+        const defs = mkEl('defs');
+        Object.entries(CONN_STYLE).forEach(([type, st]) => {
+          const m = mkEl('marker');
+          m.setAttribute('id', 'arr-' + type);
+          m.setAttribute('markerWidth', '7');
+          m.setAttribute('markerHeight', '5');
+          m.setAttribute('refX', '6');
+          m.setAttribute('refY', '2.5');
+          m.setAttribute('orient', 'auto');
+          const p = mkEl('polygon');
+          p.setAttribute('points', '0 0, 7 2.5, 0 5');
+          p.setAttribute('fill', st.stroke);
+          m.appendChild(p);
+          defs.appendChild(m);
+        });
+        svg.appendChild(defs);
+
+        const g = mkEl('g');
+        svg.appendChild(g);
+
+        // Flow awareness
+        const flowData = S.activeFlow ? FLOWS.find((f) => f.id === S.activeFlow) : null;
+        const flowStepSet = flowData ? new Set(flowData.steps) : null;
+        const flowStepIndex = flowData
+          ? Object.fromEntries(flowData.steps.map((id, i) => [id, i + 1]))
+          : {};
+
+        // When a flow is active, show all nodes (non-flow ones dimmed); otherwise respect filters
+        const visIds = flowStepSet
+          ? new Set(nodes.map((n) => n.id))
+          : new Set(nodes.filter(nodeVisible).map((n) => n.id));
+        const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+
+        // connections (drawn under nodes)
+        connections.forEach((c) => {
+          if (!visIds.has(c.from) || !visIds.has(c.to)) return;
+          const nf = nodeMap[c.from],
+            nt = nodeMap[c.to];
+          if (!nf || !nt) return;
+          const st = CONN_STYLE[c.type] || CONN_STYLE.nav;
+          const x1 = nf.x + nf.w / 2,
+            y1 = nf.y + nf.h;
+          const x2 = nt.x + nt.w / 2,
+            y2 = nt.y;
+          const path = mkEl('path');
+          path.setAttribute('d', cubicPath(x1, y1, x2, y2));
+          path.setAttribute('fill', 'none');
+          const isFlowConn = flowStepSet && flowStepSet.has(c.from) && flowStepSet.has(c.to);
+          if (flowStepSet) {
+            if (isFlowConn) {
+              path.setAttribute('stroke', flowData.color);
+              path.setAttribute('stroke-width', '2.5');
+              path.setAttribute('stroke-opacity', '0.9');
+            } else {
+              path.setAttribute('stroke', st.stroke);
+              path.setAttribute('stroke-width', String(st.w));
+              path.setAttribute('stroke-opacity', '0.06');
+              if (st.dash !== 'none') path.setAttribute('stroke-dasharray', st.dash);
+            }
+          } else {
+            path.setAttribute('stroke', st.stroke);
+            path.setAttribute('stroke-width', String(st.w));
+            path.setAttribute('stroke-opacity', '0.45');
+            if (st.dash !== 'none') path.setAttribute('stroke-dasharray', st.dash);
+          }
+          path.setAttribute('marker-end', 'url(#arr-' + c.type + ')');
+          g.appendChild(path);
+        });
+
+        // nodes
+        nodes
+          .filter((n) => visIds.has(n.id))
+          .forEach((n) => {
+            const col = ACCESS_STYLE[n.access] || ACCESS_STYLE.public;
+            const sel = S.selected === n.id;
+            const inFlow = flowStepSet ? flowStepSet.has(n.id) : true;
+            const stepNum = flowStepIndex[n.id];
+            const grp = mkEl('g');
+            grp.setAttribute('cursor', 'pointer');
+            grp.setAttribute('data-id', n.id);
+            if (flowStepSet && !inFlow) grp.setAttribute('opacity', '0.12');
+            grp.addEventListener('click', () => selectNode(n.id));
+
+            // glow for selected
+            if (sel) {
+              const glow = mkEl('rect');
+              glow.setAttribute('x', String(n.x - 3));
+              glow.setAttribute('y', String(n.y - 3));
+              glow.setAttribute('width', String(n.w + 6));
+              glow.setAttribute('height', String(n.h + 6));
+              glow.setAttribute('rx', '8');
+              glow.setAttribute('fill', 'none');
+              glow.setAttribute('stroke', '#ffffff');
+              glow.setAttribute('stroke-width', '1.5');
+              glow.setAttribute('stroke-opacity', '0.3');
+              grp.appendChild(glow);
+            }
+
+            // flow highlight ring
+            if (inFlow && flowStepSet) {
+              const fring = mkEl('rect');
+              fring.setAttribute('x', String(n.x - 4));
+              fring.setAttribute('y', String(n.y - 4));
+              fring.setAttribute('width', String(n.w + 8));
+              fring.setAttribute('height', String(n.h + 8));
+              fring.setAttribute('rx', '9');
+              fring.setAttribute('fill', 'none');
+              fring.setAttribute('stroke', flowData.color);
+              fring.setAttribute('stroke-width', '2');
+              fring.setAttribute('stroke-opacity', '0.65');
+              grp.appendChild(fring);
+            }
+
+            const rect = mkEl('rect');
+            rect.setAttribute('x', String(n.x));
+            rect.setAttribute('y', String(n.y));
+            rect.setAttribute('width', String(n.w));
+            rect.setAttribute('height', String(n.h));
+            rect.setAttribute('rx', '6');
+            rect.setAttribute('fill', col.fill);
+            rect.setAttribute('stroke', sel ? '#ffffff' : col.stroke);
+            rect.setAttribute('stroke-width', sel ? '2' : '1');
+            grp.appendChild(rect);
+
+            const lbl = mkEl('text');
+            lbl.setAttribute('x', String(n.x + n.w / 2));
+            lbl.setAttribute('y', String(n.y + 15.5));
+            lbl.setAttribute('text-anchor', 'middle');
+            lbl.setAttribute('fill', '#e6edf3');
+            lbl.setAttribute('font-size', '11');
+            lbl.setAttribute('font-weight', '600');
+            lbl.setAttribute('font-family', 'system-ui,-apple-system,sans-serif');
+            // truncate long labels
+            const maxChars = 20;
+            lbl.textContent =
+              n.label.length > maxChars ? n.label.slice(0, maxChars - 1) + '…' : n.label;
+            grp.appendChild(lbl);
+
+            const rt = mkEl('text');
+            rt.setAttribute('x', String(n.x + n.w / 2));
+            rt.setAttribute('y', String(n.y + 30));
+            rt.setAttribute('text-anchor', 'middle');
+            rt.setAttribute('fill', col.stroke);
+            rt.setAttribute('font-size', '8');
+            rt.setAttribute('font-family', 'monospace');
+            rt.setAttribute('opacity', '0.7');
+            let rtxt = n.route;
+            if (rtxt.length > 24) rtxt = rtxt.slice(0, 22) + '…';
+            rt.textContent = rtxt;
+            grp.appendChild(rt);
+
+            // step number badge
+            if (stepNum) {
+              const bc = mkEl('circle');
+              bc.setAttribute('cx', String(n.x + n.w - 8));
+              bc.setAttribute('cy', String(n.y + 8));
+              bc.setAttribute('r', '8');
+              bc.setAttribute('fill', flowData.color);
+              bc.setAttribute('stroke', '#0d1117');
+              bc.setAttribute('stroke-width', '1.5');
+              grp.appendChild(bc);
+              const bt = mkEl('text');
+              bt.setAttribute('x', String(n.x + n.w - 8));
+              bt.setAttribute('y', String(n.y + 12));
+              bt.setAttribute('text-anchor', 'middle');
+              bt.setAttribute('fill', '#0d1117');
+              bt.setAttribute('font-size', '9');
+              bt.setAttribute('font-weight', '800');
+              bt.setAttribute('font-family', 'system-ui,-apple-system,sans-serif');
+              bt.textContent = String(stepNum);
+              grp.appendChild(bt);
+            }
+
+            g.appendChild(grp);
+          });
+
+        // row labels (right edge)
+        const rowLabels = [
+          { text: 'PUBLIC PAGES', y: ROW.public + 26 },
+          { text: 'AUTH FLOW', y: ROW.auth + 26 },
+          { text: 'USER ACTIONS', y: ROW.actions + 26 },
+          { text: 'PROFILE', y: ROW.profile + 26 },
+          { text: 'DASHBOARDS', y: ROW.dashboards + 26 },
+          { text: 'ADMIN', y: ROW.admin + 26 },
+        ];
+        rowLabels.forEach((r) => {
+          const t = mkEl('text');
+          t.setAttribute('x', String(CANVAS_W - 18));
+          t.setAttribute('y', String(r.y));
+          t.setAttribute('text-anchor', 'end');
+          t.setAttribute('fill', '#21262d');
+          t.setAttribute('font-size', '8.5');
+          t.setAttribute('font-weight', '700');
+          t.setAttribute('letter-spacing', '1.5');
+          t.setAttribute('font-family', 'system-ui,-apple-system,sans-serif');
+          t.textContent = r.text;
+          g.appendChild(t);
+        });
+
+        // domain group labels
+        const domainAnchors = [
+          { label: 'TOURISM', nodeId: 'tourism' },
+          { label: 'GUIDES', nodeId: 'guides' },
+          { label: 'MARKETPLACE', nodeId: 'marketplace' },
+          { label: 'LOGISTICS', nodeId: 'logistics' },
+          { label: 'INVESTMENT', nodeId: 'investment' },
+          { label: 'JOBS', nodeId: 'jobs' },
+          { label: 'BENEFITS', nodeId: 'benefits' },
+          { label: 'SEARCH', nodeId: 'search' },
+        ];
+        domainAnchors.forEach((d) => {
+          const anchor = nodes.find((n) => n.id === d.nodeId);
+          if (!anchor || !visIds.has(d.nodeId)) return;
+          const t = mkEl('text');
+          t.setAttribute('x', String(anchor.x));
+          t.setAttribute('y', String(ROW.public - 14));
+          t.setAttribute('fill', '#7d8590');
+          t.setAttribute('font-size', '8');
+          t.setAttribute('font-weight', '700');
+          t.setAttribute('letter-spacing', '1.2');
+          t.setAttribute('font-family', 'system-ui,-apple-system,sans-serif');
+          t.textContent = d.label;
+          g.appendChild(t);
+        });
+
+        // update stat bar
+        const visible = nodes.filter((n) => visIds.has(n.id)).length;
+        document.getElementById('stat-bar').textContent =
+          `${visible} / ${nodes.length} pages · zoom ${Math.round(S.zoom * 100)}%`;
+
+        updateInfo();
+      }
+
+      // ── NODE INSPECTOR ─────────────────────────────────────────────────────────────
+      function selectNode(id) {
+        S.selected = S.selected === id ? null : id;
+        render();
+      }
+
+      function updateInfo() {
+        const panel = document.getElementById('node-info');
+        while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+        const n = nodes.find((x) => x.id === S.selected);
+        if (!n) {
+          const e = document.createElement('div');
+          e.className = 'ni-empty';
+          e.textContent = 'Click any node to inspect';
+          panel.appendChild(e);
+          return;
+        }
+
+        const title = document.createElement('div');
+        title.className = 'ni-title';
+        title.textContent = n.label;
+        panel.appendChild(title);
+
+        const route = document.createElement('div');
+        route.className = 'ni-route';
+        route.textContent = n.route;
+        panel.appendChild(route);
+
+        const badgeText = {
+          public: 'Public',
+          auth: 'Auth Required',
+          role: 'Role-Gated',
+          admin: 'Admin Only',
+          global: 'Global Widget',
+        };
+        const badge = document.createElement('span');
+        badge.className = 'ni-badge badge-' + n.access;
+        badge.textContent = badgeText[n.access] || n.access;
+        panel.appendChild(badge);
+
+        if (n.roles && n.roles.length) {
+          const roles = document.createElement('div');
+          roles.className = 'ni-roles';
+          roles.textContent = 'Roles: ' + n.roles.join(', ');
+          panel.appendChild(roles);
+        }
+
+        const desc = document.createElement('div');
+        desc.className = 'ni-desc';
+        desc.textContent = n.desc;
+        panel.appendChild(desc);
+
+        if (n.tabs && n.tabs.length) {
+          const sec = document.createElement('div');
+          sec.className = 'ni-tabs';
+          const lbl = document.createElement('div');
+          lbl.className = 'ni-tab-label';
+          lbl.textContent = 'Internal Tabs';
+          sec.appendChild(lbl);
+          n.tabs.forEach((t) => {
+            const item = document.createElement('div');
+            item.className = 'ni-tab-item';
+            item.textContent = t;
+            sec.appendChild(item);
+          });
+          panel.appendChild(sec);
+        }
+
+        if (n.features && n.features.length) {
+          const sec = document.createElement('div');
+          sec.className = 'ni-features';
+          const lbl = document.createElement('div');
+          lbl.className = 'ni-feat-label';
+          lbl.textContent = 'Features';
+          sec.appendChild(lbl);
+          n.features.forEach((f) => {
+            const item = document.createElement('div');
+            item.className = 'ni-feat-item';
+            item.textContent = f;
+            sec.appendChild(item);
+          });
+          panel.appendChild(sec);
+        }
+      }
+
+      // ── SIDEBAR ───────────────────────────────────────────────────────────────────
+      function buildSidebar() {
+        const presetsEl = document.getElementById('preset-btns');
+        PRESETS.forEach((p) => {
+          const btn = document.createElement('button');
+          btn.className = 'preset-btn' + (p.id === S.activePreset ? ' active' : '');
+          btn.textContent = p.label;
+          btn.dataset.pid = p.id;
+          btn.addEventListener('click', () => applyPreset(p.id));
+          presetsEl.appendChild(btn);
+        });
+
+        const rolesEl = document.getElementById('role-btns');
+        const allBtn = document.createElement('button');
+        allBtn.className = 'role-btn active';
+        allBtn.textContent = 'All Roles';
+        allBtn.addEventListener('click', () => setRole(null));
+        rolesEl.appendChild(allBtn);
+        ALL_ROLES.forEach((r) => {
+          const btn = document.createElement('button');
+          btn.className = 'role-btn';
+          btn.textContent = r;
+          btn.dataset.role = r;
+          btn.addEventListener('click', () => setRole(r));
+          rolesEl.appendChild(btn);
+        });
+
+        const domEl = document.getElementById('domain-checks');
+        DOMAINS.forEach((d) => {
+          const label = document.createElement('label');
+          label.className = 'domain-item';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = true;
+          cb.dataset.domain = d;
+          cb.addEventListener('change', () => {
+            if (cb.checked) S.visibleDomains.add(d);
+            else S.visibleDomains.delete(d);
+            render();
+          });
+          const span = document.createElement('span');
+          span.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+          label.appendChild(cb);
+          label.appendChild(span);
+          domEl.appendChild(label);
+        });
+      }
+
+      function applyPreset(id) {
+        const p = PRESETS.find((x) => x.id === id);
+        if (!p) return;
+        S.activePreset = id;
+        S.visibleDomains = new Set(p.domains);
+        S.activeRole = p.role;
+        S.selected = null;
+        document
+          .querySelectorAll('.preset-btn')
+          .forEach((b) => b.classList.toggle('active', b.dataset.pid === id));
+        document.querySelectorAll('#domain-checks input').forEach((cb) => {
+          cb.checked = S.visibleDomains.has(cb.dataset.domain);
+        });
+        document.querySelectorAll('.role-btn').forEach((b) => {
+          if (b.dataset.role) b.classList.toggle('active', b.dataset.role === S.activeRole);
+          else b.classList.toggle('active', !S.activeRole);
+        });
+        render();
+      }
+
+      function setRole(role) {
+        S.activeRole = role;
+        document.querySelectorAll('.role-btn').forEach((b) => {
+          if (b.dataset.role) b.classList.toggle('active', b.dataset.role === role);
+          else b.classList.toggle('active', !role);
+        });
+        render();
+      }
+
+      // ── FLOWS ─────────────────────────────────────────────────────────────────────
+      function fitToFlow(flowId) {
+        const flow = FLOWS.find((f) => f.id === flowId);
+        if (!flow) return;
+        const flowNodes = nodes.filter((n) => flow.steps.includes(n.id));
+        if (!flowNodes.length) return;
+        const wrapEl = document.getElementById('canvas-wrap');
+        const wW = wrapEl.clientWidth;
+        const wH = wrapEl.clientHeight;
+        const pad = 80;
+        const minX = Math.min(...flowNodes.map((n) => n.x)) - pad;
+        const maxX = Math.max(...flowNodes.map((n) => n.x + n.w)) + pad;
+        const minY = Math.min(...flowNodes.map((n) => n.y)) - pad;
+        const maxY = Math.max(...flowNodes.map((n) => n.y + n.h)) + pad;
+        const cW = maxX - minX;
+        const cH = maxY - minY;
+        S.zoom = Math.min(Math.max(0.12, Math.min(wW / cW, wH / cH)), 2.5);
+        S.pan.x = wW / 2 - (minX + cW / 2) * S.zoom;
+        S.pan.y = wH / 2 - (minY + cH / 2) * S.zoom;
+        svg.style.transform = `translate(${S.pan.x}px,${S.pan.y}px)`;
+      }
+
+      function setFlow(id) {
+        S.activeFlow = S.activeFlow === id ? null : id;
+        document.querySelectorAll('.flow-btn').forEach((b) => {
+          b.classList.toggle('active', b.dataset.fid === S.activeFlow);
+        });
+        const clearBtn = document.getElementById('flow-clear-btn');
+        if (clearBtn) clearBtn.style.display = S.activeFlow ? 'block' : 'none';
+        if (S.activeFlow) fitToFlow(S.activeFlow);
+        render();
+      }
+
+      function buildFlows() {
+        const container = document.getElementById('flow-btns');
+        if (!container) return;
+        const clearBtn = document.createElement('button');
+        clearBtn.id = 'flow-clear-btn';
+        clearBtn.style.display = 'none';
+        clearBtn.textContent = '\u2715 Clear flow highlight';
+        clearBtn.addEventListener('click', () => setFlow(S.activeFlow));
+        container.appendChild(clearBtn);
+        FLOWS.forEach((f) => {
+          const btn = document.createElement('button');
+          btn.className = 'flow-btn';
+          btn.dataset.fid = f.id;
+          btn.style.borderLeft = '3px solid ' + f.color;
+          btn.addEventListener('click', () => setFlow(f.id));
+          const name = document.createElement('span');
+          name.className = 'flow-btn-name';
+          name.textContent = f.label;
+          btn.appendChild(name);
+          const desc = document.createElement('span');
+          desc.className = 'flow-btn-desc';
+          desc.textContent = f.desc;
+          btn.appendChild(desc);
+          const steps = document.createElement('span');
+          steps.className = 'flow-btn-steps';
+          steps.textContent = f.steps.length + ' steps';
+          btn.appendChild(steps);
+          container.appendChild(btn);
+        });
+      }
+
+      // ── PAN & ZOOM ─────────────────────────────────────────────────────────────────
+      const wrap = document.getElementById('canvas-wrap');
+      wrap.addEventListener('mousedown', (e) => {
+        if (e.target.closest('[data-id]')) return;
+        S.dragging = true;
+        S.dragStart = { x: e.clientX, y: e.clientY };
+        S.panStart = { x: S.pan.x, y: S.pan.y };
+        svg.classList.add('panning');
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!S.dragging) return;
+        S.pan.x = S.panStart.x + (e.clientX - S.dragStart.x);
+        S.pan.y = S.panStart.y + (e.clientY - S.dragStart.y);
+        svg.style.transform = `translate(${S.pan.x}px,${S.pan.y}px)`;
+      });
+      window.addEventListener('mouseup', () => {
+        S.dragging = false;
+        svg.classList.remove('panning');
+      });
+      wrap.addEventListener(
+        'wheel',
+        (e) => {
+          e.preventDefault();
+          S.zoom = Math.min(2.5, Math.max(0.12, S.zoom + (e.deltaY > 0 ? -0.04 : 0.04)));
+          render();
+        },
+        { passive: false },
+      );
+      document.getElementById('btn-zin').addEventListener('click', () => {
+        S.zoom = Math.min(2.5, S.zoom + 0.1);
+        render();
+      });
+      document.getElementById('btn-zout').addEventListener('click', () => {
+        S.zoom = Math.max(0.12, S.zoom - 0.1);
+        render();
+      });
+      document.getElementById('btn-zreset').addEventListener('click', () => {
+        S.zoom = 0.3;
+        S.pan = { x: 14, y: 14 };
+        svg.style.transform = `translate(${S.pan.x}px,${S.pan.y}px)`;
+        render();
+      });
+
+      // ── INIT ──────────────────────────────────────────────────────────────────────
+      svg.style.transform = `translate(${S.pan.x}px,${S.pan.y}px)`;
+      buildSidebar();
+      buildFlows();
+      render();
+    </script>
+  </body>
+</html>

@@ -25,11 +25,13 @@ export function StarRating({ value, onChange }: { value: number; onChange: (v: n
 export function ReviewForm({
   jobId,
   appId,
+  direction,
   label,
   onDone,
 }: {
   jobId: string;
   appId: string;
+  direction: string;
   label: string;
   onDone: () => void;
 }) {
@@ -39,7 +41,11 @@ export function ReviewForm({
 
   async function handleSubmit() {
     try {
-      await submitMutation.mutateAsync({ rating, comment: comment.trim() || undefined });
+      await submitMutation.mutateAsync({
+        direction,
+        rating,
+        comment: comment.trim() || undefined,
+      });
       toast.success('تم إرسال تقييمك');
       onDone();
     } catch (err) {
