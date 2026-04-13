@@ -33,7 +33,8 @@ CREATE TABLE "market"."job_posts" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
 	CONSTRAINT "job_posts_compensation_non_negative" CHECK ("market"."job_posts"."compensation" >= 0),
-	CONSTRAINT "job_posts_slots_positive" CHECK ("market"."job_posts"."slots" >= 1)
+	CONSTRAINT "job_posts_slots_positive" CHECK ("market"."job_posts"."slots" >= 1),
+	CONSTRAINT "job_posts_valid_date_range" CHECK (starts_at IS NULL OR ends_at IS NULL OR ends_at >= starts_at)
 );
 --> statement-breakpoint
 CREATE TABLE "market"."job_reviews" (

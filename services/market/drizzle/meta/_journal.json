@@ -120,13 +120,6 @@
       "when": 1776053465000,
       "tag": "20260413041105_t36-employment-board",
       "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1776077204000,
-      "tag": "20260413104644_add_job_posts_date_range_check",
-      "breakpoints": true
     }
   ]
 }
