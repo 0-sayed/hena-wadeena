@@ -29,7 +29,8 @@ import type {
   ApplicationStatus,
   CompensationType,
 } from '@/lib/format';
-import { apiFetchWithRefresh } from './auth-manager';
+import { toQueryString } from '@/lib/query-string';
+import { apiFetchRawWithRefresh, apiFetchWithRefresh } from './auth-manager';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -49,46 +50,57 @@ export class ApiError extends Error {
   }
 }
 
+async function buildApiError(response: Response): Promise<ApiError> {
+  const error = (await response.json().catch(() => ({ message: 'Network error' }))) as Record<
+    string,
+    unknown
+  >;
+  const message =
+    response.status === 429
+      ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
+      : ((error.detail as string) ?? (error.message as string) ?? `API Error ${response.status}`);
+  return new ApiError(response.status, message, error);
+}
+
+function buildRequestHeaders(options?: RequestInit): Headers {
+  const token = localStorage.getItem('access_token');
+  const headers = new Headers(options?.headers);
+  const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData;
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (
+    !isFormData &&
+    options?.body !== undefined &&
+    options?.body !== null &&
+    !headers.has('Content-Type')
+  ) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  return headers;
+}
+
 // ── Generic fetch wrapper ───────────────────────────────────────────────────
 
-export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('access_token');
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+export async function apiFetchRaw(endpoint: string, options?: RequestInit): Promise<Response> {
+  return fetch(`${BASE_URL}${endpoint}`, {
     ...options,
-    headers: { ...headers, ...(options?.headers as Record<string, string>) },
+    headers: buildRequestHeaders(options),
   });
+}
+
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await apiFetchRaw(endpoint, options);
 
   if (!res.ok) {
-    const error = (await res.json().catch(() => ({ message: 'Network error' }))) as Record<
-      string,
-      unknown
-    >;
-    const message =
-      res.status === 429
-        ? 'محاولات كثيرة جدًا، يُرجى الانتظار قليلًا'
-        : ((error.detail as string) ?? (error.message as string) ?? `API Error ${res.status}`);
-    throw new ApiError(res.status, message, error);
+    throw await buildApiError(res);
   }
 
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
-}
-
-/** Build ?key=value&... from object, skipping undefined values */
-function toQueryString(params?: object): string {
-  if (!params) return '';
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null);
-  if (entries.length === 0) return '';
-  return (
-    '?' +
-    entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&')
-  );
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -601,6 +613,7 @@ export interface BusinessEntry {
 
 export const priceIndexAPI = {
   getIndex: (params?: {
+    q?: string;
     category?: string;
     region?: string;
     price_type?: string;
@@ -828,6 +841,7 @@ export interface Listing {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  produceDetails?: ProduceDetailsResponse | null;
 }
 
 export interface ListingUpsertRequest {
@@ -851,6 +865,51 @@ export interface ListingUpsertRequest {
   tags?: string[];
   contact?: Record<string, unknown>;
   openingHours?: string;
+  produce_details?: ProduceDetails;
+}
+
+export interface PriceAlertSubscription {
+  id: string;
+  commodityId: string;
+  thresholdPrice: number; // piasters
+  direction: 'above' | 'below';
+  isActive: boolean;
+  lastTriggeredAt: string | null;
+  createdAt: string;
+}
+
+export interface CreatePriceAlertRequest {
+  commodityId: string;
+  thresholdPrice: number; // piasters
+  direction: 'above' | 'below';
+}
+
+export interface UpdatePriceAlertRequest {
+  thresholdPrice?: number;
+  direction?: 'above' | 'below';
+}
+
+export interface ProduceDetails {
+  commodity_type: 'dates' | 'olives' | 'wheat' | 'other';
+  storage_type: 'field' | 'warehouse' | 'cold_storage';
+  preferred_buyer: 'any' | 'wholesaler' | 'exporter' | 'local';
+  quantity_kg?: number;
+  harvest_date?: string; // YYYY-MM-DD
+  certifications?: Array<'organic' | 'gap' | 'other'>;
+  contact_phone?: string;
+  contact_whatsapp?: string;
+}
+
+// Camel-case shape returned by the NestJS API (response only)
+export interface ProduceDetailsResponse {
+  commodityType: 'dates' | 'olives' | 'wheat' | 'other';
+  storageType: string;
+  preferredBuyer: string;
+  quantityKg?: string | null;
+  harvestDate?: string | null;
+  certifications?: string[];
+  contactPhone?: string | null;
+  contactWhatsapp?: string | null;
 }
 
 export interface ListingInquiry {
@@ -886,17 +945,21 @@ export interface ReplyListingInquiryRequest {
 export const listingsAPI = {
   getAll: (params?: {
     category?: string;
+    commodity_type?: string;
     district?: string;
     limit?: number;
     offset?: number;
     sort?: string;
+    q?: string;
   }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
+    if (params?.commodity_type) qs.set('commodity_type', params.commodity_type);
     if (params?.district) qs.set('area', params.district);
     if (params?.limit != null) qs.set('limit', String(params.limit));
     if (params?.offset != null) qs.set('offset', String(params.offset));
     if (params?.sort) qs.set('sort', params.sort);
+    if (params?.q) qs.set('q', params.q);
     const query = qs.toString();
     return apiFetch<{
       data: Listing[];
@@ -947,6 +1010,21 @@ export const listingInquiriesAPI = {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
+};
+
+export const priceAlertsAPI = {
+  list: () => apiFetchWithRefresh<PriceAlertSubscription[]>('/price-alerts'),
+  create: (body: CreatePriceAlertRequest) =>
+    apiFetchWithRefresh<PriceAlertSubscription>('/price-alerts', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: UpdatePriceAlertRequest) =>
+    apiFetchWithRefresh<PriceAlertSubscription>(`/price-alerts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) => apiFetchWithRefresh<void>(`/price-alerts/${id}`, { method: 'DELETE' }),
 };
 
 // ── Investment ──────────────────────────────────────────────────────────────
@@ -1304,20 +1382,20 @@ export const reviewsAPI = {
   getGuideReviews: (guideId: string, params?: { offset?: number; limit?: number; sort?: string }) =>
     apiFetch<PaginatedResponse<Review>>(`/guides/${guideId}/reviews${toQueryString(params)}`),
 
-  // POST /api/v1/reviews — auth required, tourist only
-  createReview: (body: { bookingId: string; rating: number; comment?: string }) =>
-    apiFetchWithRefresh<Review>('/reviews', {
+  // POST /api/v1/guide-reviews — auth required, tourist only
+  createReview: (body: { bookingId: string; rating: number; comment: string }) =>
+    apiFetchWithRefresh<Review>('/guide-reviews', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
-  // GET /api/v1/reviews/mine — auth required
+  // GET /api/v1/guide-reviews/mine — auth required
   getMyReviews: (params?: { offset?: number; limit?: number }) =>
-    apiFetchWithRefresh<PaginatedResponse<Review>>(`/reviews/mine${toQueryString(params)}`),
+    apiFetchWithRefresh<PaginatedResponse<Review>>(`/guide-reviews/mine${toQueryString(params)}`),
 
-  // POST /api/v1/reviews/:id/helpful — auth required
+  // POST /api/v1/guide-reviews/:id/helpful — auth required
   markHelpful: (reviewId: string) =>
-    apiFetchWithRefresh<Review>(`/reviews/${reviewId}/helpful`, { method: 'POST' }),
+    apiFetchWithRefresh<Review>(`/guide-reviews/${reviewId}/helpful`, { method: 'POST' }),
 };
 
 // ── Payments / Wallet ──────────────────────────────────────────────────────
@@ -1428,6 +1506,19 @@ export interface Poi {
   createdAt: string;
   updatedAt: string | null;
   deletedAt: string | null;
+}
+
+export interface PoiWithStatus {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: string;
+  location: { x: number; y: number }; // PostGIS point: x=lng, y=lat
+  status: string | null;
+  statusNoteAr: string | null;
+  statusNoteEn: string | null;
+  validUntil: string | null;
+  statusUpdatedAt: string | null;
 }
 
 // ── Carpool ────────────────────────────────────────────────────────────────
@@ -1555,6 +1646,15 @@ export const mapAPI = {
     apiFetchWithRefresh<{ asDriver: CarpoolRide[]; asPassenger: CarpoolPassenger[] }>(
       '/carpool/my',
     ),
+
+  getStatusBoard: (page = 1, limit = 12, search?: string, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set('search', search);
+    if (status) params.set('status', status);
+    return apiFetch<PaginatedResponse<PoiWithStatus>>(
+      `/map/sites/status-board?${params.toString()}`,
+    );
+  },
 };
 
 // ── Admin ───────────────────────────────────────────────────────────────────
@@ -1675,6 +1775,17 @@ export interface AdminKycFilters {
   limit?: number;
 }
 
+export interface AdminListingFilters {
+  page?: number;
+  limit?: number;
+  status?: 'draft' | 'active' | 'suspended';
+  is_verified?: boolean;
+  owner_id?: string;
+  category?: string;
+  category_ne?: string;
+  sort?: 'created_at|asc' | 'created_at|desc' | 'price|asc' | 'price|desc';
+}
+
 export interface AdminGuideFilters {
   status?: string;
   verified?: boolean;
@@ -1692,9 +1803,159 @@ export interface AdminBookingFilters {
   limit?: number;
 }
 
+export interface AiKnowledgeDocument {
+  doc_id: string;
+  batch_id: string | null;
+  filename: string;
+  source_type: string;
+  title: string | null;
+  language: string;
+  total_pages: number;
+  total_chunks: number;
+  file_size_kb: number;
+  uploaded_at: string;
+  indexed_at: string | null;
+  status: string;
+  tags: string[];
+  description: string | null;
+  current_step: string | null;
+  error_detail: string | null;
+}
+
+export interface AiKnowledgeDocumentListResponse {
+  documents: AiKnowledgeDocument[];
+  pagination: {
+    total: number;
+    page: number;
+    per_page: number;
+  };
+}
+
+export interface AiKnowledgeBatchItem {
+  doc_id: string;
+  filename: string;
+  status: string;
+  current_step: string | null;
+  error_detail: string | null;
+  total_pages: number;
+  total_chunks: number;
+  language: string | null;
+  indexed_at: string | null;
+}
+
+export interface AiKnowledgeBatchResponse {
+  batch_id: string;
+  status: string;
+  total_files: number;
+  pending_files: number;
+  processing_files: number;
+  indexed_files: number;
+  failed_files: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  items: AiKnowledgeBatchItem[];
+}
+
+export interface AiKnowledgeDeleteResponse {
+  doc_id: string;
+  deleted: boolean;
+  qdrant_points_deleted: number;
+  mongo_chunks_deleted: number;
+  mongo_document_deleted: boolean;
+  deleted_at: string;
+}
+
+export interface AiKnowledgeUploadRequest {
+  files: File[];
+  title?: string;
+  description?: string;
+  tags?: string[];
+  language?: string;
+}
+
+export interface AiCuratedKnowledgeEntry {
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  tags: string[];
+  language: string;
+}
+
+export interface AiCuratedKnowledgeComposeRequest {
+  text: string;
+  language?: string;
+}
+
+export interface AiCuratedKnowledgeComposeResponse {
+  strategy: string;
+  entries: AiCuratedKnowledgeEntry[];
+}
+
+export interface AiCuratedKnowledgeFeedRequest {
+  entries: AiCuratedKnowledgeEntry[];
+}
+
+export interface AiCuratedKnowledgeFeedItem {
+  slug: string;
+  title: string;
+  status: string;
+  filename: string | null;
+  doc_id: string | null;
+  indexed_at: string | null;
+  total_chunks: number;
+  error_detail: string | null;
+}
+
+export interface AiCuratedKnowledgeFeedResponse {
+  total_entries: number;
+  indexed_entries: number;
+  failed_entries: number;
+  items: AiCuratedKnowledgeFeedItem[];
+}
+
+function buildAiKnowledgeUploadFormData(body: AiKnowledgeUploadRequest): FormData {
+  const formData = new FormData();
+
+  for (const file of body.files) {
+    formData.append('files', file);
+  }
+
+  if (body.title) {
+    formData.append('title', body.title);
+  }
+
+  if (body.description) {
+    formData.append('description', body.description);
+  }
+
+  if (body.tags && body.tags.length > 0) {
+    formData.append('tags', body.tags.join(','));
+  }
+
+  formData.append('language', body.language ?? 'auto');
+  return formData;
+}
+
 export const adminAPI = {
   // Stats
   getStats: () => apiFetchWithRefresh<AdminStatsResponse>('/admin/stats'),
+
+  // Listings management
+  getListings: (params?: AdminListingFilters) =>
+    apiFetchWithRefresh<PaginatedResponse<Listing>>(
+      `/admin/listings${toQueryString({
+        status: params?.status,
+        is_verified: params?.is_verified,
+        owner_id: params?.owner_id,
+        category: params?.category,
+        category_ne: params?.category_ne,
+        sort: params?.sort,
+        offset: ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
+        limit: params?.limit,
+      })}`,
+    ),
 
   // Users
   getUsers: (params?: AdminUserFilters) =>
@@ -1818,6 +2079,33 @@ export interface ChatMessageResponse {
   latency_ms: number | null;
 }
 
+interface ChatStreamTokenEvent {
+  type: 'token';
+  delta: string;
+}
+
+interface ChatStreamStatusEvent {
+  type: 'status';
+  phase: string;
+  message?: string;
+}
+
+interface ChatStreamCompleteEvent {
+  type: 'complete';
+  message: ChatMessageResponse;
+}
+
+interface ChatStreamErrorEvent {
+  type: 'error';
+  message: string;
+}
+
+type ChatStreamEvent =
+  | ChatStreamStatusEvent
+  | ChatStreamTokenEvent
+  | ChatStreamCompleteEvent
+  | ChatStreamErrorEvent;
+
 export interface ChatSessionMessage {
   message_id: string;
   role: 'user' | 'assistant' | 'system';
@@ -1849,6 +2137,70 @@ export interface LegacyChatResponse {
   sources: ChatSource[];
 }
 
+async function consumeChatStream(
+  response: Response,
+  handlers: {
+    onStatus?: (phase: string, message?: string) => void;
+    onToken: (delta: string) => void;
+    onComplete: (message: ChatMessageResponse) => void;
+    onError?: (message: string) => void;
+  },
+): Promise<void> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Streaming is not supported in this browser.');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const handleEvent = (event: ChatStreamEvent) => {
+    if (event.type === 'status') {
+      handlers.onStatus?.(event.phase, event.message);
+      return;
+    }
+
+    if (event.type === 'token') {
+      handlers.onToken(event.delta);
+      return;
+    }
+
+    if (event.type === 'complete') {
+      handlers.onComplete(event.message);
+      return;
+    }
+
+    handlers.onError?.(event.message);
+    throw new Error(event.message);
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    let newlineIndex = buffer.indexOf('\n');
+    while (newlineIndex >= 0) {
+      const line = buffer.slice(0, newlineIndex).trim();
+      buffer = buffer.slice(newlineIndex + 1);
+
+      if (line) {
+        handleEvent(JSON.parse(line) as ChatStreamEvent);
+      }
+
+      newlineIndex = buffer.indexOf('\n');
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  const trailing = buffer.trim();
+  if (trailing) {
+    handleEvent(JSON.parse(trailing) as ChatStreamEvent);
+  }
+}
+
 export const aiAPI = {
   createSession: (
     body?: { language_preference?: string; metadata?: Record<string, unknown> },
@@ -1870,6 +2222,31 @@ export const aiAPI = {
       body: JSON.stringify(body),
     }),
 
+  streamMessage: async (
+    sessionId: string,
+    body: { content: string; language?: string },
+    handlers: {
+      onStatus?: (phase: string, message?: string) => void;
+      onToken: (delta: string) => void;
+      onComplete: (message: ChatMessageResponse) => void;
+      onError?: (message: string) => void;
+    },
+    options?: { signal?: AbortSignal },
+  ) => {
+    const response = await apiFetchRawWithRefresh(`/chat/sessions/${sessionId}/messages/stream`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { Accept: 'application/x-ndjson' },
+      signal: options?.signal,
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response);
+    }
+
+    await consumeChatStream(response, handlers);
+  },
+
   closeSession: (sessionId: string) =>
     apiFetchWithRefresh<{
       session_id: string;
@@ -1887,6 +2264,42 @@ export const aiAPI = {
 };
 
 // ── Benefits ─────────────────────────────────────────────────────────────────
+
+export const aiKnowledgeAPI = {
+  listDocuments: (params?: {
+    page?: number;
+    per_page?: number;
+    status?: string;
+    language?: string;
+    tags?: string;
+  }) => apiFetchWithRefresh<AiKnowledgeDocumentListResponse>(`/documents${toQueryString(params)}`),
+
+  uploadDocuments: (body: AiKnowledgeUploadRequest) =>
+    apiFetchWithRefresh<AiKnowledgeBatchResponse>('/documents/inject', {
+      method: 'POST',
+      body: buildAiKnowledgeUploadFormData(body),
+    }),
+
+  getBatchStatus: (batchId: string) =>
+    apiFetchWithRefresh<AiKnowledgeBatchResponse>(`/documents/batches/${batchId}`),
+
+  deleteDocument: (docId: string) =>
+    apiFetchWithRefresh<AiKnowledgeDeleteResponse>(`/documents/${docId}`, {
+      method: 'DELETE',
+    }),
+
+  composeCuratedText: (body: AiCuratedKnowledgeComposeRequest) =>
+    apiFetchWithRefresh<AiCuratedKnowledgeComposeResponse>('/documents/curated/compose', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  feedCuratedText: (body: AiCuratedKnowledgeFeedRequest) =>
+    apiFetchWithRefresh<AiCuratedKnowledgeFeedResponse>('/documents/curated/feed', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};
 
 export interface BenefitInfo {
   id: string;
@@ -1916,7 +2329,7 @@ export const benefitsAPI = {
     }),
 };
 
-// ── Employment Board ─────────────────────────────────────────────────────────
+// ── Employment Board ────────────────────────────────────────────────────────
 
 export type ReviewDirection = 'worker_rates_poster' | 'poster_rates_worker';
 
@@ -1955,7 +2368,7 @@ export interface JobReview {
   reviewerId: string;
   revieweeId: string;
   direction: ReviewDirection;
-  rating: number;
+  rating: number; // 1–5
   comment: string | null;
   createdAt: string;
 }
@@ -2044,4 +2457,46 @@ export const jobsAPI = {
     }),
 
   deleteJob: (id: string) => apiFetchWithRefresh<void>(`/jobs/${id}`, { method: 'DELETE' }),
+};
+
+// ── Desert Trips (Guide Safety) ─────────────────────────────────────────────
+
+export type DesertTripStatus = 'pending' | 'checked_in' | 'overdue' | 'alert_sent' | 'resolved';
+
+export interface DesertTrip {
+  id: string;
+  bookingId: string;
+  guideId: string;
+  destinationName: string;
+  emergencyContact: string;
+  expectedArrivalAt: string;
+  rangerStationName: string | null;
+  status: DesertTripStatus;
+  checkedInAt: string | null;
+  alertTriggeredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RegisterDesertTripRequest {
+  destinationName: string;
+  emergencyContact: string;
+  expectedArrivalAt: string;
+  rangerStationName?: string;
+}
+
+export const desertTripsAPI = {
+  getByBooking: (bookingId: string) =>
+    apiFetchWithRefresh<DesertTrip>(`/bookings/${bookingId}/desert-trip`),
+
+  register: (bookingId: string, body: RegisterDesertTripRequest) =>
+    apiFetchWithRefresh<DesertTrip>(`/bookings/${bookingId}/desert-trip`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  checkIn: (bookingId: string) =>
+    apiFetchWithRefresh<DesertTrip>(`/bookings/${bookingId}/desert-trip/check-in`, {
+      method: 'POST',
+    }),
 };

@@ -135,13 +135,13 @@ async def lifespan(app: FastAPI):
     app.state.prompt_builder = prompt_builder
     app.state.session_manager = session_manager
     app.state.startup_checks = startup_checks
-    app.state.document_batch_tasks = set()
+    app.state.background_tasks = set()
 
     logger.info("Nakheel app started with validated dependencies")
     try:
         yield
     finally:
-        batch_tasks = list(getattr(app.state, "document_batch_tasks", set()))
+        batch_tasks = list(getattr(app.state, "background_tasks", set()))
         for task in batch_tasks:
             task.cancel()
         if batch_tasks:

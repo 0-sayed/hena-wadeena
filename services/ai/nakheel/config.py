@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
     OPENAI_EMBEDDING_DIMENSIONS: int = 1024
-    OPENAI_MAX_TOKENS: int = 1024
+    OPENAI_MAX_TOKENS: int = 768
     OPENAI_TEMPERATURE: float = 0.3
+    OPENAI_TIMEOUT_SECONDS: float = 60.0
 
     JWT_ACCESS_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
@@ -47,11 +48,12 @@ class Settings(BaseSettings):
     CHUNK_MIN_TOKENS: int = 50
     CHUNK_OVERLAP_RATIO: float = 0.20
 
-    DENSE_TOP_K: int = 20
-    SPARSE_TOP_K: int = 20
+    DENSE_TOP_K: int = 5
+    SPARSE_TOP_K: int = 5
     RRF_K: int = 60
-    RRF_TOP_N: int = 10
-    RERANKER_TOP_K: int = 5
+    RRF_TOP_N: int = 5
+    RERANKER_TOP_K: int = 3
+    RERANKER_MIN_CANDIDATES: int = 6
     RELEVANCE_THRESHOLD: float = 0.35
     DENSE_WEIGHT: float = 0.7
     SPARSE_WEIGHT: float = 0.3
@@ -59,6 +61,8 @@ class Settings(BaseSettings):
     SESSION_MAX_MESSAGES: int = 10
     SESSION_TTL_HOURS: int = 168
     TOKEN_BUDGET_HISTORY: int = 2000
+    TOKEN_BUDGET_CONTEXT: int = 1600
+    QUERY_CACHE_SIZE: int = 128
 
     MAX_FILE_SIZE_MB: int = 50
     TEMP_DIR: Path = Field(default=Path("./tmp/nakheel"))

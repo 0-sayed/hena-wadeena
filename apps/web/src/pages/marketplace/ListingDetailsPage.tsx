@@ -123,7 +123,7 @@ export default function ListingDetailsPage() {
                     className="h-64 w-full rounded-xl object-cover md:h-80"
                   />
                 </div>
-                {(listing.images ?? []).slice(1, 3).map((image, index) => (
+                {(listing.images ?? []).slice(1).map((image, index) => (
                   <img
                     key={`${image}-${index}`}
                     src={image}
@@ -151,7 +151,9 @@ export default function ListingDetailsPage() {
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>{districtLabel(listing.district ?? listing.address ?? 'غير محدد')}</span>
+                      <span>
+                        {districtLabel(listing.district ?? listing.address ?? 'غير محدد')}
+                      </span>
                     </div>
                     {listing.areaSqm != null && (
                       <div className="flex items-center gap-2">
@@ -253,8 +255,11 @@ export default function ListingDetailsPage() {
               </Card>
             </div>
 
-            <div className="space-y-6">
-              <Card className="sticky top-20 border-border/50">
+            <aside
+              aria-label="ملخص وتواصل الإعلان"
+              className="space-y-6 lg:sticky lg:top-20 lg:self-start"
+            >
+              <Card className="border-border/50">
                 <CardHeader>
                   <CardTitle className="text-lg">ملخص الإعلان</CardTitle>
                 </CardHeader>
@@ -323,8 +328,8 @@ export default function ListingDetailsPage() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    هذا الإعلان مرتبط بصاحبه مباشرة عبر النظام، ويمكنك إرسال استفسارك من الزر
-                    المخصص ليصل إلى صندوق الوارد الخاص به.
+                    هذا الإعلان مرتبط بصاحبه مباشرة عبر النظام، ويمكنك إرسال استفسارك من الزر المخصص
+                    ليصل إلى صندوق الوارد الخاص به.
                   </p>
                 </CardContent>
               </Card>
@@ -366,11 +371,13 @@ export default function ListingDetailsPage() {
                     </div>
                   )}
                   {!contactName && !contactPhone && !contactWebsite && (
-                    <p className="text-muted-foreground">لا توجد بيانات تواصل منشورة لهذا الإعلان.</p>
+                    <p className="text-muted-foreground">
+                      لا توجد بيانات تواصل منشورة لهذا الإعلان.
+                    </p>
                   )}
                 </CardContent>
               </Card>
-            </div>
+            </aside>
           </div>
         </div>
       </section>

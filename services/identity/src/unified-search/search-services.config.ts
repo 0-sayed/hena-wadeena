@@ -1,4 +1,4 @@
-import type { SearchResultType } from '@hena-wadeena/types';
+import { resolveLocalServiceUrl, type SearchResultType } from '@hena-wadeena/types';
 
 export interface SearchServiceConfig {
   name: string;
@@ -9,17 +9,32 @@ export interface SearchServiceConfig {
 export const EXTERNAL_SEARCH_SERVICES: SearchServiceConfig[] = [
   {
     name: 'market',
-    url: process.env.MARKET_SERVICE_URL ?? 'http://localhost:8002',
+    url: resolveLocalServiceUrl({
+      defaultPort: 8002,
+      explicitPort: process.env.MARKET_PORT,
+      explicitUrl: process.env.MARKET_SERVICE_URL,
+      env: process.env,
+    }),
     types: ['listing', 'opportunity', 'business'],
   },
   {
     name: 'guide-booking',
-    url: process.env.GUIDE_BOOKING_SERVICE_URL ?? 'http://localhost:8003',
+    url: resolveLocalServiceUrl({
+      defaultPort: 8003,
+      explicitPort: process.env.GUIDE_BOOKING_PORT,
+      explicitUrl: process.env.GUIDE_BOOKING_SERVICE_URL,
+      env: process.env,
+    }),
     types: ['guide', 'attraction', 'package'],
   },
   {
     name: 'map',
-    url: process.env.MAP_SERVICE_URL ?? 'http://localhost:8004',
+    url: resolveLocalServiceUrl({
+      defaultPort: 8004,
+      explicitPort: process.env.MAP_PORT,
+      explicitUrl: process.env.MAP_SERVICE_URL,
+      env: process.env,
+    }),
     types: ['poi'],
   },
 ];

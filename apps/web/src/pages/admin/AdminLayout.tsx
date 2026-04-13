@@ -1,10 +1,12 @@
 import { UserRole } from '@hena-wadeena/types';
 import {
   BarChart3,
+  Bot,
   Home,
   Leaf,
   LogOut,
   MapPin,
+  Megaphone,
   Menu,
   Shield,
   User,
@@ -37,6 +39,11 @@ const navItems = [
     icon: UserCheck,
   },
   {
+    to: '/admin/listings',
+    label: { ar: 'الإعلانات', en: 'Announcements' },
+    icon: Megaphone,
+  },
+  {
     to: '/admin/guides',
     label: { ar: 'المرشدون', en: 'Guides' },
     icon: Shield,
@@ -51,7 +58,12 @@ const navItems = [
     label: { ar: 'المحاصيل', en: 'Crops' },
     icon: Leaf,
   },
-];
+  {
+    to: '/admin/ai',
+    label: { ar: 'إدارة الذكاء الاصطناعي', en: 'AI knowledge' },
+    icon: Bot,
+  },
+] as const;
 
 export default function AdminLayout() {
   const { user, isLoading, direction, language, logout } = useAuth();

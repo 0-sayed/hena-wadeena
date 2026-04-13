@@ -1,14 +1,16 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import io
 import os
+import re
 import threading
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 
 from nakheel.config import Settings
+from nakheel.utils.text_cleaning import clean_text, normalize_arabic
 
 try:
     from FlagEmbedding import FlagReranker
@@ -26,6 +28,9 @@ except ImportError:  # pragma: no cover
     transformers_logging = None
 
 from .hybrid_search import CandidateChunk
+
+ARABIC_RE = re.compile(r"[\u0600-\u06FF]")
+TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 
 
 @dataclass(slots=True)
@@ -55,6 +60,24 @@ def _run_quietly(fn, *args, **kwargs):
 
     with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
         return fn(*args, **kwargs)
+
+
+def _normalized_terms(text: str) -> set[str]:
+    normalized = clean_text(text).lower()
+    if ARABIC_RE.search(normalized):
+        normalized = normalize_arabic(normalized)
+    return {term for term in TOKEN_RE.findall(normalized) if term}
+
+
+def _heuristic_score(query: str, candidate: CandidateChunk) -> float:
+    query_terms = _normalized_terms(query)
+    chunk_terms = _normalized_terms(candidate.chunk.text)
+    if not query_terms or not chunk_terms:
+        return float(candidate.retrieval_score)
+
+    overlap = len(query_terms & chunk_terms)
+    overlap_ratio = overlap / max(1, len(query_terms))
+    return min(1.0, overlap_ratio + float(candidate.retrieval_score))
 
 
 class RerankerService:
@@ -96,23 +119,25 @@ class RerankerService:
     def rerank(self, query: str, candidates: list[CandidateChunk]) -> list[ScoredChunk]:
         """Score candidates synchronously using the configured reranker or fallback."""
 
-        self._start_background_load()
         if not candidates:
             return []
+        if len(candidates) < self.settings.RERANKER_MIN_CANDIDATES:
+            reranked = [
+                ScoredChunk(chunk=item, score=_heuristic_score(query, item)) for item in candidates
+            ]
+            reranked.sort(key=lambda item: item.score, reverse=True)
+            return reranked[: self.settings.RERANKER_TOP_K]
+        self._start_background_load()
         if self._model is not None:
             pairs = [(query, item.chunk.text) for item in candidates]
             scores = _run_quietly(self._model.compute_score, pairs, normalize=True)
             if not isinstance(scores, list):
                 scores = [scores]
         else:
-            query_terms = set(query.lower().split())
-            scores = []
-            for item in candidates:
-                chunk_terms = set(item.chunk.text.lower().split())
-                overlap = len(query_terms & chunk_terms)
-                denom = max(1, len(query_terms))
-                scores.append(min(1.0, overlap / denom + item.retrieval_score))
-        reranked = [ScoredChunk(chunk=item, score=float(score)) for item, score in zip(candidates, scores)]
+            scores = [_heuristic_score(query, item) for item in candidates]
+        reranked = [
+            ScoredChunk(chunk=item, score=float(score)) for item, score in zip(candidates, scores)
+        ]
         reranked.sort(key=lambda item: item.score, reverse=True)
         return reranked[: self.settings.RERANKER_TOP_K]
 
@@ -132,7 +157,9 @@ class RerankerService:
         if self._model is None:
             return {"ok": True, "detail": "using heuristic fallback reranker"}
         try:
-            score = _run_quietly(self._model.compute_score, [("startup check", "startup check")], normalize=True)
+            score = _run_quietly(
+                self._model.compute_score, [("startup check", "startup check")], normalize=True
+            )
         except Exception as exc:
             return {"ok": False, "detail": f"reranker startup check failed: {exc}"}
         if isinstance(score, list):

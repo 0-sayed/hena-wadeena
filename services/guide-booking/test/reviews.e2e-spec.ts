@@ -100,12 +100,12 @@ describe('Reviews (e2e)', () => {
 
   // --- Tests ---
 
-  describe('POST /api/v1/reviews', () => {
+  describe('POST /api/v1/guide-reviews', () => {
     it('creates review for completed booking', async () => {
       const { booking } = await seedCompletedBooking();
 
       const res = await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.touristToken())
         .send({
           bookingId: booking.id,
@@ -121,7 +121,7 @@ describe('Reviews (e2e)', () => {
       const { booking } = await seedCompletedBooking();
 
       await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.tourist2Token())
         .send({
           bookingId: booking.id,
@@ -135,13 +135,13 @@ describe('Reviews (e2e)', () => {
       const { booking } = await seedCompletedBooking();
 
       await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.touristToken())
         .send({ bookingId: booking.id, rating: 5, comment: 'First review' })
         .expect(201);
 
       await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.touristToken())
         .send({ bookingId: booking.id, rating: 3, comment: 'Duplicate' })
         .expect(409);
@@ -153,13 +153,13 @@ describe('Reviews (e2e)', () => {
       const { booking } = await seedCompletedBooking();
 
       const reviewRes = await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.touristToken())
         .send({ bookingId: booking.id, rating: 4, comment: 'Nice tour' })
         .expect(201);
 
       const replyRes = await request(ctx.app.getHttpServer())
-        .post(`/api/v1/reviews/${reviewRes.body.id}/reply`)
+        .post(`/api/v1/guide-reviews/${reviewRes.body.id}/reply`)
         .set('Authorization', tokens.guideToken())
         .send({ guideReply: 'Thank you for the kind words!' })
         .expect(201);
@@ -173,14 +173,14 @@ describe('Reviews (e2e)', () => {
       const { booking } = await seedCompletedBooking();
 
       const reviewRes = await request(ctx.app.getHttpServer())
-        .post('/api/v1/reviews')
+        .post('/api/v1/guide-reviews')
         .set('Authorization', tokens.touristToken())
         .send({ bookingId: booking.id, rating: 5, comment: 'Amazing!' })
         .expect(201);
 
       // Vote helpful
       const vote1 = await request(ctx.app.getHttpServer())
-        .post(`/api/v1/reviews/${reviewRes.body.id}/helpful`)
+        .post(`/api/v1/guide-reviews/${reviewRes.body.id}/helpful`)
         .set('Authorization', tokens.guideToken())
         .expect(201);
 
@@ -188,7 +188,7 @@ describe('Reviews (e2e)', () => {
 
       // Duplicate vote is rejected
       await request(ctx.app.getHttpServer())
-        .post(`/api/v1/reviews/${reviewRes.body.id}/helpful`)
+        .post(`/api/v1/guide-reviews/${reviewRes.body.id}/helpful`)
         .set('Authorization', tokens.guideToken())
         .expect(409);
     });

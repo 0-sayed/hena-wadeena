@@ -44,6 +44,7 @@ import CreateRidePage from './pages/logistics/CreateRidePage';
 import RideDetailPage from './pages/logistics/RideDetailPage';
 
 import PricesPage from './pages/marketplace/PricesPage';
+import ProducePage from './pages/marketplace/ProducePage';
 import ListingDetailsPage from './pages/marketplace/ListingDetailsPage';
 import ListingInquiryPage from './pages/marketplace/ListingInquiryPage';
 import ListingInquiriesPage from './pages/marketplace/ListingInquiriesPage';
@@ -67,15 +68,18 @@ import GuideBookingPage from './pages/tourism/GuideBookingPage';
 import AccommodationListPage from './pages/tourism/AccommodationListPage';
 import AccommodationDetailsPage from './pages/tourism/AccommodationDetailsPage';
 import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
+import SiteStatusBoardPage from './pages/tourism/SiteStatusBoardPage';
 
 const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
+const AdminListings = lazy(() => import('@/pages/admin/AdminListings'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminUserDetail = lazy(() => import('@/pages/admin/AdminUserDetail'));
 const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration'));
 const AdminGuides = lazy(() => import('@/pages/admin/AdminGuides'));
 const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 const AdminCrops = lazy(() => import('@/pages/admin/AdminCrops'));
+const AdminAiDocuments = lazy(() => import('@/pages/admin/AdminAiDocuments'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,12 +143,14 @@ const App = () => (
               >
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<AdminOverview />} />
+                <Route path="listings" element={<AdminListings />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="users/:id" element={<AdminUserDetail />} />
                 <Route path="moderation" element={<AdminModeration />} />
                 <Route path="guides" element={<AdminGuides />} />
                 <Route path="map" element={<AdminMap />} />
                 <Route path="crops" element={<AdminCrops />} />
+                <Route path="ai" element={<AdminAiDocuments />} />
               </Route>
             </Route>
 
@@ -177,17 +183,22 @@ const App = () => (
 
             <Route path="/benefits" element={<BenefitsPage />} />
 
-            {/* Employment board — public browsing */}
+            {/* ── Jobs — static routes first, then dynamic ────── */}
             <Route path="/jobs" element={<JobBoardPage />} />
+            <Route element={<RequireAuth />}>
+              <Route
+                element={
+                  <RequireRole roles={[UserRole.MERCHANT, UserRole.FARMER, UserRole.ADMIN]} />
+                }
+              >
+                <Route path="/jobs/post" element={<PostJobPage />} />
+                <Route path="/jobs/:id/edit" element={<EditJobPage />} />
+                <Route path="/jobs/my-posts" element={<MyPostsPage />} />
+              </Route>
+              <Route path="/jobs/my-applications" element={<MyApplicationsPage />} />
+            </Route>
             <Route path="/jobs/:id" element={<JobDetailPage />} />
 
-            {/* Employment board — authenticated actions */}
-            <Route element={<RequireAuth />}>
-              <Route path="/jobs/post" element={<PostJobPage />} />
-              <Route path="/jobs/:id/edit" element={<EditJobPage />} />
-              <Route path="/jobs/my-applications" element={<MyApplicationsPage />} />
-              <Route path="/jobs/my-posts" element={<MyPostsPage />} />
-            </Route>
             <Route path="/search" element={<SearchResultsPage />} />
 
             <Route path="/tourism" element={<TourismPage />} />
@@ -200,6 +211,7 @@ const App = () => (
               path="/tourism/accommodation-inquiry/:id"
               element={<AccommodationInquiryPage />}
             />
+            <Route path="/tourism/sites" element={<SiteStatusBoardPage />} />
 
             <Route path="/logistics" element={<LogisticsPage />} />
             <Route element={<RequireAuth />}>
@@ -212,6 +224,7 @@ const App = () => (
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/marketplace/ads/:id" element={<ListingDetailsPage />} />
             <Route path="/marketplace/prices" element={<PricesPage />} />
+            <Route path="/marketplace/produce" element={<ProducePage />} />
             <Route path="/marketplace/supplier/:id" element={<SupplierDetailsPage />} />
 
             <Route path="/investment" element={<InvestmentPage />} />

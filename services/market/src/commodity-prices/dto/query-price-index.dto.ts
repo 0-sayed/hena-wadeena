@@ -3,6 +3,7 @@ import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 const queryPriceIndexSchema = z.object({
+  q: z.string().optional(),
   category: z.enum(Object.values(CommodityCategory) as [string, ...string[]]).optional(),
   region: z.enum(Object.values(NvDistrict) as [string, ...string[]]).optional(),
   price_type: z.enum(Object.values(PriceType) as [string, ...string[]]).optional(),

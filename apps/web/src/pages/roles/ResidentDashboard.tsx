@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { districtLabel, listingCategoryLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { Link } from 'react-router';
+import { Button } from '@/components/ui/button';
 
 export default function ResidentDashboard() {
   const { language } = useAuth();
@@ -150,6 +151,34 @@ export default function ResidentDashboard() {
               </TableBody>
             </Table>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {pickLocalizedCopy(appLanguage, { ar: 'فرص العمل', en: 'Job opportunities' })}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {pickLocalizedCopy(appLanguage, {
+              ar: 'تصفح الوظائف المتاحة وتابع طلباتك.',
+              en: 'Browse available jobs and track your applications.',
+            })}
+          </p>
+          <div className="flex gap-2">
+            <Button asChild size="sm">
+              <Link to="/jobs">
+                {pickLocalizedCopy(appLanguage, { ar: 'تصفح الوظائف', en: 'Browse jobs' })}
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/jobs/my-applications">
+                {pickLocalizedCopy(appLanguage, { ar: 'طلباتي', en: 'My applications' })}
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </DashboardShell>

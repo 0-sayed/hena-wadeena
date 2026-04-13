@@ -8,12 +8,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, count, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import type { Column } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { pointsOfInterest, siteStatusUpdates, siteStewards } from '../db/schema/index';
 import { isUniqueViolation } from '../utils/db';
+import { escapeLike } from '../utils/query';
 
 import type { CreateStatusDto } from './dto';
 
@@ -89,6 +90,8 @@ export class SiteStatusService {
   async getStatusBoard(params: {
     page: number;
     limit: number;
+    search?: string;
+    status?: string;
   }): Promise<PaginatedResponse<PoiWithStatus>> {
     const offset = (params.page - 1) * params.limit;
 
@@ -98,7 +101,23 @@ export class SiteStatusService {
     const noteEnSq = latestStatusField(siteStatusUpdates.noteEn);
     const validUntilSq = latestStatusField(siteStatusUpdates.validUntil);
 
-    const where = and(eq(pointsOfInterest.status, 'approved'), isNull(pointsOfInterest.deletedAt));
+    const searchCondition = params.search
+      ? or(
+          ilike(pointsOfInterest.nameAr, `%${escapeLike(params.search)}%`),
+          ilike(pointsOfInterest.nameEn, `%${escapeLike(params.search)}%`),
+        )
+      : undefined;
+
+    const statusCondition = params.status
+      ? sql`(SELECT status FROM ${siteStatusUpdates} WHERE ${siteStatusUpdates.poiId} = ${pointsOfInterest.id} ORDER BY ${siteStatusUpdates.createdAt} DESC, ${siteStatusUpdates.id} DESC LIMIT 1) = ${params.status}`
+      : undefined;
+
+    const where = and(
+      eq(pointsOfInterest.status, 'approved'),
+      isNull(pointsOfInterest.deletedAt),
+      searchCondition,
+      statusCondition,
+    );
 
     const [data, countRows] = await Promise.all([
       this.db

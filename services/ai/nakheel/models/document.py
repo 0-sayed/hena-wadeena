@@ -30,6 +30,7 @@ class DocumentSourceType(str, Enum):
 
     PDF = "pdf"
     COPIED_DOC = "copied_doc"
+    BOOTSTRAP = "bootstrap"
 
 
 class DocumentMetadata(BaseModel):

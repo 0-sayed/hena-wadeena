@@ -81,4 +81,35 @@ describe('queryKeys', () => {
       undefined,
     ]);
   });
+
+  it('jobs.all without filters includes undefined', () => {
+    expect(queryKeys.jobs.all()).toEqual(['jobs', undefined]);
+  });
+
+  it('jobs.all with filters includes them', () => {
+    expect(queryKeys.jobs.all({ category: 'agriculture' })).toEqual([
+      'jobs',
+      { category: 'agriculture' },
+    ]);
+  });
+
+  it('jobs.detail includes id', () => {
+    expect(queryKeys.jobs.detail('job-1')).toEqual(['jobs', 'job-1']);
+  });
+
+  it('jobs.applications includes jobId', () => {
+    expect(queryKeys.jobs.applications('job-1')).toEqual(['jobs', 'job-1', 'applications']);
+  });
+
+  it('jobs.myApplications returns stable key', () => {
+    expect(queryKeys.jobs.myApplications()).toEqual(['jobs', 'my-applications']);
+  });
+
+  it('jobs.myPosts returns stable key', () => {
+    expect(queryKeys.jobs.myPosts()).toEqual(['jobs', 'my-posts']);
+  });
+
+  it('jobs.userReviews includes userId', () => {
+    expect(queryKeys.jobs.userReviews('user-1')).toEqual(['jobs', 'reviews', 'user-1']);
+  });
 });

@@ -4,10 +4,12 @@ import { listingsAPI } from '@/services/api';
 
 export function useListings(params?: {
   category?: string;
+  commodity_type?: string;
   district?: string;
   limit?: number;
   offset?: number;
   sort?: string;
+  q?: string;
 }) {
   return useQuery({
     queryKey: queryKeys.market.listings(params),

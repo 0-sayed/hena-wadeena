@@ -67,7 +67,7 @@ export class DesertTripsService {
         expectedArrivalAt: new Date(dto.expectedArrivalAt),
         destinationName: dto.destinationName,
         emergencyContact: dto.emergencyContact,
-        rangerStationId: dto.rangerStationId ?? null,
+        rangerStationName: dto.rangerStationName ?? null,
       })
       .onConflictDoNothing({ target: desertTrips.bookingId })
       .returning();

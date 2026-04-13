@@ -6,7 +6,7 @@
  * - Refresh token: sessionStorage + in-memory cache
  */
 
-import { apiFetch, ApiError } from './api';
+import { apiFetch, apiFetchRaw, ApiError } from './api';
 
 // ── Module-level state ───────────────────────────────────────────────────────
 
@@ -98,4 +98,52 @@ export async function apiFetchWithRefresh<T>(endpoint: string, options?: Request
     await refreshPromise;
     return apiFetch<T>(endpoint, options);
   }
+}
+
+export async function apiFetchRawWithRefresh(
+  endpoint: string,
+  options?: RequestInit,
+): Promise<Response> {
+  if (AUTH_PASSTHROUGH.some((p) => endpoint.startsWith(p))) {
+    return apiFetchRaw(endpoint, options);
+  }
+
+  const response = await apiFetchRaw(endpoint, options);
+  if (response.status !== 401) {
+    return response;
+  }
+
+  const rt = getRefreshToken();
+
+  if (!rt) {
+    clearTokens();
+    window.location.href = '/login';
+    return response;
+  }
+
+  if (isRefreshing) {
+    await refreshPromise;
+    return apiFetchRaw(endpoint, options);
+  }
+
+  isRefreshing = true;
+  refreshPromise = apiFetch<{ access_token: string; refresh_token: string }>('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refresh_token: rt }),
+  })
+    .then((tokens) => {
+      setTokens(tokens.access_token, tokens.refresh_token);
+    })
+    .catch((refreshErr: unknown) => {
+      clearTokens();
+      window.location.href = '/login';
+      throw refreshErr;
+    })
+    .finally(() => {
+      isRefreshing = false;
+      refreshPromise = null;
+    });
+
+  await refreshPromise;
+  return apiFetchRaw(endpoint, options);
 }

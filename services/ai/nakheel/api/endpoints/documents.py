@@ -8,12 +8,25 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, 
 from fastapi.responses import FileResponse
 from loguru import logger
 
-from nakheel.api.deps import AuthenticatedUser, get_current_user, get_indexer, get_mongo, get_qdrant
+from nakheel.api.deps import (
+    AuthenticatedUser,
+    get_admin_user,
+    get_indexer,
+    get_llm_client,
+    get_mongo,
+    get_qdrant,
+)
+from nakheel.core.generation.llm_client import LLMClient
+from nakheel.core.ingestion.curated_text import compose_curated_documents, normalize_curated_entries
 from nakheel.core.ingestion.indexer import DocumentIndexer, QueuedPdf
 from nakheel.db.mongo import MongoDatabase
 from nakheel.db.qdrant import QdrantDatabase
 from nakheel.exceptions import BadRequestError, DocumentNotFoundError
 from nakheel.models.api import (
+    CuratedKnowledgeComposeRequest,
+    CuratedKnowledgeComposeResponse,
+    CuratedKnowledgeFeedRequest,
+    CuratedKnowledgeFeedResponse,
     DocumentBatchResponse,
     DocumentListResponse,
     ParsedMarkdownResponse,
@@ -21,6 +34,85 @@ from nakheel.models.api import (
 )
 
 router = APIRouter(prefix="/documents")
+CURATED_FEED_CONCURRENCY = 4
+
+
+@router.post("/curated/compose", response_model=CuratedKnowledgeComposeResponse)
+async def compose_curated_text(
+    payload: CuratedKnowledgeComposeRequest,
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
+    llm_client: LLMClient = Depends(get_llm_client),
+):
+    """Convert a long report into topic-separated curated entries for review before ingestion."""
+
+    strategy, entries = await compose_curated_documents(
+        payload.text,
+        llm_client=llm_client,
+        default_language=payload.language,
+    )
+    return {"strategy": strategy, "entries": [entry.to_dict() for entry in entries]}
+
+
+@router.post("/curated/feed", response_model=CuratedKnowledgeFeedResponse)
+async def feed_curated_text(
+    payload: CuratedKnowledgeFeedRequest,
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
+    indexer: DocumentIndexer = Depends(get_indexer),
+):
+    """Index curated text entries after the admin reviews and optionally edits their slugs."""
+
+    entries = normalize_curated_entries(
+        [entry.model_dump(mode="json") for entry in payload.entries],
+        default_language="ar",
+    )
+    if not entries:
+        raise BadRequestError("At least one valid curated entry is required")
+
+    semaphore = asyncio.Semaphore(min(CURATED_FEED_CONCURRENCY, len(entries)))
+
+    async def process_entry(entry) -> dict:
+        async with semaphore:
+            try:
+                result = await indexer.inject_curated_text(
+                    slug=entry.slug,
+                    content=entry.content,
+                    title=entry.title,
+                    description=entry.description,
+                    tags=entry.tags,
+                    language_hint=entry.language,
+                )
+                return {
+                    "slug": result.get("slug", entry.slug),
+                    "title": entry.title,
+                    "status": result["status"],
+                    "filename": result["filename"],
+                    "doc_id": result["doc_id"],
+                    "indexed_at": result.get("indexed_at"),
+                    "total_chunks": result.get("total_chunks", 0),
+                    "error_detail": None,
+                }
+            except Exception as exc:
+                logger.exception("Curated text indexing failed for slug {}", entry.slug)
+                return {
+                    "slug": entry.slug,
+                    "title": entry.title,
+                    "status": "failed",
+                    "filename": f"{entry.slug}.md",
+                    "doc_id": None,
+                    "indexed_at": None,
+                    "total_chunks": 0,
+                    "error_detail": str(getattr(exc, "detail", exc)),
+                }
+
+    items = await asyncio.gather(*(process_entry(entry) for entry in entries))
+    indexed_entries = sum(item["status"] == "indexed" for item in items)
+
+    return {
+        "total_entries": len(entries),
+        "indexed_entries": indexed_entries,
+        "failed_entries": len(entries) - indexed_entries,
+        "items": items,
+    }
 
 
 @router.post(
@@ -62,7 +154,7 @@ async def inject_documents(
     description: Optional[str] = Form(default=None),
     tags: Optional[str] = Form(default=None),
     language: str = Form(default="auto"),
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Create an asynchronous PDF ingestion batch and return immediately."""
@@ -82,10 +174,10 @@ async def inject_documents(
     )
 
     if batch["pending_files"] > 0:
-        batch_tasks = getattr(request.app.state, "document_batch_tasks", None)
+        batch_tasks = getattr(request.app.state, "background_tasks", None)
         if batch_tasks is None:
             batch_tasks = set()
-            request.app.state.document_batch_tasks = batch_tasks
+            request.app.state.background_tasks = batch_tasks
 
         task = asyncio.create_task(indexer.process_document_batch(batch["batch_id"]))
         batch_tasks.add(task)
@@ -110,7 +202,7 @@ async def parse_document(
     request: Request,
     file: UploadFile = File(...),
     format: str = Form(default="markdown"),
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Parse a PDF into a temporary Markdown artifact and return a direct download link."""
@@ -128,7 +220,7 @@ async def parse_document(
 @router.get("/parsed/{parse_id}/download")
 async def download_parsed_markdown(
     parse_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Download a staged Markdown parse result before it expires."""
@@ -144,7 +236,7 @@ async def download_parsed_markdown(
 @router.post("/inject-text")
 async def inject_raw_text(
     payload: RawTextInjectRequest,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Index pasted text as a copied document source."""
@@ -161,7 +253,7 @@ async def inject_raw_text(
 @router.get("/batches/{batch_id}", response_model=DocumentBatchResponse)
 async def get_document_batch_status(
     batch_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     indexer: DocumentIndexer = Depends(get_indexer),
 ):
     """Return the latest persisted ingestion state for a submitted PDF batch."""
@@ -172,7 +264,7 @@ async def get_document_batch_status(
 @router.delete("/{doc_id}")
 async def delete_document(
     doc_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     mongo: MongoDatabase = Depends(get_mongo),
     qdrant: QdrantDatabase = Depends(get_qdrant),
 ):
@@ -237,7 +329,7 @@ async def list_documents(
     status: str | None = None,
     language: str | None = None,
     tags: str | None = None,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     mongo: MongoDatabase = Depends(get_mongo),
 ):
     """List indexed documents with optional filtering and pagination."""
@@ -267,7 +359,7 @@ async def list_documents(
 @router.get("/{doc_id}/status")
 async def get_document_status(
     doc_id: str,
-    _current_user: AuthenticatedUser = Depends(get_current_user),
+    _current_user: AuthenticatedUser = Depends(get_admin_user),
     mongo: MongoDatabase = Depends(get_mongo),
 ):
     """Return the latest persisted ingestion state for a document."""

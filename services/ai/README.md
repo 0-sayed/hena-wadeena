@@ -86,8 +86,9 @@ OPENAI_API_KEY=sk-your-openai-key-here
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_EMBEDDING_DIMENSIONS=1024
-OPENAI_MAX_TOKENS=1024
+OPENAI_MAX_TOKENS=768
 OPENAI_TEMPERATURE=0.3
+OPENAI_TIMEOUT_SECONDS=60
 
 # JWT Authentication (shared with identity service)
 JWT_ACCESS_SECRET=your-shared-jwt-secret
@@ -108,11 +109,12 @@ CHUNK_MIN_TOKENS=50
 CHUNK_OVERLAP_RATIO=0.20
 
 # Retrieval
-DENSE_TOP_K=20
-SPARSE_TOP_K=20
+DENSE_TOP_K=5
+SPARSE_TOP_K=5
 RRF_K=60
-RRF_TOP_N=10
-RERANKER_TOP_K=5
+RRF_TOP_N=5
+RERANKER_TOP_K=3
+RERANKER_MIN_CANDIDATES=6
 RELEVANCE_THRESHOLD=0.35
 DENSE_WEIGHT=0.7
 SPARSE_WEIGHT=0.3
@@ -121,6 +123,8 @@ SPARSE_WEIGHT=0.3
 SESSION_MAX_MESSAGES=10
 SESSION_TTL_HOURS=168  # 7 days
 TOKEN_BUDGET_HISTORY=2000
+TOKEN_BUDGET_CONTEXT=1600
+QUERY_CACHE_SIZE=128
 
 # File Upload
 MAX_FILE_SIZE_MB=50
@@ -393,8 +397,9 @@ uv run pytest -k "test_chunker"
 
 **Model**: `gpt-4o-mini`
 
-- Max tokens: 1024 (configurable via `OPENAI_MAX_TOKENS`)
+- Max tokens: 768 (configurable via `OPENAI_MAX_TOKENS`)
 - Temperature: 0.3 (low randomness for factual responses)
+- Timeout: 60 seconds (configurable via `OPENAI_TIMEOUT_SECONDS`)
 - Fallback: Returns generic message if API key not configured
 
 ### Embeddings (OpenAI)
@@ -456,16 +461,26 @@ uv run python scripts/seed_knowledge_base.py \
 
 See `scripts/seed_knowledge_base.py` for advanced options (batch size, file filters, etc.).
 
+## Admin Curated Ingestion
+
+Curated RAG entries are now prepared and fed manually from the admin dashboard:
+
+- Paste a long report in the RAG admin screen
+- Let the LLM split it into topic-level sections with generated slugs
+- Review or edit the slugs before feeding the chatbot
+- Feed the sections through the same curated indexing pipeline used by the AI service
+
 ## Performance Tuning
 
 ### Retrieval Parameters
 
 | Parameter | Default | Purpose |
 |-----------|---------|---------|
-| `DENSE_TOP_K` | 20 | Dense search recall |
-| `SPARSE_TOP_K` | 20 | Sparse search recall |
-| `RRF_TOP_N` | 10 | Post-fusion candidates |
-| `RERANKER_TOP_K` | 5 | Final context chunks |
+| `DENSE_TOP_K` | 5 | Dense search recall |
+| `SPARSE_TOP_K` | 5 | Sparse search recall |
+| `RRF_TOP_N` | 5 | Post-fusion candidates |
+| `RERANKER_TOP_K` | 3 | Final context chunks |
+| `RERANKER_MIN_CANDIDATES` | 6 | Skip neural reranking for very small candidate sets |
 | `RELEVANCE_THRESHOLD` | 0.35 | Min reranker score |
 | `DENSE_WEIGHT` | 0.7 | Dense priority (semantic) |
 | `SPARSE_WEIGHT` | 0.3 | Sparse priority (keywords) |
@@ -474,6 +489,7 @@ See `scripts/seed_knowledge_base.py` for advanced options (batch size, file filt
 - Increase `DENSE_WEIGHT` for conceptual queries
 - Increase `SPARSE_WEIGHT` for keyword-heavy queries
 - Lower `RELEVANCE_THRESHOLD` if results are too sparse
+- Keep `RERANKER_MIN_CANDIDATES` above `RERANKER_TOP_K` to avoid paying neural rerank cost on tiny corpora
 
 ### Chunking Parameters
 

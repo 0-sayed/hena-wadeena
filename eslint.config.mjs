@@ -10,7 +10,11 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['services/*/test/*.e2e-spec.ts', 'gateway/*.spec.ts'],
+          allowDefaultProject: [
+            'services/*/test/*.e2e-spec.ts',
+            'services/*/src/db/seed-data/*.spec.ts',
+            'gateway/*.spec.ts',
+          ],
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 20,
         },
         tsconfigRootDir: import.meta.dirname,

@@ -45,6 +45,7 @@ export const queryKeys = {
       ['market', 'commodities', id, 'price-history', params] as const,
     businesses: (filters?: Record<string, unknown>) => ['market', 'businesses', filters] as const,
     business: (id: string) => ['market', 'businesses', id] as const,
+    priceAlerts: (userId?: string) => ['market', 'price-alerts', userId] as const,
   },
   bookings: {
     mine: (filters?: Record<string, unknown>) =>
@@ -67,6 +68,8 @@ export const queryKeys = {
     carpool: (filters?: Record<string, unknown>) => ['map', 'carpool', filters] as const,
     ride: (id: string) => ['map', 'carpool', id] as const,
     myRides: () => ['map', 'my-rides'] as const,
+    statusBoard: (page: number, search?: string, status?: string) =>
+      ['map', 'status-board', page, search ?? '', status ?? ''] as const,
   },
   search: {
     results: (query: string, filters?: Record<string, unknown>) =>
@@ -82,6 +85,17 @@ export const queryKeys = {
   },
   admin: {
     stats: () => ['admin', 'stats'] as const,
+    listingsAll: () => ['admin', 'listings'] as const,
+    listings: (filters?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      is_verified?: boolean;
+      owner_id?: string;
+      category?: string;
+      category_ne?: string;
+      sort?: string;
+    }) => [...queryKeys.admin.listingsAll(), filters] as const,
     users: (filters?: {
       role?: string;
       status?: string;
@@ -107,6 +121,14 @@ export const queryKeys = {
       ['admin', 'bookings', filters] as const,
     pendingPois: (filters?: { page?: number; limit?: number }) =>
       ['admin', 'pois', filters] as const,
+    aiDocuments: (filters?: {
+      page?: number;
+      per_page?: number;
+      status?: string;
+      language?: string;
+      tags?: string;
+    }) => ['admin', 'ai', 'documents', filters] as const,
+    aiBatch: (batchId: string) => ['admin', 'ai', 'batches', batchId] as const,
   },
   jobs: {
     all: (filters?: Record<string, unknown>) => ['jobs', filters] as const,
@@ -116,5 +138,8 @@ export const queryKeys = {
     myPosts: () => ['jobs', 'my-posts'] as const,
     reviews: () => ['jobs', 'reviews'] as const,
     userReviews: (userId: string) => ['jobs', 'reviews', userId] as const,
+  },
+  desertTrips: {
+    byBooking: (bookingId: string) => ['desert-trips', 'booking', bookingId] as const,
   },
 };

@@ -5,9 +5,14 @@ import { toast } from 'sonner';
 import { queryKeys } from '@/lib/query-keys';
 import {
   adminAPI,
+  aiKnowledgeAPI,
+  type AiCuratedKnowledgeComposeRequest,
+  type AiCuratedKnowledgeFeedRequest,
+  type AiKnowledgeUploadRequest,
   type AdminBookingFilters,
   type AdminGuideFilters,
   type AdminKycFilters,
+  type AdminListingFilters,
   type AdminUserFilters,
 } from '@/services/api';
 
@@ -48,6 +53,13 @@ export function useAdminPendingListings(filters?: { page?: number; limit?: numbe
   });
 }
 
+export function useAdminListings(filters?: AdminListingFilters) {
+  return useQuery({
+    queryKey: queryKeys.admin.listings(filters),
+    queryFn: () => adminAPI.getListings(filters),
+  });
+}
+
 export function useAdminPendingBusinesses(filters?: { page?: number; limit?: number }) {
   return useQuery({
     queryKey: queryKeys.admin.pendingBusinesses(filters),
@@ -73,6 +85,85 @@ export function useAdminPendingPois(filters?: { page?: number; limit?: number })
   return useQuery({
     queryKey: queryKeys.admin.pendingPois(filters),
     queryFn: () => adminAPI.getPendingPois(filters),
+  });
+}
+
+export function useAdminAiDocuments(filters?: {
+  page?: number;
+  per_page?: number;
+  status?: string;
+  language?: string;
+  tags?: string;
+}) {
+  return useQuery({
+    queryKey: queryKeys.admin.aiDocuments(filters),
+    queryFn: () => aiKnowledgeAPI.listDocuments(filters),
+  });
+}
+
+export function useAdminAiBatch(batchId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.admin.aiBatch(batchId ?? ''),
+    queryFn: () => aiKnowledgeAPI.getBatchStatus(batchId!),
+    enabled: !!batchId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === 'completed' || status === 'completed_with_errors' || status === 'failed'
+        ? false
+        : 1500;
+    },
+  });
+}
+
+export function useUploadAdminAiDocuments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AiKnowledgeUploadRequest) => aiKnowledgeAPI.uploadDocuments(body),
+    onSuccess: () => {
+      toast.success('تم إرسال ملفات PDF إلى قاعدة معرفة الذكاء الاصطناعي');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'فشل رفع ملفات PDF'),
+  });
+}
+
+export function useDeleteAdminAiDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (docId: string) => aiKnowledgeAPI.deleteDocument(docId),
+    onSuccess: () => {
+      toast.success('تم حذف ملف PDF من قاعدة المعرفة');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'فشل حذف ملف PDF'),
+  });
+}
+
+export function useComposeAdminAiCuratedText() {
+  return useMutation({
+    mutationFn: (body: AiCuratedKnowledgeComposeRequest) => aiKnowledgeAPI.composeCuratedText(body),
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'Failed to prepare curated knowledge'),
+  });
+}
+
+export function useFeedAdminAiCuratedText() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AiCuratedKnowledgeFeedRequest) => aiKnowledgeAPI.feedCuratedText(body),
+    onSuccess: (response) => {
+      const hasFailures = response.failed_entries > 0;
+      toast.success(
+        hasFailures
+          ? `Fed ${response.indexed_entries} sections with ${response.failed_entries} failure(s)`
+          : `Fed ${response.indexed_entries} curated sections to the chatbot`,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'documents'] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : 'Failed to feed the chatbot'),
   });
 }
 
