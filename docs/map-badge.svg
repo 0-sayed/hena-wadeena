@@ -1,0 +1,105 @@
+<svg width="560" height="80" viewBox="0 0 560 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+
+    <!-- Flowing gradient for border — repeating pattern twice the width so translate loops cleanly -->
+    <linearGradient id="flow" x1="0" y1="0" x2="1120" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#2ea043"/>
+      <stop offset="16%"  stop-color="#56d364"/>
+      <stop offset="33%"  stop-color="#79c0ff"/>
+      <stop offset="50%"  stop-color="#2ea043"/>
+      <stop offset="66%"  stop-color="#56d364"/>
+      <stop offset="83%"  stop-color="#79c0ff"/>
+      <stop offset="100%" stop-color="#2ea043"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+        from="0 0" to="-560 0" dur="3s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- Shimmer sweep gradient -->
+    <linearGradient id="shim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0)"/>
+      <stop offset="44%"  stop-color="rgba(255,255,255,0)"/>
+      <stop offset="50%"  stop-color="rgba(255,255,255,0.07)"/>
+      <stop offset="56%"  stop-color="rgba(255,255,255,0)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+
+    <!-- Glow blur filter -->
+    <filter id="glow" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Arrow glow filter (tighter) -->
+    <filter id="arrowglow" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Clip to card bounds -->
+    <clipPath id="cardclip">
+      <rect x="2" y="2" width="556" height="76" rx="11"/>
+    </clipPath>
+
+  </defs>
+
+  <!-- Outer glow halo (blurred wide stroke) -->
+  <rect x="0" y="0" width="560" height="80" rx="13"
+        fill="none" stroke="url(#flow)" stroke-width="8" opacity="0.22"
+        filter="url(#glow)"/>
+
+  <!-- Animated border -->
+  <rect x="1" y="1" width="558" height="78" rx="12"
+        fill="none" stroke="url(#flow)" stroke-width="2">
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="2.5s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Card body -->
+  <rect x="2" y="2" width="556" height="76" rx="11" fill="#0d1117"/>
+
+  <!-- Shimmer sweep (clipped to card) -->
+  <rect x="0" y="2" width="560" height="76" fill="url(#shim)" clip-path="url(#cardclip)">
+    <animateTransform attributeName="transform" type="translate"
+      from="-560 0" to="560 0" dur="4.5s" repeatCount="indefinite" begin="1s"/>
+  </rect>
+
+  <!-- Pulsing live dot — solid core -->
+  <circle cx="32" cy="40" r="4" fill="#2ea043">
+    <animate attributeName="r"       values="3.5;5;3.5"   dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.75;1;0.75" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Pulsing live dot — expanding ring -->
+  <circle cx="32" cy="40" r="6" fill="none" stroke="#2ea043" stroke-width="1.5">
+    <animate attributeName="r"             values="5;14;5"   dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity"       values="0.55;0;0.55" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="1.5;0.5;1.5" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Title text — baseline at 45 visually centers 15px caps at y≈40 -->
+  <text x="52" y="45"
+        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif"
+        font-size="15" font-weight="700" fill="#e6edf3" letter-spacing="0.3">
+    View the Platform Flow Map
+  </text>
+
+  <!-- Arrow — bounces right with glow, same baseline -->
+  <g filter="url(#arrowglow)">
+    <animateTransform attributeName="transform" type="translate"
+      values="0,0; 6,0; 0,0" dur="2s" keyTimes="0;0.5;1"
+      keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"
+      calcMode="spline"
+      repeatCount="indefinite"/>
+    <text x="522" y="45"
+          font-family="system-ui,sans-serif"
+          font-size="22" fill="#56d364"
+          text-anchor="middle">
+      &#8594;
+    </text>
+  </g>
+
+</svg>

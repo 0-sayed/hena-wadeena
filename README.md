@@ -2,13 +2,25 @@
 
 Unified digital platform for New Valley Governorate, Egypt — connecting tourists, residents, merchants, guides, investors, and government in a single Arabic-first experience.
 
+<p align="center">
+  <a href="https://0-sayed.github.io/hena-wadeena/app-flow-map.html">
+    <img src="./docs/map-badge.svg" alt="View the Platform Flow Map" width="520"/>
+  </a>
+</p>
+
+> Click above to explore the full platform — every screen, every user flow, every connection — as an interactive map.
+
 ## What it does
 
 - **Tourist Guide** — attractions, coordinates, photos, tips across the New Valley
-- **Market Directory** — listings, price index, business directory, investment opportunities
+- **Market Directory** — listings, price index, business directory, supplier contacts
+- **Investment Opportunities** — investment deals, startup pitches, applications, tracking
+- **Employment Board** — job postings, worker applications, compensation negotiation, mutual reviews
 - **Guide Booking** — request, confirm, and manage tours with local guides
+- **Logistics Network** — carpool rides, distribution, supply chain, driver coordination
+- **Benefits & Government Services** — public services and benefit programs for residents
+- **Points of Interest** — community-curated map with photos, status, and reviews
 - **AI Concierge** — RAG chatbot in Egyptian Arabic, backed by a curated knowledge base
-- **Carpool + POIs** — community rides and points of interest on an interactive map
 - **Unified Search** — full-text Arabic search across all services
 
 ## Tech Stack
