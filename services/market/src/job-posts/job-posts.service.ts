@@ -150,7 +150,7 @@ export class JobPostsService {
       await this.db
         .update(jobPosts)
         .set(updates)
-        .where(and(eq(jobPosts.id, id), isNull(jobPosts.deletedAt)))
+        .where(and(eq(jobPosts.id, id), isNull(jobPosts.deletedAt), eq(jobPosts.status, 'open')))
         .returning(),
     );
   }

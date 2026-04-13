@@ -142,6 +142,10 @@ export class JobApplicationsService {
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(jobApplications)
+        .innerJoin(
+          jobPosts,
+          and(eq(jobApplications.jobId, jobPosts.id), isNull(jobPosts.deletedAt)),
+        )
         .where(whereClause),
     ]);
     return paginate(items, countResult[0]?.count ?? 0, query.offset, query.limit);
@@ -369,6 +373,7 @@ export class JobApplicationsService {
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(jobReviews)
+        .innerJoin(jobPosts, and(eq(jobReviews.jobId, jobPosts.id), isNull(jobPosts.deletedAt)))
         .where(whereClause),
     ]);
 
