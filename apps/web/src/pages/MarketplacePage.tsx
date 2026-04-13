@@ -2,7 +2,17 @@ import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
 import { useNavigate } from 'react-router';
-import { Search, MapPin, Phone, BarChart3, Plus, ExternalLink, Building2 } from 'lucide-react';
+import {
+  Search,
+  MapPin,
+  Phone,
+  BarChart3,
+  Plus,
+  ExternalLink,
+  Building2,
+  Leaf,
+  TrendingUp,
+} from 'lucide-react';
 import { UserRole } from '@hena-wadeena/types';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -369,6 +379,71 @@ const MarketplacePage = () => {
             </p>
           </SR>
         </PageHero>
+
+        {/* Quick Access Cards */}
+        <section className="py-8 bg-muted/20">
+          <div className="container px-4">
+            <SR>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="rounded-2xl border-border/50 transition-all hover:border-primary/40 hover:shadow-md">
+                  <button
+                    type="button"
+                    onClick={() => void navigate('/marketplace/prices')}
+                    className="w-full cursor-pointer text-start"
+                  >
+                    <CardContent className="flex items-center gap-4 p-5">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                        <TrendingUp className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-foreground">
+                          {pickLocalizedCopy(language, {
+                            ar: 'لوحة الأسعار المباشرة',
+                            en: 'Live Price Board',
+                          })}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {pickLocalizedCopy(language, {
+                            ar: 'تابع أسعار السوق لحظة بلحظة',
+                            en: 'Track market prices in real-time',
+                          })}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </button>
+                </Card>
+
+                <Card className="rounded-2xl border-border/50 transition-all hover:border-primary/40 hover:shadow-md">
+                  <button
+                    type="button"
+                    onClick={() => void navigate('/marketplace/produce')}
+                    className="w-full cursor-pointer text-start"
+                  >
+                    <CardContent className="flex items-center gap-4 p-5">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                        <Leaf className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-foreground">
+                          {pickLocalizedCopy(language, {
+                            ar: 'منتجات زراعية',
+                            en: 'Agricultural Produce',
+                          })}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {pickLocalizedCopy(language, {
+                            ar: 'تمور، زيتون، قمح وأكثر',
+                            en: 'Dates, olives, wheat and more',
+                          })}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </button>
+                </Card>
+              </div>
+            </SR>
+          </div>
+        </section>
 
         <section className="py-14">
           <div className="container px-4">

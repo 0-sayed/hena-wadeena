@@ -205,6 +205,18 @@ export function unitLabel(unit: string, language: AppLanguage = 'ar'): string {
   return labels[unit as CommodityUnit] ?? unit;
 }
 
+export function producePriceUnitLabel(
+  unit: string | null | undefined,
+  language: AppLanguage = 'ar',
+): string {
+  const normalizedUnit = unit?.trim().toLowerCase();
+  if (!normalizedUnit || normalizedUnit === 'egp' || normalizedUnit === 'جنيه') {
+    return unitLabel('kg', language);
+  }
+
+  return unitLabel(normalizedUnit, language);
+}
+
 export const priceTypeLabels: Record<PriceType, string> = {
   retail: 'تجزئة',
   wholesale: 'جملة',
@@ -221,6 +233,11 @@ export function priceTypeLabel(type: string, language: AppLanguage = 'ar'): stri
   const labels = language === 'en' ? priceTypeLabelsEn : priceTypeLabels;
   return labels[type as PriceType] ?? type;
 }
+
+/** Select options derived from priceTypeLabels */
+export const PRICE_TYPE_OPTIONS: { value: PriceType; label: string }[] = Object.entries(
+  priceTypeLabels,
+).map(([value, label]) => ({ value: value as PriceType, label }));
 
 export type AttractionType = 'attraction' | 'historical' | 'natural' | 'festival' | 'adventure';
 export type AttractionArea = 'kharga' | 'dakhla' | 'farafra' | 'baris' | 'balat';
@@ -306,6 +323,34 @@ export function languageLabel(value: string, language: AppLanguage = 'ar'): stri
   const labels = language === 'en' ? languageLabelsEn : languageLabels;
   return labels[value] ?? value;
 }
+
+// ── Produce commodity types (for agricultural listings) ─────────────────────
+
+export type ProduceCommodityType = 'dates' | 'olives' | 'wheat' | 'other';
+
+export const produceCommodityTypeLabels: Record<ProduceCommodityType, string> = {
+  dates: 'تمور',
+  olives: 'زيتون',
+  wheat: 'قمح',
+  other: 'أخرى',
+};
+
+const produceCommodityTypeLabelsEn: Record<ProduceCommodityType, string> = {
+  dates: 'Dates',
+  olives: 'Olives',
+  wheat: 'Wheat',
+  other: 'Other',
+};
+
+export function produceCommodityTypeLabel(type: string, language: AppLanguage = 'ar'): string {
+  const labels = language === 'en' ? produceCommodityTypeLabelsEn : produceCommodityTypeLabels;
+  return labels[type as ProduceCommodityType] ?? type;
+}
+
+export const PRODUCE_COMMODITY_TYPE_OPTIONS = [
+  { id: 'all', label: 'الكل' },
+  ...Object.entries(produceCommodityTypeLabels).map(([id, label]) => ({ id, label })),
+] as const;
 
 export const specialtyLabels: Record<string, string> = {
   [GuideSpecialty.HISTORY]: 'تاريخ',

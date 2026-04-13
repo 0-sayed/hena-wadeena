@@ -7,6 +7,8 @@ const mockInvalidateQueries = vi.fn();
 const mockCreateListing = vi.fn();
 const mockRemoveListing = vi.fn();
 const mockUpdateListing = vi.fn();
+const mockVerifyListing = vi.fn();
+const mockGetUser = vi.fn();
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
@@ -25,15 +27,35 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@/components/market/ListingEditorDialog', () => ({
-  ListingEditorDialog: ({
-    open,
-    onSave,
-  }: {
-    open: boolean;
-    onSave: () => void;
-  }) =>
+  ListingEditorDialog: ({ open, onSave }: { open: boolean; onSave: () => void }) =>
     open ? <button onClick={onSave}>Save listing</button> : null,
 }));
+
+vi.mock('@/components/market/ProduceListingSheet', () => ({
+  ProduceListingSheet: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="produce-sheet">Produce Sheet</div> : null,
+}));
+
+vi.mock('@/components/ui/tabs', async () => {
+  const { createContext, useContext } = await import('react');
+  const TabsActiveCtx = createContext('');
+
+  return {
+    Tabs: ({ children, defaultValue }: { children: ReactNode; defaultValue?: string }) => (
+      <TabsActiveCtx.Provider value={defaultValue ?? ''}>
+        <div data-default-tab={defaultValue}>{children}</div>
+      </TabsActiveCtx.Provider>
+    ),
+    TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    TabsTrigger: ({ children, value }: { children: ReactNode; value: string }) => (
+      <button data-tab={value}>{children}</button>
+    ),
+    TabsContent: ({ children, value }: { children: ReactNode; value: string }) => {
+      const active = useContext(TabsActiveCtx);
+      return active === value ? <div>{children}</div> : null;
+    },
+  };
+});
 
 vi.mock('@/components/market/listing-editor-form', () => ({
   emptyListingForm: {
@@ -112,6 +134,10 @@ vi.mock('@/services/api', async () => {
       update: (...args: unknown[]) => mockUpdateListing(...args),
       remove: (...args: unknown[]) => mockRemoveListing(...args),
     },
+    adminAPI: {
+      verifyListing: (...args: unknown[]) => mockVerifyListing(...args),
+      getUser: (...args: unknown[]) => mockGetUser(...args),
+    },
   };
 });
 
@@ -124,6 +150,9 @@ describe('AdminListings', () => {
     mockCreateListing.mockReset();
     mockRemoveListing.mockReset();
     mockUpdateListing.mockReset();
+    mockVerifyListing.mockReset();
+    mockGetUser.mockReset();
+    mockGetUser.mockResolvedValue({ fullName: 'Test User' });
 
     mockUseAdminListings.mockReturnValue({
       data: {
@@ -187,12 +216,79 @@ describe('AdminListings', () => {
     expect(screen.getByRole('heading', { name: 'Announcements' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New announcement' })).toBeInTheDocument();
     expect(screen.getByText('Fresh dates')).toBeInTheDocument();
-    expect(screen.getByText('merchant-uuid-1')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(mockRemoveListing).toHaveBeenCalledWith('listing-1');
+    });
+  });
+
+  it('shows Approve button for draft listings and calls verifyListing on click', async () => {
+    mockVerifyListing.mockResolvedValue(undefined);
+    mockUseAdminListings.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'draft-listing-1',
+            ownerId: 'merchant-uuid-1',
+            listingType: 'business',
+            transaction: 'sale',
+            titleAr: 'Pending product',
+            titleEn: 'Pending product',
+            description: null,
+            category: 'shopping',
+            subCategory: null,
+            price: 5000,
+            priceUnit: 'piece',
+            priceRange: null,
+            areaSqm: null,
+            location: null,
+            district: 'kharga',
+            address: null,
+            images: null,
+            features: null,
+            amenities: null,
+            tags: null,
+            contact: null,
+            openingHours: null,
+            slug: 'pending-product',
+            status: 'draft',
+            isVerified: false,
+            isFeatured: false,
+            isPublished: false,
+            featuredUntil: null,
+            approvedBy: null,
+            approvedAt: null,
+            ratingAvg: null,
+            reviewCount: 0,
+            viewsCount: 0,
+            createdAt: '2026-04-12T09:00:00.000Z',
+            updatedAt: '2026-04-12T09:00:00.000Z',
+            deletedAt: null,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        hasMore: false,
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(<AdminListings />);
+
+    const approveBtn = screen.getByRole('button', { name: /approve/i });
+    expect(approveBtn).toBeInTheDocument();
+
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => {
+      expect(mockVerifyListing).toHaveBeenCalledWith('draft-listing-1', true);
     });
   });
 

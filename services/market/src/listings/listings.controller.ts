@@ -51,7 +51,7 @@ export class ListingsController {
   }
 
   @Get('mine')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
+  @Roles(UserRole.FARMER, UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   findMine(@CurrentUser() user: JwtPayload) {
     return this.listingsService.findMine(user.sub);
   }
@@ -87,15 +87,15 @@ export class ListingsController {
   // --- Protected: create ---
 
   @Post()
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
+  @Roles(UserRole.FARMER, UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   create(@Body() dto: CreateListingDto, @CurrentUser() user: JwtPayload) {
-    return this.listingsService.create(dto, user.sub);
+    return this.listingsService.create(dto, user.sub, (user.role as UserRole) === UserRole.ADMIN);
   }
 
   // --- Owner routes: update + delete (admin bypasses ownership check) ---
 
   @Patch(':id')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
+  @Roles(UserRole.FARMER, UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateListingDto,
@@ -106,7 +106,7 @@ export class ListingsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
+  @Roles(UserRole.FARMER, UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   async remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     await this.assertOwnerUnlessAdmin(id, user);
     return this.listingsService.remove(id);
@@ -115,7 +115,7 @@ export class ListingsController {
   // --- Image upload (owner or admin) ---
 
   @Post(':id/images')
-  @Roles(UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
+  @Roles(UserRole.FARMER, UserRole.MERCHANT, UserRole.INVESTOR, UserRole.RESIDENT, UserRole.ADMIN)
   async generateImageUploadUrl(
     @Param('id') id: string,
     @Body() dto: ImageUploadDto,

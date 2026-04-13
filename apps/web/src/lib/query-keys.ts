@@ -45,6 +45,7 @@ export const queryKeys = {
       ['market', 'commodities', id, 'price-history', params] as const,
     businesses: (filters?: Record<string, unknown>) => ['market', 'businesses', filters] as const,
     business: (id: string) => ['market', 'businesses', id] as const,
+    priceAlerts: (userId?: string) => ['market', 'price-alerts', userId] as const,
   },
   bookings: {
     mine: (filters?: Record<string, unknown>) =>
@@ -91,6 +92,8 @@ export const queryKeys = {
       status?: string;
       is_verified?: boolean;
       owner_id?: string;
+      category?: string;
+      category_ne?: string;
       sort?: string;
     }) => [...queryKeys.admin.listingsAll(), filters] as const,
     users: (filters?: {

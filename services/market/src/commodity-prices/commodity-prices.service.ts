@@ -367,7 +367,7 @@ export class CommodityPricesService {
     // Ensure defaults for pagination - DTO validation may not apply defaults correctly
     const offset = (query.offset as number | undefined) ?? 0;
     const limit = (query.limit as number | undefined) ?? 20;
-    const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}:${offset}:${limit}`;
+    const cacheKey = `mkt:price-index:${query.region ?? '*'}:${query.category ?? '*'}:${query.price_type ?? '*'}:${query.q ?? ''}:${offset}:${limit}`;
     try {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
@@ -380,6 +380,9 @@ export class CommodityPricesService {
     const categoryFilter = query.category ? sql`AND c.category = ${query.category}` : sql``;
     const regionFilter = query.region ? sql`AND cp.region = ${query.region}` : sql``;
     const priceTypeFilter = query.price_type ? sql`AND cp.price_type = ${query.price_type}` : sql``;
+    const nameFilter = query.q
+      ? sql`AND (c.name_ar ILIKE ${'%' + query.q + '%'} OR c.name_en ILIKE ${'%' + query.q + '%'})`
+      : sql``;
 
     const countRows = await this.db.execute<{ count: number }>(sql`
       SELECT COUNT(*) AS count FROM (
@@ -391,6 +394,7 @@ export class CommodityPricesService {
           ${categoryFilter}
           ${regionFilter}
           ${priceTypeFilter}
+          ${nameFilter}
       ) sub
     `);
 
@@ -413,6 +417,7 @@ export class CommodityPricesService {
           ${categoryFilter}
           ${regionFilter}
           ${priceTypeFilter}
+          ${nameFilter}
         ORDER BY cp.commodity_id, cp.region, cp.price_type, cp.recorded_at DESC
       ),
       with_prev AS (

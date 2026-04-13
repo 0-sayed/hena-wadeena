@@ -14,6 +14,7 @@ import {
   listingInquiries,
   listings,
   priceSnapshots,
+  produceListingDetails,
   reviews,
 } from './schema/index.js';
 import { benefitInfoData } from './seed-data/benefits.js';
@@ -23,7 +24,11 @@ import { commodities as commodityData, generatePriceSnapshots } from './seed-dat
 import { showcaseInvestmentApplications } from './seed-data/investment-applications.js';
 import { essentialInvestments, showcaseInvestments } from './seed-data/investments.js';
 import { showcaseListingInquiries } from './seed-data/listing-inquiries.js';
-import { essentialListings, showcaseListings } from './seed-data/listings.js';
+import {
+  essentialListings,
+  showcaseListings,
+  showcaseProduceListingDetails,
+} from './seed-data/listings.js';
 import { generatePriceSnapshotData } from './seed-data/price-snapshots.js';
 import { showcaseListingReviews } from './seed-data/reviews.js';
 
@@ -135,7 +140,7 @@ async function main() {
         status: l.status,
         isVerified: l.isVerified,
         isPublished: l.isPublished,
-        images: getListingImages(l.slug, l.category),
+        images: l.images ?? getListingImages(l.slug, l.category),
         location: point(l.lat, l.lon),
       })),
     )
@@ -181,6 +186,7 @@ async function main() {
   let inquiryCount = 0;
   let applicationCount = 0;
   let priceSnapshotCount = 0;
+  let produceDetailCount = 0;
 
   if (layer === 'showcase') {
     // 4. Business directories — showcase only
@@ -217,7 +223,15 @@ async function main() {
     }
     priceCount = snapshots.length;
 
-    // 6. Listing reviews — showcase only
+    // 6. Produce listing details — showcase only
+    const produceDetailResult = await db
+      .insert(produceListingDetails)
+      .values(showcaseProduceListingDetails)
+      .onConflictDoNothing()
+      .returning({ listingId: produceListingDetails.listingId });
+    produceDetailCount = produceDetailResult.length;
+
+    // 7. Listing reviews — showcase only
     const reviewResult = await db
       .insert(reviews)
       .values(
@@ -236,7 +250,7 @@ async function main() {
       .returning({ id: reviews.id });
     reviewCount = reviewResult.length;
 
-    // 7. Business commodities — showcase only
+    // 8. Business commodities — showcase only
     const bizCommodityResult = await db
       .insert(businessCommodities)
       .values(showcaseBusinessCommodities)
@@ -244,7 +258,7 @@ async function main() {
       .returning({ businessId: businessCommodities.businessId });
     bizCommodityCount = bizCommodityResult.length;
 
-    // 8. Listing inquiries — showcase only
+    // 9. Listing inquiries — showcase only
     const inquiryResult = await db
       .insert(listingInquiries)
       .values(
@@ -269,7 +283,7 @@ async function main() {
       .returning({ id: listingInquiries.id });
     inquiryCount = inquiryResult.length;
 
-    // 9. Investment applications — showcase only
+    // 10. Investment applications — showcase only
     const applicationResult = await db
       .insert(investmentApplications)
       .values(
@@ -289,7 +303,7 @@ async function main() {
       .returning({ id: investmentApplications.id });
     applicationCount = applicationResult.length;
 
-    // 10. Real-estate price snapshots — showcase only
+    // 11. Real-estate price snapshots — showcase only
     const psData = generatePriceSnapshotData();
     for (let i = 0; i < psData.length; i += BATCH) {
       await db
@@ -320,6 +334,7 @@ async function main() {
       inquiries: inquiryCount,
       applications: applicationCount,
       realEstatePriceSnapshots: priceSnapshotCount,
+      produceDetails: produceDetailCount,
     }),
   });
 }

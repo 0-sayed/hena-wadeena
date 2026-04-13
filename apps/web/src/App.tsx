@@ -44,6 +44,7 @@ import CreateRidePage from './pages/logistics/CreateRidePage';
 import RideDetailPage from './pages/logistics/RideDetailPage';
 
 import PricesPage from './pages/marketplace/PricesPage';
+import ProducePage from './pages/marketplace/ProducePage';
 import ListingDetailsPage from './pages/marketplace/ListingDetailsPage';
 import ListingInquiryPage from './pages/marketplace/ListingInquiryPage';
 import ListingInquiriesPage from './pages/marketplace/ListingInquiriesPage';
@@ -205,6 +206,7 @@ const App = () => (
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/marketplace/ads/:id" element={<ListingDetailsPage />} />
             <Route path="/marketplace/prices" element={<PricesPage />} />
+            <Route path="/marketplace/produce" element={<ProducePage />} />
             <Route path="/marketplace/supplier/:id" element={<SupplierDetailsPage />} />
 
             <Route path="/investment" element={<InvestmentPage />} />

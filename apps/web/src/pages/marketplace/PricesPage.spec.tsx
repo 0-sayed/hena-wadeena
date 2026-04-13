@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react';
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PricesPage from './PricesPage';
 
 const mockNavigate = vi.fn();
-const mockUsePriceIndex = vi.fn();
+const mockUsePriceIndexPage = vi.fn();
 const mockUsePriceSummary = vi.fn();
 
 vi.mock('react-router', async () => {
@@ -27,6 +27,8 @@ vi.mock('lucide-react', () => {
     Search: Icon,
     BarChart3: Icon,
     ArrowRight: Icon,
+    Bell: Icon,
+    BellRing: Icon,
   };
 });
 
@@ -39,7 +41,17 @@ vi.mock('@/components/market/TrendBadge', () => ({
 }));
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children }: { children: ReactNode }) => <button>{children}</button>,
+  Button: ({
+    children,
+    variant: _variant,
+    size: _size,
+    asChild: _asChild,
+    ...props
+  }: ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant?: string;
+    size?: string;
+    asChild?: boolean;
+  }) => <button {...props}>{children}</button>,
 }));
 
 vi.mock('@/components/ui/input', () => ({
@@ -62,7 +74,13 @@ vi.mock('@/components/ui/card', () => ({
 }));
 
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Badge: ({
+    children,
+    'aria-label': ariaLabel,
+  }: {
+    children: ReactNode;
+    'aria-label'?: string;
+  }) => <div aria-label={ariaLabel}>{children}</div>,
 }));
 
 vi.mock('@/components/ui/select', () => ({
@@ -89,27 +107,51 @@ vi.mock('@/components/motion/Skeleton', () => ({
 }));
 
 vi.mock('@/hooks/use-price-index', () => ({
-  usePriceIndex: (filters?: Record<string, unknown>) => mockUsePriceIndex(filters),
+  usePriceIndexPage: (...args: unknown[]) => mockUsePriceIndexPage(...args),
   usePriceSummary: () => mockUsePriceSummary(),
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({ isAuthenticated: false }),
+}));
+
+vi.mock('@/hooks/use-price-alerts', () => ({
+  usePriceAlerts: () => ({ data: [] }),
+}));
+
+vi.mock('@/components/market/PriceAlertSheet', () => ({
+  PriceAlertSheet: () => null,
+}));
+
+vi.mock('@/components/market/PriceTrendModal', () => ({
+  PriceTrendModal: () => null,
+}));
+
 describe('PricesPage', () => {
+  beforeEach(() => {
+    mockUsePriceIndexPage.mockReset();
+    mockUsePriceSummary.mockReset();
+    mockNavigate.mockReset();
+  });
+
   it('keeps price table header and body columns on the same logical alignment', () => {
-    mockUsePriceIndex.mockReturnValue({
-      data: [
-        {
-          commodity: {
-            id: 'commodity-1',
-            nameAr: 'فول سوداني',
-            category: 'crops',
-            unit: 'kg',
+    mockUsePriceIndexPage.mockReturnValue({
+      data: {
+        data: [
+          {
+            commodity: {
+              id: 'commodity-1',
+              nameAr: 'فول سوداني',
+              category: 'crops',
+              unit: 'kg',
+            },
+            region: 'kharga',
+            latestPrice: 4687,
+            changePercent: -1.97,
           },
-          region: 'kharga',
-          latestPrice: 4687,
-          changePercent: -1.97,
-        },
-      ],
-      total: 1,
+        ],
+        total: 1,
+      },
       isLoading: false,
       hasNextPage: false,
       isFetchingNextPage: false,
@@ -129,7 +171,152 @@ describe('PricesPage', () => {
     const bodyCells = within(table).getAllByRole('cell');
 
     expect(table).toHaveClass('table-fixed');
+    expect(table).toHaveClass('min-w-[48rem]');
+    expect(mockUsePriceIndexPage).toHaveBeenCalledWith(
+      {
+        category: undefined,
+        region: undefined,
+        price_type: 'retail',
+      },
+      1,
+      20,
+    );
     headerCells.forEach((cell) => expect(cell).toHaveClass('text-start'));
     bodyCells.forEach((cell) => expect(cell).toHaveClass('text-start'));
+    expect(headerCells.at(-1)).toHaveClass('w-16');
+    expect(bodyCells.at(-1)).toHaveClass('pe-8');
+  });
+
+  it('shows the city tag on mover cards so repeated products are distinguishable by place', () => {
+    mockUsePriceIndexPage.mockReturnValue({
+      data: {
+        data: [
+          {
+            commodity: {
+              id: 'commodity-1',
+              nameAr: 'زيتون',
+              category: 'oils',
+              unit: 'kg',
+            },
+            region: 'kharga',
+            latestPrice: 4687,
+            changePercent: 18.54,
+          },
+          {
+            commodity: {
+              id: 'commodity-1',
+              nameAr: 'زيتون',
+              category: 'oils',
+              unit: 'kg',
+            },
+            region: 'dakhla',
+            latestPrice: 4700,
+            changePercent: 18.53,
+          },
+        ],
+        total: 2,
+      },
+      isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+    });
+    mockUsePriceSummary.mockReturnValue({
+      data: {
+        topMovers: [],
+      },
+      isLoading: false,
+    });
+
+    render(<PricesPage />);
+
+    expect(screen.getByLabelText('مدينة المنتج الأكثر ارتفاعا الخارجة')).toBeInTheDocument();
+    expect(screen.getByLabelText('مدينة المنتج الأكثر ارتفاعا الداخلة')).toBeInTheDocument();
+    expect(screen.getByText('+18.54%')).toBeInTheDocument();
+    expect(screen.getByText('+18.53%')).toBeInTheDocument();
+  });
+
+  it('populates the falling card from price rows when summary movers do not include fallers', () => {
+    mockUsePriceIndexPage.mockReturnValue({
+      data: {
+        data: [
+          {
+            commodity: {
+              id: 'commodity-1',
+              nameAr: 'قمح',
+              category: 'grains',
+              unit: 'kg',
+            },
+            region: 'baris',
+            latestPrice: 951,
+            changePercent: -5,
+          },
+        ],
+        total: 1,
+      },
+      isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+    });
+    mockUsePriceSummary.mockReturnValue({
+      data: {
+        topMovers: [],
+      },
+      isLoading: false,
+    });
+
+    render(<PricesPage />);
+
+    expect(screen.getByText('-5%')).toBeInTheDocument();
+    expect(screen.getByLabelText('مدينة المنتج الأكثر انخفاضا باريس')).toBeInTheDocument();
+  });
+
+  it('paginates the price table with explicit page controls', () => {
+    mockUsePriceIndexPage.mockImplementation((_filters: unknown, page: number) => ({
+      data: {
+        data: [
+          {
+            commodity: {
+              id: `commodity-${page}`,
+              nameAr: `فول سوداني ${page}`,
+              category: 'crops',
+              unit: 'kg',
+            },
+            region: 'kharga',
+            latestPrice: 4687,
+            changePercent: 0,
+            priceType: 'retail',
+          },
+        ],
+        total: 41,
+      },
+      isLoading: false,
+      isFetching: false,
+    }));
+    mockUsePriceSummary.mockReturnValue({
+      data: {
+        topMovers: [],
+      },
+      isLoading: false,
+    });
+
+    render(<PricesPage />);
+
+    expect(screen.getByText('فول سوداني 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'صفحة 1' })).toHaveAttribute('aria-current', 'page');
+
+    fireEvent.click(screen.getByRole('button', { name: 'صفحة 2' }));
+
+    expect(mockUsePriceIndexPage).toHaveBeenLastCalledWith(
+      {
+        category: undefined,
+        region: undefined,
+        price_type: 'retail',
+      },
+      2,
+      20,
+    );
+    expect(screen.getByText('فول سوداني 2')).toBeInTheDocument();
   });
 });
