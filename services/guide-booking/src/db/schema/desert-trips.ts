@@ -16,7 +16,7 @@ export const desertTrips = guideBookingSchema.table(
     expectedArrivalAt: timestamp('expected_arrival_at', { withTimezone: true }).notNull(),
     destinationName: text('destination_name').notNull(),
     emergencyContact: text('emergency_contact').notNull(),
-    rangerStationId: uuid('ranger_station_id'), // plain UUID; no cross-schema FK
+    rangerStationName: text('ranger_station_name'), // free-text name; no cross-schema FK
     checkedInAt: timestamp('checked_in_at', { withTimezone: true }),
     alertTriggeredAt: timestamp('alert_triggered_at', { withTimezone: true }),
     gpsBreadcrumbs: jsonb('gps_breadcrumbs')

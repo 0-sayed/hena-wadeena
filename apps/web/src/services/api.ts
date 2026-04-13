@@ -1507,6 +1507,19 @@ export interface Poi {
   deletedAt: string | null;
 }
 
+export interface PoiWithStatus {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  category: string;
+  location: { x: number; y: number }; // PostGIS point: x=lng, y=lat
+  status: string | null;
+  statusNoteAr: string | null;
+  statusNoteEn: string | null;
+  validUntil: string | null;
+  statusUpdatedAt: string | null;
+}
+
 // ── Carpool ────────────────────────────────────────────────────────────────
 
 export type CarpoolRideStatus = 'open' | 'full' | 'departed' | 'completed' | 'cancelled';
@@ -1632,6 +1645,15 @@ export const mapAPI = {
     apiFetchWithRefresh<{ asDriver: CarpoolRide[]; asPassenger: CarpoolPassenger[] }>(
       '/carpool/my',
     ),
+
+  getStatusBoard: (page = 1, limit = 12, search?: string, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set('search', search);
+    if (status) params.set('status', status);
+    return apiFetch<PaginatedResponse<PoiWithStatus>>(
+      `/map/sites/status-board?${params.toString()}`,
+    );
+  },
 };
 
 // ── Admin ───────────────────────────────────────────────────────────────────
@@ -2403,4 +2425,46 @@ export const jobsAPI = {
     apiFetchWithRefresh<PaginatedResponse<JobApplication>>('/jobs/my-applications'),
 
   getMyPosts: () => apiFetchWithRefresh<PaginatedResponse<JobPost>>('/jobs/my-posts'),
+};
+
+// ── Desert Trips (Guide Safety) ─────────────────────────────────────────────
+
+export type DesertTripStatus = 'pending' | 'checked_in' | 'overdue' | 'alert_sent' | 'resolved';
+
+export interface DesertTrip {
+  id: string;
+  bookingId: string;
+  guideId: string;
+  destinationName: string;
+  emergencyContact: string;
+  expectedArrivalAt: string;
+  rangerStationName: string | null;
+  status: DesertTripStatus;
+  checkedInAt: string | null;
+  alertTriggeredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RegisterDesertTripRequest {
+  destinationName: string;
+  emergencyContact: string;
+  expectedArrivalAt: string;
+  rangerStationName?: string;
+}
+
+export const desertTripsAPI = {
+  getByBooking: (bookingId: string) =>
+    apiFetchWithRefresh<DesertTrip>(`/bookings/${bookingId}/desert-trip`),
+
+  register: (bookingId: string, body: RegisterDesertTripRequest) =>
+    apiFetchWithRefresh<DesertTrip>(`/bookings/${bookingId}/desert-trip`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  checkIn: (bookingId: string) =>
+    apiFetchWithRefresh<DesertTrip>(`/bookings/${bookingId}/desert-trip/check-in`, {
+      method: 'POST',
+    }),
 };

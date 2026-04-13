@@ -171,3 +171,17 @@ export function useDeclinePassenger() {
     },
   });
 }
+
+export function useStatusBoard(page: number, search = '', status = 'all', limit = 12) {
+  return useQuery({
+    queryKey: queryKeys.map.statusBoard(page, search, status),
+    queryFn: () =>
+      mapAPI.getStatusBoard(
+        page,
+        limit,
+        search || undefined,
+        status === 'all' ? undefined : status,
+      ),
+    staleTime: 5 * 60 * 1000,
+  });
+}

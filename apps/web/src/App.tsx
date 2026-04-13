@@ -67,6 +67,7 @@ import GuideBookingPage from './pages/tourism/GuideBookingPage';
 import AccommodationListPage from './pages/tourism/AccommodationListPage';
 import AccommodationDetailsPage from './pages/tourism/AccommodationDetailsPage';
 import AccommodationInquiryPage from './pages/tourism/AccommodationInquiryPage';
+import SiteStatusBoardPage from './pages/tourism/SiteStatusBoardPage';
 
 const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
 const AdminOverview = lazy(() => import('@/pages/admin/AdminOverview'));
@@ -192,6 +193,7 @@ const App = () => (
               path="/tourism/accommodation-inquiry/:id"
               element={<AccommodationInquiryPage />}
             />
+            <Route path="/tourism/sites" element={<SiteStatusBoardPage />} />
 
             <Route path="/logistics" element={<LogisticsPage />} />
             <Route element={<RequireAuth />}>
