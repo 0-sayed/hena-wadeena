@@ -1,5 +1,5 @@
 import { createZodDto } from 'nestjs-zod';
 
-import { createJobPostSchema } from './job-post.schema';
+import { jobPostBaseSchema } from './job-post.schema';
 
-export class UpdateJobPostDto extends createZodDto(createJobPostSchema.partial()) {}
+export class UpdateJobPostDto extends createZodDto(jobPostBaseSchema.partial()) {}
