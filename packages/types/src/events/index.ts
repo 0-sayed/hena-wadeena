@@ -25,6 +25,11 @@ export const EVENTS = {
   USER_ACTIVATED: 'user.activated',
   USER_VERIFIED: 'user.verified',
   DESERT_TRIP_OVERDUE: 'desert_trip.overdue',
+  JOB_POSTED: 'job.posted',
+  JOB_APPLICATION_RECEIVED: 'job.application.received',
+  JOB_APPLICATION_ACCEPTED: 'job.application.accepted',
+  JOB_COMPLETED: 'job.completed',
+  JOB_REVIEW_SUBMITTED: 'job.review.submitted',
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
