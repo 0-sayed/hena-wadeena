@@ -94,7 +94,7 @@ const PricesPage = () => {
 
   function handleBellClick(commodityId: string, name: string) {
     if (!isAuthenticated) {
-      void navigate('/auth/login');
+      void navigate('/login');
       return;
     }
     setAlertSheetCommodity({ id: commodityId, name });

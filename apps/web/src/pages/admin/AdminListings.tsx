@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Megaphone, PlusCircle } from 'lucide-react';
@@ -71,6 +71,7 @@ export default function AdminListings() {
   const [produceSheetListing, setProduceSheetListing] = useState<Listing | null>(null);
   const [saving, setSaving] = useState(false);
   const [ownerNames, setOwnerNames] = useState<Record<string, string>>({});
+  const fetchedOwnerIdsRef = useRef<Set<string>>(new Set());
   const isSavingRef = useRef(false);
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
   const isRtl = appLanguage === 'ar';
@@ -90,12 +91,15 @@ export default function AdminListings() {
     category: 'agricultural_produce',
   });
 
-  const listings = listingsQuery.data?.data ?? [];
+  const listings = useMemo(() => listingsQuery.data?.data ?? [], [listingsQuery.data?.data]);
   const total = listingsQuery.data?.total ?? 0;
   const hasMore = listingsQuery.data?.hasMore ?? false;
   const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
 
-  const produceListings = produceListingsQuery.data?.data ?? [];
+  const produceListings = useMemo(
+    () => produceListingsQuery.data?.data ?? [],
+    [produceListingsQuery.data?.data],
+  );
   const produceTotal = produceListingsQuery.data?.total ?? 0;
   const produceHasMore = produceListingsQuery.data?.hasMore ?? false;
   const produceTotalPages = produceTotal > 0 ? Math.ceil(produceTotal / PAGE_SIZE) : 1;
@@ -110,9 +114,13 @@ export default function AdminListings() {
   useEffect(() => {
     const allListings = [...listings, ...produceListings];
     const unseenIds = [
-      ...new Set(allListings.map((l) => l.ownerId).filter((id) => !(id in ownerNames))),
+      ...new Set(
+        allListings.map((l) => l.ownerId).filter((id) => !fetchedOwnerIdsRef.current.has(id)),
+      ),
     ];
     if (unseenIds.length === 0) return;
+
+    unseenIds.forEach((id) => fetchedOwnerIdsRef.current.add(id));
 
     // TODO: replace with a bulk `adminAPI.getUsers({ ids: [...] })` endpoint once available to
     // avoid N sequential per-row requests. Using allSettled so one failed lookup does not drop
@@ -129,7 +137,7 @@ export default function AdminListings() {
         setOwnerNames((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
       }
     });
-  }, [listings, produceListings]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [listings, produceListings]);
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsListingDialogOpen(open);
