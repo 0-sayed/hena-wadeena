@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
 import { Layout } from '@/components/layout/Layout';
 import {
   TrendingUp,
@@ -106,13 +107,15 @@ const PricesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const regionFilter = selectedCity === 'all' ? undefined : selectedCity;
+  const debouncedSearch = useDebounce(searchQuery.trim(), 300);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [regionFilter, selectedCategory, searchQuery]);
+  }, [regionFilter, selectedCategory, debouncedSearch]);
 
   const priceIndex = usePriceIndexPage(
     {
+      q: debouncedSearch || undefined,
       category: selectedCategory,
       region: regionFilter,
       price_type: 'retail',
@@ -181,11 +184,7 @@ const PricesPage = () => {
   const fallingCount = entries.filter((e) => (e.changePercent ?? 0) < 0).length;
   const stableCount = entries.filter((e) => (e.changePercent ?? 0) === 0).length;
 
-  const filteredProducts = entries.filter(
-    (e) =>
-      e.commodity.nameAr.includes(searchQuery) ||
-      categoryLabel(e.commodity.category).includes(searchQuery),
-  );
+  const filteredProducts = entries;
   const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * PRICE_TABLE_PAGE_SIZE + 1;
   const pageEnd = Math.min(currentPage * PRICE_TABLE_PAGE_SIZE, totalProducts);
 

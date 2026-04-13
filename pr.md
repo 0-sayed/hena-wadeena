@@ -1,6 +1,6 @@
 # PR #127 — feat: price alerts, produce listings page, and price trend charts
 
-> Generated: 2026-04-12 | Branch: worktree-f16-price-alerts-produce-listings-ui | Last updated: 2026-04-13 13:00
+> Generated: 2026-04-12 | Branch: worktree-f16-price-alerts-produce-listings-ui | Last updated: 2026-04-13 14:00
 
 ## Worth Fixing
 
@@ -142,6 +142,44 @@
   >       resetForm();
   >       onOpenChange(false);
   > ```
+  >
+  > <!-- devin-review-badge-begin -->
+  > <a href="https://app.devin.ai/review/0-sayed/hena-wadeena/pull/127" target="_blank">
+  >   <picture>
+  >     <source media="(prefers-color-scheme: dark)" srcset="https://static.devin.ai/assets/gh-open-in-devin-review-dark.svg?v=1">
+  >     <img src="https://static.devin.ai/assets/gh-open-in-devin-review-light.svg?v=1" alt="Open in Devin Review">
+  >   </picture>
+  > </a>
+  > <!-- devin-review-badge-end -->
+  >
+  > ---
+  > *Was this helpful? React with 👍 or 👎 to provide feedback.*
+
+- [x] Client-side search on server-paginated data shows wrong totals and hides cross-page results — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M56bcUS -->
+  > **apps/web/src/pages/marketplace/PricesPage.tsx:188**
+  >
+  > <!-- devin-review-comment {"id": "BUG_pr-review-job-232f2e8c88b7453e9d9f3d7c311c5f85_0001", "file_path": "apps/web/src/pages/marketplace/PricesPage.tsx", "start_line": 184, "end_line": 188, "side": "RIGHT"} -->
+  >
+  > 🔴 **Client-side search filtering applied to server-paginated data produces incorrect pagination and hides results**
+  >
+  > The `searchQuery` is used to reset `currentPage` to 1 (line 112) and to filter entries client-side via `filteredProducts` (line 184-188), but it is never sent to the server. Since `usePriceIndexPage` at line 114-122 only sends `category`, `region`, and `price_type` to the API, the search only filters the current page of 20 items. This causes two problems: (1) pagination metadata (`totalProducts`, `pageStart`-`pageEnd` at `apps/web/src/pages/marketplace/PricesPage.tsx:189-190`) reflects the unfiltered server total, so the footer might say "عرض 1-20 من 150 منتج" while only 2 rows are visible; (2) matching items on pages 2+ are invisible to the user. By contrast, the `ProducePage` at `apps/web/src/pages/marketplace/ProducePage.tsx:43` correctly passes `q: debouncedSearch` to the server.
+  >
+  > *(Refers to lines 184-188)*
+  >
+  > <details>
+  > <summary>Prompt for agents</summary>
+  >
+  > ```
+  > In PricesPage.tsx, the search query (searchQuery state variable) is used to filter entries client-side via filteredProducts (line 184-188), but is NOT sent to the usePriceIndexPage server query (line 114-122). With server-side pagination of 20 items per page, this means the search only filters the current page's items, while pagination controls show the unfiltered total.
+  >
+  > Two possible approaches:
+  > 1. Send the search query to the server: The priceIndexAPI.getIndex endpoint would need to support a q parameter (similar to how listings API does). Then pass the search to usePriceIndexPage as a filter and remove the client-side filteredProducts filtering.
+  > 2. Remove searchQuery from the useEffect that resets the page (line 112) and add a visual indicator that the search only filters the current page view, not the full dataset. Also compute pagination text from filteredProducts.length instead of totalProducts.
+  >
+  > Approach 1 is recommended since ProducePage already demonstrates the pattern with debouncedSearch sent as the q parameter.
+  > ```
+  >
+  > </details>
   >
   > <!-- devin-review-badge-begin -->
   > <a href="https://app.devin.ai/review/0-sayed/hena-wadeena/pull/127" target="_blank">

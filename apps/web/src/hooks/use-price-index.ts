@@ -3,7 +3,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { priceIndexAPI } from '@/services/api';
 import { usePaginatedQuery } from './use-paginated-query';
 
-type PriceIndexFilters = { category?: string; region?: string; price_type?: string };
+type PriceIndexFilters = { q?: string; category?: string; region?: string; price_type?: string };
 
 export function usePriceIndex(filters?: PriceIndexFilters, limit?: number) {
   return usePaginatedQuery({
