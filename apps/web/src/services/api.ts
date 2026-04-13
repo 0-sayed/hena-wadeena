@@ -613,6 +613,7 @@ export interface BusinessEntry {
 
 export const priceIndexAPI = {
   getIndex: (params?: {
+    q?: string;
     category?: string;
     region?: string;
     price_type?: string;

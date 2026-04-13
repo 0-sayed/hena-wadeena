@@ -1,6 +1,6 @@
 # PR #127 — feat: price alerts, produce listings page, and price trend charts
 
-> Generated: 2026-04-12 | Branch: worktree-f16-price-alerts-produce-listings-ui | Last updated: 2026-04-13 15:00
+> Generated: 2026-04-12 | Branch: worktree-f16-price-alerts-produce-listings-ui | Last updated: 2026-04-13 15:30
 
 ## Worth Fixing
 
@@ -208,6 +208,29 @@
   > 🟡 **`risingCount`, `fallingCount`, `stableCount` are derived from the current page's 20 entries but displayed alongside `totalProducts` (server total)**
   >
   > Lines 183–185 compute counts by filtering `entries` (the current page, max 20 items). These are then shown in stat cards next to `totalProducts`, which reflects the server total (e.g. 100). Users see "8 rising / 5 falling / 7 stable" summing to 20, contradicting the "100 products" card above. The `getPriceSummary` API (`commodity-prices.service.ts:getPriceSummary`) returns `topMovers` (top 5 only) and category averages but no per-direction counts, so there's no server source for accurate rising/falling/stable totals without a backend change.
+
+- [x] `priceIndexAPI.getIndex` type missing `q` param, bypasses type safety for search — @devin-ai-integration <!-- thread:PRRT_kwDORjaF4M56btgM -->
+  > **apps/web/src/services/api.ts:615**
+  >
+  > <!-- devin-review-comment {"id": "BUG_pr-review-job-015878235a9a4bfbb1dc410660abf51b_0001", "file_path": "apps/web/src/services/api.ts", "start_line": 615, "end_line": 621, "side": "RIGHT"} -->
+  >
+  > 🟡 **priceIndexAPI.getIndex type is missing the `q` parameter, bypassing type safety for search**
+  >
+  > The `priceIndexAPI.getIndex` parameter type at `apps/web/src/services/api.ts:615-620` does not include `q?: string`, but the backend DTO (`services/market/src/commodity-prices/dto/query-price-index.dto.ts:6`) accepts it, and the frontend `usePriceIndexPage` hook (`apps/web/src/hooks/use-price-index.ts:22`) passes it via spread (`{ ...filters, offset, limit }` where `filters` has type `PriceIndexFilters = { q?: string; ... }`). At runtime this works because `toQueryString` iterates all object keys, but it means direct callers of `priceIndexAPI.getIndex({ q: '...' })` would get a TypeScript error, and the `q` parameter completely bypasses type checking.
+  >
+  > *(Refers to lines 615-621)*
+  >
+  > <!-- devin-review-badge-begin -->
+  > <a href="https://app.devin.ai/review/0-sayed/hena-wadeena/pull/127" target="_blank">
+  >   <picture>
+  >     <source media="(prefers-color-scheme: dark)" srcset="https://static.devin.ai/assets/gh-open-in-devin-review-dark.svg?v=1">
+  >     <img src="https://static.devin.ai/assets/gh-open-in-devin-review-light.svg?v=1" alt="Open in Devin Review">
+  >   </picture>
+  > </a>
+  > <!-- devin-review-badge-end -->
+  >
+  > ---
+  > *Was this helpful? React with 👍 or 👎 to provide feedback.*
 
 ## Not Worth Fixing
 
