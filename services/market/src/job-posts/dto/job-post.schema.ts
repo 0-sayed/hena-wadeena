@@ -15,13 +15,18 @@ export const jobPostBaseSchema = z.object({
   endsAt: z.iso.datetime().optional(),
 });
 
-export const createJobPostSchema = jobPostBaseSchema.refine(
-  (data) => {
-    if (!data.startsAt || !data.endsAt) return true;
-    return new Date(data.endsAt).getTime() >= new Date(data.startsAt).getTime();
-  },
-  {
-    path: ['endsAt'],
-    message: 'endsAt must be on or after startsAt',
-  },
-);
+const validateDateRange = (data: { startsAt?: string; endsAt?: string }) => {
+  if (!data.startsAt || !data.endsAt) return true;
+  return new Date(data.endsAt).getTime() >= new Date(data.startsAt).getTime();
+};
+
+const dateRangeError = {
+  path: ['endsAt'],
+  message: 'endsAt must be on or after startsAt',
+};
+
+export const createJobPostSchema = jobPostBaseSchema.refine(validateDateRange, dateRangeError);
+
+export const updateJobPostSchema = jobPostBaseSchema
+  .partial()
+  .refine(validateDateRange, dateRangeError);
