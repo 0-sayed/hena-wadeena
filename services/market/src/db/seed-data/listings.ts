@@ -1128,7 +1128,7 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
   },
   {
     listingId: L46,
-    commodityType: 'mangoes',
+    commodityType: 'other',
     quantityKg: '950.00',
     harvestDate: '2026-04-02',
     storageType: 'عبوات بلاستيكية مهواة',
@@ -1139,7 +1139,7 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
   },
   {
     listingId: L47,
-    commodityType: 'peanuts',
+    commodityType: 'other',
     quantityKg: '3200.00',
     harvestDate: '2026-03-10',
     storageType: 'أجولة خيش',
@@ -1150,7 +1150,7 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
   },
   {
     listingId: L48,
-    commodityType: 'cumin',
+    commodityType: 'other',
     quantityKg: '700.00',
     harvestDate: '2026-03-18',
     storageType: 'أجولة محكمة',
@@ -1161,7 +1161,7 @@ export const showcaseProduceListingDetails: SeedProduceListingDetails[] = [
   },
   {
     listingId: L49,
-    commodityType: 'oranges',
+    commodityType: 'other',
     quantityKg: '2100.00',
     harvestDate: '2026-03-25',
     storageType: 'أقفاص بلاستيكية',

@@ -238,6 +238,7 @@ export function ProduceListingSheet({
             description: 'سيظهر العرض بعد مراجعته والموافقة عليه من الإدارة.',
           });
         }
+        onSuccess?.();
         resetForm();
         onOpenChange(false);
       }
