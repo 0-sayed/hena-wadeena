@@ -298,6 +298,7 @@ const ProfilePage = () => {
                         src={formData.avatar_url}
                         alt={formData.full_name}
                         className="h-28 w-28 rounded-2xl object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <User className="h-14 w-14 text-primary" />

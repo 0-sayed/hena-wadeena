@@ -8,6 +8,7 @@ import {
   MapPin,
   Megaphone,
   Menu,
+  Newspaper,
   Shield,
   User,
   UserCheck,
@@ -62,6 +63,11 @@ const navItems = [
     to: '/admin/ai',
     label: { ar: 'إدارة الذكاء الاصطناعي', en: 'AI knowledge' },
     icon: Bot,
+  },
+  {
+    to: '/admin/news',
+    label: { ar: 'الأخبار', en: 'News' },
+    icon: Newspaper,
   },
 ] as const;
 

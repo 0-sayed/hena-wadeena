@@ -288,7 +288,7 @@ const RideDetailPage = () => {
             onClick={() => void navigate('/logistics')}
             className="mb-6 gap-2"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {pickLocalizedCopy(appLanguage, { ar: 'العودة', en: 'Back' })}
           </Button>
 

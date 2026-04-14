@@ -422,6 +422,7 @@ export function ProduceListingSheet({
                           src={imageUrl}
                           alt={`معاينة صورة المنتج ${index + 1}`}
                           className="h-full w-full object-cover"
+                          loading="lazy"
                         />
                         {index === 0 ? (
                           <span className="absolute end-2 top-2 rounded bg-background/90 px-2 py-0.5 text-[11px] font-medium">

@@ -18,7 +18,7 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { CardSkeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
-import heroTourism from '@/assets/hero-tourism.jpg';
+import heroTourism from '@/assets/hero-tourism.webp';
 import { usePackages } from '@/hooks/use-packages';
 import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { areaLabels, piastresToEgp, formatRating } from '@/lib/format';
@@ -153,6 +153,7 @@ const PackagesPage = () => {
                               src={pkg.guideProfileImage ?? '/placeholder.jpg'}
                               alt="مرشد"
                               className="h-10 w-10 rounded-full object-cover"
+                              loading="lazy"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-foreground truncate">

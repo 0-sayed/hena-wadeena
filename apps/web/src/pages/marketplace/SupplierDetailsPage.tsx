@@ -27,7 +27,7 @@ const SupplierDetailsPage = () => {
         <section className="py-8 md:py-12">
           <div className="container px-4">
             <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-6">
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 ltr:rotate-180" />
               العودة للبورصة
             </Button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -64,7 +64,7 @@ const SupplierDetailsPage = () => {
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-6">
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة للبورصة
           </Button>
 

@@ -56,7 +56,7 @@ const AccommodationListPage = () => {
             onClick={() => void navigate('/tourism')}
             className="text-card hover:bg-card/10 hover:text-card"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة إلى السياحة
           </Button>
         </div>
@@ -81,11 +81,11 @@ const AccommodationListPage = () => {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="ابحث عن حي أو عنوان أو وصف"
-                className="search-input-with-icon-md"
+                className="search-input-with-icon-md h-12 rounded-xl md:h-12"
               />
             </div>
             <Select value={district} onValueChange={setDistrict}>
-              <SelectTrigger className="w-full md:w-56">
+              <SelectTrigger className="h-12 w-full rounded-xl md:w-56">
                 <SelectValue placeholder="المنطقة" />
               </SelectTrigger>
               <SelectContent>
@@ -134,6 +134,7 @@ const AccommodationListPage = () => {
                       src={listing.images?.[0] ?? '/placeholder.jpg'}
                       alt={listing.titleAr}
                       className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <CardContent className="p-5 space-y-4">

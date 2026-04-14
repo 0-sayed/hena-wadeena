@@ -85,7 +85,13 @@ const GuideProfilePage = () => {
       <PageTransition>
         {guide.coverImage && (
           <div className="h-56 overflow-hidden">
-            <img src={guide.coverImage} alt="" className="h-full w-full object-cover" />
+            <img
+              src={guide.coverImage}
+              alt=""
+              className="h-full w-full object-cover"
+              fetchPriority="high"
+              decoding="async"
+            />
           </div>
         )}
 
@@ -99,6 +105,7 @@ const GuideProfilePage = () => {
                       src={guide.profileImage ?? '/placeholder.jpg'}
                       alt={guideName}
                       className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   </div>
 
@@ -166,6 +173,7 @@ const GuideProfilePage = () => {
                             src={pkg.images[0]}
                             alt={pkg.titleAr}
                             className="h-40 w-full rounded-t-lg object-cover"
+                            loading="lazy"
                           />
                         )}
                         <div className="space-y-3 p-5">

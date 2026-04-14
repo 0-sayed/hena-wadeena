@@ -51,7 +51,7 @@ const ProducePage = () => {
       <section className="bg-gradient-to-bl from-primary/10 via-accent/5 to-background py-12 md:py-16">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-4">
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة للبورصة
           </Button>
           <div className="max-w-3xl">
@@ -155,6 +155,7 @@ const ProducePage = () => {
                       src={listing.images?.[0] ?? '/placeholder.jpg'}
                       alt={listing.titleAr}
                       className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <CardContent className="p-5 space-y-4">

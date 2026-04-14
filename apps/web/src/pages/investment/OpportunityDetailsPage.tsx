@@ -76,7 +76,7 @@ const OpportunityDetailsPage = () => {
             onClick={() => void navigate('/investment')}
             className="mb-6 gap-2"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة للاستثمار
           </Button>
 

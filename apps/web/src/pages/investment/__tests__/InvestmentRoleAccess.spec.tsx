@@ -103,7 +103,7 @@ vi.mock('@/services/api', () => ({
   },
 }));
 
-vi.mock('@/assets/hero-investment.jpg', () => ({ default: '/hero-investment.jpg' }));
+vi.mock('@/assets/hero-investment.webp', () => ({ default: '/hero-investment.webp' }));
 
 const renderWithQueryClient = (ui: React.ReactElement) => {
   const queryClient = new QueryClient({

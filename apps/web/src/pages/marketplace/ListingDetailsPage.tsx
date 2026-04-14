@@ -109,7 +109,7 @@ export default function ListingDetailsPage() {
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة
           </Button>
 
@@ -121,6 +121,7 @@ export default function ListingDetailsPage() {
                     src={listing.images?.[0] ?? '/placeholder.jpg'}
                     alt={listing.titleAr}
                     className="h-64 w-full rounded-xl object-cover md:h-80"
+                    loading="lazy"
                   />
                 </div>
                 {(listing.images ?? []).slice(1).map((image, index) => (
@@ -129,6 +130,7 @@ export default function ListingDetailsPage() {
                     src={image}
                     alt={`${listing.titleAr} ${index + 2}`}
                     className="h-40 w-full rounded-xl object-cover"
+                    loading="lazy"
                   />
                 ))}
               </div>

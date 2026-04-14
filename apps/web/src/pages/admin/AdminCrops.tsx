@@ -383,11 +383,11 @@ export default function AdminCrops() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Button onClick={openCreateCropDialog}>
-            <PlusCircle className="ms-2 h-4 w-4" />
+            <PlusCircle className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, { ar: 'إضافة محصول', en: 'Add crop' })}
           </Button>
           <Button variant="outline" onClick={openCreatePriceDialog} disabled={!selectedCommodity}>
-            <Tag className="ms-2 h-4 w-4" />
+            <Tag className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, { ar: 'إضافة سعر', en: 'Add price' })}
           </Button>
         </div>

@@ -103,7 +103,7 @@ const AccommodationDetailsPage = () => {
             onClick={() => void navigate('/tourism/accommodation')}
             className="mb-6"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة إلى السكن
           </Button>
 
@@ -115,6 +115,7 @@ const AccommodationDetailsPage = () => {
                     src={listing.images?.[0] ?? '/placeholder.jpg'}
                     alt={listing.titleAr}
                     className="h-64 w-full rounded-xl object-cover md:h-80"
+                    loading="lazy"
                   />
                 </div>
                 {(listing.images ?? []).slice(1, 3).map((image, index) => (
@@ -123,6 +124,7 @@ const AccommodationDetailsPage = () => {
                     src={image}
                     alt={`${listing.titleAr} ${index + 2}`}
                     className="h-40 w-full rounded-xl object-cover"
+                    loading="lazy"
                   />
                 ))}
               </div>
@@ -143,7 +145,9 @@ const AccommodationDetailsPage = () => {
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>{districtLabel(listing.district ?? listing.address ?? 'غير محدد')}</span>
+                      <span>
+                        {districtLabel(listing.district ?? listing.address ?? 'غير محدد')}
+                      </span>
                     </div>
                     {listing.areaSqm != null && (
                       <div className="flex items-center gap-2">
@@ -160,8 +164,11 @@ const AccommodationDetailsPage = () => {
                   </div>
                   {listing.ratingAvg != null && listing.reviewCount > 0 && (
                     <p className="mt-4 text-sm text-muted-foreground">
-                      التقييم: <span className="font-semibold text-foreground">{formatRating(listing.ratingAvg)}</span>
-                      {' '}({listing.reviewCount} تقييم)
+                      التقييم:{' '}
+                      <span className="font-semibold text-foreground">
+                        {formatRating(listing.ratingAvg)}
+                      </span>{' '}
+                      ({listing.reviewCount} تقييم)
                     </p>
                   )}
                 </CardContent>
@@ -246,9 +253,7 @@ const AccommodationDetailsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="rounded-lg bg-primary/5 py-4 text-center">
                     <p className="text-sm text-muted-foreground">السعر</p>
-                    <p className="text-3xl font-bold text-primary">
-                      {formatPrice(listing.price)}
-                    </p>
+                    <p className="text-3xl font-bold text-primary">{formatPrice(listing.price)}</p>
                     <p className="text-sm text-muted-foreground">
                       جنيه/{listing.priceUnit || 'شهرياً'}
                     </p>
@@ -296,7 +301,11 @@ const AccommodationDetailsPage = () => {
                     <div className="flex items-center gap-3">
                       <Home className="h-4 w-4 text-primary" />
                       <a
-                        href={contactWebsite.startsWith('http') ? contactWebsite : `https://${contactWebsite}`}
+                        href={
+                          contactWebsite.startsWith('http')
+                            ? contactWebsite
+                            : `https://${contactWebsite}`
+                        }
                         target="_blank"
                         rel="noreferrer"
                         className="hover:underline"
@@ -306,7 +315,9 @@ const AccommodationDetailsPage = () => {
                     </div>
                   )}
                   {!contactName && !contactPhone && !contactEmail && !contactWebsite && (
-                    <p className="text-muted-foreground">سيتم توفير بيانات التواصل بعد إرسال الاستفسار.</p>
+                    <p className="text-muted-foreground">
+                      سيتم توفير بيانات التواصل بعد إرسال الاستفسار.
+                    </p>
                   )}
                 </CardContent>
               </Card>

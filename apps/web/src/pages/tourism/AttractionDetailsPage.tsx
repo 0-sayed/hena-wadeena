@@ -56,14 +56,20 @@ const AttractionDetailsPage = () => {
       <PageTransition>
         {/* Hero Image */}
         <div className="relative h-72 md:h-96 overflow-hidden">
-          <img src={heroImage} alt={attraction.nameAr} className="w-full h-full object-cover" />
+          <img
+            src={heroImage}
+            alt={attraction.nameAr}
+            className="w-full h-full object-cover"
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
           <Button
             variant="ghost"
-            className="absolute top-4 end-4 bg-card/80 backdrop-blur-sm"
+            className="absolute top-4 start-4 bg-card/80 backdrop-blur-sm"
             onClick={() => void navigate('/tourism/attractions')}
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             رجوع
           </Button>
         </div>
@@ -243,6 +249,7 @@ const AttractionDetailsPage = () => {
                             src={a.thumbnail ?? '/placeholder.jpg'}
                             alt={a.nameAr}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
                           />
                         </div>
                         <CardContent className="p-4">
