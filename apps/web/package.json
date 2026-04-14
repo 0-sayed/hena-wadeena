@@ -16,6 +16,7 @@
   "dependencies": {
     "@hena-wadeena/types": "workspace:*",
     "@hookform/resolvers": "^3.10.0",
+    "@lottiefiles/dotlottie-wc": "^0.9.12",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
