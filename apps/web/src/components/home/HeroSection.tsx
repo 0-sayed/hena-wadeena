@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 
 import heroImage from '@/assets/hero-desert-oasis.jpg';
 import { useAuth } from '@/hooks/use-auth';
+import { useHeroStats } from '@/hooks/use-hero-stats';
 import { pickLocalizedCopy } from '@/lib/localization';
 
 const navCards = [
@@ -49,6 +50,17 @@ const navCards = [
     href: '/tourism/attractions',
     color: 'from-cyan-500 to-indigo-600',
   },
+] as const;
+
+const heroSparks = [
+  { top: '8%', left: '4%', delay: '0s', dur: '2.8s' },
+  { top: '18%', left: '88%', delay: '0.5s', dur: '3.2s', green: true },
+  { top: '50%', left: '12%', delay: '1.1s', dur: '2.5s' },
+  { top: '72%', left: '92%', delay: '1.8s', dur: '3.5s', green: true },
+  { top: '28%', left: '52%', delay: '0.7s', dur: '2.9s' },
+  { top: '82%', left: '38%', delay: '1.4s', dur: '3.1s', green: true },
+  { top: '12%', left: '68%', delay: '2.1s', dur: '2.7s' },
+  { top: '62%', left: '28%', delay: '0.3s', dur: '3.4s', green: true },
 ] as const;
 
 function MobileQuickLinks({ language }: { language: 'ar' | 'en' }) {
@@ -271,6 +283,7 @@ export function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const { language } = useAuth();
+  const { data: heroStats } = useHeroStats();
   const copy =
     language === 'en'
       ? {
@@ -361,31 +374,68 @@ export function HeroSection() {
             <span className="text-sm font-semibold text-card">{copy.portalBadge}</span>
           </div>
 
-          <h1 className="hero-reveal hero-d2 mb-5 text-4xl font-bold leading-tight text-card sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
-            {copy.brandName}
-            <span className="mt-3 block text-2xl text-accent sm:text-3xl md:text-4xl lg:text-5xl">
-              {copy.tagline}
-            </span>
-          </h1>
+          <div className="relative">
+            <div
+              className="pointer-events-none absolute inset-0 overflow-visible"
+              aria-hidden="true"
+            >
+              {heroSparks.map((s, i) => (
+                <div
+                  key={i}
+                  className="hero-spark"
+                  style={{
+                    top: s.top,
+                    left: s.left,
+                    animationDelay: s.delay,
+                    animationDuration: s.dur,
+                    background: 'green' in s && s.green ? '#7dcfa0' : 'hsl(var(--accent))',
+                  }}
+                />
+              ))}
+            </div>
+            <h1 className="hero-reveal hero-d2 mb-5 text-4xl font-bold leading-tight text-card sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
+              {copy.brandName}
+              <span className="mt-3 block text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+                {copy.tagline.split(' ').map((word, i, arr) => (
+                  <span key={i} className={`tagline-word tagline-word-${i + 1}`}>
+                    {word}
+                    {i < arr.length - 1 ? ' ' : ''}
+                  </span>
+                ))}
+              </span>
+            </h1>
+          </div>
 
-          <p className="hero-reveal hero-d3 mb-8 max-w-xl text-base leading-relaxed text-card/90 sm:mb-10 sm:text-lg md:text-xl">
+          <p className="hero-reveal hero-d3 mb-4 max-w-xl text-base leading-relaxed text-card/90 sm:text-lg md:text-xl">
             {copy.description}
           </p>
 
+          <p className="hero-reveal hero-d3 mb-6 text-xs text-card/60 sm:mb-8">{copy.helper} ✨</p>
+
           <div className="hero-reveal hero-d4 mb-5 md:hidden">
             <MobileQuickLinks language={language} />
-            <p className="mt-3 text-center text-xs text-card/60">{copy.helper}</p>
           </div>
 
           <div className="hero-reveal hero-d4 mb-12 hidden md:block">
             <CardDeck language={language} />
-            <p className="mt-4 text-center text-xs text-card/50 sm:text-end">{copy.helper} ✨</p>
           </div>
 
           <div className="hero-reveal hero-d5 grid max-w-xl grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:gap-12">
-            <Counter target={50} label={copy.transportLines} delay={900} />
-            <Counter target={200} label={copy.localProducts} delay={1200} />
-            <Counter target={30} label={copy.investmentOpportunities} delay={1500} />
+            <Counter
+              target={heroStats?.transportCount || 50}
+              label={copy.transportLines}
+              delay={900}
+            />
+            <Counter
+              target={heroStats?.commoditiesCount || 200}
+              label={copy.localProducts}
+              delay={1200}
+            />
+            <Counter
+              target={heroStats?.investmentsCount || 30}
+              label={copy.investmentOpportunities}
+              delay={1500}
+            />
           </div>
         </div>
       </div>
