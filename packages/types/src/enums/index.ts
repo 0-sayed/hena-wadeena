@@ -252,3 +252,13 @@ export enum ReviewDirection {
   WORKER_RATES_POSTER = 'worker_rates_poster',
   POSTER_RATES_WORKER = 'poster_rates_worker',
 }
+
+export enum NewsCategory {
+  ANNOUNCEMENT = 'announcement',
+  TOURISM = 'tourism',
+  INVESTMENT = 'investment',
+  AGRICULTURE = 'agriculture',
+  INFRASTRUCTURE = 'infrastructure',
+  CULTURE = 'culture',
+  EVENTS = 'events',
+}
