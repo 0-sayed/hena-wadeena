@@ -13,6 +13,8 @@ export const USER = {
   ADMIN_ADLY: '0135a54b-f50b-44ed-acbf-69a54a00c240',
   ADMIN_TAHER: 'a47960cc-8f69-4b95-adb8-00957bdf412f',
   ADMIN_SHAWQI: '929c69fa-0f5a-46e4-9f2d-ac00c0aa026b',
+  ADMIN_ABDELRAHMAN: 'e2a1b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c',
+  ADMIN_SAMAR: 'f3b2c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d',
   // Demo role users (essential layer)
   TOURIST_SALMA: 'fcba044d-04d6-40e8-a636-52665e50e770',
   RESIDENT_MOHAMED: '944ff4c9-5211-45f7-982c-0b06486e64bd',
@@ -21,6 +23,7 @@ export const USER = {
   DRIVER_AMRO: '76a90742-7062-494b-8cde-f024aacb0e0f',
   GUIDE_YOUSSEF: 'd3ce889d-c799-48f0-9c07-edfc963cd7ad',
   INVESTOR_MAHMOUD: 'dcaac073-042d-46f0-aeab-508dfcbb3c08',
+  FARMER_IBRAHIM: 'a1b2c3d4-e5f6-4789-abcd-ef0123456f01',
   // Showcase extra users
   GUIDE_FATMA: '81afa615-5b2d-4888-af51-12563285c4bc',
   GUIDE_AHMED: '9c9bee21-9cc7-4da4-ba9e-8d71f9f07eaa',
@@ -104,6 +107,12 @@ export const POI = {
   POI08: '4e8a914c-76cc-446a-812f-87151ddefc4f',
   POI09: '1ad41df0-4bbd-48c1-8b44-641df85e2994',
   POI10: 'd614f45d-5516-4113-8aa7-00bd7947c106',
+  // Pending POIs (for admin review queue)
+  POI_PENDING_01: 'bb010000-0000-4000-8000-000000000001',
+  POI_PENDING_02: 'bb020000-0000-4000-8000-000000000002',
+  POI_PENDING_03: 'bb030000-0000-4000-8000-000000000003',
+  POI_PENDING_04: 'bb040000-0000-4000-8000-000000000004',
+  POI_PENDING_05: 'bb050000-0000-4000-8000-000000000005',
 } as const;
 
 // ─── Commodities ─────────────────────────────────────────────────────
@@ -159,6 +168,18 @@ export const RIDE = {
   CR03: '6dad54b0-ff49-4a71-bd2c-774d84e166ee',
   CR04: '4cf41a53-deae-4550-a4b5-f2bb64de83ad',
   CR05: 'e7c3a918-5f24-4d0b-b167-9a4e82f10dc5',
+} as const;
+
+// ─── Well Logs ───────────────────────────────────────────────────────
+export const WELL_LOG = {
+  WL01: 'e1000000-0000-4000-8000-000000000001',
+  WL02: 'e1000000-0000-4000-8000-000000000002',
+  WL03: 'e1000000-0000-4000-8000-000000000003',
+  WL04: 'e1000000-0000-4000-8000-000000000004',
+  WL05: 'e1000000-0000-4000-8000-000000000005',
+  WL06: 'e1000000-0000-4000-8000-000000000006',
+  WL07: 'e1000000-0000-4000-8000-000000000007',
+  WL08: 'e1000000-0000-4000-8000-000000000008',
 } as const;
 
 // ─── KYC Records ─────────────────────────────────────────────────────

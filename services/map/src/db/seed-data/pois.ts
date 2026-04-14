@@ -19,9 +19,70 @@ export interface SeedPoi {
   lat: number;
   lon: number;
   submittedBy: string;
-  approvedBy: string;
+  approvedBy?: string; // Optional for pending POIs
   images?: string[];
 }
+
+/** Pending POIs: user-submitted, awaiting admin review */
+export const pendingPois: SeedPoi[] = [
+  {
+    id: POI.POI_PENDING_01,
+    nameAr: 'مطعم الواحة الخضراء',
+    nameEn: 'Green Oasis Restaurant',
+    description: 'مطعم شعبي يقدم أشهى المأكولات المحلية والمشويات الطازجة في جو تقليدي',
+    category: 'restaurant',
+    address: 'شارع السوق، الخارجة',
+    phone: '+20924925555',
+    lat: 25.438,
+    lon: 30.546,
+    submittedBy: USER.RESIDENT_MOHAMED,
+  },
+  {
+    id: POI.POI_PENDING_02,
+    nameAr: 'عين بئر الجبل',
+    nameEn: 'Mountain Well Spring',
+    description: 'عين مياه طبيعية ساخنة محاطة بأشجار النخيل، مكان رائع للاسترخاء',
+    category: 'natural',
+    address: 'طريق الفرافرة - باويطي',
+    lat: 27.12,
+    lon: 27.85,
+    submittedBy: USER.GUIDE_YOUSSEF,
+  },
+  {
+    id: POI.POI_PENDING_03,
+    nameAr: 'مسجد الشيخ عبد الرحيم',
+    nameEn: 'Sheikh Abdel Rahim Mosque',
+    description: 'مسجد تاريخي يعود تاريخه لأكثر من 200 عام، يتميز بطراز معماري فريد',
+    category: 'religious',
+    address: 'حي القديم، موط، الداخلة',
+    lat: 25.492,
+    lon: 28.974,
+    submittedBy: USER.RESIDENT_MOHAMED,
+  },
+  {
+    id: POI.POI_PENDING_04,
+    nameAr: 'استراحة القمر الفضي',
+    nameEn: 'Silver Moon Lodge',
+    description: 'استراحة سياحية توفر غرف مريحة وإطلالة على الصحراء البيضاء',
+    category: 'accommodation',
+    address: 'طريق الصحراء البيضاء، الفرافرة',
+    phone: '+20927512345',
+    lat: 27.15,
+    lon: 27.95,
+    submittedBy: USER.MERCHANT_KHALED,
+  },
+  {
+    id: POI.POI_PENDING_05,
+    nameAr: 'ملعب الخارجة الرياضي',
+    nameEn: 'Kharga Sports Stadium',
+    description: 'الملعب الرئيسي لمدينة الخارجة يستضيف المباريات والفعاليات الرياضية',
+    category: 'recreational',
+    address: 'حي الملعب، الخارجة',
+    lat: 25.442,
+    lon: 30.558,
+    submittedBy: USER.STUDENT_NOUR,
+  },
+];
 
 // Inline IDs for showcase POIs 11–20
 const P11 = 'aa110000-0000-4000-8000-000000000011';

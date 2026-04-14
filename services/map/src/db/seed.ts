@@ -5,7 +5,7 @@ import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils
 
 import { carpoolRides as carpoolRidesTable, pointsOfInterest } from './schema/index.js';
 import { carpoolRides as rideData } from './seed-data/carpool.js';
-import { essentialPois, showcasePois } from './seed-data/pois.js';
+import { essentialPois, pendingPois, showcasePois } from './seed-data/pois.js';
 
 // ── Fallback images by category ──────────────────────────────────────────────
 // Used only when POI doesn't have explicit images
@@ -107,8 +107,33 @@ async function main() {
     passengerCount = passengerResult.length;
   }
 
+  // 4. Pending POIs — always seed for admin review queue
+  const pendingResult = await db
+    .insert(pointsOfInterest)
+    .values(
+      pendingPois.map((p) => ({
+        id: p.id,
+        nameAr: p.nameAr,
+        nameEn: p.nameEn,
+        description: p.description,
+        category: p.category,
+        address: p.address,
+        phone: p.phone,
+        status: 'pending' as const,
+        submittedBy: p.submittedBy,
+        images: p.images ?? [
+          FALLBACK_CATEGORY_IMGS[p.category] ??
+            `https://picsum.photos/seed/${p.id.slice(-8)}/800/600`,
+        ],
+        location: point(p.lat, p.lon),
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: pointsOfInterest.id });
+
   logSummary('map', layer, {
     pois: poiResult.length,
+    pendingPois: pendingResult.length,
     ...(layer === 'showcase' && { rides: rideCount, passengers: passengerCount }),
   });
 }

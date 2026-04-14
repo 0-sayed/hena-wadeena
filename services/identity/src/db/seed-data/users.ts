@@ -8,7 +8,16 @@ export interface SeedUser {
   fullName: string;
   displayName: string | null;
   avatarUrl: string | null;
-  role: 'admin' | 'tourist' | 'resident' | 'student' | 'merchant' | 'driver' | 'guide' | 'investor';
+  role:
+    | 'admin'
+    | 'tourist'
+    | 'resident'
+    | 'student'
+    | 'merchant'
+    | 'driver'
+    | 'guide'
+    | 'investor'
+    | 'farmer';
   status: 'active';
   language: string;
   verifiedAt: Date | null;
@@ -66,6 +75,30 @@ export const essentialUsers: SeedUser[] = [
     fullName: 'شوقي',
     displayName: 'شوقي',
     avatarUrl: avatar('shawqi@hena-wadeena.online'),
+    role: 'admin',
+    status: 'active',
+    language: 'ar',
+    verifiedAt: now,
+  },
+  {
+    id: USER.ADMIN_ABDELRAHMAN,
+    email: 'abdelrahman@hena-wadeena.online',
+    phone: null,
+    fullName: 'عبدالرحمن',
+    displayName: 'عبدالرحمن',
+    avatarUrl: avatar('abdelrahman@hena-wadeena.online'),
+    role: 'admin',
+    status: 'active',
+    language: 'ar',
+    verifiedAt: now,
+  },
+  {
+    id: USER.ADMIN_SAMAR,
+    email: 'samar@hena-wadeena.online',
+    phone: null,
+    fullName: 'سمر',
+    displayName: 'سمر',
+    avatarUrl: avatar('samar@hena-wadeena.online'),
     role: 'admin',
     status: 'active',
     language: 'ar',
@@ -152,6 +185,18 @@ export const essentialUsers: SeedUser[] = [
     displayName: 'محمود المستثمر',
     avatarUrl: avatar('investor@hena-wadeena.online'),
     role: 'investor',
+    status: 'active',
+    language: 'ar',
+    verifiedAt: now,
+  },
+  {
+    id: USER.FARMER_IBRAHIM,
+    email: 'farmer@hena-wadeena.online',
+    phone: '+201000000016',
+    fullName: 'إبراهيم المزارع',
+    displayName: 'إبراهيم',
+    avatarUrl: avatar('farmer@hena-wadeena.online'),
+    role: 'farmer',
     status: 'active',
     language: 'ar',
     verifiedAt: now,

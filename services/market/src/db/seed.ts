@@ -13,9 +13,11 @@ import {
   investmentOpportunities,
   listingInquiries,
   listings,
+  newsArticles,
   priceSnapshots,
   produceListingDetails,
   reviews,
+  wellLogs,
 } from './schema/index.js';
 import { jobApplications } from './schema/job-applications.js';
 import { jobPosts } from './schema/job-posts.js';
@@ -37,8 +39,10 @@ import {
   showcaseListings,
   showcaseProduceListingDetails,
 } from './seed-data/listings.js';
+import { newsArticlesData } from './seed-data/news-articles.js';
 import { generatePriceSnapshotData } from './seed-data/price-snapshots.js';
 import { showcaseListingReviews } from './seed-data/reviews.js';
+import { essentialWellLogs } from './seed-data/well-logs.js';
 
 // ── Real image URLs ──────────────────────────────────────────────────────────
 type ImgPair = [string, string];
@@ -332,21 +336,80 @@ async function main() {
   // Jobs — always seeded (essential + showcase)
   const jobPostsResult = await db
     .insert(jobPosts)
-    .values(essentialJobPosts)
+    .values(
+      essentialJobPosts.map((p) => ({
+        ...p,
+        startsAt: p.startsAt ? new Date(p.startsAt) : null,
+        endsAt: p.endsAt ? new Date(p.endsAt) : null,
+        createdAt: new Date(p.createdAt),
+      })),
+    )
     .onConflictDoNothing()
     .returning({ id: jobPosts.id });
 
   const jobApplicationsResult = await db
     .insert(jobApplications)
-    .values(essentialJobApplications)
+    .values(
+      essentialJobApplications.map((a) => ({
+        ...a,
+        appliedAt: new Date(a.appliedAt),
+        resolvedAt: a.resolvedAt ? new Date(a.resolvedAt) : null,
+      })),
+    )
     .onConflictDoNothing()
     .returning({ id: jobApplications.id });
 
   const jobReviewsResult = await db
     .insert(jobReviews)
-    .values(essentialJobReviews)
+    .values(
+      essentialJobReviews.map((r) => ({
+        ...r,
+        createdAt: new Date(r.createdAt),
+      })),
+    )
     .onConflictDoNothing()
     .returning({ id: jobReviews.id });
+
+  const wellLogsResult = await db
+    .insert(wellLogs)
+    .values(
+      essentialWellLogs.map((wl) => ({
+        id: wl.id,
+        farmerId: wl.farmerId,
+        area: wl.area,
+        pumpHours: wl.pumpHours,
+        kwhConsumed: wl.kwhConsumed,
+        costPiasters: wl.costPiasters,
+        waterM3Est: wl.waterM3Est ?? null,
+        depthToWaterM: wl.depthToWaterM ?? null,
+        loggedAt: wl.loggedAt,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: wellLogs.id });
+
+  // News articles — always seeded
+  const newsResult = await db
+    .insert(newsArticles)
+    .values(
+      newsArticlesData.map((a) => ({
+        id: a.id,
+        titleAr: a.titleAr,
+        summaryAr: a.summaryAr,
+        contentAr: a.contentAr,
+        slug: a.slug,
+        category: a.category,
+        coverImage: a.coverImage,
+        authorId: a.authorId,
+        authorName: a.authorName,
+        readingTimeMinutes: a.readingTimeMinutes,
+        isPublished: a.isPublished,
+        publishedAt: a.publishedAt,
+        viewCount: a.viewCount,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: newsArticles.id });
 
   logSummary('market', layer, {
     commodities: commodityResult.length,
@@ -356,6 +419,8 @@ async function main() {
     jobPosts: jobPostsResult.length,
     jobApplications: jobApplicationsResult.length,
     jobReviews: jobReviewsResult.length,
+    wellLogs: wellLogsResult.length,
+    news: newsResult.length,
     ...(layer === 'showcase' && {
       businesses: businessCount,
       commodityPriceSnapshots: priceCount,
