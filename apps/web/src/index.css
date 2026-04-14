@@ -745,8 +745,8 @@ textarea {
     33% {
       color: #fff;
       text-shadow:
-        0 0 10px color-mix(in srgb, hsl(var(--accent)) 80%, transparent),
-        0 0 24px color-mix(in srgb, hsl(var(--accent)) 40%, transparent);
+        0 0 6px color-mix(in srgb, hsl(var(--accent)) 50%, transparent),
+        0 0 14px color-mix(in srgb, hsl(var(--accent)) 20%, transparent);
     }
   }
 
@@ -771,16 +771,17 @@ textarea {
 
   .tagline-word {
     display: inline-block;
-    animation: wordGlow 2.4s ease-in-out infinite;
+    animation: wordGlow 3.6s ease-in-out infinite;
+    animation-fill-mode: forwards;
   }
   .tagline-word-1 {
     animation-delay: 0s;
   }
   .tagline-word-2 {
-    animation-delay: 0.8s;
+    animation-delay: -1.2s;
   }
   .tagline-word-3 {
-    animation-delay: 1.6s;
+    animation-delay: -2.4s;
   }
 
   .hero-spark {
