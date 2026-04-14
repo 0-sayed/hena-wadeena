@@ -739,14 +739,14 @@ textarea {
   @keyframes wordGlow {
     0%,
     100% {
-      color: var(--color-accent);
+      color: hsl(var(--accent));
       text-shadow: none;
     }
     33% {
       color: #fff;
       text-shadow:
-        0 0 10px color-mix(in srgb, var(--color-accent) 80%, transparent),
-        0 0 24px color-mix(in srgb, var(--color-accent) 40%, transparent);
+        0 0 10px color-mix(in srgb, hsl(var(--accent)) 80%, transparent),
+        0 0 24px color-mix(in srgb, hsl(var(--accent)) 40%, transparent);
     }
   }
 
@@ -790,6 +790,7 @@ textarea {
     border-radius: 9999px;
     animation: sparkRise ease-in-out infinite;
     pointer-events: none;
+    will-change: opacity, transform;
   }
 }
 
