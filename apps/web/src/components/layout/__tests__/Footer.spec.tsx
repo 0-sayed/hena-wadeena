@@ -40,5 +40,9 @@ describe('Footer localization', () => {
     expect(
       screen.getByText(/official digital gateway for new valley/i),
     ).toBeInTheDocument();
+    expect(screen.getByAltText('Egypt Vision 2030')).toHaveAttribute(
+      'src',
+      '/images/vision-2030.svg',
+    );
   });
 });

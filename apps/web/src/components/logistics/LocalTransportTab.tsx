@@ -305,7 +305,7 @@ export function LocalTransportTab() {
         </div>
         {canManageCompanies && (
           <Button onClick={openCreateDialog}>
-            <Plus className="ms-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'إضافة شركة نقل',
               en: 'Add transport company',
