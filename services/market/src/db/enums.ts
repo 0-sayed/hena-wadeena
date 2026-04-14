@@ -137,3 +137,14 @@ export const wellAreaEnum = marketSchema.enum('well_area', [
 
 // Price alerts
 export const alertDirectionEnum = marketSchema.enum('alert_direction', ['above', 'below']);
+
+// News
+export const newsCategoryEnum = marketSchema.enum('news_category', [
+  'announcement',
+  'tourism',
+  'investment',
+  'agriculture',
+  'infrastructure',
+  'culture',
+  'events',
+]);

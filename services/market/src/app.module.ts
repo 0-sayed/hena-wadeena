@@ -27,6 +27,7 @@ import { JobApplicationsModule } from './job-applications/job-applications.modul
 import { JobPostsModule } from './job-posts/job-posts.module';
 import { ListingInquiriesModule } from './listing-inquiries/listing-inquiries.module';
 import { ListingsModule } from './listings/listings.module';
+import { NewsModule } from './news/news.module';
 import { PriceAlertsModule } from './price-alerts/price-alerts.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SearchModule } from './search/search.module';
@@ -85,6 +86,7 @@ function requireEnv(key: string): string {
     WellLogsModule,
     JobApplicationsModule,
     JobPostsModule,
+    NewsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
