@@ -50,7 +50,7 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
-import heroMarketplace from '@/assets/hero-marketplace.jpg';
+import heroMarketplace from '@/assets/hero-marketplace.webp';
 import { BusinessLogo } from '@/components/business/BusinessLogo';
 import { TrendBadge } from '@/components/market/TrendBadge';
 import { usePriceIndex, usePriceSummary } from '@/hooks/use-price-index';
@@ -500,7 +500,7 @@ const MarketplacePage = () => {
                         })}
                         value={priceSearchQuery}
                         onChange={(event) => setPriceSearchQuery(event.target.value)}
-                        className="search-input-with-icon-lg h-12 rounded-xl"
+                        className="search-input-with-icon-lg h-12 rounded-xl md:h-12"
                       />
                     </div>
                   </div>
@@ -611,7 +611,7 @@ const MarketplacePage = () => {
                         })}
                         value={supplierSearch}
                         onChange={(event) => setSupplierSearch(event.target.value)}
-                        className="search-input-with-icon-md h-12 rounded-xl"
+                        className="search-input-with-icon-md h-12 rounded-xl md:h-12"
                       />
                     </div>
                     {canManageSuppliers && (

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Sparkles, Mountain, ShoppingBag, Truck, TrendingUp, Users, Compass } from 'lucide-react';
 import { Link } from 'react-router';
 
-import heroImage from '@/assets/hero-desert-oasis.jpg';
+import heroImage from '@/assets/hero-desert-oasis.webp';
 import { useAuth } from '@/hooks/use-auth';
 import { useHeroStats } from '@/hooks/use-hero-stats';
 import { pickLocalizedCopy } from '@/lib/localization';
@@ -24,7 +24,7 @@ const navCards = [
   },
   {
     icon: Truck,
-    label: { ar: 'المواصلات', en: 'Transport' },
+    label: { ar: 'اللوجستيات', en: 'Logistics' },
     desc: { ar: 'خطوط وحجز', en: 'Routes & booking' },
     href: '/logistics',
     color: 'from-sky-500 to-blue-600',
@@ -291,7 +291,7 @@ export function HeroSection() {
           portalBadge: 'Official digital portal',
           tagline: 'Explore. Connect. Invest.',
           description:
-            'Your all-in-one gateway to New Valley, from transport and daily prices to investment opportunities and tourism.',
+            'Your all-in-one gateway to New Valley, from logistics and daily prices to investment opportunities and tourism.',
           helper: 'Tap or hover over the cards to explore each section',
           transportLines: 'transport routes',
           localProducts: 'local products',
@@ -303,17 +303,13 @@ export function HeroSection() {
           portalBadge: 'البوابة الرقمية الرسمية',
           tagline: 'اكتشف. تواصل. استثمر.',
           description:
-            'بوابتك الشاملة للوادي الجديد — من المواصلات والأسعار إلى فرص الاستثمار والسياحة. كل ما تحتاجه في مكان واحد.',
+            'بوابتك الشاملة للوادي الجديد — من اللوجستيات والأسعار إلى فرص الاستثمار والسياحة. كل ما تحتاجه في مكان واحد.',
           helper: 'المس أو مرّر على الكروت لاستكشاف الأقسام',
           transportLines: 'خط مواصلات',
           localProducts: 'منتج محلي',
           investmentOpportunities: 'فرصة استثمارية',
           heroImageAlt: 'الوادي الجديد',
         };
-
-  useEffect(() => {
-    setLoaded(true);
-  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -347,6 +343,9 @@ export function HeroSection() {
         <img
           src={heroImage}
           alt={copy.heroImageAlt}
+          fetchPriority="high"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
           className="h-[120%] w-full object-cover sm:h-[130%]"
         />
         <div className="absolute inset-0 bg-gradient-to-l from-foreground/85 via-foreground/65 to-foreground/40" />
