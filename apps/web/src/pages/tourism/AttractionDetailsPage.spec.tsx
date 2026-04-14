@@ -20,7 +20,9 @@ vi.mock('react-router', async () => {
 });
 
 vi.mock('lucide-react', () => {
-  const Icon = () => <svg aria-hidden="true" />;
+  const Icon = ({ className }: { className?: string }) => (
+    <svg aria-hidden="true" className={className} />
+  );
 
   return {
     AlertCircle: Icon,
@@ -48,10 +50,16 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({
     children,
     onClick,
+    className,
   }: {
     children: ReactNode;
     onClick?: () => void;
-  }) => <button onClick={onClick}>{children}</button>,
+    className?: string;
+  }) => (
+    <button onClick={onClick} className={className}>
+      {children}
+    </button>
+  ),
 }));
 
 vi.mock('@/components/ui/card', () => ({
@@ -79,7 +87,7 @@ vi.mock('@/hooks/use-attractions', () => ({
 }));
 
 describe('AttractionDetailsPage', () => {
-  it('shows the map section without rendering the raw coordinate row', () => {
+  beforeEach(() => {
     mockUseAttraction.mockReturnValue({
       data: {
         id: 'attr-1',
@@ -117,7 +125,21 @@ describe('AttractionDetailsPage', () => {
       refetch: vi.fn(),
     });
     mockUseNearbyAttractions.mockReturnValue({ data: [] });
+  });
 
+  it('pins the back button to the inline start side and uses Button gap for icon spacing', () => {
+    render(<AttractionDetailsPage />);
+
+    const backButton = screen.getByRole('button', { name: 'رجوع' });
+    const icon = backButton.querySelector('svg');
+
+    expect(backButton).toHaveClass('start-4');
+    expect(backButton).not.toHaveClass('end-4');
+    expect(icon?.className.baseVal).not.toMatch(/\b(?:ms|me|ml|mr)-\d/);
+    expect(icon?.className.baseVal).toContain('ltr:rotate-180');
+  });
+
+  it('shows the map section without rendering the raw coordinate row', () => {
     render(<AttractionDetailsPage />);
 
     expect(screen.getByText('الموقع')).toBeInTheDocument();

@@ -43,7 +43,7 @@ vi.mock('react-router', async () => {
   };
 });
 
-vi.mock('@/assets/hero-logistics.jpg', () => ({ default: 'hero-logistics.jpg' }));
+vi.mock('@/assets/hero-logistics.webp', () => ({ default: 'hero-logistics.webp' }));
 
 vi.mock('@/components/layout/Layout', () => ({
   Layout: ({ children }: { children: ReactNode }) => <div>{children}</div>,

@@ -73,11 +73,13 @@ vi.mock('@/components/ui/input', () => ({
     value,
     onChange,
     placeholder,
+    className,
   }: {
     value?: string;
     onChange?: (event: { target: { value: string } }) => void;
     placeholder?: string;
-  }) => <input value={value} onChange={onChange} placeholder={placeholder} />,
+    className?: string;
+  }) => <input className={className} value={value} onChange={onChange} placeholder={placeholder} />,
 }));
 
 vi.mock('@/components/ui/card', () => ({
@@ -107,8 +109,8 @@ vi.mock('@/services/api', () => ({
   },
 }));
 
-vi.mock('@/assets/hero-investment.jpg', () => ({
-  default: 'hero-investment.jpg',
+vi.mock('@/assets/hero-investment.webp', () => ({
+  default: 'hero-investment.webp',
 }));
 
 describe('InvestmentPage', () => {
@@ -173,7 +175,7 @@ describe('InvestmentPage', () => {
     expect(screen.getByText('فرصة زراعية في الداخلة')).toBeInTheDocument();
     expect(screen.queryByText('شركة تقنية ناشئة')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'ابحث' }));
+    fireEvent.click(screen.getByRole('button', { name: 'بحث' }));
 
     expect(mockNavigate).not.toHaveBeenCalledWith('/search?q=%D8%B2%D8%B1%D8%A7');
   });
@@ -191,5 +193,18 @@ describe('InvestmentPage', () => {
 
     expect(screen.getByText('شركة تقنية ناشئة')).toBeInTheDocument();
     expect(screen.queryByText('فرصة زراعية في الداخلة')).not.toBeInTheDocument();
+  });
+
+  it('uses the roomy hero search field sizing', async () => {
+    render(<InvestmentPage />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('ابحث عن فرص استثمارية...')).toHaveClass(
+        'h-16',
+        'text-lg',
+        'md:h-16',
+        'md:text-lg',
+      );
+    });
   });
 });

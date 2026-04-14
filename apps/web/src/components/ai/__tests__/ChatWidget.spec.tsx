@@ -14,6 +14,8 @@ const mockStreamMessage = vi.hoisted(() => vi.fn());
 const mockCloseSession = vi.hoisted(() => vi.fn());
 const mockLegacyChat = vi.hoisted(() => vi.fn());
 
+vi.mock('@lottiefiles/dotlottie-wc', () => ({}));
+
 vi.mock('@/hooks/use-auth', () => ({
   useAuth: (): AuthContextValue => mockUseAuth(),
 }));
@@ -86,6 +88,54 @@ describe('ChatWidget', () => {
     expect(mockSendMessage).not.toHaveBeenCalled();
   });
 
+  it('renders the animated palm in the closed launcher', () => {
+    const { container } = renderWidget();
+
+    const launcher = screen.getByLabelText('AI assistant');
+    const mascot = container.querySelector<HTMLElement>('dotlottie-wc');
+
+    expect(mascot).toBeInTheDocument();
+    expect(mascot).toHaveAttribute(
+      'src',
+      '/animations/nakheel-palm-leaf.lottie?v=palm-only-crop',
+    );
+    expect(mascot?.style.width).toBe('100%');
+    expect(mascot?.style.height).toBe('100%');
+    expect(launcher).toHaveClass('bottom-[calc(env(safe-area-inset-bottom)+5.5rem)]');
+    expect(launcher).toHaveClass('md:bottom-3');
+    expect(launcher).toHaveClass('h-20');
+    expect(launcher).toHaveClass('md:h-24');
+    expect(launcher).toContainElement(mascot);
+    expect(launcher.querySelector('svg')).not.toBeInTheDocument();
+  });
+
+  it('keeps the palm animation out of the opened panel', () => {
+    const { container } = renderWidget();
+    fireEvent.click(screen.getByLabelText('AI assistant'));
+
+    const launcher = screen.getByLabelText('AI assistant');
+    const panel = screen.getByTestId('ai-chat-panel');
+
+    expect(launcher.querySelector('dotlottie-wc')).toBeInTheDocument();
+    expect(panel).toHaveClass('bottom-[calc(env(safe-area-inset-bottom)+6rem)]');
+    expect(panel).toHaveClass('md:bottom-24');
+    expect(panel.querySelector('dotlottie-wc')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('dotlottie-wc')).toHaveLength(1);
+  });
+
+  it('closes the open panel when clicking outside the widget', () => {
+    renderWidget();
+    fireEvent.click(screen.getByLabelText('AI assistant'));
+
+    expect(screen.getByText('You need to log in to use AI chat sessions.')).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(
+      screen.queryByText('You need to log in to use AI chat sessions.'),
+    ).not.toBeInTheDocument();
+  });
+
   it('bootstraps session and renders welcome message for authenticated users', async () => {
     mockUseAuth.mockReturnValue({
       ...buildUnauthedContext(),
@@ -119,6 +169,9 @@ describe('ChatWidget', () => {
     });
 
     expect(screen.getByText('Welcome from test')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('ai-chat-panel').querySelector('dotlottie-wc'),
+    ).not.toBeInTheDocument();
   });
 
   it('restores the most recent session page when history spans multiple pages', async () => {

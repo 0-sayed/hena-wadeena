@@ -57,11 +57,13 @@ vi.mock('@/components/ui/input', () => ({
     value,
     onChange,
     placeholder,
+    className,
   }: {
     value?: string;
     onChange?: (event: { target: { value: string } }) => void;
     placeholder?: string;
-  }) => <input value={value} onChange={onChange} placeholder={placeholder} />,
+    className?: string;
+  }) => <input className={className} value={value} onChange={onChange} placeholder={placeholder} />,
 }));
 
 vi.mock('@/components/ui/card', () => ({
@@ -93,8 +95,8 @@ vi.mock('@/hooks/use-users', () => ({
   usePublicUsers: (userIds: string[]) => mockUsePublicUsers(userIds),
 }));
 
-vi.mock('@/assets/hero-guides.jpg', () => ({
-  default: 'hero-guides.jpg',
+vi.mock('@/assets/hero-guides.webp', () => ({
+  default: 'hero-guides.webp',
 }));
 
 describe('GuidesPage', () => {
@@ -152,7 +154,51 @@ describe('GuidesPage', () => {
     mockUseDebouncedCallback.mockImplementation((callback: (value: string) => void) => callback);
   });
 
-  it('filters visible guides by partial Arabic specialty text while typing', () => {
+  it('sends search term to backend and renders only matching guides', () => {
+    const allGuides = [
+      {
+        id: 'guide-1',
+        userId: 'user-1',
+        bioAr: 'مرشد للرحلات الصحراوية',
+        bioEn: null,
+        profileImage: null,
+        languages: ['arabic'],
+        specialties: ['adventure'],
+        areasOfOperation: ['kharga'],
+        basePrice: 10000,
+        ratingAvg: 4.5,
+        ratingCount: 5,
+        licenseVerified: true,
+        packageCount: 2,
+      },
+      {
+        id: 'guide-2',
+        userId: 'user-2',
+        bioAr: 'مرشد للآثار والمعابد',
+        bioEn: null,
+        profileImage: null,
+        languages: ['english'],
+        specialties: ['history'],
+        areasOfOperation: ['dakhla'],
+        basePrice: 10000,
+        ratingAvg: 4.1,
+        ratingCount: 3,
+        licenseVerified: true,
+        packageCount: 1,
+      },
+    ];
+
+    // Simulate backend filtering: only return guide-1 when search='مغا'
+    mockUseGuides.mockImplementation((filters?: Record<string, unknown>) => ({
+      data: filters?.search ? allGuides.slice(0, 1) : allGuides,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+      isFetchingNextPage: false,
+      hasNextPage: false,
+      fetchNextPage: vi.fn(),
+    }));
+
     render(<GuidesPage />);
 
     fireEvent.change(screen.getByPlaceholderText('ابحث بالتخصص أو الوصف...'), {
@@ -161,5 +207,16 @@ describe('GuidesPage', () => {
 
     expect(screen.getByText('سالم')).toBeInTheDocument();
     expect(screen.queryByText('محمود')).not.toBeInTheDocument();
+  });
+
+  it('uses the roomy hero search field sizing', () => {
+    render(<GuidesPage />);
+
+    expect(screen.getByPlaceholderText('ابحث بالتخصص أو الوصف...')).toHaveClass(
+      'h-16',
+      'text-lg',
+      'md:h-16',
+      'md:text-lg',
+    );
   });
 });
