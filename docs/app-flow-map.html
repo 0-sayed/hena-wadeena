@@ -451,6 +451,7 @@
         'investment',
         'jobs',
         'benefits',
+        'news',
         'search',
         'profile',
         'dashboard',
@@ -580,12 +581,13 @@
           route: '/tourism',
           domain: 'tourism',
           access: 'public',
-          desc: 'Main tourism landing page with 4 tabs.',
-          tabs: ['Attractions tab', 'Guides tab', 'Tour Packages tab', 'Accommodations tab'],
+          desc: 'Main tourism landing page with 2 tabs: Attractions and Guides.',
+          tabs: ['Attractions — featured grid + full grid', 'Guides — guide card grid'],
           features: [
             'Featured section per tab (6 items)',
             'All-items grid with Load More',
             'Cross-tab search',
+            'Links to packages, accommodation, and site status',
           ],
         },
         {
@@ -651,9 +653,15 @@
           label: 'Accommodation Inquiry',
           route: '/tourism/accommodation-inquiry/:id',
           domain: 'tourism',
-          access: 'public',
-          desc: 'Contact an accommodation host directly.',
-          features: ['Check-in/out dates', 'Guest count', 'Message', 'Contact info'],
+          access: 'auth',
+          desc: 'Contact an accommodation host directly. Pre-filled from user profile.',
+          features: [
+            'Check-in/out dates',
+            'Guest count',
+            'Message',
+            'Contact info',
+            'Pre-filled from profile',
+          ],
         },
 
         // ── GUIDES ────────────────────────────────────────────────────────────────
@@ -868,12 +876,21 @@
           route: '/logistics',
           domain: 'logistics',
           access: 'public',
-          desc: 'Carpool and shared transport rides in New Valley.',
+          desc: 'Three-tab hub: map-based POI explorer, carpool rides, and local transport info.',
+          tabs: [
+            'Explore Map — POI search, category filter, "Near me" geolocation, suggest POI',
+            'Carpool Rides — filter by area/date, join/create rides, manage passengers',
+            'Local Transport — curated static transport info for New Valley',
+          ],
           features: [
-            'Available rides list',
+            'POI map with category + text search',
+            '"Near me" geolocation filter (50 km radius)',
+            'Available rides list with origin/destination area filter',
             'Route + departure time',
             'Available seats',
             'Driver profile',
+            'DRIVER/ADMIN: Create ride button → /logistics/create-ride',
+            'Authenticated: My rides toggle (as driver and as passenger)',
           ],
         },
         {
@@ -1191,7 +1208,7 @@
         {
           id: 'suggest-poi',
           label: 'Suggest a POI',
-          route: '/map/pois [POST]',
+          route: '/logistics/suggest-poi',
           domain: 'search',
           access: 'role',
           roles: ['RESIDENT', 'GUIDE', 'MERCHANT'],
@@ -1292,7 +1309,7 @@
           route: '/admin/overview',
           domain: 'admin',
           access: 'admin',
-          desc: 'Admin hub with 6 sidebar sections. Shows platform-wide stats.',
+          desc: 'Admin hub with 9 sidebar sections. Shows platform-wide stats.',
           features: [
             'Stat cards (8): total users / pending KYC / listings awaiting review / pending POIs / active guides / pending bookings / total listings / investment opportunities',
             'Clickable stat cards linking to relevant sub-pages',
@@ -1348,12 +1365,17 @@
           route: '/admin/guides',
           domain: 'admin',
           access: 'admin',
-          desc: 'Verify and manage guide profiles and certifications.',
+          desc: 'Verify and manage guide profiles, certifications, and bookings.',
+          tabs: [
+            'Guides — license verify toggle, activate/deactivate per guide',
+            'Bookings — status filter, cancel booking with required reason',
+          ],
           features: [
             'Guide list with verification status',
-            'Approve / reject guide application',
+            'License verified toggle (inline)',
+            'Activate / deactivate guide account',
             'ETAA (Egyptian Tourism Authority) verification',
-            'Suspend / reinstate guide',
+            'Bookings tab: status filter, cancel with mandatory reason',
           ],
         },
         {
@@ -1388,17 +1410,17 @@
           ],
         },
         {
-          id: 'admin-investment',
-          label: 'Admin: Investment',
-          route: '/admin/investment',
+          id: 'admin-listings',
+          label: 'Admin: Listings',
+          route: '/admin/listings',
           domain: 'admin',
           access: 'admin',
-          desc: 'Review and manage investment opportunities and interest applications.',
+          desc: 'Moderate and manage all marketplace listings (produce, land, businesses).',
           features: [
-            'All investment interest submissions',
-            'Approve / reject applications',
-            'Approve / feature investment opportunities',
-            'Investment opportunity moderation queue',
+            'Paginated listings table',
+            'Verify / feature / reject listings',
+            'Filter by status and category',
+            'Link to listing detail',
           ],
         },
         {
@@ -1417,6 +1439,20 @@
           ],
         },
         {
+          id: 'admin-news',
+          label: 'Admin: News',
+          route: '/admin/news',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Manage news articles for the platform.',
+          features: [
+            'News article list',
+            'Create / edit / delete articles (AR + EN)',
+            'Publish / unpublish',
+            'Slug management',
+          ],
+        },
+        {
           id: 'site-status',
           label: 'Site Status Board',
           route: '/tourism/sites',
@@ -1429,6 +1465,47 @@
             'Paginated status board for all sites',
             'Linked to POI map entries',
           ],
+        },
+
+        // ── MARKETPLACE EXTRA ─────────────────────────────────────────────────────
+        {
+          id: 'produce',
+          label: 'Agricultural Produce',
+          route: '/marketplace/produce',
+          domain: 'marketplace',
+          access: 'public',
+          desc: 'Browse agricultural produce listings from New Valley farms.',
+          features: [
+            'Produce grid by category',
+            'Filter by district',
+            'Link to supplier profile',
+            'Contact / inquiry button',
+          ],
+        },
+
+        // ── NEWS ──────────────────────────────────────────────────────────────────
+        {
+          id: 'news',
+          label: 'News & Updates',
+          route: '/news',
+          domain: 'news',
+          access: 'public',
+          desc: 'Platform news, announcements, and governorate updates.',
+          features: [
+            'Article list with pagination',
+            'Category / tag filter',
+            'AR/EN bilingual content',
+            'Link to detail page',
+          ],
+        },
+        {
+          id: 'news-detail',
+          label: 'News Article',
+          route: '/news/:slug',
+          domain: 'news',
+          access: 'public',
+          desc: 'Full article page for a single news or announcement item.',
+          features: ['Full article body (AR/EN)', 'Published date', 'Related articles'],
         },
       ];
 
@@ -1510,11 +1587,15 @@
         'admin-guides': { x: 30 + GAP * 4, y: ROW.admin },
         'admin-map': { x: 30 + GAP * 5, y: ROW.admin },
         'admin-crops': { x: 30 + GAP * 6, y: ROW.admin },
-        'admin-investment': { x: 30 + GAP * 7, y: ROW.admin },
+        'admin-listings': { x: 30 + GAP * 7, y: ROW.admin },
         'admin-ai': { x: 30 + GAP * 8, y: ROW.admin },
+        'admin-news': { x: 30 + GAP * 9, y: ROW.admin },
 
-        // TOURISM extra (appended after search)
+        // EXTRA public nodes (appended after search)
         'site-status': { x: 30 + GAP * 23 + 80, y: ROW.public },
+        produce: { x: 30 + GAP * 24 + 90, y: ROW.public },
+        news: { x: 30 + GAP * 25 + 100, y: ROW.public },
+        'news-detail': { x: 30 + GAP * 26 + 100, y: ROW.public },
       };
 
       nodes.forEach((n) => {
@@ -1604,7 +1685,7 @@
         { from: 'admin', to: 'admin-guides', type: 'nav' },
         { from: 'admin', to: 'admin-map', type: 'nav' },
         { from: 'admin', to: 'admin-crops', type: 'nav' },
-        { from: 'admin', to: 'admin-investment', type: 'nav' },
+        { from: 'admin', to: 'admin-listings', type: 'nav' },
         { from: 'admin-users', to: 'admin-user-detail', type: 'nav' },
         { from: 'suggest-poi', to: 'admin-map', type: 'role' },
 
@@ -1612,8 +1693,16 @@
         { from: 'tourism', to: 'site-status', type: 'nav' },
         { from: 'suggest-poi', to: 'site-status', type: 'nav' },
 
-        // Admin AI
+        // Admin AI + News
         { from: 'admin', to: 'admin-ai', type: 'nav' },
+        { from: 'admin', to: 'admin-news', type: 'nav' },
+
+        // Marketplace produce
+        { from: 'marketplace', to: 'produce', type: 'nav' },
+
+        // News
+        { from: 'home', to: 'news', type: 'nav' },
+        { from: 'news', to: 'news-detail', type: 'nav' },
       ];
 
       // ── PRESETS ───────────────────────────────────────────────────────────────────
@@ -1631,6 +1720,7 @@
             'investment',
             'jobs',
             'benefits',
+            'news',
             'search',
           ],
           role: null,

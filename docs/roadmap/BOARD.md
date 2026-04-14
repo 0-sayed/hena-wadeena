@@ -112,22 +112,22 @@
 
 ## Phase 2 / Core ✅
 
-- [ ] **T35** Wallet Ledger · S · ← T29
-- [ ] **T36** Employment Board (schema + API + state machine + wallet transfer) · L · ← T35, T26
-- [ ] **T37** Price Alerts (schema + API + threshold cron) · M · ← T26
-- [ ] **T38** Produce Listings (schema extension + API) · S · ← T26
+- [x] **T35** Wallet Ledger · S · ← T29
+- [x] **T36** Employment Board (schema + API + state machine + wallet transfer) · L · ← T35, T26
+- [x] **T37** Price Alerts (schema + API + threshold cron) · M · ← T26
+- [x] **T38** Produce Listings (schema extension + API) · S · ← T26
 - [x] **T39** Site Status Board (schema + API) · S · ← T27
-- [ ] **T40** Guide Safety + Desert Trip (schema + ETAA + API + overdue cron) · M · ← T27
+- [x] **T40** Guide Safety + Desert Trip (schema + ETAA + API + overdue cron) · M · ← T27
 - [x] **T41** Price History Endpoint (no schema, uses existing snapshots) · S · ← T26
-- [ ] **T48** Government Benefits Navigator (benefit_info records + eligibility wizard) · S · ← T29
+- [x] **T48** Government Benefits Navigator (benefit_info records + eligibility wizard) · S · ← T29
 - [x] **T49** Groundwater & Well Cost Monitor (schema + API + solar estimator) · S · ← T26
-- [ ] **F15** Employment Board UI · M · ← T36
-- [ ] **F16** Price Alerts + Produce Listings UI · S · ← T37, T38
+- [x] **F15** Employment Board UI · M · ← T36
+- [x] **F16** Price Alerts + Produce Listings UI · S · ← T37, T38
 - [ ] **F17** Site Status Board UI · S · ← T39
-- [ ] **F18** Guide Safety UI (desert trip registration, check-in, ETAA badge) · M · ← T40
-- [ ] **F19** Price Trend Charts · S · ← T41
-- [ ] **F22** Benefits Navigator UI (eligibility wizard + results) · S · ← T48
-- [ ] **F23** Well Cost Monitor UI (log form + monthly summary + solar estimator) · S · ← T49
+- [x] **F18** Guide Safety UI (desert trip registration, check-in, ETAA badge) · M · ← T40
+- [x] **F19** Price Trend Charts · S · ← T41
+- [x] **F22** Benefits Navigator UI (eligibility wizard + results) · S · ← T48
+- [x] **F23** Well Cost Monitor UI (log form + monthly summary + solar estimator) · S · ← T49
 
 ## Phase 2 / Stretch ⚠️
 
