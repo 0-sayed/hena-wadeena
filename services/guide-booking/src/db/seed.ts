@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -196,6 +197,7 @@ async function main() {
         return {
           id: g.id,
           userId: g.userId,
+          displayName: g.displayName ?? null,
           bioAr: g.bioAr,
           bioEn: g.bioEn,
           languages: g.languages,
@@ -212,6 +214,16 @@ async function main() {
     )
     .onConflictDoNothing()
     .returning({ id: guides.id });
+
+  // Backfill displayName for guides that already existed before the column was added
+  for (const g of allGuides) {
+    if (g.displayName) {
+      await db
+        .update(guides)
+        .set({ displayName: g.displayName })
+        .where(eq(guides.licenseNumber, g.licenseNumber));
+    }
+  }
 
   // 3. Tour packages — essential always, showcase adds more
   const allPackages =

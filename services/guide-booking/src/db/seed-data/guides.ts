@@ -3,6 +3,7 @@ import { GUIDE_PROFILE, USER } from '../../../../../scripts/seed/shared-ids.js';
 export interface SeedGuide {
   id: string;
   userId: string;
+  displayName?: string | null;
   bioAr: string;
   bioEn: string;
   languages: string[];
@@ -18,6 +19,7 @@ export const essentialGuides: SeedGuide[] = [
   {
     id: GUIDE_PROFILE.GP01,
     userId: USER.GUIDE_YOUSSEF,
+    displayName: 'يوسف علي',
     bioAr:
       'مرشد سياحي متخصص في الآثار والتاريخ المصري القديم بالوادي الجديد. خبرة 10 سنوات في تنظيم الجولات الأثرية.',
     bioEn:
@@ -36,6 +38,7 @@ export const showcaseGuides: SeedGuide[] = [
   {
     id: GUIDE_PROFILE.GP02,
     userId: USER.GUIDE_FATMA,
+    displayName: 'فاطمة حسن',
     bioAr:
       'مرشدة سياحة صحراوية متخصصة في رحلات السفاري والتخييم في الصحراء البيضاء والسوداء. تعشق مشاركة جمال الصحراء مع الزوار.',
     bioEn:
@@ -51,6 +54,7 @@ export const showcaseGuides: SeedGuide[] = [
   {
     id: GUIDE_PROFILE.GP03,
     userId: USER.GUIDE_AHMED,
+    displayName: 'أحمد محمد',
     bioAr: 'مرشد مغامرات وتخييم. متخصص في رحلات التزلج على الرمال واستكشاف الوديان الصحراوية.',
     bioEn:
       'Adventure and camping guide. Specializes in sandboarding and desert valley exploration.',
@@ -65,6 +69,7 @@ export const showcaseGuides: SeedGuide[] = [
   {
     id: GUIDE_PROFILE.GP04,
     userId: USER.GUIDE_MARIAM,
+    displayName: 'مريم خالد',
     bioAr:
       'متخصصة في السياحة العلاجية والعيون الحارة. تنظم برامج علاجية بالمياه المعدنية والدفن بالرمال.',
     bioEn:
@@ -80,6 +85,7 @@ export const showcaseGuides: SeedGuide[] = [
   {
     id: GUIDE_PROFILE.GP05,
     userId: USER.GUIDE_OMAR,
+    displayName: 'عمر عبدالله',
     bioAr: 'مصور محترف ومرشد سياحي. يقدم جولات تصوير فوتوغرافي في أجمل مواقع الوادي الجديد.',
     bioEn:
       'Professional photographer and tour guide. Offers photography tours at the most scenic New Valley locations.',

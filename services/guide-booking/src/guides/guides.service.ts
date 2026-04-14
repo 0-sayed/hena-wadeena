@@ -8,6 +8,7 @@ import { guides } from '../db/schema/index';
 import { escapeLike, pickDefined } from '../utils/query';
 
 import type { CreateGuideDto, GuideFiltersDto, GuideUploadUrlDto, UpdateGuideDto } from './dto';
+import { IdentityClient } from './identity-client.service';
 
 type Guide = typeof guides.$inferSelect;
 
@@ -92,6 +93,7 @@ export class GuidesService {
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     @Inject(S3Service) private readonly s3: S3Service,
+    @Inject(IdentityClient) private readonly identityClient: IdentityClient,
   ) {}
 
   async resolveGuideId(userId: string): Promise<string> {
@@ -149,6 +151,7 @@ export class GuidesService {
         ...patterns.flatMap((pattern) => [
           ilike(guides.bioAr, pattern),
           ilike(guides.bioEn, pattern),
+          ilike(guides.displayName, pattern),
           sql`array_to_string(${guides.specialties}, ' ') ILIKE ${pattern}`,
           sql`array_to_string(${guides.languages}, ' ') ILIKE ${pattern}`,
           sql`array_to_string(${guides.areasOfOperation}, ' ') ILIKE ${pattern}`,
@@ -189,11 +192,14 @@ export class GuidesService {
 
     if (existingLicense) throw new ConflictException('License number is already in use');
 
+    const displayName = await this.identityClient.getDisplayName(userId);
+
     const [row] = await this.db
       .insert(guides)
       .values({
         id: generateId(),
         userId,
+        displayName,
         licenseNumber: dto.licenseNumber,
         basePrice: dto.basePrice,
         bioAr: dto.bioAr,
@@ -232,6 +238,7 @@ export class GuidesService {
         .select({
           id: guides.id,
           userId: guides.userId,
+          displayName: guides.displayName,
           bioAr: guides.bioAr,
           bioEn: guides.bioEn,
           profileImage: guides.profileImage,
@@ -472,9 +479,35 @@ export class GuidesService {
     const where = and(baseWhere, statusCondition);
     const offset = (query.page - 1) * query.limit;
 
+    const packageCountSq = sql<number>`(
+      SELECT COUNT(*)::int
+      FROM guide_booking.tour_packages tp
+      WHERE tp.guide_id = ${guides.id}
+        AND tp.deleted_at IS NULL
+    )`;
+
     const [data, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: guides.id,
+          userId: guides.userId,
+          bioAr: guides.bioAr,
+          bioEn: guides.bioEn,
+          profileImage: guides.profileImage,
+          coverImage: guides.coverImage,
+          languages: guides.languages,
+          specialties: guides.specialties,
+          areasOfOperation: guides.areasOfOperation,
+          licenseNumber: guides.licenseNumber,
+          licenseVerified: guides.licenseVerified,
+          basePrice: guides.basePrice,
+          ratingAvg: guides.ratingAvg,
+          ratingCount: guides.ratingCount,
+          active: guides.active,
+          createdAt: guides.createdAt,
+          updatedAt: guides.updatedAt,
+          packageCount: packageCountSq,
+        })
         .from(guides)
         .where(where)
         .orderBy(desc(guides.createdAt))
