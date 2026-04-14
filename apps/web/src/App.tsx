@@ -8,6 +8,8 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { ChatWidget } from '@/components/ai/ChatWidget';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { RequireRole } from '@/components/auth/RequireRole';
+import { useAuth } from '@/hooks/use-auth';
+import { getRoleDashboardPath } from '@/lib/role-utils';
 import Index from './pages/Index';
 import LogisticsPage from './pages/LogisticsPage';
 import MarketplacePage from './pages/MarketplacePage';
@@ -36,11 +38,13 @@ import InvestorDashboard from './pages/roles/InvestorDashboard';
 import TouristDashboard from './pages/roles/TouristDashboard';
 import StudentDashboard from './pages/roles/StudentDashboard';
 import ResidentDashboard from './pages/roles/ResidentDashboard';
+import FarmerDashboard from './pages/roles/FarmerDashboard';
 import ReviewerDashboard from './pages/reviewer/ReviewerDashboard';
 
 import SearchResultsPage from './pages/search/SearchResultsPage';
 
 import CreateRidePage from './pages/logistics/CreateRidePage';
+import SuggestPoiPage from './pages/logistics/SuggestPoiPage';
 import RideDetailPage from './pages/logistics/RideDetailPage';
 
 import PricesPage from './pages/marketplace/PricesPage';
@@ -55,6 +59,8 @@ import ContactPage from './pages/investment/ContactPage';
 import StartupDetailsPage from './pages/investment/StartupDetailsPage';
 
 import BenefitsPage from './pages/BenefitsPage';
+import NewsPage from './pages/news/NewsPage';
+import NewsDetailPage from './pages/news/NewsDetailPage';
 import JobBoardPage from './pages/jobs/JobBoardPage';
 import JobDetailPage from './pages/jobs/JobDetailPage';
 import PostJobPage from './pages/jobs/PostJobPage';
@@ -80,6 +86,13 @@ const AdminGuides = lazy(() => import('@/pages/admin/AdminGuides'));
 const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 const AdminCrops = lazy(() => import('@/pages/admin/AdminCrops'));
 const AdminAiDocuments = lazy(() => import('@/pages/admin/AdminAiDocuments'));
+const AdminNews = lazy(() => import('@/pages/admin/AdminNews'));
+
+function DashboardRedirect() {
+  const { user } = useAuth();
+  const path = user ? getRoleDashboardPath(user.role) : null;
+  return <Navigate to={path ?? '/'} replace />;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -151,10 +164,12 @@ const App = () => (
                 <Route path="map" element={<AdminMap />} />
                 <Route path="crops" element={<AdminCrops />} />
                 <Route path="ai" element={<AdminAiDocuments />} />
+                <Route path="news" element={<AdminNews />} />
               </Route>
             </Route>
 
             <Route element={<RequireAuth />}>
+              <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route element={<RequireRole roles={[UserRole.GUIDE]} />}>
                 <Route path="/dashboard/guide" element={<GuideDashboard />} />
               </Route>
@@ -176,10 +191,16 @@ const App = () => (
               <Route element={<RequireRole roles={[UserRole.RESIDENT]} />}>
                 <Route path="/dashboard/resident" element={<ResidentDashboard />} />
               </Route>
+              <Route element={<RequireRole roles={[UserRole.FARMER]} />}>
+                <Route path="/dashboard/farmer" element={<FarmerDashboard />} />
+              </Route>
               <Route element={<RequireRole roles={[UserRole.ADMIN, UserRole.REVIEWER]} />}>
                 <Route path="/reviewer" element={<ReviewerDashboard />} />
               </Route>
             </Route>
+
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/news/:slug" element={<NewsDetailPage />} />
 
             <Route path="/benefits" element={<BenefitsPage />} />
 
@@ -217,6 +238,15 @@ const App = () => (
             <Route element={<RequireAuth />}>
               <Route element={<RequireRole roles={[UserRole.DRIVER, UserRole.ADMIN]} />}>
                 <Route path="/logistics/create-ride" element={<CreateRidePage />} />
+              </Route>
+            </Route>
+            <Route element={<RequireAuth />}>
+              <Route
+                element={
+                  <RequireRole roles={[UserRole.RESIDENT, UserRole.GUIDE, UserRole.MERCHANT]} />
+                }
+              >
+                <Route path="/logistics/suggest-poi" element={<SuggestPoiPage />} />
               </Route>
             </Route>
             <Route path="/logistics/ride/:id" element={<RideDetailPage />} />

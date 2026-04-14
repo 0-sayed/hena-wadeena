@@ -45,6 +45,7 @@ export function Footer() {
           location: 'Kharga, New Valley, Egypt',
           followUs: 'Follow us',
           rights: '© 2026 Hena Wadeena. All rights reserved.',
+          visionLogoAlt: 'Egypt Vision 2030',
         }
       : {
           brandName: 'هُنَا وَادِينَا',
@@ -55,6 +56,7 @@ export function Footer() {
           location: 'الخارجة، الوادي الجديد، مصر',
           followUs: 'تابعنا',
           rights: '© 2026 هُنَا وَادِينَا. جميع الحقوق محفوظة.',
+          visionLogoAlt: 'رؤية مصر 2030',
         };
 
   return (
@@ -110,9 +112,12 @@ export function Footer() {
                 href="https://www.facebook.com/profile.php?id=61576495808108"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted transition-colors hover:bg-[#1877F2] hover:text-white"
+                className="group flex items-center gap-2 rounded-lg bg-muted px-3 py-2 transition-colors hover:bg-[#1877F2] hover:text-white"
               >
-                <Facebook className="h-5 w-5" />
+                <Facebook className="h-5 w-5 shrink-0" />
+                <span className="text-sm font-bold" dir="ltr">
+                  600+
+                </span>
               </a>
               <a
                 href="https://x.com/hena_wadeena"
@@ -142,7 +147,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 border-t border-border pt-8 text-center text-sm text-muted-foreground sm:flex-row">
+          <img
+            src="/images/vision-2030.svg"
+            alt={copy.visionLogoAlt}
+            className="h-12 w-12 shrink-0 object-contain"
+            loading="lazy"
+          />
           <p>{copy.rights}</p>
         </div>
       </div>

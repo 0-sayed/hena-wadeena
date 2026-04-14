@@ -6,10 +6,12 @@ import { QuickAccess } from '@/components/home/QuickAccess';
 import { MissionCards } from '@/components/home/MissionCards';
 import { FeaturedSection } from '@/components/home/FeaturedSection';
 import { PriceSnapshot } from '@/components/home/PriceSnapshot';
+import { VisionStrip } from '@/components/home/VisionStrip';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Compass,
+  Droplets,
   FileCheck,
   GraduationCap,
   Home,
@@ -95,6 +97,13 @@ const roleLinks: DashboardLink[] = [
     desc: 'خدمات الحي',
     roles: [UserRole.RESIDENT],
   },
+  {
+    to: '/dashboard/farmer',
+    icon: Droplets,
+    label: 'المزارع',
+    desc: 'إدارة الآبار والري',
+    roles: [UserRole.FARMER],
+  },
 ];
 
 function filterLinks(links: DashboardLink[], role?: UserRole) {
@@ -111,8 +120,9 @@ const Index = () => {
   const visibleRoleLinks = filterLinks(roleLinks, user?.role);
 
   return (
-    <Layout>
+    <Layout title="الرئيسية">
       <HeroSection />
+      <VisionStrip />
       <QuickAccess />
 
       {visibleAdminLinks.length > 0 && (

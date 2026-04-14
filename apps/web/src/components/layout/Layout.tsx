@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { useLocation } from 'react-router';
+import { DemoBanner } from './DemoBanner';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -18,7 +19,10 @@ export function Layout({ children, title }: LayoutProps) {
 
   return (
     <div className={`flex min-h-screen flex-col ${showMobileBottomNav ? 'pb-24 md:pb-0' : ''}`}>
-      <Header />
+      <div className="sticky top-0 z-50">
+        <DemoBanner />
+        <Header />
+      </div>
       <main className="flex-1">{children}</main>
       <Footer />
       <MobileBottomNav />
