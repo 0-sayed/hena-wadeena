@@ -7,6 +7,7 @@ import { HeroSection } from '../HeroSection';
 import { MissionCards } from '../MissionCards';
 import { PriceSnapshot } from '../PriceSnapshot';
 import { QuickAccess } from '../QuickAccess';
+import { VisionStrip } from '../VisionStrip';
 
 const mockUseAuth = vi.fn();
 const mockUseAttractions = vi.fn();
@@ -29,6 +30,10 @@ vi.mock('@/hooks/use-notifications', () => ({
   useUnreadNotificationCount: () => mockUseUnreadNotificationCount(),
 }));
 
+vi.mock('@/hooks/use-hero-stats', () => ({
+  useHeroStats: () => ({ data: null, isLoading: false }),
+}));
+
 vi.mock('@/components/motion/ScrollReveal', () => ({
   SR: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   FloatingBlob: () => null,
@@ -36,7 +41,11 @@ vi.mock('@/components/motion/ScrollReveal', () => ({
 
 vi.mock('@/components/motion/Skeleton', () => ({
   CardGridSkeleton: () => <div>loading cards</div>,
-  TableRowSkeleton: () => <tr><td>loading row</td></tr>,
+  TableRowSkeleton: () => (
+    <tr>
+      <td>loading row</td>
+    </tr>
+  ),
 }));
 
 describe('Home sections localization', () => {
@@ -110,9 +119,21 @@ describe('Home sections localization', () => {
     );
 
     expect(screen.getByText('Official digital portal')).toBeInTheDocument();
-    expect(screen.getByText('Explore. Connect. Invest.')).toBeInTheDocument();
+    expect(screen.getByText('Explore.')).toBeInTheDocument();
+    expect(screen.getByText('Connect.')).toBeInTheDocument();
+    expect(screen.getByText('Invest.')).toBeInTheDocument();
     expect(screen.getByText('Services for New Valley residents')).toBeInTheDocument();
     expect(screen.getAllByText('Explore').length).toBeGreaterThan(0);
+  });
+
+  it('renders the Vision 2030 strip in English mode', () => {
+    render(<VisionStrip />);
+
+    expect(screen.getByText('Aligned with Egypt Vision 2030')).toBeInTheDocument();
+    expect(screen.getByAltText('Egypt Vision 2030')).toHaveAttribute(
+      'src',
+      '/images/vision-2030.svg',
+    );
   });
 
   it('renders featured attractions and price snapshot content in English mode', () => {
@@ -123,9 +144,7 @@ describe('Home sections localization', () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole('heading', { name: 'Featured destinations' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Featured destinations' })).toBeInTheDocument();
     expect(screen.getByText('White Desert')).toBeInTheDocument();
     expect(screen.getByText('A surreal desert landscape.')).toBeInTheDocument();
     expect(screen.getByText("Today's prices")).toBeInTheDocument();
