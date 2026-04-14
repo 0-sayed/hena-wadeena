@@ -180,39 +180,57 @@
 
 @layer utilities {
   html[dir='rtl'] .search-inline-icon-lg {
-    left: 1rem;
-    right: auto;
-  }
-
-  html[dir='ltr'] .search-inline-icon-lg {
     right: 1rem;
     left: auto;
   }
 
-  html[dir='rtl'] .search-inline-icon-md {
-    left: 0.75rem;
+  html[dir='ltr'] .search-inline-icon-lg {
+    left: 1rem;
     right: auto;
   }
 
-  html[dir='ltr'] .search-inline-icon-md {
+  html[dir='rtl'] .search-inline-icon-md {
     right: 0.75rem;
     left: auto;
   }
 
-  html[dir='rtl'] .search-input-with-icon-lg {
-    padding-left: 3.5rem;
+  html[dir='ltr'] .search-inline-icon-md {
+    left: 0.75rem;
+    right: auto;
   }
 
-  html[dir='ltr'] .search-input-with-icon-lg {
+  html[dir='rtl'] .search-inline-icon-end-lg {
+    left: 1rem;
+    right: auto;
+  }
+
+  html[dir='ltr'] .search-inline-icon-end-lg {
+    right: 1rem;
+    left: auto;
+  }
+
+  html[dir='rtl'] .search-input-with-icon-lg {
     padding-right: 3.5rem;
   }
 
+  html[dir='ltr'] .search-input-with-icon-lg {
+    padding-left: 3.5rem;
+  }
+
   html[dir='rtl'] .search-input-with-icon-md {
-    padding-left: 3rem;
+    padding-right: 3rem;
   }
 
   html[dir='ltr'] .search-input-with-icon-md {
-    padding-right: 3rem;
+    padding-left: 3rem;
+  }
+
+  html[dir='rtl'] .search-input-with-end-icon-lg {
+    padding-left: 3.5rem;
+  }
+
+  html[dir='ltr'] .search-input-with-end-icon-lg {
+    padding-right: 3.5rem;
   }
 }
 
@@ -224,10 +242,11 @@ html {
 }
 
 input[type='tel'],
-input[type='email'] {
+input[type='email'],
+input[type='url'] {
   direction: ltr;
   text-align: left;
-  unicode-bidi: plaintext;
+  unicode-bidi: embed;
 }
 
 a[href^='mailto:'],
@@ -660,6 +679,22 @@ textarea {
     animation: gradientSpin 4s linear infinite;
   }
 
+  /* ── Demo ticker ───────────────────────────────────── */
+  @keyframes ticker {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-25%);
+    }
+  }
+  .animate-ticker {
+    animation: ticker 40s linear infinite;
+  }
+  .animate-ticker:hover {
+    animation-play-state: paused;
+  }
+
   /* ── Button press effect ────────────────────────────── */
   .btn-press {
     transition:
@@ -698,6 +733,63 @@ textarea {
   }
   .link-underline:hover::after {
     width: 100%;
+  }
+
+  /* ── Hero text animation ── */
+  @keyframes wordGlow {
+    0%,
+    100% {
+      color: var(--color-accent);
+      text-shadow: none;
+    }
+    33% {
+      color: #fff;
+      text-shadow:
+        0 0 10px color-mix(in srgb, var(--color-accent) 80%, transparent),
+        0 0 24px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    }
+  }
+
+  @keyframes sparkRise {
+    0% {
+      opacity: 0;
+      transform: translateY(0) scale(0.6);
+    }
+    25% {
+      opacity: 1;
+      transform: translateY(-10px) scale(1);
+    }
+    75% {
+      opacity: 0.5;
+      transform: translateY(-22px) scale(0.8);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-28px) scale(0.4);
+    }
+  }
+
+  .tagline-word {
+    display: inline-block;
+    animation: wordGlow 2.4s ease-in-out infinite;
+  }
+  .tagline-word-1 {
+    animation-delay: 0s;
+  }
+  .tagline-word-2 {
+    animation-delay: 0.8s;
+  }
+  .tagline-word-3 {
+    animation-delay: 1.6s;
+  }
+
+  .hero-spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    animation: sparkRise ease-in-out infinite;
+    pointer-events: none;
   }
 }
 
