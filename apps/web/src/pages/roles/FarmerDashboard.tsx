@@ -69,7 +69,7 @@ function makeEmptyForm(): LogFormState {
 export default function FarmerDashboard() {
   const { language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
-  const { data, isLoading } = useWellLogSummary();
+  const { data, isLoading, isError } = useWellLogSummary();
   const createWellLog = useCreateWellLog();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -126,7 +126,7 @@ export default function FarmerDashboard() {
 
   const logReadingButton = (
     <Button onClick={() => setDialogOpen(true)}>
-      <Plus className="me-2 h-4 w-4" />
+      <Plus className="h-4 w-4" />
       {pickLocalizedCopy(appLanguage, { ar: 'تسجيل قراءة', en: 'Log Reading' })}
     </Button>
   );
@@ -341,6 +341,10 @@ export default function FarmerDashboard() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
+            </div>
+          ) : isError ? (
+            <div className="py-10 text-center text-muted-foreground">
+              تعذّر تحميل بيانات البئر. يرجى المحاولة لاحقاً.
             </div>
           ) : months.length === 0 ? (
             <>

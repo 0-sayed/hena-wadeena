@@ -422,7 +422,7 @@ const LogisticsPage = () => {
                         className="h-12 w-full rounded-xl sm:w-auto"
                         onClick={() => void navigate('/logistics/suggest-poi')}
                       >
-                        <Plus className="h-4 w-4 ms-1" />
+                        <Plus className="h-4 w-4" />
                         {pickLocalizedCopy(appLanguage, {
                           ar: 'اقترح مكان',
                           en: 'Suggest a place',
