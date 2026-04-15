@@ -18,7 +18,7 @@ export default function NewsDetailPage() {
           to="/news"
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 ltr:rotate-180" />
           العودة إلى الأخبار
         </Link>
 
