@@ -1,6 +1,6 @@
 import { DRIZZLE_CLIENT, S3Service, generateId } from '@hena-wadeena/nest-common';
 import { NewsCategory, slugify } from '@hena-wadeena/types';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -108,7 +108,7 @@ export class NewsService {
     const [existing] = await this.db
       .select({ id: newsArticles.id })
       .from(newsArticles)
-      .where(and(eq(newsArticles.slug, slug), isNull(newsArticles.deletedAt)))
+      .where(eq(newsArticles.slug, slug))
       .limit(1);
 
     if (existing) {
@@ -196,7 +196,17 @@ export class NewsService {
   }
 
   async getUploadImageUrl(filename: string, contentType: string) {
-    const ext = filename.split('.').pop() ?? 'jpg';
+    const allowedTypes = new Map<string, string>([
+      ['image/jpeg', 'jpg'],
+      ['image/png', 'png'],
+      ['image/webp', 'webp'],
+    ]);
+
+    const ext = allowedTypes.get(contentType);
+    if (!ext) {
+      throw new BadRequestException('Unsupported image type');
+    }
+
     const key = `market/news/${generateId()}.${ext}`;
     return this.s3.getPresignedUploadUrl({ key, contentType, expiresIn: 300 });
   }

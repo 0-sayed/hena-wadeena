@@ -5,6 +5,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { CreateNewsArticleDto } from './dto/create-news-article.dto';
 import { AdminQueryNewsDto } from './dto/query-news.dto';
 import { UpdateNewsArticleDto } from './dto/update-news-article.dto';
+import { UploadImageDto } from './dto/upload-image.dto';
 import { NewsService } from './news.service';
 
 @Roles(UserRole.ADMIN)
@@ -23,8 +24,8 @@ export class NewsAdminController {
   }
 
   @Post('upload-image')
-  uploadImage(@Body() body: { filename: string; contentType: string }) {
-    return this.newsService.getUploadImageUrl(body.filename, body.contentType);
+  uploadImage(@Body() dto: UploadImageDto) {
+    return this.newsService.getUploadImageUrl(dto.filename, dto.contentType);
   }
 
   @Patch(':id')
