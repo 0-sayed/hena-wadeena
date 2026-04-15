@@ -1,4 +1,12 @@
-import { Home, ShoppingBag, MapPin, Newspaper, Landmark } from 'lucide-react';
+import {
+  Home,
+  ShoppingBag,
+  MapPin,
+  Newspaper,
+  Landmark,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
@@ -19,6 +27,7 @@ import { districtLabel, listingCategoryLabel } from '@/lib/format';
 import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
+import type { LucideIcon } from 'lucide-react';
 
 export default function ResidentDashboard() {
   const { language } = useAuth();
@@ -36,36 +45,15 @@ export default function ResidentDashboard() {
         en: 'Follow local services and listings in your area',
       })}
     >
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={pickLocalizedCopy(appLanguage, { ar: 'إعلانات حديثة', en: 'Latest listings' })}
           value={isLoading ? '...' : total}
           icon={Newspaper}
         />
-        <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'الخدمات', en: 'Services' })}
-          value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
-          icon={ShoppingBag}
-          variant="muted"
-        />
-        <StatCard
-          label={pickLocalizedCopy(appLanguage, { ar: 'نقاط الاهتمام', en: 'Points of interest' })}
-          value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
-          icon={MapPin}
-          variant="muted"
-        />
-        <Link to="/benefits">
-          <StatCard
-            label={pickLocalizedCopy(appLanguage, {
-              ar: 'خدمات حكومية',
-              en: 'Government services',
-            })}
-            value={pickLocalizedCopy(appLanguage, { ar: 'تصفح', en: 'Browse' })}
-            icon={Landmark}
-            variant="muted"
-          />
-        </Link>
       </div>
+
+      <QuickLinks appLanguage={appLanguage} />
 
       <Card>
         <CardHeader>
@@ -182,5 +170,77 @@ export default function ResidentDashboard() {
         </CardContent>
       </Card>
     </DashboardShell>
+  );
+}
+
+// ── QuickLinks ────────────────────────────────────────────────────────────────
+
+type QuickLinkItem = {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  description: string;
+};
+
+function QuickLinks({ appLanguage }: { appLanguage: AppLanguage }) {
+  const isRtl = appLanguage === 'ar';
+  const ChevronIcon = isRtl ? ChevronLeft : ChevronRight;
+
+  const links: QuickLinkItem[] = [
+    {
+      to: '/marketplace',
+      icon: ShoppingBag,
+      label: pickLocalizedCopy(appLanguage, { ar: 'الخدمات والسوق', en: 'Marketplace' }),
+      description: pickLocalizedCopy(appLanguage, {
+        ar: 'تصفح المنتجات والأسعار والموردين',
+        en: 'Browse products, prices and suppliers',
+      }),
+    },
+    {
+      to: '/tourism',
+      icon: MapPin,
+      label: pickLocalizedCopy(appLanguage, { ar: 'السياحة والأماكن', en: 'Tourism & places' }),
+      description: pickLocalizedCopy(appLanguage, {
+        ar: 'اكتشف المعالم ونقاط الاهتمام',
+        en: 'Discover attractions and points of interest',
+      }),
+    },
+    {
+      to: '/benefits',
+      icon: Landmark,
+      label: pickLocalizedCopy(appLanguage, { ar: 'خدمات حكومية', en: 'Government services' }),
+      description: pickLocalizedCopy(appLanguage, {
+        ar: 'تحقق من البرامج الحكومية التي تؤهّلك',
+        en: 'Check which government programs you qualify for',
+      }),
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">
+          {pickLocalizedCopy(appLanguage, { ar: 'روابط سريعة', en: 'Quick links' })}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-3">
+        {links.map(({ to, icon: Icon, label, description }) => (
+          <Link
+            key={to}
+            to={to}
+            className="group flex items-center gap-3 rounded-lg border p-4 transition-colors hover:border-primary/50 hover:bg-muted/40"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted group-hover:bg-primary/10">
+              <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">{label}</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">{description}</p>
+            </div>
+            <ChevronIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

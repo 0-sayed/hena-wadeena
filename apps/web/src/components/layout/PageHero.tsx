@@ -11,10 +11,6 @@ export function PageHero({ image, alt, children }: PageHeroProps) {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
     let ticking = false;
     const onScroll = () => {
       if (!ticking) {
@@ -43,7 +39,14 @@ export function PageHero({ image, alt, children }: PageHeroProps) {
             : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <img src={image} alt={alt} className="h-[120%] w-full object-cover sm:h-[130%]" />
+        <img
+          src={image}
+          alt={alt}
+          fetchPriority="high"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          className="h-[120%] w-full object-cover sm:h-[130%]"
+        />
         <div className="absolute inset-0 bg-gradient-to-l from-foreground/80 via-foreground/60 to-foreground/35" />
       </div>
 

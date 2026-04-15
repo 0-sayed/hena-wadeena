@@ -38,9 +38,13 @@ export function BusinessLogo({
           alt={alt}
           className={cn('h-full w-full object-cover', imageClassName)}
           onError={() => setFailedSrc(resolvedSrc)}
+          loading="lazy"
         />
       ) : (
-        <FallbackIcon className={cn('h-7 w-7 text-muted-foreground', iconClassName)} aria-hidden="true" />
+        <FallbackIcon
+          className={cn('h-7 w-7 text-muted-foreground', iconClassName)}
+          aria-hidden="true"
+        />
       )}
     </div>
   );

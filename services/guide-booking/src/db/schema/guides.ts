@@ -23,6 +23,7 @@ export const guides = guideBookingSchema.table(
   {
     id: uuid().primaryKey().$defaultFn(generateId),
     userId: uuid('user_id').notNull(),
+    displayName: text('display_name'),
     bioAr: text('bio_ar'),
     bioEn: text('bio_en'),
     languages: text()

@@ -16,6 +16,7 @@ import { ApiError } from '@/services/api';
 
 const roles = [
   { value: 'resident', label: 'مواطن', description: 'مستخدم عادي يبحث عن الخدمات' },
+  { value: 'farmer', label: 'مزارع', description: 'مزارع يتابع تكاليف الري والآبار' },
   { value: 'merchant', label: 'تاجر', description: 'تاجر أو منتج محلي' },
   { value: 'investor', label: 'مستثمر', description: 'مستثمر يبحث عن فرص' },
   { value: 'tourist', label: 'سائح', description: 'زائر أو سائح' },
@@ -131,7 +132,9 @@ const RegisterPage = () => {
         }
         if (err.status === 400) {
           const backendToFrontend: Record<string, string> = { full_name: 'fullName' };
-          const zodErrors = err.data?.errors as Array<{ path: string[]; message: string }> | undefined;
+          const zodErrors = err.data?.errors as
+            | Array<{ path: string[]; message: string }>
+            | undefined;
           if (zodErrors && zodErrors.length > 0) {
             const errs: Record<string, string> = {};
             let earliestStep: 1 | 2 = 2;
@@ -299,7 +302,9 @@ const RegisterPage = () => {
                                 }}
                                 className="pe-10"
                                 aria-invalid={Boolean(fieldErrors.password)}
-                                aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+                                aria-describedby={
+                                  fieldErrors.password ? 'password-error' : undefined
+                                }
                               />
                             </div>
                             <FieldErrorText id="password-error" message={fieldErrors.password} />
@@ -372,7 +377,9 @@ const RegisterPage = () => {
                               }}
                             >
                               <p className="font-medium text-foreground">{role.label}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{role.description}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {role.description}
+                              </p>
                             </button>
                           ))}
                         </div>
@@ -390,7 +397,9 @@ const RegisterPage = () => {
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">نوع الحساب</span>
-                            <span>{roles.find((role) => role.value === formData.role)?.label ?? '—'}</span>
+                            <span>
+                              {roles.find((role) => role.value === formData.role)?.label ?? '—'}
+                            </span>
                           </div>
                         </div>
 
@@ -401,7 +410,7 @@ const RegisterPage = () => {
                             className="flex-1"
                             onClick={() => setStep(1)}
                           >
-                            <ArrowRight className="h-4 w-4" />
+                            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
                             السابق
                           </Button>
                           <Button type="submit" className="flex-1" size="lg" disabled={isLoading}>

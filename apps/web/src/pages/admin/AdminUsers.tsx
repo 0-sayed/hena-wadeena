@@ -53,6 +53,7 @@ const roleLabels: Record<string, LocalizedLabel> = {
   driver: { ar: 'سائق', en: 'Driver' },
   guide: { ar: 'مرشد', en: 'Guide' },
   investor: { ar: 'مستثمر', en: 'Investor' },
+  farmer: { ar: 'مزارع', en: 'Farmer' },
 };
 
 const statusLabels: Record<string, LocalizedLabel> = {
@@ -212,10 +213,18 @@ export default function AdminUsers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'البريد', en: 'Email' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الدور', en: 'Role' })}</TableHead>
-                  <TableHead>{pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}</TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الاسم', en: 'Name' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'البريد', en: 'Email' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الدور', en: 'Role' })}
+                  </TableHead>
+                  <TableHead>
+                    {pickLocalizedCopy(appLanguage, { ar: 'الحالة', en: 'Status' })}
+                  </TableHead>
                   <TableHead>
                     {pickLocalizedCopy(appLanguage, {
                       ar: 'تاريخ التسجيل',

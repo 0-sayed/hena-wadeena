@@ -8,10 +8,12 @@ import { createMockDb } from '../test/mock-db';
 import type { CreateGuideDto } from './dto';
 import { createGuideSchema } from './dto/create-guide.dto';
 import { expandGuideSearchTerms, GuidesService } from './guides.service';
+import type { IdentityClient } from './identity-client.service';
 
 const mockGuide = {
   id: 'guide-uuid-1',
   userId: 'user-uuid-1',
+  displayName: null,
   licenseNumber: 'LIC-001',
   licenseVerified: false,
   bioAr: 'مرشد سياحي محترف',
@@ -37,6 +39,7 @@ describe('GuidesService', () => {
   let mockDb: ReturnType<typeof createMockDb>;
   let mockS3: S3Service;
   let mockGetPresignedUploadUrl: ReturnType<typeof vi.fn>;
+  let mockIdentityClient: Pick<IdentityClient, 'getDisplayName'>;
 
   beforeEach(() => {
     mockDb = createMockDb();
@@ -48,8 +51,9 @@ describe('GuidesService', () => {
     mockS3 = {
       getPresignedUploadUrl: mockGetPresignedUploadUrl,
     } as unknown as S3Service;
+    mockIdentityClient = { getDisplayName: vi.fn().mockResolvedValue(null) };
 
-    service = new GuidesService(mockDb as any, mockS3);
+    service = new GuidesService(mockDb as any, mockS3, mockIdentityClient as IdentityClient);
   });
 
   describe('expandGuideSearchTerms', () => {
@@ -107,14 +111,18 @@ describe('GuidesService', () => {
         Promise.resolve([mockGuide]).then(resolve),
       );
 
+      (mockIdentityClient.getDisplayName as ReturnType<typeof vi.fn>).mockResolvedValueOnce('يوسف');
+
       const result = await service.create(dto, 'user-uuid-1');
       expect(result).toEqual(mockGuide);
+      expect(mockIdentityClient.getDisplayName).toHaveBeenCalledWith('user-uuid-1');
       expect(mockDb.insert).toHaveBeenCalled();
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'user-uuid-1',
           licenseNumber: 'LIC-001',
           basePrice: 15000,
+          displayName: 'يوسف',
         }),
       );
     });
@@ -185,6 +193,19 @@ describe('GuidesService', () => {
         );
 
       await service.findAll({ ...baseFilters, search: 'مرشد' });
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('with display_name search: where clause applied for displayName ilike', async () => {
+      mockDb.then
+        .mockImplementationOnce((resolve: (v: unknown[]) => unknown) =>
+          Promise.resolve([]).then(resolve),
+        )
+        .mockImplementationOnce((resolve: (v: unknown[]) => unknown) =>
+          Promise.resolve([{ total: 0 }]).then(resolve),
+        );
+
+      await service.findAll({ ...baseFilters, search: 'مريم' });
       expect(mockDb.where).toHaveBeenCalled();
     });
 

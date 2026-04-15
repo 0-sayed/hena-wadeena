@@ -130,7 +130,7 @@ const CreateRidePage = () => {
             onClick={() => void navigate('/logistics')}
             className="mb-6 gap-2"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'العودة للخريطة والتنقل',
               en: 'Back to maps & transport',

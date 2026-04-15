@@ -84,7 +84,7 @@ vi.mock('lucide-react', () => {
   };
 });
 
-vi.mock('@/assets/hero-logistics.jpg', () => ({ default: 'hero-logistics.jpg' }));
+vi.mock('@/assets/hero-logistics.webp', () => ({ default: 'hero-logistics.webp' }));
 
 vi.mock('@/components/ui/ltr-text', () => ({
   LtrText: ({ children }: { children: ReactNode }) => <span>{children}</span>,
@@ -151,17 +151,19 @@ vi.mock('@/components/ui/button', () => ({
     asChild,
     disabled,
     type,
+    className,
   }: {
     children: ReactNode;
     onClick?: () => void;
     asChild?: boolean;
     disabled?: boolean;
     type?: 'button' | 'submit' | 'reset';
+    className?: string;
   }) =>
     asChild ? (
       children
     ) : (
-      <button type={type} disabled={disabled} onClick={onClick}>
+      <button type={type} disabled={disabled} onClick={onClick} className={className}>
         {children}
       </button>
     ),
@@ -171,10 +173,12 @@ vi.mock('@/components/ui/input', () => ({
   Input: ({
     onChange,
     placeholder,
+    className,
   }: {
     onChange?: (event: { target: { value: string } }) => void;
     placeholder?: string;
-  }) => <input placeholder={placeholder} onChange={onChange} />,
+    className?: string;
+  }) => <input placeholder={placeholder} onChange={onChange} className={className} />,
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -371,6 +375,17 @@ describe('LogisticsPage', () => {
     expect(carpoolTab.querySelector('[data-testid="icon-car"]')).not.toBeNull();
     expect(localTransportTab.querySelector('[data-testid="icon-car"]')).toBeNull();
     expect(localTransportTab.querySelector('[data-testid="icon-bus"]')).not.toBeNull();
+  });
+
+  it('keeps the explore map search input and nearby action the same filter height', () => {
+    render(<LogisticsPage />);
+
+    const placeSearch = screen.getByPlaceholderText('ابحث عن مكان...');
+    const nearbyButton = screen.getByRole('button', { name: /بالقرب مني/i });
+
+    expect(placeSearch).toHaveClass('h-12');
+    expect(placeSearch).toHaveClass('md:h-12');
+    expect(nearbyButton).toHaveClass('h-12');
   });
 });
 

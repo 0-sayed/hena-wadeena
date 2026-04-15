@@ -189,7 +189,7 @@ const PricesPage = () => {
       <section className="bg-gradient-to-bl from-accent/20 via-background to-background py-12 md:py-16">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-4">
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة للبورصة
           </Button>
           <div className="max-w-3xl">

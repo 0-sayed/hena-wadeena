@@ -25,6 +25,12 @@ import { listingsAPI, type Listing, type ProduceDetails } from '@/services/api';
 import { useAuth } from '@/hooks/use-auth';
 import { queryKeys } from '@/lib/query-keys';
 import { DISTRICTS, produceCommodityTypeLabels } from '@/lib/format';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_BYTES,
+  compressImage,
+  readFileAsDataUrl,
+} from '@/lib/upload';
 
 interface ProduceListingSheetProps {
   open: boolean;
@@ -59,25 +65,7 @@ const CERTIFICATIONS = [
 
 type CertificationType = 'organic' | 'gap' | 'other';
 
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_COUNT = 5;
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error('تعذر قراءة الصورة'));
-    };
-    reader.onerror = () => reject(new Error('تعذر قراءة الصورة'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function ProduceListingSheet({
   open,
@@ -280,7 +268,10 @@ export function ProduceListingSheet({
     }
 
     try {
-      const nextImageUrls = await Promise.all(selectedFiles.map(readFileAsDataUrl));
+      const compressedFiles = await Promise.all(
+        selectedFiles.map((f) => compressImage(f, { maxSizeMB: 1, maxWidthOrHeight: 1200 })),
+      );
+      const nextImageUrls = await Promise.all(compressedFiles.map((f) => readFileAsDataUrl(f)));
       setImageUrls((prev) => [...prev, ...nextImageUrls]);
       toast.success(
         nextImageUrls.length === 1
@@ -422,6 +413,7 @@ export function ProduceListingSheet({
                           src={imageUrl}
                           alt={`معاينة صورة المنتج ${index + 1}`}
                           className="h-full w-full object-cover"
+                          loading="lazy"
                         />
                         {index === 0 ? (
                           <span className="absolute end-2 top-2 rounded bg-background/90 px-2 py-0.5 text-[11px] font-medium">

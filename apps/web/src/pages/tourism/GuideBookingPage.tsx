@@ -152,7 +152,7 @@ const GuideBookingPage = () => {
       <section className="py-8 md:py-12">
         <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             رجوع
           </Button>
 
@@ -164,6 +164,7 @@ const GuideBookingPage = () => {
                     src={pkg.guideProfileImage ?? '/placeholder.jpg'}
                     alt="مرشد"
                     className="h-14 w-14 rounded-full object-cover"
+                    loading="lazy"
                   />
                   <div>
                     <p className="line-clamp-1 text-sm text-muted-foreground">{pkg.guideBioAr}</p>

@@ -51,14 +51,14 @@ function SiteStatusBoardPage() {
 
   return (
     <Layout title={t.title}>
-      <PageHero image="/images/seed/desert-landscape.jpg" alt={t.title}>
+      <PageHero image="/images/seed/wiki-white-desert-1.jpg" alt={t.title}>
         <div className="mb-6 flex justify-center">
           <Button
             variant="ghost"
             onClick={() => void navigate('/tourism')}
             className="text-card hover:bg-card/10 hover:text-card"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {pickLocalizedCopy(language, { ar: 'العودة إلى السياحة', en: 'Back to Tourism' })}
           </Button>
         </div>

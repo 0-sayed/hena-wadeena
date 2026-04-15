@@ -5,12 +5,15 @@ import {
   Briefcase,
   CalendarCheck,
   ChevronDown,
+  FileCheck,
+  LayoutDashboard,
   Languages,
   LogOut,
   Menu,
   MessageSquare,
   Moon,
   Search,
+  Shield,
   Sun,
   User,
   Wallet,
@@ -22,8 +25,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LtrText } from '@/components/ui/ltr-text';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { hasRequiredRole } from '@/components/auth/access-control';
 import { useAuth } from '@/hooks/use-auth';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
+import { getRoleDashboardPath } from '@/lib/role-utils';
+import { UserRole } from '@hena-wadeena/types';
 
 type AppLanguage = 'ar' | 'en';
 
@@ -36,12 +42,15 @@ type NavigationItem = {
 
 type HeaderCopy = {
   accountMenu: string;
+  adminDashboard: string;
   beta: string;
   bookings: string;
   myApplications: string;
+  myDashboard: string;
   myPosts: string;
   brand: string;
   inquiries: string;
+  reviewerDashboard: string;
   languageSwitchArabicError: string;
   languageSwitchEnglishError: string;
   login: string;
@@ -65,12 +74,15 @@ const CONTROL_BUTTON_CLASS =
 const headerCopy: Record<AppLanguage, HeaderCopy> = {
   ar: {
     accountMenu: 'قائمة الحساب',
+    adminDashboard: 'لوحة الإدارة',
     beta: 'تجريبي',
     bookings: 'حجوزاتي',
     myApplications: 'طلباتي الوظيفية',
+    myDashboard: 'لوحتي',
     myPosts: 'وظائفي المنشورة',
     brand: 'هُنَا وَادِينَا',
     inquiries: 'استفسارات الإعلانات',
+    reviewerDashboard: 'لوحة المراجع',
     languageSwitchArabicError: 'تعذر التبديل إلى العربية',
     languageSwitchEnglishError: 'تعذر التبديل إلى الإنجليزية',
     login: 'تسجيل الدخول',
@@ -89,12 +101,15 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
   },
   en: {
     accountMenu: 'Account menu',
+    adminDashboard: 'Admin Dashboard',
     beta: 'Beta',
     bookings: 'My bookings',
     myApplications: 'My job applications',
+    myDashboard: 'My Dashboard',
     myPosts: 'My job posts',
     brand: 'Hena Wadeena',
     inquiries: 'Marketplace inquiries',
+    reviewerDashboard: 'Reviewer Dashboard',
     languageSwitchArabicError: 'Could not switch to Arabic',
     languageSwitchEnglishError: 'Could not switch to English',
     login: 'Log in',
@@ -125,6 +140,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           logistics: 'Logistics',
           investment: 'Investment',
           jobs: 'Jobs',
+          news: 'News',
         }
       : {
           home: 'الرئيسية',
@@ -135,6 +151,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           logistics: 'اللوجستيات',
           investment: 'الاستثمار',
           jobs: 'التوظيف',
+          news: 'أخبار',
         };
 
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
@@ -155,28 +172,28 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
         (pathname.startsWith('/tourism/') && !isAccommodationPath(pathname)),
     },
     {
-      key: 'accommodation',
-      href: '/tourism/accommodation',
-      label: labels.accommodation,
-      matcher: (pathname) => isAccommodationPath(pathname),
-    },
-    {
       key: 'guides',
       href: '/guides',
       label: labels.guides,
       matcher: (pathname) => pathname.startsWith('/guides'),
     },
     {
-      key: 'marketplace',
-      href: '/marketplace',
-      label: labels.marketplace,
-      matcher: (pathname) => pathname.startsWith('/marketplace'),
+      key: 'accommodation',
+      href: '/tourism/accommodation',
+      label: labels.accommodation,
+      matcher: (pathname) => isAccommodationPath(pathname),
     },
     {
       key: 'logistics',
       href: '/logistics',
       label: labels.logistics,
       matcher: (pathname) => pathname.startsWith('/logistics'),
+    },
+    {
+      key: 'marketplace',
+      href: '/marketplace',
+      label: labels.marketplace,
+      matcher: (pathname) => pathname.startsWith('/marketplace'),
     },
     {
       key: 'investment',
@@ -189,6 +206,12 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       href: '/jobs',
       label: labels.jobs,
       matcher: (pathname) => pathname.startsWith('/jobs'),
+    },
+    {
+      key: 'news',
+      href: '/news',
+      label: labels.news,
+      matcher: (pathname) => pathname.startsWith('/news'),
     },
   ];
 }
@@ -314,10 +337,12 @@ export function Header() {
       });
   };
 
+  const roleDashboardPath = user ? getRoleDashboardPath(user.role) : null;
+
   const isActive = (item: NavigationItem) => item.matcher(location.pathname);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="w-full border-b border-border/40 bg-card/50 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between gap-2 px-3 sm:px-4">
         <Link to="/" className="flex min-w-0 items-center gap-2 overflow-hidden">
           <img
@@ -462,6 +487,16 @@ export function Header() {
                           <User className="h-4 w-4 text-muted-foreground" />
                           {copy.profile}
                         </Link>
+                        {roleDashboardPath && (
+                          <Link
+                            to={roleDashboardPath}
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                          >
+                            <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                            {copy.myDashboard}
+                          </Link>
+                        )}
                         <Link
                           to="/bookings"
                           onClick={() => setProfileOpen(false)}
@@ -516,6 +551,31 @@ export function Header() {
                           )}
                         </Link>
                       </div>
+                      {(hasRequiredRole(user.role, [UserRole.ADMIN]) ||
+                        hasRequiredRole(user.role, [UserRole.ADMIN, UserRole.REVIEWER])) && (
+                        <div className="border-t border-border py-1">
+                          {hasRequiredRole(user.role, [UserRole.ADMIN]) && (
+                            <Link
+                              to="/admin"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                            >
+                              <Shield className="h-4 w-4 text-muted-foreground" />
+                              {copy.adminDashboard}
+                            </Link>
+                          )}
+                          {hasRequiredRole(user.role, [UserRole.ADMIN, UserRole.REVIEWER]) && (
+                            <Link
+                              to="/reviewer"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                            >
+                              <FileCheck className="h-4 w-4 text-muted-foreground" />
+                              {copy.reviewerDashboard}
+                            </Link>
+                          )}
+                        </div>
+                      )}
                       <div className="border-t border-border pt-1">
                         <button
                           type="button"
@@ -658,6 +718,16 @@ export function Header() {
                       <User className="h-5 w-5 text-muted-foreground" />
                       {copy.profile}
                     </Link>
+                    {roleDashboardPath && (
+                      <Link
+                        to={roleDashboardPath}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                      >
+                        <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
+                        {copy.myDashboard}
+                      </Link>
+                    )}
                     <Link
                       to="/bookings"
                       onClick={() => setIsOpen(false)}
@@ -711,6 +781,26 @@ export function Header() {
                         </span>
                       )}
                     </Link>
+                    {hasRequiredRole(user.role, [UserRole.ADMIN]) && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                      >
+                        <Shield className="h-5 w-5 text-muted-foreground" />
+                        {copy.adminDashboard}
+                      </Link>
+                    )}
+                    {hasRequiredRole(user.role, [UserRole.ADMIN, UserRole.REVIEWER]) && (
+                      <Link
+                        to="/reviewer"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                      >
+                        <FileCheck className="h-5 w-5 text-muted-foreground" />
+                        {copy.reviewerDashboard}
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

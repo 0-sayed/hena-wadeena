@@ -36,9 +36,9 @@ vi.mock('@tanstack/react-query', async () => {
   };
 });
 
-vi.mock('@/assets/hero-tourism.jpg', () => ({ default: 'hero-tourism.jpg' }));
-vi.mock('@/assets/hero-marketplace.jpg', () => ({ default: 'hero-marketplace.jpg' }));
-vi.mock('@/assets/hero-investment.jpg', () => ({ default: 'hero-investment.jpg' }));
+vi.mock('@/assets/hero-tourism.webp', () => ({ default: 'hero-tourism.webp' }));
+vi.mock('@/assets/hero-marketplace.webp', () => ({ default: 'hero-marketplace.webp' }));
+vi.mock('@/assets/hero-investment.webp', () => ({ default: 'hero-investment.webp' }));
 
 vi.mock('@/components/layout/Layout', () => ({
   Layout: ({ children }: { children: ReactNode }) => <div>{children}</div>,

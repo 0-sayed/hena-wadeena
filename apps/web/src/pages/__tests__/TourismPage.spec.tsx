@@ -77,11 +77,13 @@ vi.mock('@/components/ui/input', () => ({
     value,
     onChange,
     placeholder,
+    className,
   }: {
     value?: string;
     onChange?: (event: { target: { value: string } }) => void;
     placeholder?: string;
-  }) => <input value={value} onChange={onChange} placeholder={placeholder} />,
+    className?: string;
+  }) => <input className={className} value={value} onChange={onChange} placeholder={placeholder} />,
 }));
 
 vi.mock('@/components/ui/card', () => ({
@@ -114,8 +116,8 @@ vi.mock('@/hooks/use-users', () => ({
   usePublicUsers: (userIds: string[]) => mockUsePublicUsers(userIds),
 }));
 
-vi.mock('@/assets/hero-tourism.jpg', () => ({
-  default: 'hero-tourism.jpg',
+vi.mock('@/assets/hero-tourism.webp', () => ({
+  default: 'hero-tourism.webp',
 }));
 
 describe('TourismPage', () => {
@@ -231,7 +233,7 @@ describe('TourismPage', () => {
     expect(screen.queryByText('عين الفرافرة')).not.toBeInTheDocument();
     expect(screen.queryByText('سالم')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'ابحث' }));
+    fireEvent.click(screen.getByRole('button', { name: 'بحث' }));
 
     expect(mockNavigate).not.toHaveBeenCalledWith('/search?q=%D9%87%D9%8A%D8%A8');
   });
@@ -246,5 +248,16 @@ describe('TourismPage', () => {
     expect(screen.getByText('سالم')).toBeInTheDocument();
     expect(screen.queryByText('معبد هيبس')).not.toBeInTheDocument();
     expect(screen.queryByText('عين الفرافرة')).not.toBeInTheDocument();
+  });
+
+  it('uses the roomy hero search field sizing', () => {
+    render(<TourismPage />);
+
+    expect(screen.getByPlaceholderText('ابحث عن معالم أو مرشدين...')).toHaveClass(
+      'h-16',
+      'text-lg',
+      'md:h-16',
+      'md:text-lg',
+    );
   });
 });

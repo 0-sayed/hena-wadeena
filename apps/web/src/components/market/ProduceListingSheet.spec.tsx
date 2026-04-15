@@ -33,6 +33,13 @@ vi.mock('@/hooks/use-auth', () => ({
   }),
 }));
 
+vi.mock('@/lib/upload', () => ({
+  ALLOWED_IMAGE_TYPES: new Set(['image/jpeg', 'image/png', 'image/webp']),
+  MAX_IMAGE_BYTES: 5 * 1024 * 1024,
+  compressImage: vi.fn((file: File) => Promise.resolve(file)),
+  readFileAsDataUrl: vi.fn((file: File) => Promise.resolve(`data:${file.type};base64,mock`)),
+}));
+
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ children, open }: { children: ReactNode; open?: boolean }) =>
     open ? <div role="dialog">{children}</div> : null,

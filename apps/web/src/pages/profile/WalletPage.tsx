@@ -107,7 +107,7 @@ const WalletPage = () => {
                           size="lg"
                           className="h-14 px-8 rounded-xl hover:scale-[1.03] transition-transform"
                         >
-                          <Plus className="h-5 w-5 me-2" />
+                          <Plus className="h-5 w-5" />
                           شحن المحفظة
                         </Button>
                       </div>

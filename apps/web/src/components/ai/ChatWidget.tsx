@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { MessageCircle, X, Send, Bot, User, RotateCcw, LogIn } from 'lucide-react';
+import { Send, User, RotateCcw, LogIn } from 'lucide-react';
+import '@lottiefiles/dotlottie-wc';
 
 import { useAuth } from '@/hooks/use-auth';
 import { aiAPI, ApiError, type ChatSessionView } from '@/services/api';
@@ -12,6 +13,34 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   streaming?: boolean;
+}
+
+const PALM_ANIMATION_SRC = '/animations/nakheel-palm-leaf.lottie?v=palm-only-crop';
+
+interface PalmAnimationIconProps {
+  className: string;
+}
+
+function PalmAnimationIcon({ className }: PalmAnimationIconProps) {
+  return (
+    <span
+      className={`relative block overflow-visible drop-shadow-lg ${className}`}
+      aria-hidden="true"
+    >
+      <dotlottie-wc
+        autoplay
+        loop
+        speed={1}
+        src={PALM_ANIMATION_SRC}
+        style={{
+          display: 'block',
+          height: '100%',
+          pointerEvents: 'none',
+          width: '100%',
+        }}
+      />
+    </span>
+  );
 }
 
 function mapSessionMessages(session: ChatSessionView): Message[] {
@@ -36,6 +65,8 @@ export function ChatWidget() {
   const [bootstrapping, setBootstrapping] = useState(false);
   const [bootstrapError, setBootstrapError] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>();
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const sessionStorageKey = useMemo(() => (user ? `ai_chat_session:${user.id}` : null), [user]);
@@ -61,6 +92,24 @@ export function ChatWidget() {
     if (!open) {
       setBootstrapError(false);
     }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+
+      if (launcherRef.current?.contains(target) || panelRef.current?.contains(target)) {
+        return;
+      }
+
+      setOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [open]);
 
   const bootstrapSession = useCallback(
@@ -299,22 +348,24 @@ export function ChatWidget() {
   return (
     <>
       <button
+        ref={launcherRef}
         onClick={() => setOpen((value) => !value)}
-        className="fixed bottom-6 start-6 z-50 h-14 w-14 rounded-full bg-primary text-white shadow-xl transition-all hover:scale-110 hover:bg-primary/90"
+        className="group fixed bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] start-3 z-50 h-20 w-20 overflow-visible bg-transparent text-white transition-all hover:scale-105 md:bottom-3 md:h-24 md:w-24"
         aria-label="AI assistant"
       >
-        {open ? <X className="m-auto h-6 w-6" /> : <MessageCircle className="m-auto h-6 w-6" />}
+        <PalmAnimationIcon className="h-20 w-20 md:h-24 md:w-24" />
       </button>
 
       {open && (
-        <div className="fixed bottom-24 inset-x-4 z-50 flex max-h-[560px] w-auto max-w-[360px] flex-col overflow-hidden rounded-2xl border border-border/50 bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 sm:inset-x-auto sm:start-6 sm:w-[360px]">
+        <div
+          ref={panelRef}
+          data-testid="ai-chat-panel"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] inset-x-4 z-50 flex max-h-[560px] w-auto max-w-[360px] flex-col overflow-hidden rounded-2xl border border-border/50 bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 md:bottom-24 sm:inset-x-auto sm:start-6 sm:w-[360px]"
+        >
           <div className="flex items-center justify-between bg-gradient-to-l from-primary to-primary/80 px-5 py-4 text-white">
-            <div className="flex items-center gap-3">
-              <Bot className="h-6 w-6" />
-              <div>
-                <p className="text-sm font-bold">Smart Assistant</p>
-                <p className="text-xs text-white/70">Hena Wadeena</p>
-              </div>
+            <div>
+              <p className="text-sm font-bold">Smart Assistant</p>
+              <p className="text-xs text-white/70">Hena Wadeena</p>
             </div>
 
             {isAuthenticated ? (
@@ -368,7 +419,7 @@ export function ChatWidget() {
                       {msg.role === 'user' ? (
                         <User className="h-4 w-4 text-primary" />
                       ) : (
-                        <Bot className="h-4 w-4 text-accent-foreground" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-primary" aria-hidden="true" />
                       )}
                     </div>
                     <div

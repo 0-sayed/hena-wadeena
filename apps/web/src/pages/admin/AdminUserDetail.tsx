@@ -189,7 +189,7 @@ export default function AdminUserDetail() {
             void navigate('/admin/users');
           }}
         >
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 ltr:rotate-180" />
           {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
         </Button>
         <Card>
@@ -215,7 +215,7 @@ export default function AdminUserDetail() {
               void navigate('/admin/users');
             }}
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {pickLocalizedCopy(appLanguage, { ar: 'العودة إلى المستخدمين', en: 'Back to users' })}
           </Button>
           <h1 className="text-2xl font-bold">

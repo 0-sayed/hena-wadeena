@@ -24,6 +24,12 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition, GradientMesh } from '@/components/motion/PageTransition';
 import { Skeleton } from '@/components/motion/Skeleton';
 import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_AVATAR_BYTES,
+  compressImage,
+  readFileAsDataUrl,
+} from '@/lib/upload';
 
 type ProfileFormState = {
   full_name: string;
@@ -36,7 +42,6 @@ type ProfileFormState = {
 type ProfileErrors = Partial<Record<keyof ProfileFormState, string>>;
 
 const PHONE_REGEX = /^\+?[0-9\s-]{7,20}$/;
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 const roleLabels: Record<string, { ar: string; en: string }> = {
   admin: { ar: 'مدير', en: 'Admin' },
@@ -126,23 +131,6 @@ function validateProfileForm(formData: ProfileFormState, language: AppLanguage):
   return errors;
 }
 
-function readFileAsDataUrl(file: File, errorMessage: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        resolve(result);
-        return;
-      }
-
-      reject(new Error(errorMessage));
-    };
-    reader.onerror = () => reject(new Error(errorMessage));
-    reader.readAsDataURL(file);
-  });
-}
-
 const ProfilePage = () => {
   const { user, isLoading, updateUser, language } = useAuth();
   const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
@@ -205,7 +193,7 @@ const ProfilePage = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       toast.error(
         pickLocalizedCopy(appLanguage, {
           ar: 'اختر صورة بصيغة JPG أو PNG أو WebP',
@@ -228,8 +216,9 @@ const ProfilePage = () => {
     }
 
     try {
+      const compressed = await compressImage(file, { maxSizeMB: 0.3, maxWidthOrHeight: 400 });
       const avatarUrl = await readFileAsDataUrl(
-        file,
+        compressed,
         pickLocalizedCopy(appLanguage, {
           ar: 'تعذر قراءة الصورة',
           en: 'Unable to read the image',
@@ -298,6 +287,7 @@ const ProfilePage = () => {
                         src={formData.avatar_url}
                         alt={formData.full_name}
                         className="h-28 w-28 rounded-2xl object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <User className="h-14 w-14 text-primary" />

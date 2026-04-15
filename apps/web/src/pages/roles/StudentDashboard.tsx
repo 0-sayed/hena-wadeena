@@ -79,7 +79,7 @@ export default function StudentDashboard() {
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <Link to="/tourism/accommodation">
               {pickLocalizedCopy(appLanguage, { ar: 'عرض جميع السكن', en: 'View all housing' })}
-              <ArrowLeft className="me-2 h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
         </CardHeader>
@@ -113,6 +113,7 @@ export default function StudentDashboard() {
                     }) || listing.id
                   }
                   className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                  loading="lazy"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">

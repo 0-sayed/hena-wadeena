@@ -17,6 +17,12 @@ import type {
   NotificationListResponse,
   UnifiedSearchResponse,
   SearchResultType,
+  WellLogDto,
+  WellMonthlySummaryDto,
+  SolarEstimateDto,
+  NewsArticle,
+  CreateNewsArticlePayload,
+  UpdateNewsArticlePayload,
 } from '@hena-wadeena/types';
 import type {
   AttractionType,
@@ -2459,6 +2465,38 @@ export const jobsAPI = {
   deleteJob: (id: string) => apiFetchWithRefresh<void>(`/jobs/${id}`, { method: 'DELETE' }),
 };
 
+// ── News ────────────────────────────────────────────────────────────────────
+
+export const newsAPI = {
+  getList: (params?: { category?: string; offset?: number; limit?: number }) =>
+    apiFetch<PaginatedResponse<NewsArticle>>(`/news${toQueryString(params)}`),
+
+  getBySlug: (slug: string) => apiFetch<NewsArticle>(`/news/${slug}`),
+
+  adminGetList: (params?: { category?: string; offset?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<NewsArticle>>(`/admin/news${toQueryString(params)}`),
+
+  adminCreate: (body: CreateNewsArticlePayload) =>
+    apiFetchWithRefresh<NewsArticle>('/admin/news', { method: 'POST', body: JSON.stringify(body) }),
+
+  adminUpdate: (id: string, body: UpdateNewsArticlePayload) =>
+    apiFetchWithRefresh<NewsArticle>(`/admin/news/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  adminPublish: (id: string) =>
+    apiFetchWithRefresh<NewsArticle>(`/admin/news/${id}/publish`, { method: 'PATCH' }),
+
+  adminDelete: (id: string) => apiFetchWithRefresh<void>(`/admin/news/${id}`, { method: 'DELETE' }),
+
+  adminUploadImage: (body: { filename: string; contentType: string }) =>
+    apiFetchWithRefresh<{ uploadUrl: string; key: string }>('/admin/news/upload-image', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};
+
 // ── Desert Trips (Guide Safety) ─────────────────────────────────────────────
 
 export type DesertTripStatus = 'pending' | 'checked_in' | 'overdue' | 'alert_sent' | 'resolved';
@@ -2500,3 +2538,31 @@ export const desertTripsAPI = {
       method: 'POST',
     }),
 };
+
+// ── Well Logs ─────────────────────────────────────────────────────────────────
+
+export interface WellLogCreateRequest {
+  area: NvDistrict;
+  pump_hours: number;
+  kwh_consumed: number;
+  cost_piasters: number;
+  water_m3_est?: number;
+  depth_to_water_m?: number;
+  logged_at: string; // ISO date YYYY-MM-DD
+}
+
+export const wellLogsAPI = {
+  create: (body: WellLogCreateRequest) =>
+    apiFetchWithRefresh<WellLogDto>('/well-logs', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  getSummary: () =>
+    apiFetchWithRefresh<{ months: WellMonthlySummaryDto[]; solar: SolarEstimateDto | null }>(
+      '/well-logs/summary',
+    ),
+};
+
+// ── Re-exports from @hena-wadeena/types ─────────────────────────────────────
+
+export type { PaginatedResponse } from '@hena-wadeena/types';

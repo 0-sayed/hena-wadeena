@@ -1,0 +1,1 @@
+ALTER TABLE "guide_booking"."guides" ADD COLUMN "display_name" text;

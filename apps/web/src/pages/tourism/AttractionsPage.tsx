@@ -68,7 +68,7 @@ const AttractionsPage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-background" />
         <div className="container relative px-4">
           <Button variant="ghost" onClick={() => void navigate('/tourism')} className="mb-6">
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             العودة للسياحة
           </Button>
 
@@ -160,6 +160,7 @@ const AttractionsPage = () => {
                         src={attraction.thumbnail ?? '/placeholder.jpg'}
                         alt={attraction.nameAr}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
                       />
                       <Badge className="absolute top-4 end-4 bg-card/90 text-foreground backdrop-blur-sm">
                         {attractionTypeLabels[attraction.type]}

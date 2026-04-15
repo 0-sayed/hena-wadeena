@@ -58,7 +58,7 @@ import type { Poi, PoiCategory, CarpoolRide, CarpoolPassenger } from '@/services
 import { UserRole } from '@hena-wadeena/types';
 import { AREA_PRESETS, findArea, getAreaDisplayName, localizeAreaName } from '@/lib/area-presets';
 import { toast } from 'sonner';
-import heroLogistics from '@/assets/hero-logistics.jpg';
+import heroLogistics from '@/assets/hero-logistics.webp';
 
 const RIDE_CREATOR_ROLES = [UserRole.DRIVER, UserRole.ADMIN] as const;
 
@@ -390,13 +390,12 @@ const LogisticsPage = () => {
                           en: 'Search for a place...',
                         })}
                         onChange={(e) => debouncedSetSearch(e.target.value)}
-                        className="search-input-with-icon-md"
+                        className="search-input-with-icon-md h-12 rounded-xl md:h-12"
                       />
                     </div>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
+                      className="h-12 w-full rounded-xl sm:w-auto"
                       onClick={handleNearMe}
                     >
                       <LocateFixed className="h-4 w-4 ms-1" />
@@ -408,8 +407,7 @@ const LogisticsPage = () => {
                     {geoFilter && (
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="w-full sm:w-auto"
+                        className="h-12 w-full rounded-xl sm:w-auto"
                         onClick={() => setGeoFilter(undefined)}
                       >
                         {pickLocalizedCopy(appLanguage, {
@@ -421,18 +419,10 @@ const LogisticsPage = () => {
                     {canSuggestPoi && (
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() =>
-                          toast.info(
-                            pickLocalizedCopy(appLanguage, {
-                              ar: 'ميزة اقتراح الأماكن قريباً',
-                              en: 'Place suggestions are coming soon',
-                            }),
-                          )
-                        }
+                        className="h-12 w-full rounded-xl sm:w-auto"
+                        onClick={() => void navigate('/logistics/suggest-poi')}
                       >
-                        <Plus className="h-4 w-4 ms-1" />
+                        <Plus className="h-4 w-4" />
                         {pickLocalizedCopy(appLanguage, {
                           ar: 'اقترح مكان',
                           en: 'Suggest a place',
@@ -783,7 +773,12 @@ function PoiDetailContent({ poi, appLanguage }: { poi: Poi; appLanguage: AppLang
     <div className="space-y-5 pt-4">
       {poi.images?.[0] ? (
         <div className="overflow-hidden rounded-3xl border border-border/60 bg-muted/30 shadow-sm">
-          <img src={poi.images[0]} alt={poiName} className="h-52 w-full object-cover" />
+          <img
+            src={poi.images[0]}
+            alt={poiName}
+            className="h-52 w-full object-cover"
+            loading="lazy"
+          />
         </div>
       ) : null}
 

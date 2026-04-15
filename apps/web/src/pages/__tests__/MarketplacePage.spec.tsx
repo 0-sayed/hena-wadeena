@@ -97,11 +97,15 @@ vi.mock('@/components/ui/input', () => ({
     value,
     onChange,
     placeholder,
+    className,
   }: {
     value?: string;
     onChange?: (event: { target: { value: string } }) => void;
     placeholder?: string;
-  }) => <input value={value} onChange={onChange} placeholder={placeholder} />,
+    className?: string;
+  }) => (
+    <input value={value} onChange={onChange} placeholder={placeholder} className={className} />
+  ),
 }));
 
 vi.mock('@/components/ui/card', () => ({
@@ -151,7 +155,9 @@ vi.mock('@/components/ui/select', () => ({
   Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  SelectTrigger: ({ children }: { children: ReactNode }) => <button>{children}</button>,
+  SelectTrigger: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <button className={className}>{children}</button>
+  ),
   SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
 }));
 
@@ -182,8 +188,8 @@ vi.mock('@/services/api', () => ({
   },
 }));
 
-vi.mock('@/assets/hero-marketplace.jpg', () => ({
-  default: 'hero-marketplace.jpg',
+vi.mock('@/assets/hero-marketplace.webp', () => ({
+  default: 'hero-marketplace.webp',
 }));
 
 describe('MarketplacePage', () => {
@@ -333,5 +339,16 @@ describe('MarketplacePage', () => {
     expect(table).toHaveClass('table-fixed');
     headerCells.forEach((cell) => expect(cell).toHaveClass('text-start'));
     bodyCells.forEach((cell) => expect(cell).toHaveClass('text-start'));
+  });
+
+  it('keeps the desktop price filter input height aligned with the city select', () => {
+    render(<MarketplacePage />);
+
+    const citySelect = screen.getByRole('button', { name: 'اختر المدينة' });
+    const productSearch = screen.getByPlaceholderText('ابحث عن منتج...');
+
+    expect(citySelect).toHaveClass('h-12');
+    expect(productSearch).toHaveClass('h-12');
+    expect(productSearch).toHaveClass('md:h-12');
   });
 });

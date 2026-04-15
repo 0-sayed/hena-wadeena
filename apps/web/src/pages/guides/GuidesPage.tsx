@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
+import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { Link } from 'react-router';
 import { AlertCircle, Search, Star, Users } from 'lucide-react';
 import { GuideLanguage, GuideSpecialty } from '@hena-wadeena/types';
@@ -19,9 +20,8 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { CardSkeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
-import heroGuides from '@/assets/hero-guides.jpg';
+import heroGuides from '@/assets/hero-guides.webp';
 import { useGuides } from '@/hooks/use-guides';
-import { useDebouncedCallback } from '@/hooks/use-debounce';
 import { usePublicUsers } from '@/hooks/use-users';
 import {
   areaLabels,
@@ -30,7 +30,6 @@ import {
   piastresToEgp,
   specialtyLabels,
 } from '@/lib/format';
-import { matchesSearchQuery } from '@/lib/search';
 import type { GuideFilters, PublicUserProfile } from '@/services/api';
 
 function getGuideName(profile?: PublicUserProfile) {
@@ -55,44 +54,22 @@ const GuidesPage = () => {
   const publicUsers = useMemo(() => publicUsersData ?? {}, [publicUsersData]);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
-    setFilters((previous) => ({ ...previous, search: value || undefined }));
-  });
+    setFilters((previous) => ({ ...previous, search: value.trim() || undefined }));
+  }, 300);
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = event.target.value;
-    setSearchInput(nextValue);
-    debouncedSetSearch(nextValue);
+    const value = event.target.value;
+    setSearchInput(value);
+    debouncedSetSearch(value);
   };
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    debouncedSetSearch.cancel(); // discard any pending debounced call
     const trimmed = searchInput.trim();
     setSearchInput(trimmed);
-    debouncedSetSearch(trimmed); // cancel any pending debounce with stale untrimmed value
     setFilters((previous) => ({ ...previous, search: trimmed || undefined }));
   };
-
-  const filteredGuides = useMemo(
-    () =>
-      guides.filter((guide) => {
-        const profile = publicUsers[guide.userId];
-
-        return matchesSearchQuery(searchInput, [
-          getGuideName(profile),
-          guide.bioAr,
-          guide.bioEn,
-          ...guide.specialties,
-          ...guide.specialties.map((specialty) => specialtyLabels[specialty] ?? specialty),
-          ...guide.languages,
-          ...guide.languages.map((language) => languageLabels[language] ?? language),
-          ...guide.areasOfOperation,
-          ...guide.areasOfOperation.map(
-            (area) => areaLabels[area as keyof typeof areaLabels] ?? area,
-          ),
-        ]);
-      }),
-    [guides, publicUsers, searchInput],
-  );
 
   const handleLanguageChange = (value: string) => {
     setFilters((previous) => ({ ...previous, language: value === 'all' ? undefined : value }));
@@ -128,19 +105,19 @@ const GuidesPage = () => {
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
+              <button
+                type="submit"
+                aria-label="بحث"
+                className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 z-10 p-1 text-muted-foreground"
+              >
+                <Search className="h-5 w-5" />
+              </button>
               <Input
                 placeholder="ابحث بالتخصص أو الوصف..."
                 value={searchInput}
                 onChange={handleSearchChange}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm md:h-16 md:text-lg"
               />
-              <Button
-                type="submit"
-                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
-              >
-                ابحث
-              </Button>
             </form>
           </SR>
         </PageHero>
@@ -211,7 +188,7 @@ const GuidesPage = () => {
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredGuides.map((guide) => {
+                    {guides.map((guide) => {
                       const guideName = getGuideName(publicUsers[guide.userId]);
 
                       return (
@@ -227,6 +204,7 @@ const GuidesPage = () => {
                                   src={guide.profileImage ?? '/placeholder.jpg'}
                                   alt={guideName}
                                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                  loading="lazy"
                                 />
                                 {guide.licenseVerified && (
                                   <Badge className="absolute start-3 top-3 bg-green-500 text-white shadow-lg">
@@ -296,12 +274,9 @@ const GuidesPage = () => {
 
                 {guides.length === 0 && (
                   <div className="py-12 text-center">
-                    <p className="text-lg text-muted-foreground">لا يوجد مرشدون متاحون</p>
-                  </div>
-                )}
-                {guides.length > 0 && filteredGuides.length === 0 && (
-                  <div className="py-12 text-center">
-                    <p className="text-lg text-muted-foreground">لا يوجد مرشدون مطابقون للبحث</p>
+                    <p className="text-lg text-muted-foreground">
+                      {filters.search ? 'لا يوجد مرشدون مطابقون للبحث' : 'لا يوجد مرشدون متاحون'}
+                    </p>
                   </div>
                 )}
 

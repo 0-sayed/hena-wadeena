@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 /** Returns a debounced value that updates after the specified delay. */
 export function useDebounce<T>(value: T, delay = 300): T {
@@ -12,11 +12,15 @@ export function useDebounce<T>(value: T, delay = 300): T {
   return debouncedValue;
 }
 
-/** Returns a debounced version of the callback (300ms default). */
+export type DebouncedCallback<T extends (...args: never[]) => void> = T & {
+  cancel: () => void;
+};
+
+/** Returns a debounced version of the callback (300ms default) with a `.cancel()` method. */
 export function useDebouncedCallback<T extends (...args: never[]) => void>(
   callback: T,
   delay = 300,
-): T {
+): DebouncedCallback<T> {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
@@ -27,11 +31,22 @@ export function useDebouncedCallback<T extends (...args: never[]) => void>(
     };
   }, []);
 
-  return useCallback(
-    ((...args: Parameters<T>) => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => callbackRef.current(...args), delay);
-    }) as T,
+  return useMemo(
+    () =>
+      Object.assign(
+        (...args: Parameters<T>) => {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => callbackRef.current(...args), delay);
+        },
+        {
+          cancel: () => {
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+          },
+        },
+      ) as DebouncedCallback<T>,
     [delay],
   );
 }

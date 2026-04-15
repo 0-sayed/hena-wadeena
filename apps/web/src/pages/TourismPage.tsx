@@ -11,7 +11,7 @@ import { SR } from '@/components/motion/ScrollReveal';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { CardSkeleton } from '@/components/motion/Skeleton';
 import { PageHero } from '@/components/layout/PageHero';
-import heroTourism from '@/assets/hero-tourism.jpg';
+import heroTourism from '@/assets/hero-tourism.webp';
 import { useAuth } from '@/hooks/use-auth';
 import { useAttractions } from '@/hooks/use-attractions';
 import { useGuides } from '@/hooks/use-guides';
@@ -162,27 +162,23 @@ const TourismPage = () => {
             </p>
           </SR>
           <SR delay={300}>
-            <form onSubmit={handleSearch} className="mx-auto max-w-xl">
-              <div className="flex flex-col gap-3 sm:relative">
-                <div className="relative">
-                  <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
-                  <Input
-                    placeholder={pickLocalizedCopy(language, {
-                      ar: 'ابحث عن معالم أو مرشدين...',
-                      en: 'Search for attractions or guides...',
-                    })}
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full rounded-xl sm:absolute sm:start-2 sm:top-1/2 sm:w-auto sm:-translate-y-1/2"
-                >
-                  {pickLocalizedCopy(language, { ar: 'ابحث', en: 'Search' })}
-                </Button>
-              </div>
+            <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
+              <button
+                type="submit"
+                aria-label={pickLocalizedCopy(language, { ar: 'بحث', en: 'Search' })}
+                className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 z-10 p-1 text-muted-foreground"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+              <Input
+                placeholder={pickLocalizedCopy(language, {
+                  ar: 'ابحث عن معالم أو مرشدين...',
+                  en: 'Search for attractions or guides...',
+                })}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm md:h-16 md:text-lg"
+              />
             </form>
           </SR>
         </PageHero>
@@ -239,6 +235,7 @@ const TourismPage = () => {
                                   en: attraction.nameEn,
                                 })}
                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                loading="lazy"
                               />
                               <Badge className="absolute end-4 top-4 glass font-medium text-foreground">
                                 {attractionTypeLabel(attraction.type, language)}
@@ -288,8 +285,8 @@ const TourismPage = () => {
                                   {pickLocalizedCopy(language, {
                                     ar: 'المزيد',
                                     en: 'View details',
-                                  })}{' '}
-                                  <ArrowLeft className="me-1 h-4 w-4" />
+                                  })}
+                                  <ArrowLeft className="h-4 w-4" />
                                 </Button>
                               </div>
                             </CardContent>
@@ -334,6 +331,7 @@ const TourismPage = () => {
                                   en: attraction.nameEn,
                                 })}
                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                loading="lazy"
                               />
                             </div>
                             <CardContent className="p-5">
@@ -386,6 +384,7 @@ const TourismPage = () => {
                                     src={guide.profileImage ?? '/placeholder.jpg'}
                                     alt={guideName}
                                     className="h-full w-full object-cover"
+                                    loading="lazy"
                                   />
                                 </div>
                                 <div className="min-w-0">

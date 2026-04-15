@@ -8,6 +8,12 @@ import { BusinessLogo } from '@/components/business/BusinessLogo';
 import { useBusinesses } from '@/hooks/use-businesses';
 import { useAuth } from '@/hooks/use-auth';
 import { businessesAPI } from '@/services/api';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_LOGO_BYTES,
+  compressImage,
+  readFileAsDataUrl,
+} from '@/lib/upload';
 import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import { districtLabel, DISTRICTS } from '@/lib/format';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
@@ -45,7 +51,6 @@ type TransportFormState = {
   logoUrl: string;
 };
 
-const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const emptyTransportForm: TransportFormState = {
   nameAr: '',
   district: 'kharga',
@@ -55,22 +60,6 @@ const emptyTransportForm: TransportFormState = {
   generalInfo: '',
   logoUrl: '',
 };
-
-function readFileAsDataUrl(file: File, errorMessage: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error(errorMessage));
-    };
-    reader.onerror = () => reject(new Error(errorMessage));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function LocalTransportTab() {
   const queryClient = useQueryClient();
@@ -110,7 +99,7 @@ export function LocalTransportTab() {
       headquarters: company.description ?? '',
       bookingLink: company.website ?? '',
       contactInfo: company.phone ?? '',
-      generalInfo: appLanguage === 'ar' ? company.descriptionAr ?? '' : '',
+      generalInfo: appLanguage === 'ar' ? (company.descriptionAr ?? '') : '',
       logoUrl: company.logoUrl ?? '',
     });
     setDialogOpen(true);
@@ -120,7 +109,7 @@ export function LocalTransportTab() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       toast.error(
         pickLocalizedCopy(appLanguage, {
           ar: 'اختر صورة بصيغة JPG أو PNG أو WebP',
@@ -143,8 +132,9 @@ export function LocalTransportTab() {
     }
 
     try {
+      const compressed = await compressImage(file, { maxSizeMB: 0.3, maxWidthOrHeight: 800 });
       const logoUrl = await readFileAsDataUrl(
-        file,
+        compressed,
         pickLocalizedCopy(appLanguage, {
           ar: 'تعذر قراءة الشعار',
           en: 'Could not read the logo file',
@@ -158,14 +148,14 @@ export function LocalTransportTab() {
         }),
       );
     } catch (error) {
-      const message =
+      toast.error(
         error instanceof Error
           ? error.message
           : pickLocalizedCopy(appLanguage, {
-              ar: 'تعذر قراءة الشعار',
-              en: 'Could not read the logo file',
-            });
-      toast.error(message);
+              ar: 'تعذر معالجة الشعار',
+              en: 'Could not process the logo',
+            }),
+      );
     } finally {
       event.target.value = '';
     }
@@ -305,7 +295,7 @@ export function LocalTransportTab() {
         </div>
         {canManageCompanies && (
           <Button onClick={openCreateDialog}>
-            <Plus className="ms-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             {pickLocalizedCopy(appLanguage, {
               ar: 'إضافة شركة نقل',
               en: 'Add transport company',
@@ -344,95 +334,99 @@ export function LocalTransportTab() {
                   });
                   const generalInfo =
                     appLanguage === 'ar'
-                      ? company.descriptionAr?.trim() ?? company.description?.trim() ?? ''
+                      ? (company.descriptionAr?.trim() ?? company.description?.trim() ?? '')
                       : '';
 
                   return (
                     <>
-                <div className="flex items-start gap-4">
-                  <BusinessLogo
-                    src={company.logoUrl}
-                    alt={companyName}
-                    fallbackIcon={Bus}
-                    className="h-16 w-16 shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-lg font-bold text-foreground">{companyName}</h4>
-                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{districtLabel(company.district ?? '', appLanguage)}</span>
-                    </div>
-                  </div>
-                </div>
+                      <div className="flex items-start gap-4">
+                        <BusinessLogo
+                          src={company.logoUrl}
+                          alt={companyName}
+                          fallbackIcon={Bus}
+                          className="h-16 w-16 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-lg font-bold text-foreground">{companyName}</h4>
+                          <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>{districtLabel(company.district ?? '', appLanguage)}</span>
+                          </div>
+                        </div>
+                      </div>
 
-                {company.description && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'المقر',
-                        en: 'Headquarters',
-                      })}
-                    </p>
-                    <p className="text-sm text-foreground">{company.description}</p>
-                  </div>
-                )}
+                      {company.description && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            {pickLocalizedCopy(appLanguage, {
+                              ar: 'المقر',
+                              en: 'Headquarters',
+                            })}
+                          </p>
+                          <p className="text-sm text-foreground">{company.description}</p>
+                        </div>
+                      )}
 
-                {generalInfo && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground">
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'نبذة عامة',
-                        en: 'General information',
-                      })}
-                    </p>
-                    <p className="text-sm text-foreground">{generalInfo}</p>
-                  </div>
-                )}
+                      {generalInfo && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            {pickLocalizedCopy(appLanguage, {
+                              ar: 'نبذة عامة',
+                              en: 'General information',
+                            })}
+                          </p>
+                          <p className="text-sm text-foreground">{generalInfo}</p>
+                        </div>
+                      )}
 
-                <div className="flex flex-wrap gap-3">
-                  {company.phone && (
-                    <Button asChild variant="outline" className="flex-1">
-                      <a href={`tel:${company.phone}`}>
-                        <Phone className="ms-2 h-4 w-4" />
-                        <LtrText>{company.phone}</LtrText>
-                      </a>
-                    </Button>
-                  )}
-                  {company.website && (
-                    <Button asChild className="flex-1">
-                      <a href={company.website} target="_blank" rel="noreferrer">
-                        <ExternalLink className="ms-2 h-4 w-4" />
-                        {pickLocalizedCopy(appLanguage, {
-                          ar: 'رابط الحجز',
-                          en: 'Booking link',
-                        })}
-                      </a>
-                    </Button>
-                  )}
-                </div>
+                      <div className="flex flex-wrap gap-3">
+                        {company.phone && (
+                          <Button asChild variant="outline" className="flex-1">
+                            <a href={`tel:${company.phone}`}>
+                              <Phone className="ms-2 h-4 w-4" />
+                              <LtrText>{company.phone}</LtrText>
+                            </a>
+                          </Button>
+                        )}
+                        {company.website && (
+                          <Button asChild className="flex-1">
+                            <a href={company.website} target="_blank" rel="noreferrer">
+                              <ExternalLink className="ms-2 h-4 w-4" />
+                              {pickLocalizedCopy(appLanguage, {
+                                ar: 'رابط الحجز',
+                                en: 'Booking link',
+                              })}
+                            </a>
+                          </Button>
+                        )}
+                      </div>
 
-                {canManageCompanies && (
-                  <div className="flex gap-2 border-t pt-4">
-                    <Button variant="outline" size="sm" onClick={() => openEditDialog(company)}>
-                      <Pencil className="ms-2 h-4 w-4" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'تعديل',
-                        en: 'Edit',
-                      })}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => void handleDeleteCompany(company.id)}
-                    >
-                      <Trash2 className="ms-2 h-4 w-4" />
-                      {pickLocalizedCopy(appLanguage, {
-                        ar: 'حذف',
-                        en: 'Delete',
-                      })}
-                    </Button>
-                  </div>
-                )}
+                      {canManageCompanies && (
+                        <div className="flex gap-2 border-t pt-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(company)}
+                          >
+                            <Pencil className="ms-2 h-4 w-4" />
+                            {pickLocalizedCopy(appLanguage, {
+                              ar: 'تعديل',
+                              en: 'Edit',
+                            })}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => void handleDeleteCompany(company.id)}
+                          >
+                            <Trash2 className="ms-2 h-4 w-4" />
+                            {pickLocalizedCopy(appLanguage, {
+                              ar: 'حذف',
+                              en: 'Delete',
+                            })}
+                          </Button>
+                        </div>
+                      )}
                     </>
                   );
                 })()}

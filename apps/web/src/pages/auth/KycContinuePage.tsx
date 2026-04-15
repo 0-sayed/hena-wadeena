@@ -16,14 +16,14 @@ import { Label } from '@/components/ui/label';
 import { kycOnboardingAPI } from '@/services/api';
 import type { KycOnboardingSession, KycOnboardingSubmission } from '@/services/api';
 import { clearKycSessionToken, getKycSessionToken } from '@/services/kyc-session-manager';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_DOCUMENT_BYTES,
+  compressImage,
+  readFileAsDataUrl,
+} from '@/lib/upload';
 
-const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
-const ALLOWED_DOCUMENT_TYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const ALLOWED_DOCUMENT_TYPES = new Set(['application/pdf', ...ALLOWED_IMAGE_TYPES]);
 
 const documentLabels: Record<string, string> = {
   [KycDocType.NATIONAL_ID]: 'بطاقة الرقم القومي',
@@ -39,23 +39,6 @@ const statusLabels: Record<KycOnboardingSubmission['status'], string> = {
   approved: 'مقبول',
   rejected: 'مرفوض',
 };
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        resolve(result);
-        return;
-      }
-
-      reject(new Error('تعذر قراءة الملف'));
-    };
-    reader.onerror = () => reject(new Error('تعذر قراءة الملف'));
-    reader.readAsDataURL(file);
-  });
-}
 
 function getLatestSubmission(
   submissions: KycOnboardingSubmission[],
@@ -105,11 +88,9 @@ export default function KycContinuePage() {
     };
   }, [navigate]);
 
-  const handleFileSelected = (docType: string) => (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (docType: string, event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!ALLOWED_DOCUMENT_TYPES.has(file.type)) {
       toast.error('اختر ملف PDF أو صورة JPG/PNG/WebP');
@@ -123,7 +104,16 @@ export default function KycContinuePage() {
       return;
     }
 
-    setSelectedFiles((current) => ({ ...current, [docType]: file }));
+    try {
+      const fileToStore = ALLOWED_IMAGE_TYPES.has(file.type)
+        ? await compressImage(file, { maxSizeMB: 2, maxWidthOrHeight: 2000 })
+        : file;
+      setSelectedFiles((current) => ({ ...current, [docType]: fileToStore }));
+    } catch {
+      toast.error('تعذر معالجة الصورة');
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const refreshSession = async () => {
@@ -251,7 +241,7 @@ export default function KycContinuePage() {
                               id={`kyc-${docType}`}
                               type="file"
                               accept=".pdf,image/jpeg,image/png,image/webp"
-                              onChange={handleFileSelected(docType)}
+                              onChange={(e) => void handleFileSelected(docType, e)}
                               disabled={!canSubmit}
                             />
                           </div>

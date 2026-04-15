@@ -23,6 +23,7 @@ export { benefitInfo } from './benefit-info';
 export { produceListingDetails } from './produce-listing-details';
 export { priceAlertSubscriptions } from './price-alert-subscriptions';
 export { wellLogs } from './well-logs';
+export { newsArticles } from './news-articles';
 
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';

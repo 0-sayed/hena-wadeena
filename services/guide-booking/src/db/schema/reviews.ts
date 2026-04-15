@@ -15,6 +15,7 @@ import {
 import { guideBookingSchema } from '../schema';
 
 import { bookings } from './bookings';
+import { guides } from './guides';
 
 export const guideReviews = guideBookingSchema.table(
   'guide_reviews',
@@ -43,6 +44,11 @@ export const guideReviews = guideBookingSchema.table(
       name: 'fk_guide_reviews_booking',
       columns: [t.bookingId],
       foreignColumns: [bookings.id],
+    }),
+    foreignKey({
+      name: 'fk_guide_reviews_guide',
+      columns: [t.guideId],
+      foreignColumns: [guides.id],
     }),
     check('chk_guide_reviews_helpful_count_non_neg', sql`${t.helpfulCount} >= 0`),
     check('chk_guide_reviews_rating_range', sql`${t.rating} >= 1 AND ${t.rating} <= 5`),

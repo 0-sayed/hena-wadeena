@@ -3,6 +3,10 @@
 Unified digital platform for New Valley Governorate, Egypt — connecting tourists, residents, merchants, guides, investors, and government in a single Arabic-first experience.
 
 <p align="center">
+  <img src="./apps/web/public/images/vision-2030.svg" alt="Egypt Vision 2030" width="120"/>
+</p>
+
+<p align="center">
   <a href="https://0-sayed.github.io/hena-wadeena/app-flow-map.html">
     <img src="./docs/map-badge.svg" alt="View the Platform Flow Map" width="520"/>
   </a>
