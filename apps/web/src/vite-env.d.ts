@@ -30,7 +30,7 @@ declare global {
 }
 
 declare module 'react' {
-  interface ImgHTMLAttributes<T> {
+  interface ImgHTMLAttributes<_T> {
     fetchPriority?: 'high' | 'low' | 'auto';
   }
 }
