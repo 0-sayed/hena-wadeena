@@ -1,0 +1,1 @@
+ALTER TABLE "guide_booking"."guide_reviews" ADD CONSTRAINT "fk_guide_reviews_guide" FOREIGN KEY ("guide_id") REFERENCES "guide_booking"."guides"("id") ON DELETE no action ON UPDATE no action;
