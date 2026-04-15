@@ -1,4 +1,4 @@
-.PHONY: help setup infra infra-down dev web ai build test validate health logs seed clean
+.PHONY: help setup infra infra-down dev web ai build test validate health logs db-migrate db-reset seed clean
 
 DC = docker compose -f docker-compose.yml -f docker-compose.dev.yml
 
@@ -15,6 +15,8 @@ help:
 	@echo "  validate    lint + typecheck + test + knip + audit + build"
 	@echo "  health      ping all /health endpoints"
 	@echo "  logs        tail infrastructure container logs"
+	@echo "  db-migrate  run all service migrations"
+	@echo "  db-reset    drop all schemas + clear migration tracking (local dev only)"
 	@echo "  seed        seed all service databases"
 	@echo "  clean       stop containers, remove volumes + dist folders"
 	@echo ""
@@ -64,6 +66,15 @@ health:
 	@echo "── ai           " && curl -sf --max-time 5 http://localhost:8005/health && echo "OK" || echo "FAIL"
 
 # ── Database ──────────────────────────────────────────────────────────────────
+db-migrate:
+	pnpm --filter @hena-wadeena/identity run db:migrate
+	pnpm --filter @hena-wadeena/market run db:migrate
+	pnpm --filter @hena-wadeena/guide-booking run db:migrate
+	pnpm --filter @hena-wadeena/map run db:migrate
+
+db-reset:
+	pnpm db:reset
+
 seed:
 	pnpm --filter @hena-wadeena/identity run db:seed
 	pnpm --filter @hena-wadeena/market run db:seed

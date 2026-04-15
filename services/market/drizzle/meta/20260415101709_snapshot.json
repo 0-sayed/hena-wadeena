@@ -1,6 +1,6 @@
 {
-  "id": "9c193c7c-7426-44df-90ea-a03a2fc7da23",
-  "prevId": "be88cb0f-78b2-4d8b-a354-982e294c7f4c",
+  "id": "97029acf-8f18-4583-9938-bd944eccfa3e",
+  "prevId": "8827cd1e-3efd-483b-8dd6-c7cc5659e0a8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1355,6 +1355,538 @@
       },
       "isRLSEnabled": false
     },
+    "market.job_applications": {
+      "name": "job_applications",
+      "schema": "market",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "applicant_id": {
+          "name": "applicant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note_ar": {
+          "name": "note_ar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "job_application_status",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "applied_at": {
+          "name": "applied_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_job_applications_job_id": {
+          "name": "idx_job_applications_job_id",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_applications_applicant_id": {
+          "name": "idx_job_applications_applicant_id",
+          "columns": [
+            {
+              "expression": "applicant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_applications_status": {
+          "name": "idx_job_applications_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_applications_applied_at": {
+          "name": "idx_job_applications_applied_at",
+          "columns": [
+            {
+              "expression": "applied_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "job_applications_job_id_job_posts_id_fk": {
+          "name": "job_applications_job_id_job_posts_id_fk",
+          "tableFrom": "job_applications",
+          "tableTo": "job_posts",
+          "schemaTo": "market",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "job_applications_applicant_job_unique": {
+          "name": "job_applications_applicant_job_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "applicant_id",
+            "job_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "market.job_posts": {
+      "name": "job_posts",
+      "schema": "market",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "poster_id": {
+          "name": "poster_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description_ar": {
+          "name": "description_ar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description_en": {
+          "name": "description_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "job_category",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "area": {
+          "name": "area",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "compensation": {
+          "name": "compensation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "compensation_type": {
+          "name": "compensation_type",
+          "type": "compensation_type",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slots": {
+          "name": "slots",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "status": {
+          "name": "status",
+          "type": "job_status",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_job_posts_poster_id": {
+          "name": "idx_job_posts_poster_id",
+          "columns": [
+            {
+              "expression": "poster_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_posts_status": {
+          "name": "idx_job_posts_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_posts_category": {
+          "name": "idx_job_posts_category",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_posts_area": {
+          "name": "idx_job_posts_area",
+          "columns": [
+            {
+              "expression": "area",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_posts_created_at": {
+          "name": "idx_job_posts_created_at",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "job_posts_compensation_non_negative": {
+          "name": "job_posts_compensation_non_negative",
+          "value": "\"market\".\"job_posts\".\"compensation\" >= 0"
+        },
+        "job_posts_slots_positive": {
+          "name": "job_posts_slots_positive",
+          "value": "\"market\".\"job_posts\".\"slots\" >= 1"
+        },
+        "job_posts_valid_date_range": {
+          "name": "job_posts_valid_date_range",
+          "value": "\"market\".\"job_posts\".\"starts_at\" IS NULL OR \"market\".\"job_posts\".\"ends_at\" IS NULL OR \"market\".\"job_posts\".\"ends_at\" >= \"market\".\"job_posts\".\"starts_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "market.job_reviews": {
+      "name": "job_reviews",
+      "schema": "market",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewer_id": {
+          "name": "reviewer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewee_id": {
+          "name": "reviewee_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "direction": {
+          "name": "direction",
+          "type": "review_direction",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "job_reviews_application_direction_unique": {
+          "name": "job_reviews_application_direction_unique",
+          "columns": [
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "direction",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_reviews_reviewer_id": {
+          "name": "idx_job_reviews_reviewer_id",
+          "columns": [
+            {
+              "expression": "reviewer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_reviews_reviewee_id": {
+          "name": "idx_job_reviews_reviewee_id",
+          "columns": [
+            {
+              "expression": "reviewee_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_job_reviews_created_at": {
+          "name": "idx_job_reviews_created_at",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "job_reviews_job_id_job_posts_id_fk": {
+          "name": "job_reviews_job_id_job_posts_id_fk",
+          "tableFrom": "job_reviews",
+          "tableTo": "job_posts",
+          "schemaTo": "market",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "job_reviews_application_id_job_applications_id_fk": {
+          "name": "job_reviews_application_id_job_applications_id_fk",
+          "tableFrom": "job_reviews",
+          "tableTo": "job_applications",
+          "schemaTo": "market",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "job_reviews_rating_range": {
+          "name": "job_reviews_rating_range",
+          "value": "\"market\".\"job_reviews\".\"rating\" >= 1 AND \"market\".\"job_reviews\".\"rating\" <= 5"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "market.listing_inquiries": {
       "name": "listing_inquiries",
       "schema": "market",
@@ -1972,6 +2504,277 @@
       },
       "isRLSEnabled": false
     },
+    "market.news_articles": {
+      "name": "news_articles",
+      "schema": "market",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title_ar": {
+          "name": "title_ar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary_ar": {
+          "name": "summary_ar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_ar": {
+          "name": "content_ar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "news_category",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cover_image": {
+          "name": "cover_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author_id": {
+          "name": "author_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author_name": {
+          "name": "author_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reading_time_minutes": {
+          "name": "reading_time_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "is_published": {
+          "name": "is_published",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "view_count": {
+          "name": "view_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_news_category_published": {
+          "name": "idx_news_category_published",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "is_published",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_news_deleted_at": {
+          "name": "idx_news_deleted_at",
+          "columns": [
+            {
+              "expression": "deleted_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "news_articles_slug_unique": {
+          "name": "news_articles_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "market.price_alert_subscriptions": {
+      "name": "price_alert_subscriptions",
+      "schema": "market",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "commodity_id": {
+          "name": "commodity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "threshold_price": {
+          "name": "threshold_price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "direction": {
+          "name": "direction",
+          "type": "alert_direction",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "last_triggered_at": {
+          "name": "last_triggered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_price_alert_commodity": {
+          "name": "idx_price_alert_commodity",
+          "columns": [
+            {
+              "expression": "commodity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "price_alert_subscriptions_commodity_id_commodities_id_fk": {
+          "name": "price_alert_subscriptions_commodity_id_commodities_id_fk",
+          "tableFrom": "price_alert_subscriptions",
+          "tableTo": "commodities",
+          "schemaTo": "market",
+          "columnsFrom": [
+            "commodity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "price_alert_subscriptions_user_id_commodity_id_direction_unique": {
+          "name": "price_alert_subscriptions_user_id_commodity_id_direction_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "commodity_id",
+            "direction"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "market.price_snapshots": {
       "name": "price_snapshots",
       "schema": "market",
@@ -2104,6 +2907,105 @@
           "value": "\"market\".\"price_snapshots\".\"sample_count\" >= 0"
         }
       },
+      "isRLSEnabled": false
+    },
+    "market.produce_listing_details": {
+      "name": "produce_listing_details",
+      "schema": "market",
+      "columns": {
+        "listing_id": {
+          "name": "listing_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "commodity_type": {
+          "name": "commodity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity_kg": {
+          "name": "quantity_kg",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "harvest_date": {
+          "name": "harvest_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "storage_type": {
+          "name": "storage_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "certifications": {
+          "name": "certifications",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "preferred_buyer": {
+          "name": "preferred_buyer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_phone": {
+          "name": "contact_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact_whatsapp": {
+          "name": "contact_whatsapp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_produce_commodity_type": {
+          "name": "idx_produce_commodity_type",
+          "columns": [
+            {
+              "expression": "commodity_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "produce_listing_details_listing_id_listings_id_fk": {
+          "name": "produce_listing_details_listing_id_listings_id_fk",
+          "tableFrom": "produce_listing_details",
+          "tableTo": "listings",
+          "schemaTo": "market",
+          "columnsFrom": [
+            "listing_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "market.review_helpful_votes": {
@@ -2345,9 +3247,165 @@
         }
       },
       "isRLSEnabled": false
+    },
+    "market.well_logs": {
+      "name": "well_logs",
+      "schema": "market",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "farmer_id": {
+          "name": "farmer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "area": {
+          "name": "area",
+          "type": "well_area",
+          "typeSchema": "market",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pump_hours": {
+          "name": "pump_hours",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kwh_consumed": {
+          "name": "kwh_consumed",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cost_piasters": {
+          "name": "cost_piasters",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "water_m3_est": {
+          "name": "water_m3_est",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "depth_to_water_m": {
+          "name": "depth_to_water_m",
+          "type": "numeric(6, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logged_at": {
+          "name": "logged_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_well_logs_farmer_id": {
+          "name": "idx_well_logs_farmer_id",
+          "columns": [
+            {
+              "expression": "farmer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_well_logs_area": {
+          "name": "idx_well_logs_area",
+          "columns": [
+            {
+              "expression": "area",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_well_logs_logged_at": {
+          "name": "idx_well_logs_logged_at",
+          "columns": [
+            {
+              "expression": "logged_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_well_logs_pump_hours_non_neg": {
+          "name": "chk_well_logs_pump_hours_non_neg",
+          "value": "\"market\".\"well_logs\".\"pump_hours\" >= 0"
+        },
+        "chk_well_logs_kwh_consumed_non_neg": {
+          "name": "chk_well_logs_kwh_consumed_non_neg",
+          "value": "\"market\".\"well_logs\".\"kwh_consumed\" >= 0"
+        },
+        "chk_well_logs_cost_piasters_non_neg": {
+          "name": "chk_well_logs_cost_piasters_non_neg",
+          "value": "\"market\".\"well_logs\".\"cost_piasters\" >= 0"
+        },
+        "chk_well_logs_water_m3_est_non_neg": {
+          "name": "chk_well_logs_water_m3_est_non_neg",
+          "value": "\"market\".\"well_logs\".\"water_m3_est\" >= 0"
+        },
+        "chk_well_logs_depth_to_water_m_non_neg": {
+          "name": "chk_well_logs_depth_to_water_m_non_neg",
+          "value": "\"market\".\"well_logs\".\"depth_to_water_m\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
     }
   },
   "enums": {
+    "market.alert_direction": {
+      "name": "alert_direction",
+      "schema": "market",
+      "values": [
+        "above",
+        "below"
+      ]
+    },
     "market.application_status": {
       "name": "application_status",
       "schema": "market",
@@ -2401,6 +3459,16 @@
         "box"
       ]
     },
+    "market.compensation_type": {
+      "name": "compensation_type",
+      "schema": "market",
+      "values": [
+        "fixed",
+        "daily",
+        "per_kg",
+        "negotiable"
+      ]
+    },
     "market.investment_sector": {
       "name": "investment_sector",
       "schema": "market",
@@ -2412,6 +3480,41 @@
         "services",
         "technology",
         "energy"
+      ]
+    },
+    "market.job_application_status": {
+      "name": "job_application_status",
+      "schema": "market",
+      "values": [
+        "pending",
+        "accepted",
+        "rejected",
+        "withdrawn",
+        "in_progress",
+        "completed"
+      ]
+    },
+    "market.job_category": {
+      "name": "job_category",
+      "schema": "market",
+      "values": [
+        "agriculture",
+        "tourism",
+        "skilled_trade",
+        "domestic",
+        "logistics",
+        "handicraft"
+      ]
+    },
+    "market.job_status": {
+      "name": "job_status",
+      "schema": "market",
+      "values": [
+        "open",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "expired"
       ]
     },
     "market.listing_category": {
@@ -2426,7 +3529,8 @@
         "transport",
         "education",
         "healthcare",
-        "shopping"
+        "shopping",
+        "agricultural_produce"
       ]
     },
     "market.listing_inquiry_status": {
@@ -2458,6 +3562,19 @@
         "business"
       ]
     },
+    "market.news_category": {
+      "name": "news_category",
+      "schema": "market",
+      "values": [
+        "announcement",
+        "tourism",
+        "investment",
+        "agriculture",
+        "infrastructure",
+        "culture",
+        "events"
+      ]
+    },
     "market.opportunity_status": {
       "name": "opportunity_status",
       "schema": "market",
@@ -2478,6 +3595,14 @@
         "farm_gate"
       ]
     },
+    "market.review_direction": {
+      "name": "review_direction",
+      "schema": "market",
+      "values": [
+        "worker_rates_poster",
+        "poster_rates_worker"
+      ]
+    },
     "market.transaction_type": {
       "name": "transaction_type",
       "schema": "market",
@@ -2494,6 +3619,17 @@
         "verified",
         "rejected",
         "suspended"
+      ]
+    },
+    "market.well_area": {
+      "name": "well_area",
+      "schema": "market",
+      "values": [
+        "kharga",
+        "dakhla",
+        "farafra",
+        "baris",
+        "balat"
       ]
     }
   },
