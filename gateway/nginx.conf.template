@@ -147,7 +147,7 @@ server {
     }
 
     # ── Market Service ────────────────────────────────────────────────────────
-    location ~ ^/api/v1/(listings|market|prices|price-index|business|businesses|commodities|commodity-prices|reviews|opportunities|investments|listing-inquiries|business-inquiries|benefits|jobs)(?:/|$) {
+    location ~ ^/api/v1/(listings|market|prices|price-index|business|businesses|commodities|commodity-prices|reviews|opportunities|investments|listing-inquiries|business-inquiries|benefits|jobs|news|well-logs|price-alerts)(?:/|$) {
         limit_req zone=global burst=20 nodelay;
         set $upstream_market http://market:8002;
         proxy_pass $upstream_market;
@@ -160,13 +160,13 @@ server {
         proxy_pass $upstream_identity;
     }
 
-    location ~ ^/api/v1/admin/(stats|market-stats|market-moderation|moderation|listings)(?:/|$) {
+    location ~ ^/api/v1/admin/(stats|market-stats|market-moderation|moderation|listings|news|well-logs|investment|investments)(?:/|$) {
         limit_req zone=global burst=20 nodelay;
         set $upstream_market http://market:8002;
         proxy_pass $upstream_market;
     }
 
-    location ~ ^/api/v1/admin/(guides|bookings)(?:/|$) {
+    location ~ ^/api/v1/admin/(guides|bookings|packages|attractions)(?:/|$) {
         limit_req zone=global burst=20 nodelay;
         set $upstream_guide http://guide-booking:8003;
         proxy_pass $upstream_guide;
