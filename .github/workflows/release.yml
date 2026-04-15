@@ -19,6 +19,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify tag commit is on main
+        run: |
+          git fetch origin main --depth=1
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/main"
+
       - name: Generate Changelog
         id: changelog
         uses: requarks/changelog-action@6d71e098526ee17bae963f058d34cd763378337f # v1
@@ -34,6 +39,7 @@ jobs:
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.changes }}
           token: ${{ github.token }}
+          allowUpdates: true
 
       - name: Commit CHANGELOG.md
         uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1

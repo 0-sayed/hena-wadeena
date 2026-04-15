@@ -10,11 +10,13 @@ HERO_DIR="$REPO_ROOT/apps/web/src/assets"
 echo "=== Compressing seed images (in-place JPEG) ==="
 before=$(du -sh "$SEED_DIR" | cut -f1)
 
+shopt -s nullglob
 for f in "$SEED_DIR"/*.jpg; do
   tmp=$(mktemp "${f}.tmp.XXXXXX")
   convert "$f" -resize 1200x1200\> -quality 75 -strip "$tmp" && mv "$tmp" "$f" || { rm -f "$tmp"; exit 1; }
   echo "  compressed: $(basename "$f")"
 done
+shopt -u nullglob
 
 after=$(du -sh "$SEED_DIR" | cut -f1)
 echo "Seed: $before → $after"
