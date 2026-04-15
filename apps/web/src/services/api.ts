@@ -2562,3 +2562,7 @@ export const wellLogsAPI = {
       '/well-logs/summary',
     ),
 };
+
+// ── Re-exports from @hena-wadeena/types ─────────────────────────────────────
+
+export type { PaginatedResponse } from '@hena-wadeena/types';

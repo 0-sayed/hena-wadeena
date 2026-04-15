@@ -10,9 +10,9 @@ export const NEWS_CATEGORY_OPTIONS = [
   { value: NewsCategory.EVENTS, label: 'فعاليات' },
 ] as const;
 
-export const NEWS_CATEGORY_LABELS: Record<NewsCategory, string> = Object.fromEntries(
+export const NEWS_CATEGORY_LABELS = Object.fromEntries(
   NEWS_CATEGORY_OPTIONS.map((o) => [o.value, o.label]),
-);
+) as Record<NewsCategory, string>;
 
 /** Tailwind bg+text classes per category — safe-listed via explicit string literals */
 export const NEWS_CATEGORY_COLORS: Record<NewsCategory, string> = {
