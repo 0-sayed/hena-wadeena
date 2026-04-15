@@ -23,9 +23,9 @@ export interface CreateNewsArticlePayload {
   summaryAr: string;
   contentAr: string;
   category: NewsCategory;
-  coverImage?: string;
+  coverImage?: string | null;
   authorName: string;
-  authorId?: string;
+  authorId?: string | null;
 }
 
 export type UpdateNewsArticlePayload = Partial<CreateNewsArticlePayload>;
