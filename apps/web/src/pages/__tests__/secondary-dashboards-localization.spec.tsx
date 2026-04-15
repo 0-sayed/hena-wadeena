@@ -33,13 +33,7 @@ vi.mock('@/components/dashboard/DashboardShell', () => ({
 }));
 
 vi.mock('@/components/dashboard/StatCard', () => ({
-  StatCard: ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string | number;
-  }) => (
+  StatCard: ({ label, value }: { label: string; value: string | number }) => (
     <div>
       <span>{label}</span>
       <span>{value}</span>
@@ -192,7 +186,7 @@ describe('Secondary dashboard localization', () => {
 
     expect(screen.getByRole('heading', { name: 'Resident dashboard' })).toBeInTheDocument();
     expect(screen.getAllByText('Latest listings').length).toBeGreaterThan(0);
-    expect(screen.getByText('Services')).toBeInTheDocument();
+    expect(screen.getByText('Government services')).toBeInTheDocument();
     expect(screen.getByText('Verified')).toBeInTheDocument();
   });
 
