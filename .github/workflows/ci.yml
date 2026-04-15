@@ -120,6 +120,9 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # pnpm 9.x uses the retired npm audit endpoint (returns 410).
+    # Non-blocking until pnpm is upgraded to 10.x.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: ./.github/actions/setup-node-pnpm
