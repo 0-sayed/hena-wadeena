@@ -48,6 +48,7 @@ const SuggestPoiPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (suggestPoi.isPending) return;
 
     if (!nameAr.trim()) {
       toast.error(

@@ -1,5 +1,5 @@
 // apps/web/src/pages/admin/AdminNews.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Eye, EyeOff, ImageIcon, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,7 @@ import {
   NEWS_CATEGORY_OPTIONS,
   formatNewsDate,
 } from '@/lib/news-utils';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES, compressImage } from '@/lib/upload';
 
 interface ArticleFormData {
   titleAr: string;
@@ -86,25 +87,25 @@ export default function AdminNews() {
   const [uploading, setUploading] = useState(false);
 
   async function handleImageFile(file: File) {
-    const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp']);
-    if (!ALLOWED.has(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       toast.error('يُسمح بصيغ JPEG وPNG وWebP فقط');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_BYTES) {
       toast.error('حجم الصورة يجب ألا يتجاوز 5 ميجابايت');
       return;
     }
     setUploading(true);
     try {
+      const compressed = await compressImage(file, { maxSizeMB: 1, maxWidthOrHeight: 1600 });
       const { uploadUrl } = await newsAPI.adminUploadImage({
-        filename: file.name,
-        contentType: file.type,
+        filename: compressed.name,
+        contentType: compressed.type,
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type },
+        body: compressed,
+        headers: { 'Content-Type': compressed.type },
         signal: AbortSignal.timeout(20_000),
       });
       if (!res.ok) throw new Error(`S3 ${res.status}`);
@@ -164,6 +165,7 @@ export default function AdminNews() {
   }
 
   async function handleTogglePublish(article: NewsArticle) {
+    if (publishMutation.isPending) return;
     // Toast uses article.isPublished at click time (before the server flips it)
     try {
       await publishMutation.mutateAsync(article.id);
@@ -184,6 +186,13 @@ export default function AdminNews() {
   }
 
   const total = data?.total ?? 0;
+
+  useEffect(() => {
+    if (offset > 0 && offset >= total) {
+      setOffset(Math.max(0, offset - LIMIT));
+    }
+  }, [offset, total]);
+
   const hasMore = offset + LIMIT < total;
   const hasPrev = offset > 0;
   const isSaving = createMutation.isPending || updateMutation.isPending || uploading;
@@ -245,6 +254,7 @@ export default function AdminNews() {
                         variant="ghost"
                         size="icon"
                         title={article.isPublished ? 'إلغاء النشر' : 'نشر'}
+                        disabled={publishMutation.isPending}
                         onClick={() => void handleTogglePublish(article)}
                       >
                         {article.isPublished ? (
