@@ -421,17 +421,17 @@ export function HeroSection() {
 
           <div className="hero-reveal hero-d5 grid max-w-xl grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:gap-12">
             <Counter
-              target={heroStats?.transportCount || 50}
+              target={heroStats?.transportCount ?? 50}
               label={copy.transportLines}
               delay={900}
             />
             <Counter
-              target={heroStats?.commoditiesCount || 200}
+              target={heroStats?.commoditiesCount ?? 200}
               label={copy.localProducts}
               delay={1200}
             />
             <Counter
-              target={heroStats?.investmentsCount || 30}
+              target={heroStats?.investmentsCount ?? 30}
               label={copy.investmentOpportunities}
               delay={1500}
             />

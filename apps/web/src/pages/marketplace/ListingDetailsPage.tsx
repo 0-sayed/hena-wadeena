@@ -121,7 +121,7 @@ export default function ListingDetailsPage() {
                     src={listing.images?.[0] ?? '/placeholder.jpg'}
                     alt={listing.titleAr}
                     className="h-64 w-full rounded-xl object-cover md:h-80"
-                    loading="lazy"
+                    loading="eager"
                   />
                 </div>
                 {(listing.images ?? []).slice(1).map((image, index) => (
