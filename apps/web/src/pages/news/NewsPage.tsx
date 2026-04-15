@@ -77,7 +77,7 @@ export default function NewsPage() {
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [offset, setOffset] = useState(0);
 
-  const { data, isLoading } = useNewsList({ category, offset, limit: LIMIT });
+  const { data, isLoading, isError, refetch } = useNewsList({ category, offset, limit: LIMIT });
 
   const total = data?.total ?? 0;
   const hasMore = offset + LIMIT < total;
@@ -120,6 +120,13 @@ export default function NewsPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <NewsCardSkeleton key={i} />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <p className="text-muted-foreground">حدث خطأ أثناء تحميل الأخبار</p>
+            <Button variant="outline" onClick={() => void refetch()}>
+              إعادة المحاولة
+            </Button>
           </div>
         ) : data && data.data.length > 0 ? (
           <>

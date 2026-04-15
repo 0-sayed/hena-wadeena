@@ -54,7 +54,7 @@ const GuidesPage = () => {
   const publicUsers = useMemo(() => publicUsersData ?? {}, [publicUsersData]);
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
-    setFilters((previous) => ({ ...previous, search: value || undefined }));
+    setFilters((previous) => ({ ...previous, search: value.trim() || undefined }));
   }, 300);
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +65,7 @@ const GuidesPage = () => {
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    debouncedSetSearch.cancel(); // discard any pending debounced call
     const trimmed = searchInput.trim();
     setSearchInput(trimmed);
     setFilters((previous) => ({ ...previous, search: trimmed || undefined }));
