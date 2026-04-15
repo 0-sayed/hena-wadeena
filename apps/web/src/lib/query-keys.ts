@@ -146,7 +146,7 @@ export const queryKeys = {
     stats: () => ['home', 'stats'] as const,
   },
   wellLogs: {
-    summary: () => ['market', 'well-logs', 'summary'] as const,
+    summary: (userId?: string) => ['market', 'well-logs', 'summary', userId] as const,
     list: (filters?: Record<string, unknown>) => ['market', 'well-logs', 'list', filters] as const,
   },
   news: {

@@ -45,7 +45,7 @@ describe('useWellLogSummary', () => {
     mockGetSummary.mockReset();
     mockCreate.mockReset();
     mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'test-user-id' } });
     mockGetSummary.mockResolvedValue(fakeSummary);
   });
 
@@ -75,7 +75,7 @@ describe('useWellLogSummary', () => {
 
     await waitFor(() =>
       expect(
-        queryClient.getQueryCache().find({ queryKey: queryKeys.wellLogs.summary() }),
+        queryClient.getQueryCache().find({ queryKey: queryKeys.wellLogs.summary('test-user-id') }),
       ).toBeTruthy(),
     );
   });
@@ -86,7 +86,7 @@ describe('useCreateWellLog', () => {
     mockGetSummary.mockReset();
     mockCreate.mockReset();
     mockUseAuth.mockReset();
-    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: 'test-user-id' } });
     mockGetSummary.mockResolvedValue(fakeSummary);
     mockCreate.mockResolvedValue({ id: 'log-1' });
   });
@@ -126,7 +126,7 @@ describe('useCreateWellLog', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: queryKeys.wellLogs.summary(),
+      queryKey: queryKeys.wellLogs.summary('test-user-id'),
     });
   });
 });
