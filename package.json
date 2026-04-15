@@ -24,6 +24,8 @@
     "format:check": "prettier --check .",
     "knip": "knip",
     "validate": "pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm knip && pnpm audit --audit-level=high",
+    "db:migrate": "pnpm --filter @hena-wadeena/identity run db:migrate && pnpm --filter @hena-wadeena/market run db:migrate && pnpm --filter @hena-wadeena/guide-booking run db:migrate && pnpm --filter @hena-wadeena/map run db:migrate",
+    "db:reset": "node --env-file .env --import tsx scripts/db-reset.ts",
     "db:seed": "pnpm --filter @hena-wadeena/identity run db:seed && pnpm --filter @hena-wadeena/market run db:seed && pnpm --filter @hena-wadeena/guide-booking run db:seed && pnpm --filter @hena-wadeena/map run db:seed",
     "db:seed:showcase": "pnpm --filter @hena-wadeena/identity run db:seed:showcase && pnpm --filter @hena-wadeena/market run db:seed:showcase && pnpm --filter @hena-wadeena/guide-booking run db:seed:showcase && pnpm --filter @hena-wadeena/map run db:seed:showcase"
   },
@@ -38,7 +40,9 @@
     "eslint-plugin-import": "^2.31.0",
     "knip": "^5.40.0",
     "lefthook": "^2.1.3",
+    "postgres": "^3.4.5",
     "prettier": "^3.4.2",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "unplugin-swc": "^1.5.9",
