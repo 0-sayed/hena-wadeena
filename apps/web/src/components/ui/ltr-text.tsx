@@ -13,7 +13,7 @@ export function LtrText<T extends ElementType = 'span'>({
   children,
   className,
 }: LtrTextProps<T>) {
-  const Component = as ?? 'span';
+  const Component = (as ?? 'span') as ElementType;
 
   return (
     <Component className={cn('inline-block text-left', className)} data-ltr="contact" dir="ltr">

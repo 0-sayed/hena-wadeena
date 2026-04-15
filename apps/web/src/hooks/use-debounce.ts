@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 /** Returns a debounced value that updates after the specified delay. */
 export function useDebounce<T>(value: T, delay = 300): T {
@@ -31,21 +31,22 @@ export function useDebouncedCallback<T extends (...args: never[]) => void>(
     };
   }, []);
 
-  return useCallback(
-    Object.assign(
-      (...args: Parameters<T>) => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => callbackRef.current(...args), delay);
-      },
-      {
-        cancel: () => {
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-          }
+  return useMemo(
+    () =>
+      Object.assign(
+        (...args: Parameters<T>) => {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => callbackRef.current(...args), delay);
         },
-      },
-    ) as DebouncedCallback<T>,
+        {
+          cancel: () => {
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+          },
+        },
+      ) as DebouncedCallback<T>,
     [delay],
   );
 }

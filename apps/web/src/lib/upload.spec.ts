@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the library so canvas is not needed in jsdom
 vi.mock('browser-image-compression', () => ({
-  default: vi.fn(async (file: File) => file),
+  default: vi.fn((file: File) => Promise.resolve(file)),
 }));
 
 import imageCompression from 'browser-image-compression';
@@ -76,7 +76,7 @@ describe('readFileAsDataUrl', () => {
 
 describe('compressImage', () => {
   beforeEach(() => {
-    vi.mocked(imageCompression).mockImplementation(async (file) => file);
+    vi.mocked(imageCompression).mockImplementation((file) => Promise.resolve(file));
   });
 
   afterEach(() => {
