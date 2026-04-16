@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 
 import ListingDetailsPage from './ListingDetailsPage';
 
@@ -31,6 +32,7 @@ vi.mock('@/components/motion/Skeleton', () => ({
 vi.mock('@/hooks/use-auth', () => ({
   useAuth: () => ({
     isAuthenticated: false,
+    language: 'ar',
     user: null,
   }),
 }));
@@ -76,6 +78,14 @@ vi.mock('@/hooks/use-users', () => ({
 }));
 
 describe('ListingDetailsPage', () => {
+  beforeEach(() => {
+    void i18n.changeLanguage('ar');
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
+  });
+
   it('keeps the whole listing summary sidebar sticky instead of only the price card', () => {
     render(<ListingDetailsPage />);
 

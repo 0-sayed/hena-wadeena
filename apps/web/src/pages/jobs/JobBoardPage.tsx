@@ -140,7 +140,7 @@ export default function JobBoardPage() {
             </div>
             {canPost && (
               <Button onClick={() => void navigate('/jobs/post')}>
-                <Plus className="ms-2 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 {t('createJobBtn')}
               </Button>
             )}

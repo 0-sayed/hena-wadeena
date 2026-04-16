@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import i18n from 'i18next';
 
 import TourismPage from '../TourismPage';
 
@@ -122,6 +123,7 @@ vi.mock('@/assets/hero-tourism.webp', () => ({
 
 describe('TourismPage', () => {
   beforeEach(() => {
+    void i18n.changeLanguage('ar');
     mockNavigate.mockReset();
     mockUseAuth.mockReset();
     mockUseAttractions.mockReset();
@@ -222,6 +224,10 @@ describe('TourismPage', () => {
     });
   });
 
+  afterEach(() => {
+    void i18n.changeLanguage('en');
+  });
+
   it('filters tourism content locally instead of navigating to the global search page', () => {
     render(<TourismPage />);
 
@@ -233,7 +239,7 @@ describe('TourismPage', () => {
     expect(screen.queryByText('عين الفرافرة')).not.toBeInTheDocument();
     expect(screen.queryByText('سالم')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'بحث' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ابحث' }));
 
     expect(mockNavigate).not.toHaveBeenCalledWith('/search?q=%D9%87%D9%8A%D8%A8');
   });

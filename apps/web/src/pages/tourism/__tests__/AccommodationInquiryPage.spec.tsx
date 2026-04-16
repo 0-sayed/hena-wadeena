@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 
 import AccommodationInquiryPage from '../AccommodationInquiryPage';
 
@@ -51,7 +52,15 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 vi.mock('@/components/ui/label', () => ({
-  Label: ({ children, htmlFor, className }: { children: ReactNode; htmlFor?: string; className?: string }) => (
+  Label: ({
+    children,
+    htmlFor,
+    className,
+  }: {
+    children: ReactNode;
+    htmlFor?: string;
+    className?: string;
+  }) => (
     <label htmlFor={htmlFor} className={className}>
       {children}
     </label>
@@ -135,7 +144,10 @@ describe('AccommodationInquiryPage', () => {
     mockUseAuth.mockReset();
     mockUseListing.mockReset();
 
+    void i18n.changeLanguage('ar');
+
     mockUseAuth.mockReturnValue({
+      language: 'ar',
       user: {
         id: 'tenant-1',
         full_name: 'Resident User',
@@ -156,6 +168,10 @@ describe('AccommodationInquiryPage', () => {
     mockSubmitInquiry.mockResolvedValue({
       id: 'inquiry-1',
     });
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
   });
 
   it('submits the accommodation inquiry through the listing inquiries API', async () => {

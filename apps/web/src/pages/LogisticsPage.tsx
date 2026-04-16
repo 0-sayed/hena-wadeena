@@ -302,7 +302,7 @@ const LogisticsPage = () => {
                       className="h-12 w-full rounded-xl sm:w-auto"
                       onClick={handleNearMe}
                     >
-                      <LocateFixed className="h-4 w-4 ms-1" />
+                      <LocateFixed className="h-4 w-4" />
                       {t('map.nearbyBtn')}
                     </Button>
                     {geoFilter && (
@@ -320,9 +320,9 @@ const LogisticsPage = () => {
                         variant="outline"
                         size="sm"
                         className="h-12 w-full rounded-xl sm:w-auto"
-                        onClick={() => toast.info(t('map.suggestPlaceToast'))}
+                        onClick={() => void navigate('/logistics/suggest-poi')}
                       >
-                        <Plus className="h-4 w-4 ms-1" />
+                        <Plus className="h-4 w-4" />
                         {t('map.suggestPlaceBtn')}
                       </Button>
                     )}
@@ -490,7 +490,7 @@ const LogisticsPage = () => {
                             void navigate('/logistics/create-ride');
                           }}
                         >
-                          <Car className="h-5 w-5 ms-2" />
+                          <Car className="h-5 w-5" />
                           {t('rides.addRideBtn')}
                         </Button>
                       </CanAccess>

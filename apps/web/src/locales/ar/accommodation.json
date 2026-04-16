@@ -6,6 +6,7 @@
   "list.back": "العودة إلى السياحة",
   "list.searchPlaceholder": "ابحث عن حي أو عنوان أو وصف",
   "list.districtLabel": "المنطقة",
+  "list.allDistricts": "جميع المناطق",
   "list.errorLoading": "تعذر تحميل إعلانات السكن حالياً.",
   "list.retry": "إعادة المحاولة",
   "list.emptyMatch": "لا توجد إعلانات سكن مطابقة لبحثك حالياً.",

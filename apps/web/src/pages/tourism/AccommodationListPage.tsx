@@ -95,7 +95,9 @@ const AccommodationListPage = () => {
               <SelectContent>
                 {DISTRICTS_WITH_ALL.map((item) => (
                   <SelectItem key={item.id} value={item.id}>
-                    {item.id === 'all' ? item.name : districtLabel(item.id, appLanguage)}
+                    {item.id === 'all'
+                      ? t('list.allDistricts')
+                      : districtLabel(item.id, appLanguage)}
                   </SelectItem>
                 ))}
               </SelectContent>

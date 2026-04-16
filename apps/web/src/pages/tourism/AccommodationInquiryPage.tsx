@@ -80,7 +80,7 @@ const AccommodationInquiryPage = () => {
       `${t('inquiry.messageContext.name')}: ${formData.name}`,
       `${t('inquiry.messageContext.phone')}: ${formData.phone}`,
       formData.email ? `${t('inquiry.messageContext.email')}: ${formData.email}` : null,
-      `${t('inquiry.messageContext.tenantType')}: ${formData.tenantType}`,
+      `${t('inquiry.messageContext.tenantType')}: ${t(formData.tenantType)}`,
       formData.moveInDate ? `${t('inquiry.messageContext.moveIn')}: ${formData.moveInDate}` : null,
       formData.duration ? `${t('inquiry.messageContext.duration')}: ${formData.duration}` : null,
       `${t('inquiry.messageContext.occupants')}: ${formData.occupants}`,
@@ -229,7 +229,7 @@ const AccommodationInquiryPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {tenantTypesKeys.map((key) => (
-                        <SelectItem key={key} value={t(key)}>
+                        <SelectItem key={key} value={key}>
                           {t(key)}
                         </SelectItem>
                       ))}

@@ -147,7 +147,7 @@ const TourismPage = () => {
                     placeholder={t('home.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
+                    className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-lg shadow-lg backdrop-blur-sm md:h-16 md:text-lg sm:ps-28"
                   />
                 </div>
                 <Button
@@ -255,7 +255,7 @@ const TourismPage = () => {
                                   }
                                 >
                                   {t('home.viewDetailsBtn')}
-                                  <ArrowLeft className="me-1 h-4 w-4" />
+                                  <ArrowLeft className="h-4 w-4" />
                                 </Button>
                               </div>
                             </CardContent>
@@ -416,7 +416,7 @@ const TourismPage = () => {
                                   className="transition-transform hover:scale-[1.03]"
                                   onClick={() => void navigate(`/guides/${guide.id}`)}
                                 >
-                                  <Calendar className="ms-2 h-4 w-4" />
+                                  <Calendar className="h-4 w-4" />
                                   {t('home.viewProfileBtn')}
                                 </Button>
                               </div>

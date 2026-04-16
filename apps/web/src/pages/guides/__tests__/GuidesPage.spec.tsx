@@ -1,12 +1,19 @@
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import i18n from 'i18next';
 
 import GuidesPage from '../GuidesPage';
 
 const mockUseGuides = vi.fn();
 const mockUsePublicUsers = vi.fn();
 const mockUseDebouncedCallback = vi.fn();
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({
+    language: 'ar',
+  }),
+}));
 
 vi.mock('react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
@@ -101,6 +108,7 @@ vi.mock('@/assets/hero-guides.webp', () => ({
 
 describe('GuidesPage', () => {
   beforeEach(() => {
+    void i18n.changeLanguage('ar');
     mockUseGuides.mockReset();
     mockUsePublicUsers.mockReset();
     mockUseDebouncedCallback.mockReset();
@@ -152,6 +160,10 @@ describe('GuidesPage', () => {
       },
     });
     mockUseDebouncedCallback.mockImplementation((callback: (value: string) => void) => callback);
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
   });
 
   it('sends search term to backend and renders only matching guides', () => {

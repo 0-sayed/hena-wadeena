@@ -188,7 +188,7 @@ const PricesPage = () => {
       ''
     ).toLowerCase();
     const category = categoryLabel(e.commodity.category, language).toLowerCase();
-    const query = searchQuery.toLowerCase();
+    const query = debouncedSearch.toLowerCase();
     return name.includes(query) || category.includes(query);
   });
   const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * PRICE_TABLE_PAGE_SIZE + 1;
@@ -337,7 +337,9 @@ const PricesPage = () => {
               <SelectContent>
                 {DISTRICTS_WITH_ALL.map((city) => (
                   <SelectItem key={city.id} value={city.id}>
-                    {districtLabel(city.id, language)}
+                    {city.id === 'all'
+                      ? t('prices.filters.allCities')
+                      : districtLabel(city.id, language)}
                   </SelectItem>
                 ))}
               </SelectContent>

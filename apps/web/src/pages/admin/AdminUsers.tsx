@@ -228,11 +228,13 @@ export default function AdminUsers() {
                         <LtrText>{user.email}</LtrText>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{t(`users.roles.${user.role}`)}</Badge>
+                        <Badge variant="secondary">
+                          {t(`users.roles.${user.role}`, { defaultValue: user.role })}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusVariants[user.status] || 'secondary'}>
-                          {t(`users.statuses.${user.status}`)}
+                          {t(`users.statuses.${user.status}`, { defaultValue: user.status })}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">

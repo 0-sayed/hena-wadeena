@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 
 import AttractionDetailsPage from './AttractionDetailsPage';
 
@@ -81,6 +82,12 @@ vi.mock('@/components/motion/ScrollReveal', () => ({
   SR: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({
+    language: 'ar',
+  }),
+}));
+
 vi.mock('@/hooks/use-attractions', () => ({
   useAttraction: (slug: string) => mockUseAttraction(slug),
   useNearbyAttractions: (slug: string) => mockUseNearbyAttractions(slug),
@@ -88,6 +95,8 @@ vi.mock('@/hooks/use-attractions', () => ({
 
 describe('AttractionDetailsPage', () => {
   beforeEach(() => {
+    void i18n.changeLanguage('ar');
+
     mockUseAttraction.mockReturnValue({
       data: {
         id: 'attr-1',
@@ -125,6 +134,10 @@ describe('AttractionDetailsPage', () => {
       refetch: vi.fn(),
     });
     mockUseNearbyAttractions.mockReturnValue({ data: [] });
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
   });
 
   it('pins the back button to the inline start side and uses Button gap for icon spacing', () => {

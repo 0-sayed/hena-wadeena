@@ -147,7 +147,7 @@ const AttractionDetailsPage = () => {
                       {t('attractions.durationTitle')}
                     </span>
                     <span className="font-semibold">
-                      {t('attractions.hours', { hours: attraction.durationHours })}
+                      {t('attractions.hours', { count: attraction.durationHours })}
                     </span>
                   </CardContent>
                 </Card>
@@ -217,19 +217,19 @@ const AttractionDetailsPage = () => {
                   {attraction.entryFee.adultsPiasters != null && (
                     <p>
                       {t('attractions.adultsFeeLabel')}
-                      {piastresToEgp(attraction.entryFee.adultsPiasters)}
+                      {piastresToEgp(attraction.entryFee.adultsPiasters)} {t('list.currency')}
                     </p>
                   )}
                   {attraction.entryFee.childrenPiasters != null && (
                     <p>
                       {t('attractions.childrenFeeLabel')}
-                      {piastresToEgp(attraction.entryFee.childrenPiasters)}
+                      {piastresToEgp(attraction.entryFee.childrenPiasters)} {t('list.currency')}
                     </p>
                   )}
                   {attraction.entryFee.foreignersPiasters != null && (
                     <p>
                       {t('attractions.foreignersFeeLabel')}
-                      {piastresToEgp(attraction.entryFee.foreignersPiasters)}
+                      {piastresToEgp(attraction.entryFee.foreignersPiasters)} {t('list.currency')}
                     </p>
                   )}
                 </div>

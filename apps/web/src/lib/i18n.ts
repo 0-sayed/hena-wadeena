@@ -20,6 +20,7 @@ import dashboardAr from '@/locales/ar/dashboard.json';
 import walletAr from '@/locales/ar/wallet.json';
 import kycAr from '@/locales/ar/kyc.json';
 import searchAr from '@/locales/ar/search.json';
+import marketplaceAr from '@/locales/ar/marketplace.json';
 
 import commonEn from '@/locales/en/common.json';
 import layoutEn from '@/locales/en/layout.json';
@@ -38,66 +39,88 @@ import dashboardEn from '@/locales/en/dashboard.json';
 import walletEn from '@/locales/en/wallet.json';
 import kycEn from '@/locales/en/kyc.json';
 import searchEn from '@/locales/en/search.json';
+import marketplaceEn from '@/locales/en/marketplace.json';
 
 // ── i18next configuration ──────────────────────────────────────────
 void i18n
-    .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
-        resources: {
-            ar: {
-                common: commonAr,
-                layout: layoutAr,
-                home: homeAr,
-                auth: authAr,
-                accommodation: accommodationAr,
-                admin: adminAr,
-                guides: guidesAr,
-                jobs: jobsAr,
-                market: marketAr,
-                tourism: tourismAr,
-                logistics: logisticsAr,
-                investment: investmentAr,
-                profile: profileAr,
-                dashboard: dashboardAr,
-                wallet: walletAr,
-                kyc: kycAr,
-                search: searchAr,
-            },
-            en: {
-                common: commonEn,
-                layout: layoutEn,
-                home: homeEn,
-                auth: authEn,
-                accommodation: accommodationEn,
-                admin: adminEn,
-                guides: guidesEn,
-                jobs: jobsEn,
-                market: marketEn,
-                tourism: tourismEn,
-                logistics: logisticsEn,
-                investment: investmentEn,
-                profile: profileEn,
-                dashboard: dashboardEn,
-                wallet: walletEn,
-                kyc: kycEn,
-                search: searchEn,
-            },
-        },
-        fallbackLng: 'ar',
-        defaultNS: 'common',
-        ns: ['common', 'layout', 'home', 'auth', 'accommodation', 'admin', 'guides', 'jobs', 'market', 'tourism', 'logistics', 'investment', 'profile', 'dashboard', 'wallet', 'kyc', 'search'],
-        interpolation: {
-            escapeValue: false, // React already escapes
-        },
-        detection: {
-            order: ['localStorage'],
-            lookupLocalStorage: 'hena-wadeena:language',
-            caches: [], // auth-context manages persistence, not the detector
-        },
-        react: {
-            useSuspense: false, // translations are bundled, no async loading
-        },
-    });
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources: {
+      ar: {
+        common: commonAr,
+        layout: layoutAr,
+        home: homeAr,
+        auth: authAr,
+        accommodation: accommodationAr,
+        admin: adminAr,
+        guides: guidesAr,
+        jobs: jobsAr,
+        market: marketAr,
+        tourism: tourismAr,
+        logistics: logisticsAr,
+        investment: investmentAr,
+        profile: profileAr,
+        dashboard: dashboardAr,
+        wallet: walletAr,
+        kyc: kycAr,
+        search: searchAr,
+        marketplace: marketplaceAr,
+      },
+      en: {
+        common: commonEn,
+        layout: layoutEn,
+        home: homeEn,
+        auth: authEn,
+        accommodation: accommodationEn,
+        admin: adminEn,
+        guides: guidesEn,
+        jobs: jobsEn,
+        market: marketEn,
+        tourism: tourismEn,
+        logistics: logisticsEn,
+        investment: investmentEn,
+        profile: profileEn,
+        dashboard: dashboardEn,
+        wallet: walletEn,
+        kyc: kycEn,
+        search: searchEn,
+        marketplace: marketplaceEn,
+      },
+    },
+    fallbackLng: 'ar',
+    defaultNS: 'common',
+    ns: [
+      'common',
+      'layout',
+      'home',
+      'auth',
+      'accommodation',
+      'admin',
+      'guides',
+      'jobs',
+      'market',
+      'tourism',
+      'logistics',
+      'investment',
+      'profile',
+      'dashboard',
+      'wallet',
+      'kyc',
+      'search',
+      'marketplace',
+    ],
+    interpolation: {
+      escapeValue: false, // React already escapes
+    },
+    detection: {
+      order: ['localStorage'],
+      lookupLocalStorage: 'hena-wadeena:language',
+      caches: [], // auth-context manages persistence, not the detector
+    },
+    react: {
+      useSuspense: false, // translations are bundled, no async loading
+    },
+  });
 
 export default i18n;

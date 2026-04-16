@@ -6,6 +6,7 @@
   "list.back": "Back to Tourism",
   "list.searchPlaceholder": "Search by neighborhood, address, or description",
   "list.districtLabel": "District",
+  "list.allDistricts": "All Districts",
   "list.errorLoading": "Could not load accommodation listings at this time.",
   "list.retry": "Retry",
   "list.emptyMatch": "No accommodation listings match your search.",

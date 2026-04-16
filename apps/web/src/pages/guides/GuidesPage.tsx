@@ -63,7 +63,7 @@ const GuidesPage = () => {
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setFilters((previous) => ({ ...previous, search: value || undefined }));
-  });
+  }, 300);
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value;
@@ -136,7 +136,7 @@ const GuidesPage = () => {
                 placeholder={t('searchPlaceholder')}
                 value={searchInput}
                 onChange={handleSearchChange}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28 md:h-16 md:text-lg"
               />
               <Button
                 type="submit"

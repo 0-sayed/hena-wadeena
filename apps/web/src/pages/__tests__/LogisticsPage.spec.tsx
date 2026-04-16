@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { UserRole } from '@hena-wadeena/types';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 
 import LogisticsPage from '../LogisticsPage';
 
@@ -270,6 +271,7 @@ vi.mock('sonner', () => ({
 
 describe('LogisticsPage', () => {
   beforeEach(() => {
+    void i18n.changeLanguage('ar');
     mockNavigate.mockReset();
     mockUseAuth.mockReset();
     mockUsePois.mockReset();
@@ -297,6 +299,10 @@ describe('LogisticsPage', () => {
     mockUseActivateRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
     mockUseCancelRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
     mockUseDeleteRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
   });
 
   it('opens the poi detail sheet when a map marker is clicked', () => {
@@ -391,6 +397,7 @@ describe('LogisticsPage', () => {
 
 describe('LogisticsPage ride creation access', () => {
   beforeEach(() => {
+    void i18n.changeLanguage('ar');
     mockNavigate.mockReset();
     mockUseAuth.mockReset();
     mockUsePois.mockReset();
@@ -408,6 +415,10 @@ describe('LogisticsPage ride creation access', () => {
     mockUseActivateRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
     mockUseCancelRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
     mockUseDeleteRide.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
   });
 
   it('hides the add-trip action from unauthorized roles', () => {
