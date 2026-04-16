@@ -1,0 +1,43 @@
+{
+  "title": "التحقق من الهوية",
+  "loading": "جاري تحميل حالة التحقق...",
+  "loadError": "تعذر تحميل جلسة التحقق",
+  "cardTitle": "استكمال التحقق من الهوية",
+  "cardDescription": "ارفع المستندات المطلوبة لتفعيل حساب {{name}}",
+  "document": {
+    "NATIONAL_ID": "بطاقة الرقم القومي",
+    "STUDENT_ID": "بطاقة الطالب",
+    "GUIDE_LICENSE": "رخصة الإرشاد",
+    "COMMERCIAL_REGISTER": "السجل التجاري",
+    "BUSINESS_DOCUMENT": "مستند تجاري",
+    "label": "المستند",
+    "selectFile": "اختر الملف",
+    "uploadSuccess": "تم رفع المستند بنجاح",
+    "uploadError": "تعذر رفع المستند",
+    "readError": "تعذر قراءة الملف",
+    "typeError": "اختر ملف PDF أو صورة JPG/PNG/WebP",
+    "sizeError": "حجم الملف يجب ألا يتجاوز 5 ميجابايت",
+    "requiredError": "اختر الملف أولاً"
+  },
+  "status": {
+    "pending": "قيد الانتظار",
+    "under_review": "قيد المراجعة",
+    "approved": "مقبول",
+    "rejected": "مرفوض",
+    "current": "الحالة الحالية: {{status}}",
+    "notSubmitted": "لم يتم رفع هذا المستند بعد",
+    "rejectionReason": "سبب الرفض: {{reason}}"
+  },
+  "button": {
+    "submitting": "جارٍ الرفع...",
+    "reUpload": "إعادة الرفع",
+    "approved": "تم الاعتماد",
+    "pendingReview": "بانتظار المراجعة",
+    "upload": "رفع المستند",
+    "backToLogin": "العودة إلى تسجيل الدخول"
+  },
+  "info": {
+    "title": "ماذا يحدث بعد الرفع؟",
+    "description": "تظهر المستندات في لوحة الإدارة للمراجعة. سيبقى الحساب معلقًا حتى يتم اعتماد كل المستندات المطلوبة."
+  }
+}

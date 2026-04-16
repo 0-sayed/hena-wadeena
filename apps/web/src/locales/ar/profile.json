@@ -1,0 +1,64 @@
+{
+  "title": "الملف الشخصي",
+  "loadError": "لا يمكن تحميل الملف الشخصي حاليًا.",
+  "notProvided": "غير مضاف",
+  "roles": {
+    "admin": "مدير",
+    "tourist": "سائح",
+    "investor": "مستثمر",
+    "merchant": "تاجر",
+    "guide": "مرشد سياحي",
+    "student": "طالب",
+    "driver": "سائق",
+    "resident": "مقيم",
+    "moderator": "منسق",
+    "reviewer": "مراجع"
+  },
+  "status": {
+    "active": "نشط",
+    "suspended": "معلّق",
+    "inactive": "غير نشط",
+    "pending": "قيد المراجعة",
+    "pending_kyc": "بانتظار التحقق",
+    "rejected": "مرفوض"
+  },
+  "languages": {
+    "ar": "العربية",
+    "en": "English"
+  },
+  "form": {
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "language": "اللغة",
+    "saveBtn": "حفظ التغييرات",
+    "savingBtn": "جارٍ الحفظ...",
+    "cancelBtn": "إلغاء",
+    "editBtn": "تعديل الملف الشخصي",
+    "changePasswordBtn": "تغيير كلمة المرور"
+  },
+  "validation": {
+    "fullNameRequired": "الاسم الكامل مطلوب",
+    "fullNameMin": "الاسم الكامل يجب أن يكون 3 أحرف على الأقل",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "emailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا",
+    "phoneInvalid": "أدخل رقم هاتف صحيحًا"
+  },
+  "toast": {
+    "updateSuccess": "تم تحديث الملف الشخصي بنجاح",
+    "updateError": "تعذر تحديث الملف الشخصي",
+    "imageType": "اختر صورة بصيغة JPG أو PNG أو WebP",
+    "imageSize": "حجم الصورة يجب ألا يتجاوز 5 ميجابايت",
+    "imageReadError": "تعذر قراءة الصورة",
+    "imageReady": "تم تجهيز الصورة. احفظ التغييرات لتحديث الملف الشخصي"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markAllRead": "قراءة الكل",
+    "loadError": "حدث خطأ في تحميل الإشعارات",
+    "retryBtn": "إعادة المحاولة",
+    "empty": "لا توجد إشعارات",
+    "markReadError": "تعذر تحديث الإشعار",
+    "markAllReadError": "تعذر تحديث الإشعارات"
+  }
+}

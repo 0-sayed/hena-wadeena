@@ -1,0 +1,155 @@
+{
+  "pageTitle": "Tour Guides",
+  "heroBadge": "Tour Guides",
+  "heroTitle": "Tour Guides",
+  "heroSubtitle": "Choose your guide and book a memorable trip in the New Valley",
+  "searchPlaceholder": "Search by specialty or description...",
+  "searchBtn": "Search",
+  
+  "filter": {
+    "language": "Language",
+    "allLanguages": "All Languages",
+    "specialty": "Specialty",
+    "allSpecialties": "All Specialties",
+    "area": "Area",
+    "allAreas": "All Areas"
+  },
+
+  "loadError": "An error occurred while loading guides",
+  "retryBtn": "Retry",
+  "noGuides": "No guides available",
+  "noMatchingGuides": "No guides match your search",
+
+  "guide": {
+    "defaultName": "Tour Guide",
+    "defaultBio": "Certified guide for New Valley trips",
+    "licensedBadge": "Licensed",
+    "perDay": "/day",
+    "packagesAvailable_zero": "{{count}} packages available",
+    "packagesAvailable_one": "{{count}} package available",
+    "packagesAvailable_other": "{{count}} packages available"
+  },
+
+  "profileTitle": "Guide Profile",
+  "loadErrorProfile": "Could not load guide details",
+  
+  "stats": {
+    "ratingCount_zero": "{{count}} ratings",
+    "ratingCount_one": "{{count}} rating",
+    "ratingCount_other": "{{count}} ratings",
+    "reviewCount_zero": "{{count}} reviews",
+    "reviewCount_one": "{{count}} review",
+    "reviewCount_other": "{{count}} reviews",
+    "packageCount_zero": "{{count}} packages",
+    "packageCount_one": "{{count}} package",
+    "packageCount_other": "{{count}} packages"
+  },
+
+  "packages": {
+    "title": "Available Packages",
+    "empty": "No packages available currently",
+    "hours_zero": "{{count}} hours",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "upToPeople": "Up to {{count}} people",
+    "perPerson": "/ person",
+    "bookNow": "Book Now"
+  },
+
+  "reviews": {
+    "title": "Traveler Reviews",
+    "empty": "No reviews yet",
+    "guideReply": "Guide's Reply",
+    "helpful": "Helpful ({{count}})",
+    "error": "An error occurred"
+  },
+
+  "backBtn": "Back",
+
+  "dashboard": {
+    "title": "Guide dashboard",
+    "subtitle": "Manage your profile, tour packages, and bookings",
+    "currency": "EGP",
+    "hours": "hours",
+    "stats": {
+      "packages": "Packages",
+      "newRequests": "New requests",
+      "activeBookings": "Active bookings",
+      "totalEarnings": "Total earnings"
+    },
+    "profile": {
+      "titleEdit": "Guide profile",
+      "titleCreate": "Create guide profile",
+      "description": "Update the core details visitors will see",
+      "licenseNumber": "License number",
+      "dailyRate": "Daily rate (EGP)",
+      "bio": "Bio",
+      "languages": "Languages",
+      "languagesPlaceholder": "Select supported languages",
+      "specialties": "Specialties",
+      "specialtiesPlaceholder": "Select specialties",
+      "areas": "Areas of operation",
+      "areasPlaceholder": "Select operating areas",
+      "updateBtn": "Update profile",
+      "createBtn": "Create profile",
+      "saving": "Saving..."
+    },
+    "package": {
+      "titleEdit": "Edit package",
+      "titleAdd": "Add a new package",
+      "description": "Create tourism packages and keep prices and capacity up to date",
+      "formTitle": "Package title",
+      "formDesc": "Description",
+      "formDuration": "Duration (hours)",
+      "formMaxPeople": "Max guests",
+      "formPrice": "Price (EGP)",
+      "formIncludes": "Included items",
+      "formIncludesPlaceholder": "transport, guide, snack",
+      "saveBtnUpdate": "Update package",
+      "saveBtnAdd": "Add package",
+      "cancelBtn": "Cancel editing"
+    },
+    "packagesList": {
+      "title": "Current packages",
+      "empty": "No packages yet.",
+      "colPackage": "Package",
+      "colDuration": "Duration",
+      "colCapacity": "Capacity",
+      "colPrice": "Price",
+      "colActions": "Actions"
+    },
+    "bookings": {
+      "title": "Bookings",
+      "description": "Confirm, start, or complete bookings from here",
+      "empty": "No bookings linked to you right now.",
+      "colDate": "Date",
+      "colGuests": "Guests",
+      "colStatus": "Status",
+      "actions": {
+        "confirm": "Confirm",
+        "startTour": "Start tour",
+        "completeTour": "Complete tour",
+        "cancel": "Cancel"
+      }
+    },
+    "toasts": {
+      "licenseRequired": "License number is required",
+      "invalidDailyRate": "Enter a valid daily rate",
+      "profileUpdated": "Guide profile updated",
+      "profileCreated": "Guide profile created",
+      "profileSaveError": "Unable to save the guide profile",
+      "packageTitleRequired": "Package title is required",
+      "invalidDuration": "Duration is invalid",
+      "invalidMaxPeople": "Max guests is invalid",
+      "invalidPrice": "Package price is invalid",
+      "packageUpdated": "Package updated",
+      "packageAdded": "Package added",
+      "packageSaveError": "Unable to save the package",
+      "packageDeleted": "Package deleted",
+      "packageDeleteError": "Unable to delete the package",
+      "bookingUpdated": "Booking status updated",
+      "bookingUpdateError": "Unable to update the booking",
+      "cancelledByGuide": "Cancelled by the guide"
+    }
+  }
+}

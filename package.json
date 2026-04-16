@@ -48,6 +48,11 @@
     "unplugin-swc": "^1.5.9",
     "vitest": "^3.0.0"
   },
+  "dependencies": {
+    "i18next": "^26.0.4",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "react-i18next": "^17.0.2"
+  },
   "pnpm": {
     "overrides": {
       "axios": "^1.15.0",

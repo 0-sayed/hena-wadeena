@@ -1,0 +1,145 @@
+{
+  "pageTitle": "المرشدون السياحيون",
+  "heroBadge": "المرشدين السياحيين",
+  "heroTitle": "المرشدين السياحيين",
+  "heroSubtitle": "اختر مرشدك واحجز رحلة مميزة في الوادي الجديد",
+  "searchPlaceholder": "ابحث بالتخصص أو الوصف...",
+  "searchBtn": "ابحث",
+  
+  "filter": {
+    "language": "اللغة",
+    "allLanguages": "كل اللغات",
+    "specialty": "التخصص",
+    "allSpecialties": "كل التخصصات",
+    "area": "المنطقة",
+    "allAreas": "كل المناطق"
+  },
+
+  "loadError": "حدث خطأ أثناء تحميل المرشدين",
+  "retryBtn": "إعادة المحاولة",
+  "noGuides": "لا يوجد مرشدون متاحون",
+  "noMatchingGuides": "لا يوجد مرشدون مطابقون للبحث",
+
+  "guide": {
+    "defaultName": "مرشد سياحي",
+    "defaultBio": "مرشد معتمد لرحلات الوادي الجديد",
+    "licensedBadge": "مرخّص",
+    "perDay": "/يوم",
+    "packagesAvailable": "{{count}} باقة متاحة"
+  },
+
+  "profileTitle": "ملف المرشد",
+  "loadErrorProfile": "تعذّر تحميل بيانات المرشد",
+  
+  "stats": {
+    "ratingCount": "{{count}} تقييم",
+    "reviewCount": "{{count}} مراجعة",
+    "packageCount": "{{count}} باقة"
+  },
+
+  "packages": {
+    "title": "الباقات المتاحة",
+    "empty": "لا توجد باقات متاحة حالياً",
+    "hours": "{{count}} ساعة",
+    "upToPeople": "حتى {{count}} أفراد",
+    "perPerson": "/ فرد",
+    "bookNow": "احجز الآن"
+  },
+
+  "reviews": {
+    "title": "تقييمات المسافرين",
+    "empty": "لا توجد تقييمات بعد",
+    "guideReply": "رد المرشد",
+    "helpful": "مفيد ({{count}})",
+    "error": "حدث خطأ"
+  },
+
+  "backBtn": "رجوع",
+
+  "dashboard": {
+    "title": "لوحة المرشد",
+    "subtitle": "إدارة الملف التعريفي والبرامج السياحية وطلبات الحجز",
+    "currency": "ج.م",
+    "hours": "ساعة",
+    "stats": {
+      "packages": "الباقات",
+      "newRequests": "طلبات جديدة",
+      "activeBookings": "حجوزات نشطة",
+      "totalEarnings": "إجمالي الأرباح"
+    },
+    "profile": {
+      "titleEdit": "ملف المرشد",
+      "titleCreate": "إنشاء ملف المرشد",
+      "description": "حدّث بياناتك الأساسية كما ستظهر للزوار",
+      "licenseNumber": "رقم الترخيص",
+      "dailyRate": "السعر اليومي (جنيه)",
+      "bio": "نبذة تعريفية",
+      "languages": "اللغات",
+      "languagesPlaceholder": "اختر اللغات المتاحة",
+      "specialties": "التخصصات",
+      "specialtiesPlaceholder": "اختر مجالات التخصص",
+      "areas": "مناطق العمل",
+      "areasPlaceholder": "اختر المناطق التي تعمل بها",
+      "updateBtn": "تحديث الملف",
+      "createBtn": "إنشاء الملف",
+      "saving": "جارٍ الحفظ..."
+    },
+    "package": {
+      "titleEdit": "تعديل الباقة",
+      "titleAdd": "إضافة باقة جديدة",
+      "description": "أنشئ برامجك السياحية وحدّث الأسعار والسعة",
+      "formTitle": "عنوان الباقة",
+      "formDesc": "الوصف",
+      "formDuration": "الساعات",
+      "formMaxPeople": "أقصى عدد",
+      "formPrice": "السعر (جنيه)",
+      "formIncludes": "المتضمن",
+      "formIncludesPlaceholder": "مواصلات, مرشد, وجبة خفيفة",
+      "saveBtnUpdate": "تحديث الباقة",
+      "saveBtnAdd": "إضافة الباقة",
+      "cancelBtn": "إلغاء التعديل"
+    },
+    "packagesList": {
+      "title": "الباقات الحالية",
+      "empty": "لم تقم بإضافة باقات بعد.",
+      "colPackage": "الباقة",
+      "colDuration": "المدة",
+      "colCapacity": "السعة",
+      "colPrice": "السعر",
+      "colActions": "الإجراءات"
+    },
+    "bookings": {
+      "title": "طلبات الحجز",
+      "description": "يمكنك تأكيد الحجز أو بدء الجولة أو إنهاؤها من هنا",
+      "empty": "لا توجد حجوزات مرتبطة بك حاليًا.",
+      "colDate": "التاريخ",
+      "colGuests": "الأشخاص",
+      "colStatus": "الحالة",
+      "actions": {
+        "confirm": "تأكيد",
+        "startTour": "بدء الجولة",
+        "completeTour": "إنهاء الجولة",
+        "cancel": "إلغاء"
+      }
+    },
+    "toasts": {
+      "licenseRequired": "رقم الترخيص مطلوب",
+      "invalidDailyRate": "أدخل سعرًا صحيحًا لليوم",
+      "profileUpdated": "تم تحديث ملف المرشد",
+      "profileCreated": "تم إنشاء ملف المرشد",
+      "profileSaveError": "تعذر حفظ ملف المرشد",
+      "packageTitleRequired": "عنوان الباقة مطلوب",
+      "invalidDuration": "عدد الساعات غير صحيح",
+      "invalidMaxPeople": "العدد الأقصى للأشخاص غير صحيح",
+      "invalidPrice": "سعر الباقة غير صحيح",
+      "packageUpdated": "تم تحديث الباقة",
+      "packageAdded": "تمت إضافة الباقة",
+      "packageSaveError": "تعذر حفظ الباقة",
+      "packageDeleted": "تم حذف الباقة",
+      "packageDeleteError": "تعذر حذف الباقة",
+      "bookingUpdated": "تم تحديث حالة الحجز",
+      "bookingUpdateError": "تعذر تحديث الحجز",
+      "cancelledByGuide": "تم الإلغاء من قبل المرشد"
+    }
+  }
+}

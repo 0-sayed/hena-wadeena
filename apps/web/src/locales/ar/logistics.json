@@ -1,0 +1,178 @@
+{
+  "transport": {
+    "title": "شركات النقل المحلي",
+    "desc": "دليل شركات النقل والحافلات داخل الوادي الجديد مع روابط الحجز وبيانات التواصل.",
+    "addBtn": "إضافة شركة نقل",
+    "empty": "لا توجد شركات نقل محلية مسجلة حالياً.",
+    "headquarters": "المقر",
+    "generalInfo": "نبذة عامة",
+    "bookingLink": "رابط الحجز",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "dialog": {
+      "titleAdd": "إضافة شركة نقل",
+      "titleEdit": "تعديل شركة النقل",
+      "desc": "أضف بيانات الحجز والتواصل والشعار لتظهر مباشرة داخل تبويب النقل المحلي."
+    },
+    "form": {
+      "name": "اسم الشركة",
+      "district": "المنطقة",
+      "logo": "الشعار",
+      "uploadLogo": "رفع الشعار",
+      "noLogo": "لم يتم رفع شعار بعد.",
+      "contact": "بيانات التواصل",
+      "updateBtn": "تحديث الشركة",
+      "addBtn": "إضافة الشركة"
+    },
+    "toast": {
+      "imageType": "اختر صورة بصيغة JPG أو PNG أو WebP",
+      "imageSize": "حجم الشعار يجب ألا يتجاوز 2 ميجابايت",
+      "readError": "تعذر قراءة الشعار",
+      "uploaded": "تم رفع الشعار وسيظهر بعد الحفظ",
+      "nameReq": "اسم الشركة مطلوب",
+      "districtReq": "اختر المنطقة",
+      "linkInvalid": "رابط الحجز يجب أن يبدأ بـ http:// أو https://",
+      "updated": "تم تحديث شركة النقل",
+      "added": "تمت إضافة شركة النقل",
+      "saveError": "تعذر حفظ شركة النقل",
+      "deleteConfirm": "هل تريد حذف شركة النقل هذه؟",
+      "deleted": "تم حذف شركة النقل",
+      "deleteError": "تعذر حذف شركة النقل"
+    }
+  },
+  "hero": {
+    "badge": "الخريطة والتنقل",
+    "title": "اللوجستيات والتنقل",
+    "subtitle": "استكشف معالم الوادي الجديد وشارك رحلتك مع الآخرين"
+  },
+  "tabs": {
+    "explore": "استكشف الخريطة",
+    "carpool": "مشاركة الرحلات",
+    "transport": "النقل المحلي"
+  },
+  "map": {
+    "searchPlaceholder": "ابحث عن مكان...",
+    "nearbyBtn": "بالقرب مني",
+    "clearLocationBtn": "إلغاء الموقع",
+    "suggestPlaceBtn": "اقترح مكان",
+    "suggestPlaceToast": "ميزة اقتراح الأماكن قريباً",
+    "browserLocationError": "المتصفح لا يدعم تحديد الموقع",
+    "detectLocationError": "لم نتمكن من تحديد موقعك",
+    "noNearbyFound": "لا توجد أماكن ضمن 50 كم من موقعك الحالي. اعرض جميع الأماكن في الوادي الجديد.",
+    "resultsCount": "{{count}} نتيجة",
+    "categories": {
+      "all": "الكل",
+      "historical": "تاريخي",
+      "natural": "طبيعي",
+      "religious": "ديني",
+      "recreational": "ترفيهي",
+      "accommodation": "إقامة",
+      "restaurant": "مطعم",
+      "service": "خدمات",
+      "government": "حكومي"
+    },
+    "poiDetails": {
+      "phone": "الهاتف",
+      "website": "الموقع الإلكتروني",
+      "openInMaps": "افتح في Google Maps",
+      "visitWebsite": "زيارة الموقع",
+      "address": "العنوان",
+      "reviews": "({{count}} تقييم)"
+    }
+  },
+  "rides": {
+    "title": "الرحلات المتاحة",
+    "myRidesBtn": "رحلاتي",
+    "addRideBtn": "أضف رحلتك",
+    "emptyState": "لا توجد رحلات متاحة حالياً",
+    "beFirstBtn": "كن أول من يضيف رحلة",
+    "loginRequiredToast": "يجب تسجيل الدخول أولاً",
+    "deleteConfirm": "هل تريد حذف هذه الرحلة نهائياً؟",
+    "seats": "{{count}} مقاعد متاحة",
+    "seats_one": "{{count}} مقعد متاح",
+    "toasts": {
+      "cancelled": "تم إلغاء الرحلة",
+      "reactivated": "تمت إعادة تفعيل الرحلة",
+      "deleted": "تم حذف الرحلة"
+    },
+    "status": {
+      "open": "متاحة",
+      "full": "مكتملة المقاعد",
+      "departed": "غادرت",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة"
+    },
+    "passengerStatus": {
+      "requested": "بانتظار التأكيد",
+      "confirmed": "مؤكد",
+      "declined": "مرفوض",
+      "cancelled": "ملغي"
+    },
+    "actions": {
+      "cancel": "إلغاء الرحلة",
+      "reactivate": "إعادة التفعيل",
+      "delete": "حذف الرحلة"
+    },
+    "userRides": {
+      "asDriver": "كسائق ({{count}})",
+      "asPassenger": "كراكب ({{count}})",
+      "noDriverRides": "لم تنشئ أي رحلات بعد",
+      "noPassengerRides": "لم تنضم لأي رحلات بعد",
+      "passengerSeats": "{{count}} مقاعد",
+      "passengerSeats_one": "{{count}} مقعد"
+    },
+    "rideDetails": {
+      "title": "تفاصيل الرحلة",
+      "loadError": "حدث خطأ أثناء تحميل الرحلة",
+      "notFound": "الرحلة غير موجودة",
+      "seatsAvailability": "{{count}} من {{total}} مقاعد متاحة",
+      "signInToJoin": "سجل دخول للانضمام",
+      "sending": "جارٍ الإرسال...",
+      "requestSeat": "طلب مقعد",
+      "cancelRequest": "إلغاء طلبي",
+      "passengersTitle": "الركاب ({{count}})",
+      "toasts": {
+        "requestSent": "تم إرسال طلب الانضمام",
+        "requestCancelled": "تم إلغاء طلب الانضمام",
+        "passengerConfirmed": "تم تأكيد الراكب",
+        "passengerDeclined": "تم رفض الراكب"
+      }
+    },
+    "createRide": {
+      "title": "إنشاء رحلة جديدة",
+      "backBtn": "العودة للخريطة والتنقل",
+      "cardTitle": "إنشاء رحلة جديدة",
+      "cardSubtitle": "شارك رحلتك مع الآخرين ووفر التكلفة",
+      "creating": "جارٍ الإنشاء...",
+      "publishBtn": "نشر الرحلة",
+      "placeholders": {
+        "origin": "اختر نقطة الانطلاق",
+        "destination": "اختر الوجهة",
+        "notes": "أي تفاصيل إضافية عن الرحلة..."
+      },
+      "labels": {
+        "from": "من",
+        "to": "إلى",
+        "date": "التاريخ",
+        "time": "الوقت",
+        "seats": "عدد المقاعد المتاحة",
+        "price": "السعر للمقعد (جنيه) — 0 = مجاني",
+        "notes": "ملاحظات إضافية"
+      },
+      "toasts": {
+        "selectEndpoints": "اختر نقطة الانطلاق والوجهة",
+        "sameEndpoints": "نقطة الانطلاق والوجهة يجب أن تكونا مختلفتين",
+        "missingDateTime": "حدد التاريخ والوقت",
+        "futureOnly": "وقت المغادرة يجب أن يكون في المستقبل",
+        "success": "تم إنشاء الرحلة بنجاح!",
+        "error": "حدث خطأ أثناء إنشاء الرحلة"
+      }
+    }
+  },
+  "back": "العودة",
+  "form": {
+    "from": "من أين؟",
+    "to": "إلى أين؟",
+    "clear": "مسح"
+  }
+}

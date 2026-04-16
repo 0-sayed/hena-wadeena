@@ -1,0 +1,21 @@
+{
+  "title": "نتائج البحث",
+  "placeholder": "ابحث عن أماكن، مرشدين، فرص استثمارية...",
+  "comprehensiveSearch": "بحث شامل",
+  "mainHeading": "بحث في المنصة",
+  "resultsCount": "{{count}} نتيجة لـ \"{{query}}\"",
+  "hasMore": " (يوجد المزيد)",
+  "fromSources": "من: {{sources}}",
+  "error": "حدث خطأ أثناء البحث. حاول مرة أخرى.",
+  "empty": "لا توجد نتائج. جرب كلمات بحث مختلفة.",
+  "types": {
+    "listing": "إعلان",
+    "opportunity": "استثمار",
+    "business": "دليل أعمال",
+    "user": "مستخدم",
+    "guide": "مرشد",
+    "attraction": "معلم سياحي",
+    "package": "باقة",
+    "poi": "مكان"
+  }
+}

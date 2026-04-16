@@ -1,0 +1,210 @@
+{
+  "title": "البورصة",
+  "hero": {
+    "title": "البورصة والأسعار",
+    "subtitle": "أسعار المنتجات المحلية، دليل الموردين، والتواصل المباشر",
+    "badge": "البورصة والأسعار"
+  },
+  "tabs": {
+    "prices": "لوحة الأسعار",
+    "suppliers": "دليل الموردين"
+  },
+  "filters": {
+    "selectCity": "اختر المدينة",
+    "searchProduct": "ابحث عن منتج..."
+  },
+  "table": {
+    "cityPrices": "أسعار {{city}}",
+    "product": "المنتج",
+    "category": "التصنيف",
+    "price": "السعر",
+    "change": "التغيير",
+    "priceUnit": "جنيه/{{unit}}"
+  },
+  "suppliers": {
+    "searchPlaceholder": "ابحث عن مورد...",
+    "addBtn": "إضافة مورد",
+    "verified": "موثق",
+    "viewProfile": "عرض الملف",
+    "visitWebsite": "زيارة الموقع"
+  },
+  "dialog": {
+    "addTitle": "إضافة مورد جديد",
+    "addDesc": "اختر المحصول الرئيسي من القائمة، أو استخدم \"أخرى\" لإدخال محصول غير موجود.",
+    "form": {
+      "name": "اسم المورد",
+      "primaryCommodity": "المحصول الرئيسي",
+      "other": "أخرى",
+      "customCommodity": "حدد المحصول",
+      "customPlaceholder": "اكتب اسم المحصول",
+      "phone": "رقم التواصل",
+      "website": "رابط الموقع",
+      "logo": "رابط الشعار",
+      "description": "نبذة عن المورد (بالعربية)",
+      "commodities": "محاصيل أخرى يوفرها المورد"
+    }
+  },
+  "toast": {
+    "nameReq": "اسم المورد مطلوب",
+    "commodityReq": "اختر المحصول الرئيسي",
+    "customNameReq": "أدخل اسم المحصول المخصص",
+    "districtReq": "اختر المنطقة",
+    "urlInvalid": "رابط الموقع يجب أن يبدأ بـ http:// أو https://",
+    "logoInvalid": "رابط الشعار يجب أن يكون مساراً نسبياً أو رابط http(s) أو data URL",
+    "added": "تمت إضافة المورد وظهر مباشرة في الدليل",
+    "error": "تعذر إضافة المورد"
+  },
+  "lastMarketUpdate": "آخر تحديث للبورصة: {{date}}",
+  "lastUpdateUnavailable": "آخر تحديث: غير متاح",
+  "listingDetails": {
+    "title": "تفاصيل الإعلان",
+    "loadError": "تعذر تحميل تفاصيل الإعلان.",
+    "backToMarket": "العودة إلى السوق",
+    "retry": "إعادة المحاولة",
+    "back": "العودة",
+    "undefinedDistrict": "غير محدد",
+    "rating": "التقييم: ",
+    "reviews": "({{count}} تقييم)",
+    "descriptionTitle": "وصف الإعلان",
+    "amenitiesTitle": "المميزات",
+    "featuresTitle": "تفاصيل إضافية",
+    "locationTitle": "الموقع",
+    "noCoordinates": "لا تتوفر إحداثيات دقيقة لهذا الإعلان حالياً.",
+    "summaryTitle": "ملخص الإعلان",
+    "priceLabel": "السعر",
+    "priceUnit": "جنيه/{{unit}}",
+    "unitFallback": "الوحدة",
+    "viewAccommodation": "عرض صفحة السكن",
+    "manageInquiries": "متابعة الاستفسارات الواردة",
+    "sendInquiry": "إرسال استفسار إلى المالك",
+    "ownerTitle": "مالك الإعلان",
+    "ownerFallback": "صاحب الإعلان",
+    "ownerBadge": "مالك الإعلان",
+    "ownerSystemNote": "هذا الإعلان مرتبط بصاحبه مباشرة عبر النظام، ويمكنك إرسال استفسارك من الزر المخصص ليصل إلى صندوق الوارد الخاص به.",
+    "contactTitle": "بيانات التواصل",
+    "noContact": "لا توجد بيانات تواصل منشورة لهذا الإعلان."
+  },
+  "listingInquiry": {
+    "title": "استفسار الإعلان",
+    "loadError": "تعذر تحميل الإعلان المطلوب.",
+    "backToMarket": "العودة إلى السوق",
+    "back": "العودة",
+    "isOwnerError": "لا يمكنك إرسال استفسار إلى إعلانك الخاص",
+    "idMissingError": "الإعلان غير متاح حالياً",
+    "validationError": "يرجى إدخال الاسم والرسالة على الأقل",
+    "submitSuccess": "تم إرسال الاستفسار بنجاح، ويمكنك متابعته من تبويب الرسائل المرسلة.",
+    "submitError": "تعذر إرسال الاستفسار",
+    "cardTitle": "إرسال استفسار عن الإعلان",
+    "cardDescription": "سيتم حفظ رسالتك وربطها بالإعلان \"{{title}}\" لصالح \"{{owner}}\".",
+    "cardDescriptionNoOwner": "سيتم حفظ رسالتك وربطها بالإعلان \"{{title}}\".",
+    "form": {
+      "name": "الاسم *",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "message": "الرسالة *",
+      "messagePlaceholder": "اكتب سؤالك أو طلبك بخصوص هذا الإعلان..."
+    },
+    "button": {
+      "submitting": "جارٍ الإرسال...",
+      "submit": "إرسال الاستفسار"
+    }
+  },
+  "listingInquiries": {
+    "title": "استفسارات الإعلانات",
+    "header": {
+      "title": "استفسارات الإعلانات",
+      "subtitle": "تابع الوارد على إعلاناتك والرسائل التي أرسلتها إلى الملاك من مكان واحد.",
+      "received": "الوارد",
+      "sent": "المرسل"
+    },
+    "tabs": {
+      "received": "الوارد",
+      "sent": "المرسل"
+    },
+    "status": {
+      "pending": "غير مقروء",
+      "read": "تمت القراءة",
+      "replied": "تم الرد"
+    },
+    "errors": {
+      "loadReceived": "تعذر تحميل الاستفسارات الواردة حالياً.",
+      "loadSent": "تعذر تحميل الاستفسارات المرسلة حالياً."
+    },
+    "empty": {
+      "received": "لا توجد استفسارات واردة على إعلاناتك حتى الآن.",
+      "sent": "لم ترسل أي استفسارات بعد. يمكنك التواصل مع مالكي الإعلانات من صفحة الإعلان نفسها."
+    },
+    "badges": {
+      "fromNotifications": "من الإشعارات"
+    },
+    "buttons": {
+      "viewAd": "عرض الإعلان",
+      "markAsRead": "تحديد كمقروء",
+      "mail": "مراسلة بالبريد",
+      "call": "اتصال مباشر",
+      "updateReply": "تحديث الرد",
+      "sendReply": "إرسال الرد"
+    },
+    "inquiry": {
+      "originalMessage": "رسالة المهتم بالإعلان",
+      "replyLabel": "الرد داخل المنصة",
+      "lastReplyAt": "آخر رد {{time}}",
+      "replyPlaceholder": "اكتب ردك هنا ليظهر لصاحب الاستفسار في صندوق الرسائل...",
+      "replyNote": "تم حفظ الرد داخل سجل هذا الاستفسار ويمكن للمستخدم رؤيته في تبويب الرسائل المرسلة.",
+      "myOriginalMessage": "رسالتك الأصلية",
+      "ownerReply": "رد مالك الإعلان",
+      "repliedAt": "تم الرد {{time}}",
+      "noReplyYet": "لم يصل رد بعد. سيظهر هنا عند استجابة مالك الإعلان، كما ستصلك إشعارات المنصة.",
+      "ownerFallback": "مالك الإعلان"
+    }
+  },
+  "prices": {
+    "title": "أسعار السوق",
+    "backToMarket": "العودة للبورصة",
+    "heroTitle": "لوحة الأسعار المباشرة",
+    "heroSubtitle": "تابع أسعار المنتجات الزراعية في الوادي الجديد لحظة بلحظة",
+    "stats": {
+      "available": "منتج متاح",
+      "rising": "منتج صاعد",
+      "falling": "منتج هابط",
+      "stable": "منتج مستقر"
+    },
+    "movers": {
+      "gainers": "الأكثر ارتفاعاً",
+      "losers": "الأكثر انخفاضاً"
+    },
+    "filters": {
+      "selectCity": "اختر المدينة",
+      "searchProduct": "ابحث عن منتج..."
+    },
+    "table": {
+      "product": "المنتج",
+      "category": "التصنيف",
+      "city": "المدينة",
+      "price": "السعر",
+      "change": "التغير",
+      "priceUnit": "جنيه/{{unit}}"
+    },
+    "footer": {
+      "lastUpdated": "آخر تحديث: {{date}}",
+      "noData": "لا تتوفر بيانات حاليا"
+    }
+  },
+  "supplierDetails": {
+    "title": "تفاصيل المورد",
+    "backToMarket": "العودة للبورصة",
+    "loadError": "لم يتم العثور على المورد",
+    "verified": "موثق",
+    "aboutTitle": "عن المورد",
+    "productsTitle": "المنتجات",
+    "table": {
+      "product": "المنتج",
+      "unit": "الوحدة"
+    },
+    "contactTitle": "معلومات التواصل",
+    "regionSuffix": "، الوادي الجديد",
+    "callBtn": "اتصل الآن",
+    "visitWebsite": "زيارة الموقع",
+    "callAlert": "للتواصل مع {{name}}: {{phone}}"
+  }
+}

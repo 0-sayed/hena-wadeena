@@ -1,0 +1,21 @@
+{
+  "title": "Search Results",
+  "placeholder": "Search for places, guides, investment opportunities...",
+  "comprehensiveSearch": "Comprehensive Search",
+  "mainHeading": "Search Platform",
+  "resultsCount": "{{count}} results for \"{{query}}\"",
+  "hasMore": " (more exist)",
+  "fromSources": "From: {{sources}}",
+  "error": "An error occurred while searching. Try again.",
+  "empty": "No results found. Try different keywords.",
+  "types": {
+    "listing": "Ad",
+    "opportunity": "Investment",
+    "business": "Business Directory",
+    "user": "User",
+    "guide": "Guide",
+    "attraction": "Tourist Attraction",
+    "package": "Package",
+    "poi": "Place"
+  }
+}

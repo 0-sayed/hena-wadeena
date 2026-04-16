@@ -1,0 +1,277 @@
+{
+  "bookings": {
+    "title": "My bookings",
+    "loadError": "Something went wrong while loading your bookings",
+    "empty": "No bookings yet",
+    "browseGuides": "Browse guides",
+    "table": {
+      "package": "Package",
+      "date": "Date",
+      "status": "Status"
+    },
+    "status": {
+      "pending": "Pending approval",
+      "confirmed": "Confirmed booking",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "resident": {
+    "title": "Resident dashboard",
+    "subtitle": "Follow local services and listings in your area",
+    "stats": {
+      "latestListings": "Latest listings",
+      "services": "Services",
+      "pois": "Points of interest",
+      "govServices": "Government services",
+      "browse": "Browse"
+    },
+    "listings": {
+      "title": "Latest listings",
+      "loadError": "Something went wrong while loading listings",
+      "empty": "No listings available right now",
+      "browseMarketplace": "Browse marketplace"
+    },
+    "table": {
+      "title": "Title",
+      "type": "Type",
+      "district": "District",
+      "status": "Status",
+      "unknown": "Unknown"
+    },
+    "status": {
+      "verified": "Verified",
+      "underReview": "Under review"
+    },
+    "jobs": {
+      "title": "Job opportunities",
+      "description": "Browse available jobs and track your applications.",
+      "browseJobs": "Browse jobs",
+      "myApplications": "My applications"
+    }
+  },
+  "tourist": {
+    "title": "Tourist dashboard",
+    "subtitle": "Track your bookings and trips",
+    "stats": {
+      "total": "Total bookings",
+      "upcoming": "Upcoming",
+      "completed": "Completed"
+    }
+  },
+  "investor": {
+    "title": "Investor dashboard",
+    "subtitle": "Track the opportunities you published and the interest you received or sent",
+    "stats": {
+      "published": "My published opportunities",
+      "received": "Received inquiries",
+      "sent": "Sent inquiries",
+      "startups": "Startup inquiries"
+    },
+    "opportunities": {
+      "title": "My investment opportunities",
+      "loadError": "Unable to load your investment opportunities",
+      "empty": "No investment opportunities yet.",
+      "table": {
+        "opportunity": "Opportunity",
+        "location": "Location",
+        "investment": "Investment",
+        "interest": "Interest"
+      }
+    },
+    "inbox": {
+      "title": "Investment inbox",
+      "empty": "Choose an opportunity from the table to view received inquiries.",
+      "loadError": "Unable to load received inquiries",
+      "noInquiries": "No received inquiries for this opportunity yet.",
+      "noEmail": "No email provided",
+      "phone": "Phone:",
+      "proposedAmount": "Proposed amount:",
+      "replyEmail": "Reply by email",
+      "callDirect": "Call directly"
+    },
+    "startupInbox": {
+      "title": "Startup inquiry inbox",
+      "noBusinesses": "No startups or businesses are registered on your account yet.",
+      "loadError": "Unable to load startup inquiries right now.",
+      "empty": "No startup inquiries have arrived yet.",
+      "from": "From:",
+      "replyEmail": "Reply by email",
+      "callDirect": "Call directly"
+    },
+    "submitted": {
+      "title": "Submitted inquiries",
+      "loadError": "Unable to load sent inquiries",
+      "empty": "No sent investment inquiries yet.",
+      "table": {
+        "opportunity": "Opportunity",
+        "status": "Status",
+        "amount": "Proposed amount",
+        "details": "Details"
+      },
+      "viewBtn": "View opportunity"
+    },
+    "status": {
+      "pending": "Pending",
+      "reviewed": "Reviewed",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "currency": "EGP"
+  },
+  "merchant": {
+    "title": "Merchant dashboard",
+    "subtitle": "Manage your business activity, listings, and incoming inquiries",
+    "stats": {
+      "businesses": "Businesses",
+      "verified": "Verified businesses",
+      "underReview": "Businesses under review",
+      "myListings": "My listings",
+      "inquiries": "Incoming inquiries",
+      "openJobs": "Open jobs"
+    },
+    "businesses": {
+      "title": "My businesses",
+      "loadError": "There was an error loading your businesses",
+      "empty": "No businesses yet.",
+      "table": {
+        "business": "Business",
+        "category": "Category",
+        "district": "District",
+        "status": "Status"
+      },
+      "verification": {
+        "verified": "Verified",
+        "pending": "Under review",
+        "rejected": "Rejected",
+        "suspended": "Suspended"
+      }
+    },
+    "listingActions": {
+      "title": "Add a new listing",
+      "description": "Open a modal to add a new listing or edit an existing one without shifting the page layout.",
+      "helpText": "Use the button below to open the listing form in a dedicated modal. You can also edit any listing from the table below using the same dialog.",
+      "addBtn": "Add advertisement"
+    },
+    "employment": {
+      "title": "Employment board",
+      "description": "Post jobs and manage applications.",
+      "postBtn": "Post a job",
+      "myPostsBtn": "My posts"
+    },
+    "inbox": {
+      "title": "Inquiry inbox",
+      "description": "Recent messages on your listings with quick access to the follow-up page.",
+      "manageBtn": "Manage all inquiries",
+      "loadError": "Unable to load incoming inquiries right now.",
+      "empty": "No incoming inquiries on your listings yet.",
+      "status": {
+        "unread": "Unread",
+        "read": "Read",
+        "replied": "Replied"
+      },
+      "from": "From:",
+      "openThread": "Open thread",
+      "latestReply": "Latest saved reply",
+      "email": "Email",
+      "call": "Call",
+      "viewListing": "View listing"
+    },
+    "listingsList": {
+      "title": "Current listings",
+      "empty": "No listings right now.",
+      "table": {
+        "listing": "Listing",
+        "district": "District",
+        "price": "Price",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "editBtn": "Edit",
+      "deleteBtn": "Delete"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "draft": "Draft",
+      "pending": "Pending",
+      "sold": "Sold",
+      "rented": "Rented"
+    },
+    "toasts": {
+      "titleRequired": "Listing name is required",
+      "invalidPrice": "Enter a valid price",
+      "updated": "Listing updated",
+      "added": "Listing added",
+      "saveError": "Unable to save the listing",
+      "deleted": "Listing deleted",
+      "deleteError": "Unable to delete the listing"
+    },
+    "currency": "EGP"
+  },
+  "driver": {
+    "title": "Driver dashboard",
+    "subtitle": "Manage carpool rides and available seats",
+    "stats": {
+      "rides": "Rides",
+      "available": "Available seats",
+      "booked": "Booked seats"
+    },
+    "rides": {
+      "title": "My rides",
+      "loading": "Loading...",
+      "empty": "No rides yet",
+      "table": {
+        "route": "Route",
+        "schedule": "Schedule",
+        "seats": "Seats",
+        "price": "Price/seat",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "detailsBtn": "Details",
+      "cancelBtn": "Cancel",
+      "activateBtn": "Activate",
+      "deleteBtn": "Delete"
+    },
+    "status": {
+      "open": "Open",
+      "full": "Full",
+      "departed": "Departed",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "toasts": {
+      "cancelled": "Ride cancelled",
+      "reactivated": "Ride reactivated",
+      "deleted": "Ride deleted",
+      "confirmDelete": "Do you want to permanently delete this ride?"
+    },
+    "currency": "EGP"
+  },
+  "student": {
+    "title": "Student dashboard",
+    "subtitle": "Track housing, bookings, and student services",
+    "stats": {
+      "bookings": "My bookings",
+      "upcoming": "Upcoming",
+      "housing": "Housing",
+      "browse": "Browse"
+    },
+    "housingSearch": {
+      "title": "Find housing",
+      "description": "The lowest-priced housing options available now with quick access to the full housing page",
+      "viewAllBtn": "View all housing",
+      "unknownDistrict": "Unknown",
+      "housingBadge": "Housing"
+    },
+    "jobs": {
+      "title": "Job opportunities",
+      "description": "Browse available jobs and track your applications.",
+      "browseJobs": "Browse jobs",
+      "myApplications": "My applications"
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "transport": {
+    "title": "Local transport companies",
+    "desc": "Directory of transport and bus companies across New Valley with booking links and contact details.",
+    "addBtn": "Add transport company",
+    "empty": "No local transport companies are listed yet.",
+    "headquarters": "Headquarters",
+    "generalInfo": "General information",
+    "bookingLink": "Booking link",
+    "edit": "Edit",
+    "delete": "Delete",
+    "dialog": {
+      "titleAdd": "Add transport company",
+      "titleEdit": "Edit transport company",
+      "desc": "Add booking details, contact information, and a logo so the company appears directly in the local transport tab."
+    },
+    "form": {
+      "name": "Company name",
+      "district": "District",
+      "logo": "Logo",
+      "uploadLogo": "Upload logo",
+      "noLogo": "No logo uploaded yet.",
+      "contact": "Contact information",
+      "updateBtn": "Update company",
+      "addBtn": "Add company"
+    },
+    "toast": {
+      "imageType": "Choose a JPG, PNG, or WebP image",
+      "imageSize": "Logo size must not exceed 2 MB",
+      "readError": "Could not read the logo file",
+      "uploaded": "Logo uploaded and will appear after saving",
+      "nameReq": "Company name is required",
+      "districtReq": "Select a district",
+      "linkInvalid": "Booking link must start with http:// or https://",
+      "updated": "Transport company updated",
+      "added": "Transport company added",
+      "saveError": "Could not save the transport company",
+      "deleteConfirm": "Do you want to delete this transport company?",
+      "deleted": "Transport company deleted",
+      "deleteError": "Could not delete the transport company"
+    }
+  },
+  "hero": {
+    "badge": "Maps & transport",
+    "title": "Maps & transport",
+    "subtitle": "Discover New Valley landmarks and share your trip with others"
+  },
+  "tabs": {
+    "explore": "Explore the map",
+    "carpool": "Carpool rides",
+    "transport": "Local transport"
+  },
+  "map": {
+    "searchPlaceholder": "Search for a place...",
+    "nearbyBtn": "Nearby",
+    "clearLocationBtn": "Clear location",
+    "suggestPlaceBtn": "Suggest a place",
+    "suggestPlaceToast": "Place suggestions are coming soon",
+    "browserLocationError": "Your browser does not support location access",
+    "detectLocationError": "We could not determine your location",
+    "noNearbyFound": "No places were found within 50 km of your current location. Showing all places in New Valley instead.",
+    "resultsCount": "{{count}} results",
+    "categories": {
+      "all": "All",
+      "historical": "Historical",
+      "natural": "Natural",
+      "religious": "Religious",
+      "recreational": "Recreational",
+      "accommodation": "Accommodation",
+      "restaurant": "Restaurant",
+      "service": "Services",
+      "government": "Government"
+    },
+    "poiDetails": {
+      "phone": "Phone",
+      "website": "Website",
+      "openInMaps": "Open in Google Maps",
+      "visitWebsite": "Visit website",
+      "address": "Address",
+      "reviews": "({{count}} reviews)"
+    }
+  },
+  "rides": {
+    "title": "Available rides",
+    "myRidesBtn": "My rides",
+    "addRideBtn": "Add your ride",
+    "emptyState": "No rides available right now",
+    "beFirstBtn": "Be the first to add a ride",
+    "loginRequiredToast": "You need to sign in first",
+    "deleteConfirm": "Do you want to permanently delete this ride?",
+    "seats": "{{count}} seats available",
+    "seats_one": "{{count}} seat available",
+    "toasts": {
+      "cancelled": "Ride cancelled",
+      "reactivated": "Ride reactivated",
+      "deleted": "Ride deleted"
+    },
+    "status": {
+      "open": "Open",
+      "full": "Full",
+      "departed": "Departed",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "passengerStatus": {
+      "requested": "Pending confirmation",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "cancel": "Cancel ride",
+      "reactivate": "Reactivate",
+      "delete": "Delete ride"
+    },
+    "userRides": {
+      "asDriver": "As driver ({{count}})",
+      "asPassenger": "As passenger ({{count}})",
+      "noDriverRides": "You have not created any rides yet",
+      "noPassengerRides": "You have not joined any rides yet",
+      "passengerSeats": "{{count}} seats",
+      "passengerSeats_one": "{{count}} seat"
+    },
+    "rideDetails": {
+      "title": "Ride Details",
+      "loadError": "Something went wrong while loading the ride",
+      "notFound": "Ride not found",
+      "seatsAvailability": "{{count}} of {{total}} seats available",
+      "signInToJoin": "Sign in to join",
+      "sending": "Sending...",
+      "requestSeat": "Request a seat",
+      "cancelRequest": "Cancel my request",
+      "passengersTitle": "Passengers ({{count}})",
+      "toasts": {
+        "requestSent": "Ride request sent",
+        "requestCancelled": "Ride request cancelled",
+        "passengerConfirmed": "Passenger confirmed",
+        "passengerDeclined": "Passenger declined"
+      }
+    },
+    "createRide": {
+      "title": "Create New Ride",
+      "backBtn": "Back to maps & transport",
+      "cardTitle": "Create a new ride",
+      "cardSubtitle": "Share your trip with others and split the cost",
+      "creating": "Creating...",
+      "publishBtn": "Publish ride",
+      "placeholders": {
+        "origin": "Select the origin",
+        "destination": "Select the destination",
+        "notes": "Any extra details about the ride..."
+      },
+      "labels": {
+        "from": "From",
+        "to": "To",
+        "date": "Date",
+        "time": "Time",
+        "seats": "Available seats",
+        "price": "Price per seat (EGP) - 0 = free",
+        "notes": "Additional notes"
+      },
+      "toasts": {
+        "selectEndpoints": "Select both the origin and destination",
+        "sameEndpoints": "Origin and destination must be different",
+        "missingDateTime": "Choose the date and time",
+        "futureOnly": "Departure time must be in the future",
+        "success": "Ride created successfully!",
+        "error": "Something went wrong while creating the ride"
+      }
+    }
+  },
+  "back": "Back",
+  "form": {
+    "from": "Where from?",
+    "to": "Where to?",
+    "clear": "Clear"
+  }
+}
