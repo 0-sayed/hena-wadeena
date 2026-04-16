@@ -14,8 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { listingInquiriesAPI } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function ListingInquiryPage() {
+  const { t } = useTranslation('marketplace');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -43,7 +45,7 @@ export default function ListingInquiryPage() {
 
   if (isLoading) {
     return (
-      <Layout title="استفسار الإعلان">
+      <Layout title={t('listingInquiry.title')}>
         <div className="container space-y-6 px-4 py-10">
           <Skeleton className="h-10 w-32" />
           <Skeleton className="h-96 w-full rounded-2xl" />
@@ -54,10 +56,12 @@ export default function ListingInquiryPage() {
 
   if (!listing) {
     return (
-      <Layout title="استفسار الإعلان">
+      <Layout title={t('listingInquiry.title')}>
         <div className="container space-y-4 px-4 py-20 text-center">
-          <p className="text-lg text-muted-foreground">تعذر تحميل الإعلان المطلوب.</p>
-          <Button onClick={() => void navigate('/marketplace')}>العودة إلى السوق</Button>
+          <p className="text-lg text-muted-foreground">{t('listingInquiry.loadError')}</p>
+          <Button onClick={() => void navigate('/marketplace')}>
+            {t('listingInquiry.backToMarket')}
+          </Button>
         </div>
       </Layout>
     );
@@ -70,17 +74,17 @@ export default function ListingInquiryPage() {
     event.preventDefault();
 
     if (isOwner) {
-      toast.error('لا يمكنك إرسال استفسار إلى إعلانك الخاص');
+      toast.error(t('listingInquiry.isOwnerError'));
       return;
     }
 
     if (!id) {
-      toast.error('الإعلان غير متاح حالياً');
+      toast.error(t('listingInquiry.idMissingError'));
       return;
     }
 
     if (!formData.name.trim() || !formData.message.trim()) {
-      toast.error('يرجى إدخال الاسم والرسالة على الأقل');
+      toast.error(t('listingInquiry.validationError'));
       return;
     }
 
@@ -93,10 +97,10 @@ export default function ListingInquiryPage() {
         message: formData.message.trim(),
       });
 
-      toast.success('تم إرسال الاستفسار بنجاح، ويمكنك متابعته من تبويب الرسائل المرسلة.');
+      toast.success(t('listingInquiry.submitSuccess'));
       void navigate(`/marketplace/inquiries?tab=sent&focus=${inquiry.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
+      const message = error instanceof Error ? error.message : t('listingInquiry.submitError');
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -104,12 +108,12 @@ export default function ListingInquiryPage() {
   };
 
   return (
-    <Layout title="استفسار الإعلان">
+    <Layout title={t('listingInquiry.title')}>
       <section className="py-8 md:py-12">
         <div className="container max-w-2xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            العودة
+            {t('listingInquiry.back')}
           </Button>
 
           <Card className="border-border/50">
@@ -117,17 +121,14 @@ export default function ListingInquiryPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <MessageSquare className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl">إرسال استفسار عن الإعلان</CardTitle>
+              <CardTitle className="text-2xl">{t('listingInquiry.cardTitle')}</CardTitle>
               <p className="text-muted-foreground">
-                سيتم حفظ رسالتك وربطها بالإعلان{' '}
-                <span className="font-semibold text-foreground">{listing.titleAr}</span>
-                {owner ? (
-                  <>
-                    {' '}
-                    لصالح <span className="font-semibold text-foreground">{owner.full_name}</span>
-                  </>
-                ) : null}
-                .
+                {owner
+                  ? t('listingInquiry.cardDescription', {
+                      title: listing.titleAr,
+                      owner: owner.full_name,
+                    })
+                  : t('listingInquiry.cardDescriptionNoOwner', { title: listing.titleAr })}
               </p>
             </CardHeader>
             <CardContent className="pt-6">
@@ -138,7 +139,7 @@ export default function ListingInquiryPage() {
                 className="space-y-6"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="listingInquiryName">الاسم *</Label>
+                  <Label htmlFor="listingInquiryName">{t('listingInquiry.form.name')}</Label>
                   <div className="relative">
                     <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -155,7 +156,7 @@ export default function ListingInquiryPage() {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="listingInquiryEmail">البريد الإلكتروني</Label>
+                    <Label htmlFor="listingInquiryEmail">{t('listingInquiry.form.email')}</Label>
                     <div className="relative">
                       <Mail className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -171,7 +172,7 @@ export default function ListingInquiryPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="listingInquiryPhone">رقم الهاتف</Label>
+                    <Label htmlFor="listingInquiryPhone">{t('listingInquiry.form.phone')}</Label>
                     <div className="relative">
                       <Phone className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -188,7 +189,7 @@ export default function ListingInquiryPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="listingInquiryMessage">الرسالة *</Label>
+                  <Label htmlFor="listingInquiryMessage">{t('listingInquiry.form.message')}</Label>
                   <Textarea
                     id="listingInquiryMessage"
                     rows={6}
@@ -196,14 +197,16 @@ export default function ListingInquiryPage() {
                     onChange={(event) =>
                       setFormData((prev) => ({ ...prev, message: event.target.value }))
                     }
-                    placeholder="اكتب سؤالك أو طلبك بخصوص هذا الإعلان..."
+                    placeholder={t('listingInquiry.form.messagePlaceholder')}
                     required
                   />
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={submitting || isOwner}>
                   <Send className="h-5 w-5" />
-                  {submitting ? 'جارٍ الإرسال...' : 'إرسال الاستفسار'}
+                  {submitting
+                    ? t('listingInquiry.button.submitting')
+                    : t('listingInquiry.button.submit')}
                 </Button>
               </form>
             </CardContent>

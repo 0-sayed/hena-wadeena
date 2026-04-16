@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import {
   Bell,
   Briefcase,
@@ -36,137 +37,27 @@ type AppLanguage = 'ar' | 'en';
 type NavigationItem = {
   href: string;
   key: string;
-  label: string;
+  labelKey: string;
   matcher: (pathname: string) => boolean;
-};
-
-type HeaderCopy = {
-  accountMenu: string;
-  adminDashboard: string;
-  beta: string;
-  bookings: string;
-  myApplications: string;
-  myDashboard: string;
-  myPosts: string;
-  brand: string;
-  inquiries: string;
-  reviewerDashboard: string;
-  languageSwitchArabicError: string;
-  languageSwitchEnglishError: string;
-  login: string;
-  logout: string;
-  menu: string;
-  mobileSearchPlaceholder: string;
-  notifications: string;
-  profile: string;
-  register: string;
-  search: string;
-  searchPlaceholder: string;
-  switchToArabic: string;
-  switchToEnglish: string;
-  themeToggle: string;
-  wallet: string;
 };
 
 const CONTROL_BUTTON_CLASS =
   'flex h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 md:h-9 md:min-w-9';
 
-const headerCopy: Record<AppLanguage, HeaderCopy> = {
-  ar: {
-    accountMenu: 'قائمة الحساب',
-    adminDashboard: 'لوحة الإدارة',
-    beta: 'تجريبي',
-    bookings: 'حجوزاتي',
-    myApplications: 'طلباتي الوظيفية',
-    myDashboard: 'لوحتي',
-    myPosts: 'وظائفي المنشورة',
-    brand: 'هُنَا وَادِينَا',
-    inquiries: 'استفسارات الإعلانات',
-    reviewerDashboard: 'لوحة المراجع',
-    languageSwitchArabicError: 'تعذر التبديل إلى العربية',
-    languageSwitchEnglishError: 'تعذر التبديل إلى الإنجليزية',
-    login: 'تسجيل الدخول',
-    logout: 'تسجيل الخروج',
-    menu: 'فتح القائمة',
-    mobileSearchPlaceholder: 'بحث في المنصة...',
-    notifications: 'الإشعارات',
-    profile: 'الملف الشخصي',
-    register: 'إنشاء حساب',
-    search: 'بحث',
-    searchPlaceholder: 'بحث...',
-    switchToArabic: 'التبديل إلى العربية',
-    switchToEnglish: 'Switch to English',
-    themeToggle: 'تبديل الوضع',
-    wallet: 'المحفظة',
-  },
-  en: {
-    accountMenu: 'Account menu',
-    adminDashboard: 'Admin Dashboard',
-    beta: 'Beta',
-    bookings: 'My bookings',
-    myApplications: 'My job applications',
-    myDashboard: 'My Dashboard',
-    myPosts: 'My job posts',
-    brand: 'Hena Wadeena',
-    inquiries: 'Marketplace inquiries',
-    reviewerDashboard: 'Reviewer Dashboard',
-    languageSwitchArabicError: 'Could not switch to Arabic',
-    languageSwitchEnglishError: 'Could not switch to English',
-    login: 'Log in',
-    logout: 'Log out',
-    menu: 'Open menu',
-    mobileSearchPlaceholder: 'Search the platform...',
-    notifications: 'Notifications',
-    profile: 'Profile',
-    register: 'Create account',
-    search: 'Search',
-    searchPlaceholder: 'Search...',
-    switchToArabic: 'Switch to Arabic',
-    switchToEnglish: 'Switch to English',
-    themeToggle: 'Toggle theme',
-    wallet: 'Wallet',
-  },
-};
-
-function buildNavigation(language: AppLanguage): NavigationItem[] {
-  const labels =
-    language === 'en'
-      ? {
-          home: 'Home',
-          tourism: 'Tourism',
-          accommodation: 'Accommodation',
-          guides: 'Guides',
-          marketplace: 'Marketplace',
-          logistics: 'Logistics',
-          investment: 'Investment',
-          jobs: 'Jobs',
-          news: 'News',
-        }
-      : {
-          home: 'الرئيسية',
-          tourism: 'السياحة',
-          accommodation: 'الإقامة',
-          guides: 'المرشدين',
-          marketplace: 'البورصة',
-          logistics: 'اللوجستيات',
-          investment: 'الاستثمار',
-          jobs: 'التوظيف',
-          news: 'أخبار',
-        };
-
+function buildNavigation(): NavigationItem[] {
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
 
   return [
     {
       key: 'home',
       href: '/',
-      label: labels.home,
+      labelKey: 'nav.home',
       matcher: (pathname) => pathname === '/',
     },
     {
       key: 'tourism',
       href: '/tourism',
-      label: labels.tourism,
+      labelKey: 'nav.tourism',
       matcher: (pathname) =>
         pathname === '/tourism' ||
         (pathname.startsWith('/tourism/') && !isAccommodationPath(pathname)),
@@ -174,49 +65,50 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
     {
       key: 'guides',
       href: '/guides',
-      label: labels.guides,
+      labelKey: 'nav.guides',
       matcher: (pathname) => pathname.startsWith('/guides'),
     },
     {
       key: 'accommodation',
       href: '/tourism/accommodation',
-      label: labels.accommodation,
+      labelKey: 'nav.accommodation',
       matcher: (pathname) => isAccommodationPath(pathname),
     },
     {
       key: 'logistics',
       href: '/logistics',
-      label: labels.logistics,
+      labelKey: 'nav.logistics',
       matcher: (pathname) => pathname.startsWith('/logistics'),
     },
     {
       key: 'marketplace',
       href: '/marketplace',
-      label: labels.marketplace,
+      labelKey: 'nav.marketplace',
       matcher: (pathname) => pathname.startsWith('/marketplace'),
     },
     {
       key: 'investment',
       href: '/investment',
-      label: labels.investment,
+      labelKey: 'nav.investment',
       matcher: (pathname) => pathname.startsWith('/investment'),
     },
     {
       key: 'jobs',
       href: '/jobs',
-      label: labels.jobs,
+      labelKey: 'nav.jobs',
       matcher: (pathname) => pathname.startsWith('/jobs'),
     },
     {
       key: 'news',
       href: '/news',
-      label: labels.news,
+      labelKey: 'nav.news',
       matcher: (pathname) => pathname.startsWith('/news'),
     },
   ];
 }
 
-function ThemeToggle({ language }: { language: AppLanguage }) {
+function ThemeToggle() {
+  const { t } = useTranslation('layout');
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -231,7 +123,7 @@ function ThemeToggle({ language }: { language: AppLanguage }) {
   }
 
   const isDark = resolvedTheme === 'dark';
-  const label = headerCopy[language].themeToggle;
+  const label = t('header.themeToggle');
 
   return (
     <button
@@ -255,8 +147,9 @@ function LanguageToggle({
   disabled?: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation('layout');
   const nextLanguage = language === 'ar' ? 'en' : 'ar';
-  const title = language === 'ar' ? headerCopy.ar.switchToEnglish : headerCopy.en.switchToArabic;
+  const title = language === 'ar' ? t('header.switchToEnglish') : t('header.switchToArabic');
 
   return (
     <button
@@ -286,12 +179,13 @@ function HeaderActionCluster({
   return (
     <div className="flex items-center gap-0.5 rounded-full border border-border/60 bg-background/80 p-0.5 shadow-sm sm:gap-1 sm:p-1">
       <LanguageToggle language={language} disabled={disabled} onToggle={onToggleLanguage} />
-      <ThemeToggle language={language} />
+      <ThemeToggle />
     </div>
   );
 }
 
 export function Header() {
+  const { t } = useTranslation('layout');
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -305,8 +199,7 @@ export function Header() {
   const { data: unreadData } = useUnreadNotificationCount();
   const unreadCount = unreadData?.count ?? 0;
 
-  const navigation = useMemo(() => buildNavigation(language), [language]);
-  const copy = headerCopy[language];
+  const navigation = useMemo(() => buildNavigation(), []);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -329,7 +222,9 @@ export function Header() {
     void setLanguage(nextLanguage)
       .catch(() => {
         toast.error(
-          nextLanguage === 'en' ? copy.languageSwitchEnglishError : copy.languageSwitchArabicError,
+          nextLanguage === 'en'
+            ? t('header.languageSwitchEnglishError')
+            : t('header.languageSwitchArabicError'),
         );
       })
       .finally(() => {
@@ -347,14 +242,14 @@ export function Header() {
         <Link to="/" className="flex min-w-0 items-center gap-2 overflow-hidden">
           <img
             src="/icon-source.png"
-            alt={copy.brand}
+            alt={t('header.brand')}
             className="h-8 w-8 rounded-lg sm:h-9 sm:w-9"
           />
           <span className="truncate text-base font-bold text-foreground sm:text-xl">
-            {copy.brand}
+            {t('header.brand')}
           </span>
           <span className="mt-1 hidden self-start rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 sm:inline-flex">
-            {copy.beta}
+            {t('header.beta')}
           </span>
         </Link>
 
@@ -369,7 +264,7 @@ export function Header() {
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
         </nav>
@@ -392,8 +287,8 @@ export function Header() {
                     setSearchOpen(false);
                   }
                 }}
-                placeholder={copy.searchPlaceholder}
-                aria-label={copy.search}
+                placeholder={t('header.searchPlaceholder')}
+                aria-label={t('header.search')}
                 className="h-9 w-48 text-sm"
               />
             </form>
@@ -403,8 +298,8 @@ export function Header() {
               size="icon"
               className="text-muted-foreground hover:text-foreground"
               onClick={() => setSearchOpen(true)}
-              aria-label={copy.search}
-              title={copy.search}
+              aria-label={t('header.search')}
+              title={t('header.search')}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -418,13 +313,13 @@ export function Header() {
 
           {user ? (
             <>
-              <Link to="/notifications" className="relative" aria-label={copy.notifications}>
+              <Link to="/notifications" className="relative" aria-label={t('header.notifications')}>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label={copy.notifications}
-                  title={copy.notifications}
+                  aria-label={t('header.notifications')}
+                  title={t('header.notifications')}
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
@@ -442,7 +337,7 @@ export function Header() {
                   className="gap-1.5 text-muted-foreground hover:text-foreground"
                 >
                   <Wallet className="h-4 w-4" />
-                  <span className="text-xs font-semibold">{copy.wallet}</span>
+                  <span className="text-xs font-semibold">{t('header.wallet')}</span>
                 </Button>
               </Link>
 
@@ -451,8 +346,8 @@ export function Header() {
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
                   className="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-muted"
-                  aria-label={copy.accountMenu}
-                  title={copy.accountMenu}
+                  aria-label={t('header.accountMenu')}
+                  title={t('header.accountMenu')}
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10">
                     {user.avatar_url ? (
@@ -485,7 +380,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <User className="h-4 w-4 text-muted-foreground" />
-                          {copy.profile}
+                          {t('header.profile')}
                         </Link>
                         {roleDashboardPath && (
                           <Link
@@ -494,7 +389,7 @@ export function Header() {
                             className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                           >
                             <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                            {copy.myDashboard}
+                            {t('header.myDashboard')}
                           </Link>
                         )}
                         <Link
@@ -503,7 +398,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <CalendarCheck className="h-4 w-4 text-muted-foreground" />
-                          {copy.bookings}
+                          {t('header.bookings')}
                         </Link>
                         <Link
                           to="/marketplace/inquiries"
@@ -511,7 +406,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          {copy.inquiries}
+                          {t('header.inquiries')}
                         </Link>
                         <Link
                           to="/jobs/my-applications"
@@ -519,7 +414,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Briefcase className="h-4 w-4 text-muted-foreground" />
-                          {copy.myApplications}
+                          {t('header.myApplications')}
                         </Link>
                         <Link
                           to="/jobs/my-posts"
@@ -527,7 +422,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Briefcase className="h-4 w-4 text-muted-foreground" />
-                          {copy.myPosts}
+                          {t('header.myPosts')}
                         </Link>
                         <Link
                           to="/wallet"
@@ -535,7 +430,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Wallet className="h-4 w-4 text-muted-foreground" />
-                          {copy.wallet}
+                          {t('header.wallet')}
                         </Link>
                         <Link
                           to="/notifications"
@@ -543,7 +438,7 @@ export function Header() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                         >
                           <Bell className="h-4 w-4 text-muted-foreground" />
-                          {copy.notifications}
+                          {t('header.notifications')}
                           {unreadCount > 0 && (
                             <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                               {unreadCount}
@@ -561,7 +456,7 @@ export function Header() {
                               className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                             >
                               <Shield className="h-4 w-4 text-muted-foreground" />
-                              {copy.adminDashboard}
+                              {t('header.adminDashboard')}
                             </Link>
                           )}
                           {hasRequiredRole(user.role, [UserRole.ADMIN, UserRole.REVIEWER]) && (
@@ -571,7 +466,7 @@ export function Header() {
                               className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
                             >
                               <FileCheck className="h-4 w-4 text-muted-foreground" />
-                              {copy.reviewerDashboard}
+                              {t('header.reviewerDashboard')}
                             </Link>
                           )}
                         </div>
@@ -586,7 +481,7 @@ export function Header() {
                           className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
                           <LogOut className="h-4 w-4" />
-                          {copy.logout}
+                          {t('header.logout')}
                         </button>
                       </div>
                     </div>
@@ -599,24 +494,24 @@ export function Header() {
               <Link to="/login">
                 <Button variant="outline" size="sm">
                   <User className="ms-2 h-4 w-4" />
-                  {copy.login}
+                  {t('header.login')}
                 </Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">{copy.register}</Button>
+                <Button size="sm">{t('header.register')}</Button>
               </Link>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-0.5 lg:hidden">
-          <Link to="/search" aria-label={copy.search}>
+          <Link to="/search" aria-label={t('header.search')}>
             <Button
               variant="ghost"
               size="icon"
               className="text-muted-foreground"
-              aria-label={copy.search}
-              title={copy.search}
+              aria-label={t('header.search')}
+              title={t('header.search')}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -629,13 +524,13 @@ export function Header() {
           />
 
           {user && (
-            <Link to="/notifications" className="relative" aria-label={copy.notifications}>
+            <Link to="/notifications" className="relative" aria-label={t('header.notifications')}>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground"
-                aria-label={copy.notifications}
-                title={copy.notifications}
+                aria-label={t('header.notifications')}
+                title={t('header.notifications')}
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -649,7 +544,12 @@ export function Header() {
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={copy.menu} title={copy.menu}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t('header.menu')}
+                title={t('header.menu')}
+              >
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
@@ -685,8 +585,8 @@ export function Header() {
                   <Input
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder={copy.mobileSearchPlaceholder}
-                    aria-label={copy.search}
+                    placeholder={t('header.mobileSearchPlaceholder')}
+                    aria-label={t('header.search')}
                     className="search-input-with-icon-md h-10"
                   />
                 </form>
@@ -703,7 +603,7 @@ export function Header() {
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   ))}
                 </nav>
@@ -716,7 +616,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <User className="h-5 w-5 text-muted-foreground" />
-                      {copy.profile}
+                      {t('header.profile')}
                     </Link>
                     {roleDashboardPath && (
                       <Link
@@ -725,7 +625,7 @@ export function Header() {
                         className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                       >
                         <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
-                        {copy.myDashboard}
+                        {t('header.myDashboard')}
                       </Link>
                     )}
                     <Link
@@ -734,7 +634,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <CalendarCheck className="h-5 w-5 text-muted-foreground" />
-                      {copy.bookings}
+                      {t('header.bookings')}
                     </Link>
                     <Link
                       to="/marketplace/inquiries"
@@ -742,7 +642,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                      {copy.inquiries}
+                      {t('header.inquiries')}
                     </Link>
                     <Link
                       to="/jobs/my-applications"
@@ -750,7 +650,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Briefcase className="h-5 w-5 text-muted-foreground" />
-                      {copy.myApplications}
+                      {t('header.myApplications')}
                     </Link>
                     <Link
                       to="/jobs/my-posts"
@@ -758,7 +658,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Briefcase className="h-5 w-5 text-muted-foreground" />
-                      {copy.myPosts}
+                      {t('header.myPosts')}
                     </Link>
                     <Link
                       to="/wallet"
@@ -766,7 +666,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Wallet className="h-5 w-5 text-muted-foreground" />
-                      {copy.wallet}
+                      {t('header.wallet')}
                     </Link>
                     <Link
                       to="/notifications"
@@ -774,7 +674,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                     >
                       <Bell className="h-5 w-5 text-muted-foreground" />
-                      {copy.notifications}
+                      {t('header.notifications')}
                       {unreadCount > 0 && (
                         <span className="me-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unreadCount}
@@ -788,7 +688,7 @@ export function Header() {
                         className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                       >
                         <Shield className="h-5 w-5 text-muted-foreground" />
-                        {copy.adminDashboard}
+                        {t('header.adminDashboard')}
                       </Link>
                     )}
                     {hasRequiredRole(user.role, [UserRole.ADMIN, UserRole.REVIEWER]) && (
@@ -798,7 +698,7 @@ export function Header() {
                         className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
                       >
                         <FileCheck className="h-5 w-5 text-muted-foreground" />
-                        {copy.reviewerDashboard}
+                        {t('header.reviewerDashboard')}
                       </Link>
                     )}
                     <button
@@ -810,7 +710,7 @@ export function Header() {
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-5 w-5" />
-                      {copy.logout}
+                      {t('header.logout')}
                     </button>
                   </div>
                 ) : (
@@ -818,11 +718,11 @@ export function Header() {
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <Button className="w-full" variant="outline">
                         <User className="ms-2 h-4 w-4" />
-                        {copy.login}
+                        {t('header.login')}
                       </Button>
                     </Link>
                     <Link to="/register" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full">{copy.register}</Button>
+                      <Button className="w-full">{t('header.register')}</Button>
                     </Link>
                   </div>
                 )}

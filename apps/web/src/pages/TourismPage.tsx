@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useAttractions } from '@/hooks/use-attractions';
 import { useGuides } from '@/hooks/use-guides';
 import { usePublicUsers } from '@/hooks/use-users';
-import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 import {
   areaLabels,
   attractionTypeLabel,
@@ -31,21 +31,17 @@ import {
 import { matchesSearchQuery } from '@/lib/search';
 import type { AppLanguage } from '@/lib/localization';
 import type { PublicUserProfile } from '@/services/api';
+import type { TFunction } from 'i18next';
 
-function getGuideName(language: AppLanguage, profile?: PublicUserProfile) {
-  return (
-    profile?.display_name ??
-    profile?.full_name ??
-    pickLocalizedCopy(language, {
-      ar: 'مرشد سياحي',
-      en: 'Tour guide',
-    })
-  );
+function getGuideName(t: TFunction, profile?: PublicUserProfile) {
+  return profile?.display_name ?? profile?.full_name ?? t('home.guideRole');
 }
 
 const TourismPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('tourism');
   const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: featuredAttractions, isLoading: loadingFeatured } = useAttractions(
@@ -125,60 +121,42 @@ const TourismPage = () => {
   );
 
   return (
-    <Layout title={pickLocalizedCopy(language, { ar: 'السياحة', en: 'Tourism' })}>
+    <Layout title={t('home.pageTitle')}>
       <PageTransition>
-        <PageHero
-          image={heroTourism}
-          alt={pickLocalizedCopy(language, {
-            ar: 'السياحة في الوادي الجديد',
-            en: 'Tourism in New Valley',
-          })}
-        >
+        <PageHero image={heroTourism} alt={t('home.heroAlt')}>
           <SR>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <MapPin className="h-5 w-5 text-accent" />
-              <span className="text-sm font-semibold text-card">
-                {pickLocalizedCopy(language, {
-                  ar: 'السياحة والمجتمع',
-                  en: 'Tourism & community',
-                })}
-              </span>
+              <span className="text-sm font-semibold text-card">{t('home.heroBadge')}</span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-              {pickLocalizedCopy(language, {
-                ar: 'السياحة والمجتمع',
-                en: 'Tourism & community',
-              })}
+              {t('home.heroTitle')}
             </h1>
           </SR>
           <SR delay={200}>
-            <p className="mb-10 text-lg text-card/90 md:text-xl">
-              {pickLocalizedCopy(language, {
-                ar: 'اكتشف المعالم السياحية، احجز مرشداً، أو تصفح باقات السياحة',
-                en: 'Discover attractions, book a guide, or browse tourism experiences',
-              })}
-            </p>
+            <p className="mb-10 text-lg text-card/90 md:text-xl">{t('home.heroSubtitle')}</p>
           </SR>
           <SR delay={300}>
-            <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <button
-                type="submit"
-                aria-label={pickLocalizedCopy(language, { ar: 'بحث', en: 'Search' })}
-                className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 z-10 p-1 text-muted-foreground"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-              <Input
-                placeholder={pickLocalizedCopy(language, {
-                  ar: 'ابحث عن معالم أو مرشدين...',
-                  en: 'Search for attractions or guides...',
-                })}
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm md:h-16 md:text-lg"
-              />
+            <form onSubmit={handleSearch} className="mx-auto max-w-xl">
+              <div className="flex flex-col gap-3 sm:relative">
+                <div className="relative">
+                  <Search className="search-inline-icon-lg absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground sm:h-6 sm:w-6" />
+                  <Input
+                    placeholder={t('home.searchPlaceholder')}
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    className="search-input-with-icon-lg h-14 rounded-2xl border-0 bg-card/90 ps-14 pe-4 text-base shadow-lg backdrop-blur-sm sm:h-16 sm:ps-28 sm:text-lg"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full rounded-xl sm:absolute sm:start-2 sm:top-1/2 sm:w-auto sm:-translate-y-1/2"
+                >
+                  {t('home.searchBtn')}
+                </Button>
+              </div>
             </form>
           </SR>
         </PageHero>
@@ -192,13 +170,13 @@ const TourismPage = () => {
                     value="attractions"
                     className="min-h-[44px] rounded-xl text-sm font-semibold"
                   >
-                    {pickLocalizedCopy(language, { ar: 'المعالم', en: 'Attractions' })}
+                    {t('home.tabsAttractions')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="guides"
                     className="min-h-[44px] rounded-xl text-sm font-semibold"
                   >
-                    {pickLocalizedCopy(language, { ar: 'المرشدين', en: 'Guides' })}
+                    {t('home.tabsGuides')}
                   </TabsTrigger>
                 </TabsList>
               </SR>
@@ -214,10 +192,7 @@ const TourismPage = () => {
                   <>
                     <SR>
                       <h3 className="mb-6 text-2xl font-bold text-foreground">
-                        {pickLocalizedCopy(language, {
-                          ar: 'وجهات مميزة',
-                          en: 'Featured destinations',
-                        })}
+                        {t('home.featuredTitle')}
                       </h3>
                     </SR>
                     <SR stagger>
@@ -230,30 +205,31 @@ const TourismPage = () => {
                             <div className="relative aspect-video overflow-hidden">
                               <img
                                 src={attraction.thumbnail ?? '/placeholder.jpg'}
-                                alt={pickLocalizedField(language, {
-                                  ar: attraction.nameAr,
-                                  en: attraction.nameEn,
-                                })}
+                                alt={
+                                  (appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+                                  attraction.nameAr ??
+                                  ''
+                                }
                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 loading="lazy"
                               />
                               <Badge className="absolute end-4 top-4 glass font-medium text-foreground">
-                                {attractionTypeLabel(attraction.type, language)}
+                                {attractionTypeLabel(attraction.type, appLanguage)}
                               </Badge>
                               <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                             </div>
                             <CardContent className="p-6">
                               <h3 className="mb-2 text-xl font-bold text-foreground transition-colors duration-250 group-hover:text-primary">
-                                {pickLocalizedField(language, {
-                                  ar: attraction.nameAr,
-                                  en: attraction.nameEn,
-                                })}
+                                {(appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+                                  attraction.nameAr ??
+                                  ''}
                               </h3>
                               <p className="mb-4 line-clamp-2 text-muted-foreground">
-                                {pickLocalizedField(language, {
-                                  ar: attraction.descriptionAr,
-                                  en: attraction.descriptionEn,
-                                })}
+                                {(appLanguage === 'en'
+                                  ? attraction.descriptionEn
+                                  : attraction.descriptionAr) ??
+                                  attraction.descriptionAr ??
+                                  ''}
                               </p>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4 text-sm">
@@ -266,11 +242,7 @@ const TourismPage = () => {
                                   {attraction.durationHours && (
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                       <Clock className="h-4 w-4" />
-                                      {attraction.durationHours}{' '}
-                                      {pickLocalizedCopy(language, {
-                                        ar: 'ساعة',
-                                        en: 'hours',
-                                      })}
+                                      {attraction.durationHours} {t('home.hourLabel')}
                                     </div>
                                   )}
                                 </div>
@@ -282,11 +254,8 @@ const TourismPage = () => {
                                     void navigate(`/tourism/attraction/${attraction.slug}`)
                                   }
                                 >
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'المزيد',
-                                    en: 'View details',
-                                  })}
-                                  <ArrowLeft className="h-4 w-4" />
+                                  {t('home.viewDetailsBtn')}
+                                  <ArrowLeft className="me-1 h-4 w-4" />
                                 </Button>
                               </div>
                             </CardContent>
@@ -298,20 +267,14 @@ const TourismPage = () => {
                     <SR>
                       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <h3 className="text-2xl font-bold text-foreground">
-                          {pickLocalizedCopy(language, {
-                            ar: 'كل المعالم',
-                            en: 'All attractions',
-                          })}
+                          {t('home.allAttractionsTitle')}
                         </h3>
                         <Button
                           variant="outline"
                           className="w-full transition-transform hover:scale-[1.03] sm:w-auto"
                           onClick={() => void navigate('/tourism/attractions')}
                         >
-                          {pickLocalizedCopy(language, {
-                            ar: 'عرض المزيد',
-                            en: 'View more',
-                          })}
+                          {t('home.viewMoreBtn')}
                         </Button>
                       </div>
                     </SR>
@@ -326,24 +289,24 @@ const TourismPage = () => {
                             <div className="aspect-[4/3] overflow-hidden">
                               <img
                                 src={attraction.thumbnail ?? '/placeholder.jpg'}
-                                alt={pickLocalizedField(language, {
-                                  ar: attraction.nameAr,
-                                  en: attraction.nameEn,
-                                })}
+                                alt={
+                                  (appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+                                  attraction.nameAr ??
+                                  ''
+                                }
                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 loading="lazy"
                               />
                             </div>
                             <CardContent className="p-5">
                               <h4 className="mb-2 font-bold text-foreground transition-colors group-hover:text-primary">
-                                {pickLocalizedField(language, {
-                                  ar: attraction.nameAr,
-                                  en: attraction.nameEn,
-                                })}
+                                {(appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+                                  attraction.nameAr ??
+                                  ''}
                               </h4>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Badge variant="outline" className="text-xs">
-                                  {attractionTypeLabel(attraction.type, language)}
+                                  {attractionTypeLabel(attraction.type, appLanguage)}
                                 </Badge>
                                 <span className="flex items-center gap-1">
                                   <Star className="h-3.5 w-3.5 fill-current text-accent" />
@@ -370,7 +333,7 @@ const TourismPage = () => {
                   <SR stagger>
                     <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
                       {filteredGuides.map((guide) => {
-                        const guideName = getGuideName(language, publicUsers[guide.userId]);
+                        const guideName = getGuideName(t, publicUsers[guide.userId]);
 
                         return (
                           <Card
@@ -392,14 +355,10 @@ const TourismPage = () => {
                                     {guideName}
                                   </h3>
                                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                                    {pickLocalizedField(language, {
-                                      ar: guide.bioAr,
-                                      en: guide.bioEn,
-                                    }) ||
-                                      pickLocalizedCopy(language, {
-                                        ar: 'مرشد معتمد لرحلات الوادي الجديد',
-                                        en: 'Licensed guide for New Valley trips.',
-                                      })}
+                                    {((appLanguage === 'en' ? guide.bioEn : guide.bioAr) ??
+                                      guide.bioAr ??
+                                      '') ||
+                                      t('home.guideFallbackBio')}
                                   </p>
                                   <div className="mt-2 flex items-center gap-1.5 text-accent">
                                     <Star className="h-5 w-5 fill-current" />
@@ -407,12 +366,7 @@ const TourismPage = () => {
                                       {formatRating(guide.ratingAvg)}
                                     </span>
                                     <span className="text-sm text-muted-foreground">
-                                      ({guide.ratingCount}{' '}
-                                      {pickLocalizedCopy(language, {
-                                        ar: 'تقييم',
-                                        en: 'reviews',
-                                      })}
-                                      )
+                                      ({guide.ratingCount} {t('home.reviewsCount')})
                                     </span>
                                   </div>
                                 </div>
@@ -421,10 +375,7 @@ const TourismPage = () => {
                               <div className="mb-5 space-y-3">
                                 <div>
                                   <span className="text-sm text-muted-foreground">
-                                    {pickLocalizedCopy(language, {
-                                      ar: 'اللغات:',
-                                      en: 'Languages:',
-                                    })}
+                                    {t('home.languagesLabel')}
                                   </span>
                                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                                     {guide.languages.map((guideLanguage) => (
@@ -433,22 +384,19 @@ const TourismPage = () => {
                                         variant="secondary"
                                         className="text-xs"
                                       >
-                                        {languageLabel(guideLanguage, language)}
+                                        {languageLabel(guideLanguage, appLanguage)}
                                       </Badge>
                                     ))}
                                   </div>
                                 </div>
                                 <div>
                                   <span className="text-sm text-muted-foreground">
-                                    {pickLocalizedCopy(language, {
-                                      ar: 'التخصصات:',
-                                      en: 'Specialties:',
-                                    })}
+                                    {t('home.specialtiesLabel')}
                                   </span>
                                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                                     {guide.specialties.map((specialty) => (
                                       <Badge key={specialty} variant="outline" className="text-xs">
-                                        {specialtyLabel(specialty, language)}
+                                        {specialtyLabel(specialty, appLanguage)}
                                       </Badge>
                                     ))}
                                   </div>
@@ -461,7 +409,7 @@ const TourismPage = () => {
                                     {piastresToEgp(guide.basePrice)}
                                   </span>
                                   <span className="me-1 text-sm text-muted-foreground">
-                                    {pickLocalizedCopy(language, { ar: '/يوم', en: '/day' })}
+                                    {t('home.perDay')}
                                   </span>
                                 </div>
                                 <Button
@@ -469,10 +417,7 @@ const TourismPage = () => {
                                   onClick={() => void navigate(`/guides/${guide.id}`)}
                                 >
                                   <Calendar className="ms-2 h-4 w-4" />
-                                  {pickLocalizedCopy(language, {
-                                    ar: 'عرض الملف',
-                                    en: 'View profile',
-                                  })}
+                                  {t('home.viewProfileBtn')}
                                 </Button>
                               </div>
                             </CardContent>

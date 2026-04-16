@@ -25,9 +25,11 @@ import {
   COMPENSATION_TYPE_OPTIONS_WITH_ALL,
   DISTRICTS_WITH_ALL,
 } from '@/lib/format';
+import type { AppLanguage } from '@/lib/localization';
 import { UserRole } from '@hena-wadeena/types';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import type { JobPost } from '@/services/api';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 const CATEGORY_BADGE_COLOR: Record<string, string> = {
   agriculture: 'bg-green-100 text-green-800',
@@ -40,7 +42,17 @@ const CATEGORY_BADGE_COLOR: Record<string, string> = {
 
 const PAGE_SIZE = 12;
 
-function JobCard({ job, onClick }: { job: JobPost; onClick: () => void }) {
+function JobCard({
+  job,
+  onClick,
+  language,
+  t,
+}: {
+  job: JobPost;
+  onClick: () => void;
+  language: AppLanguage;
+  t: TFunction;
+}) {
   const colorClass = CATEGORY_BADGE_COLOR[job.category] ?? 'bg-muted text-muted-foreground';
   return (
     <Card
@@ -51,19 +63,24 @@ function JobCard({ job, onClick }: { job: JobPost; onClick: () => void }) {
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-foreground leading-snug">{job.title}</h3>
           <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}>
-            {jobCategoryLabel(job.category)}
+            {jobCategoryLabel(job.category, language)}
           </span>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <span>{districtLabel(job.area)}</span>
+          <span>{districtLabel(job.area, language)}</span>
           <span>
-            {formatPrice(job.compensation)} جنيه / {compensationTypeLabel(job.compensationType)}
+            {t('perCompensation', {
+              price: formatPrice(job.compensation),
+              compensation: compensationTypeLabel(job.compensationType, language),
+            })}
           </span>
           <span>{formatArabicSeats(job.slots)}</span>
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{jobStatusLabel(job.status)}</span>
-          <span dir="ltr">{new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
+          <span>{jobStatusLabel(job.status, language)}</span>
+          <span dir="ltr">
+            {new Date(job.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG')}
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -72,9 +89,10 @@ function JobCard({ job, onClick }: { job: JobPost; onClick: () => void }) {
 
 export default function JobBoardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('jobs');
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, language } = useAuth();
-  const appLanguage: AppLanguage = language === 'en' ? 'en' : 'ar';
+  const { user, language: rawLanguage } = useAuth();
+  const language: AppLanguage = rawLanguage === 'en' ? 'en' : 'ar';
   const canPost =
     user?.role === UserRole.MERCHANT ||
     user?.role === UserRole.FARMER ||
@@ -111,21 +129,19 @@ export default function JobBoardPage() {
   }
 
   return (
-    <Layout title={pickLocalizedCopy(appLanguage, { ar: 'لوحة التوظيف', en: 'Employment Board' })}>
+    <Layout title={t('pageTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           {/* Header */}
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Briefcase className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-                {pickLocalizedCopy(appLanguage, { ar: 'لوحة التوظيف', en: 'Employment Board' })}
-              </h1>
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">{t('title')}</h1>
             </div>
             {canPost && (
               <Button onClick={() => void navigate('/jobs/post')}>
-                <Plus className="h-4 w-4" />
-                نشر وظيفة
+                <Plus className="ms-2 h-4 w-4" />
+                {t('createJobBtn')}
               </Button>
             )}
           </div>
@@ -137,12 +153,12 @@ export default function JobBoardPage() {
               onValueChange={(v) => setFilter('category', v === 'all' ? undefined : v)}
             >
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="الفئة" />
+                <SelectValue placeholder={t('filter.category')} />
               </SelectTrigger>
               <SelectContent>
                 {JOB_CATEGORY_OPTIONS_WITH_ALL.map((opt) => (
                   <SelectItem key={opt.id ?? 'all'} value={opt.id ?? 'all'}>
-                    {opt.label}
+                    {opt.id ? jobCategoryLabel(opt.id, language) : t('filter.all')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -153,12 +169,12 @@ export default function JobBoardPage() {
               onValueChange={(v) => setFilter('area', v === 'all' ? undefined : v)}
             >
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="المنطقة" />
+                <SelectValue placeholder={t('filter.area')} />
               </SelectTrigger>
               <SelectContent>
                 {DISTRICTS_WITH_ALL.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
-                    {d.name}
+                    {d.id === 'all' ? t('filter.allCities') : districtLabel(d.id, language)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -169,12 +185,12 @@ export default function JobBoardPage() {
               onValueChange={(v) => setFilter('compensationType', v === 'all' ? undefined : v)}
             >
               <SelectTrigger className="w-44">
-                <SelectValue placeholder="نوع التعويض" />
+                <SelectValue placeholder={t('filter.compensationType')} />
               </SelectTrigger>
               <SelectContent>
                 {COMPENSATION_TYPE_OPTIONS_WITH_ALL.map((opt) => (
                   <SelectItem key={opt.id ?? 'all'} value={opt.id ?? 'all'}>
-                    {opt.label}
+                    {opt.id ? compensationTypeLabel(opt.id, language) : t('filter.all')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -190,13 +206,15 @@ export default function JobBoardPage() {
             </div>
           ) : isError ? (
             <div className="py-20 text-center space-y-4">
-              <p className="text-muted-foreground">تعذر تحميل الوظائف.</p>
-              <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+              <p className="text-muted-foreground">{t('loadError')}</p>
+              <Button onClick={() => void refetch()}>{t('retryBtn')}</Button>
             </div>
           ) : jobs.length === 0 ? (
             <div className="py-20 text-center space-y-4">
-              <p className="text-lg text-muted-foreground">لا توجد وظائف متاحة في الوقت الحالي</p>
-              {canPost && <Button onClick={() => void navigate('/jobs/post')}>نشر وظيفة</Button>}
+              <p className="text-lg text-muted-foreground">{t('emptyState')}</p>
+              {canPost && (
+                <Button onClick={() => void navigate('/jobs/post')}>{t('createJobBtn')}</Button>
+              )}
             </div>
           ) : (
             <>
@@ -205,6 +223,8 @@ export default function JobBoardPage() {
                   <JobCard
                     key={job.id}
                     job={job}
+                    language={language}
+                    t={t}
                     onClick={() => void navigate(`/jobs/${job.id}`)}
                   />
                 ))}
@@ -225,7 +245,7 @@ export default function JobBoardPage() {
                       })
                     }
                   >
-                    السابق
+                    {t('prevBtn')}
                   </Button>
                   <span className="text-sm text-muted-foreground">
                     {page + 1} / {totalPages}
@@ -242,7 +262,7 @@ export default function JobBoardPage() {
                       })
                     }
                   >
-                    التالي
+                    {t('nextBtn')}
                   </Button>
                 </div>
               )}

@@ -17,9 +17,15 @@ import {
 import { Skeleton } from '@/components/motion/Skeleton';
 import { useListings } from '@/hooks/use-listings';
 import { districtLabel, DISTRICTS_WITH_ALL, formatPrice } from '@/lib/format';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import type { AppLanguage } from '@/lib/localization';
 
 const AccommodationListPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('accommodation');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const [district, setDistrict] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -48,8 +54,8 @@ const AccommodationListPage = () => {
   }, [data, searchQuery]);
 
   return (
-    <Layout title="أماكن الإقامة">
-      <PageHero image="/images/seed/AO6BYTEnlMo.jpg" alt="شقة سكنية للإقامة">
+    <Layout title={t('list.title')}>
+      <PageHero image="/images/seed/AO6BYTEnlMo.jpg" alt={t('list.subtitle')}>
         <div className="mb-6 flex justify-center">
           <Button
             variant="ghost"
@@ -57,19 +63,17 @@ const AccommodationListPage = () => {
             className="text-card hover:bg-card/10 hover:text-card"
           >
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            العودة إلى السياحة
+            {t('list.back')}
           </Button>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-2 text-sm font-semibold text-card mb-4">
           <GraduationCap className="h-4 w-4" />
-          سكن طلابي وإقامات قصيرة
+          {t('list.subtitle')}
         </div>
         <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-          تصفح السكن المتاح
+          {t('list.heroTitle')}
         </h1>
-        <p className="text-lg text-card/90 md:text-xl">
-          اعثر على شقق ووحدات إقامة مناسبة للطلاب والزوار مع تفاصيل الموقع والتواصل المباشر.
-        </p>
+        <p className="text-lg text-card/90 md:text-xl">{t('list.heroDesc')}</p>
       </PageHero>
 
       <section className="py-10">
@@ -80,18 +84,18 @@ const AccommodationListPage = () => {
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="ابحث عن حي أو عنوان أو وصف"
+                placeholder={t('list.searchPlaceholder')}
                 className="search-input-with-icon-md h-12 rounded-xl md:h-12"
               />
             </div>
             <Select value={district} onValueChange={setDistrict}>
               <SelectTrigger className="h-12 w-full rounded-xl md:w-56">
-                <SelectValue placeholder="المنطقة" />
+                <SelectValue placeholder={t('list.districtLabel')} />
               </SelectTrigger>
               <SelectContent>
                 {DISTRICTS_WITH_ALL.map((item) => (
                   <SelectItem key={item.id} value={item.id}>
-                    {item.name}
+                    {item.id === 'all' ? item.name : districtLabel(item.id, appLanguage)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -107,9 +111,9 @@ const AccommodationListPage = () => {
           ) : isError ? (
             <Card className="rounded-2xl">
               <CardContent className="p-10 text-center space-y-4">
-                <p className="text-muted-foreground">تعذر تحميل إعلانات السكن حالياً.</p>
+                <p className="text-muted-foreground">{t('list.errorLoading')}</p>
                 <Button variant="outline" onClick={() => void refetch()}>
-                  إعادة المحاولة
+                  {t('list.retry')}
                 </Button>
               </CardContent>
             </Card>
@@ -117,9 +121,7 @@ const AccommodationListPage = () => {
             <Card className="rounded-2xl">
               <CardContent className="p-10 text-center space-y-3">
                 <Home className="mx-auto h-10 w-10 text-muted-foreground" />
-                <p className="text-lg text-muted-foreground">
-                  لا توجد إعلانات سكن مطابقة لبحثك حالياً.
-                </p>
+                <p className="text-lg text-muted-foreground">{t('list.emptyMatch')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -132,7 +134,11 @@ const AccommodationListPage = () => {
                   <div className="aspect-[4/3] overflow-hidden bg-muted">
                     <img
                       src={listing.images?.[0] ?? '/placeholder.jpg'}
-                      alt={listing.titleAr}
+                      alt={
+                        (appLanguage === 'en' ? listing.titleEn : listing.titleAr) ??
+                        listing.titleAr ??
+                        ''
+                      }
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -140,15 +146,19 @@ const AccommodationListPage = () => {
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-bold text-foreground">{listing.titleAr}</h2>
+                        <h2 className="text-lg font-bold text-foreground">
+                          {(appLanguage === 'en' ? listing.titleEn : listing.titleAr) ??
+                            listing.titleAr ??
+                            ''}
+                        </h2>
                         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                           <MapPin className="h-4 w-4 text-primary" />
                           <span>
-                            {districtLabel(listing.district ?? listing.address ?? 'غير محدد')}
+                            {districtLabel(listing.district ?? listing.address ?? '', appLanguage)}
                           </span>
                         </div>
                       </div>
-                      <Badge variant="secondary">إقامة</Badge>
+                      <Badge variant="secondary">{t('list.badgeType')}</Badge>
                     </div>
 
                     {listing.description && (
@@ -169,13 +179,13 @@ const AccommodationListPage = () => {
 
                     <div className="flex items-center justify-between border-t border-border pt-4">
                       <div>
-                        <p className="text-xs text-muted-foreground">السعر</p>
+                        <p className="text-xs text-muted-foreground">{t('list.priceLabel')}</p>
                         <p className="text-lg font-bold text-primary">
-                          {formatPrice(listing.price)} جنيه
+                          {formatPrice(listing.price)} {t('list.currency')}
                         </p>
                       </div>
                       <Button onClick={() => void navigate(`/tourism/accommodation/${listing.id}`)}>
-                        التفاصيل
+                        {t('list.detailsBtn')}
                         <ArrowLeft className="h-4 w-4" />
                       </Button>
                     </div>

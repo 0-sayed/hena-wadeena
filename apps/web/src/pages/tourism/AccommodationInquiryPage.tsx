@@ -30,13 +30,23 @@ import { UserRole } from '@hena-wadeena/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useListing } from '@/hooks/use-listings';
 import { listingInquiriesAPI } from '@/services/api';
+import { useTranslation } from 'react-i18next';
+import type { AppLanguage } from '@/lib/localization';
 
-const tenantTypes = ['طالب جامعي', 'موظف حكومي', 'موظف قطاع خاص', 'عائلة', 'أخرى'];
+const tenantTypesKeys = [
+  'inquiry.tenantTypes.student',
+  'inquiry.tenantTypes.govEmployee',
+  'inquiry.tenantTypes.privateEmployee',
+  'inquiry.tenantTypes.family',
+  'inquiry.tenantTypes.other',
+];
 
 const AccommodationInquiryPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('accommodation');
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const { data: listing } = useListing(id);
   const hasAutoFilled = useRef(false);
   const [submitting, setSubmitting] = useState(false);
@@ -67,42 +77,46 @@ const AccommodationInquiryPage = () => {
 
   const inquiryMessage = useMemo(() => {
     const details = [
-      `الاسم: ${formData.name}`,
-      `الهاتف: ${formData.phone}`,
-      formData.email ? `البريد الإلكتروني: ${formData.email}` : null,
-      `نوع المستأجر: ${formData.tenantType}`,
-      formData.moveInDate ? `تاريخ الانتقال المتوقع: ${formData.moveInDate}` : null,
-      formData.duration ? `مدة الإيجار: ${formData.duration}` : null,
-      `عدد الأفراد: ${formData.occupants}`,
-      formData.isStudent ? 'المتقدم طالب جامعي' : null,
-      formData.university ? `الجامعة/الكلية: ${formData.university}` : null,
-      formData.message ? `رسالة إضافية: ${formData.message}` : null,
+      `${t('inquiry.messageContext.name')}: ${formData.name}`,
+      `${t('inquiry.messageContext.phone')}: ${formData.phone}`,
+      formData.email ? `${t('inquiry.messageContext.email')}: ${formData.email}` : null,
+      `${t('inquiry.messageContext.tenantType')}: ${formData.tenantType}`,
+      formData.moveInDate ? `${t('inquiry.messageContext.moveIn')}: ${formData.moveInDate}` : null,
+      formData.duration ? `${t('inquiry.messageContext.duration')}: ${formData.duration}` : null,
+      `${t('inquiry.messageContext.occupants')}: ${formData.occupants}`,
+      formData.isStudent ? t('inquiry.messageContext.isStudent') : null,
+      formData.university
+        ? `${t('inquiry.messageContext.university')}: ${formData.university}`
+        : null,
+      formData.message ? `${t('inquiry.messageContext.extra')}: ${formData.message}` : null,
     ].filter(Boolean);
 
-    return `استفسار بخصوص السكن: ${listing?.titleAr ?? ''}\n\n${details.join('\n')}`;
-  }, [formData, listing?.titleAr]);
+    const listingTitle =
+      (appLanguage === 'en' ? listing?.titleEn : listing?.titleAr) ?? listing?.titleAr ?? '';
+    return `${t('inquiry.messageContext.heading')} ${listingTitle}\n\n${details.join('\n')}`;
+  }, [formData, listing?.titleAr, listing?.titleEn, appLanguage, t]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!formData.name.trim() || !formData.phone.trim() || !formData.tenantType) {
-      toast.error('يرجى استكمال الاسم ورقم الهاتف ونوع المستأجر');
+      toast.error(t('inquiry.toast.missingFields'));
       return;
     }
 
     if (!id) {
-      toast.error('إعلان السكن غير متاح حاليًا');
+      toast.error(t('inquiry.toast.noListing'));
       return;
     }
 
     if (!user) {
-      toast.error('سجل الدخول أولًا لإرسال الاستفسار');
+      toast.error(t('inquiry.toast.loginRequired'));
       void navigate('/login');
       return;
     }
 
     if (listing?.ownerId === user.id) {
-      toast.error('لا يمكنك إرسال استفسار إلى إعلانك الخاص');
+      toast.error(t('inquiry.toast.ownListing'));
       return;
     }
 
@@ -115,10 +129,10 @@ const AccommodationInquiryPage = () => {
         message: inquiryMessage,
       });
 
-      toast.success('تم إرسال الاستفسار بنجاح، ويمكنك متابعته من تبويب الرسائل المرسلة.');
+      toast.success(t('inquiry.toast.success'));
       void navigate(`/marketplace/inquiries?tab=sent&focus=${inquiry.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'تعذر إرسال الاستفسار';
+      const message = error instanceof Error ? error.message : t('inquiry.toast.failure');
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -126,12 +140,12 @@ const AccommodationInquiryPage = () => {
   };
 
   return (
-    <Layout title="استفسار الإقامة">
+    <Layout title={t('inquiry.pageTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6 gap-2">
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            العودة
+            {t('inquiry.back')}
           </Button>
 
           <Card className="border-border/50">
@@ -139,10 +153,8 @@ const AccommodationInquiryPage = () => {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <MessageSquare className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl">استفسار عن السكن</CardTitle>
-              <p className="text-muted-foreground">
-                أرسل استفسارك إلى المعلن عبر المنصة ليظهر مباشرة في صندوق الوارد الخاص به.
-              </p>
+              <CardTitle className="text-2xl">{t('inquiry.cardTitle')}</CardTitle>
+              <p className="text-muted-foreground">{t('inquiry.cardSubtitle')}</p>
             </CardHeader>
             <CardContent className="pt-6">
               <form
@@ -153,12 +165,12 @@ const AccommodationInquiryPage = () => {
               >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="name">الاسم الكامل *</Label>
+                    <Label htmlFor="name">{t('inquiry.formName')}</Label>
                     <div className="relative">
                       <User className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="name"
-                        placeholder="أدخل اسمك"
+                        placeholder={t('inquiry.formNamePlaceholder')}
                         value={formData.name}
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, name: event.target.value }))
@@ -169,7 +181,7 @@ const AccommodationInquiryPage = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">رقم الهاتف *</Label>
+                    <Label htmlFor="phone">{t('inquiry.formPhone')}</Label>
                     <div className="relative">
                       <Phone className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -188,7 +200,7 @@ const AccommodationInquiryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">البريد الإلكتروني</Label>
+                  <Label htmlFor="email">{t('inquiry.formEmail')}</Label>
                   <div className="relative">
                     <Mail className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -205,7 +217,7 @@ const AccommodationInquiryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>نوع المستأجر *</Label>
+                  <Label>{t('inquiry.formTenantType')}</Label>
                   <Select
                     value={formData.tenantType}
                     onValueChange={(value) =>
@@ -213,12 +225,12 @@ const AccommodationInquiryPage = () => {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر نوع المستأجر" />
+                      <SelectValue placeholder={t('inquiry.formTenantTypeSelect')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {tenantTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
+                      {tenantTypesKeys.map((key) => (
+                        <SelectItem key={key} value={t(key)}>
+                          {t(key)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -235,16 +247,16 @@ const AccommodationInquiryPage = () => {
                   />
                   <Label htmlFor="isStudent" className="flex cursor-pointer items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-primary" />
-                    أنا طالب جامعي
+                    {t('inquiry.studentCheckbox')}
                   </Label>
                 </div>
 
                 {formData.isStudent && (
                   <div className="space-y-2">
-                    <Label htmlFor="university">الجامعة / الكلية</Label>
+                    <Label htmlFor="university">{t('inquiry.universityLabel')}</Label>
                     <Input
                       id="university"
-                      placeholder="مثال: جامعة الوادي الجديد - كلية العلوم"
+                      placeholder={t('inquiry.universityPlaceholder')}
                       value={formData.university}
                       onChange={(event) =>
                         setFormData((prev) => ({ ...prev, university: event.target.value }))
@@ -255,7 +267,7 @@ const AccommodationInquiryPage = () => {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="moveInDate">تاريخ الانتقال المتوقع</Label>
+                    <Label htmlFor="moveInDate">{t('inquiry.moveInDate')}</Label>
                     <div className="relative">
                       <Calendar className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -270,7 +282,7 @@ const AccommodationInquiryPage = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>مدة الإيجار المتوقعة</Label>
+                    <Label>{t('inquiry.duration')}</Label>
                     <Select
                       value={formData.duration}
                       onValueChange={(value) =>
@@ -278,20 +290,28 @@ const AccommodationInquiryPage = () => {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر المدة" />
+                        <SelectValue placeholder={t('inquiry.durationSelect')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1-3 أشهر">1-3 أشهر</SelectItem>
-                        <SelectItem value="3-6 أشهر">3-6 أشهر</SelectItem>
-                        <SelectItem value="6-12 شهر">6-12 شهر</SelectItem>
-                        <SelectItem value="أكثر من سنة">أكثر من سنة</SelectItem>
+                        <SelectItem value={t('inquiry.durations.1to3')}>
+                          {t('inquiry.durations.1to3')}
+                        </SelectItem>
+                        <SelectItem value={t('inquiry.durations.3to6')}>
+                          {t('inquiry.durations.3to6')}
+                        </SelectItem>
+                        <SelectItem value={t('inquiry.durations.6to12')}>
+                          {t('inquiry.durations.6to12')}
+                        </SelectItem>
+                        <SelectItem value={t('inquiry.durations.moreThanYear')}>
+                          {t('inquiry.durations.moreThanYear')}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="occupants">عدد الأفراد</Label>
+                  <Label htmlFor="occupants">{t('inquiry.occupantsLabel')}</Label>
                   <div className="relative">
                     <Users className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -308,10 +328,10 @@ const AccommodationInquiryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">رسالتك</Label>
+                  <Label htmlFor="message">{t('inquiry.messageLabel')}</Label>
                   <Textarea
                     id="message"
-                    placeholder="اكتب أي تفاصيل إضافية أو أسئلة تريد إرسالها للمعلن..."
+                    placeholder={t('inquiry.messagePlaceholder')}
                     value={formData.message}
                     onChange={(event) =>
                       setFormData((prev) => ({ ...prev, message: event.target.value }))
@@ -322,7 +342,7 @@ const AccommodationInquiryPage = () => {
 
                 <Button type="submit" className="w-full" size="lg" disabled={submitting}>
                   <Send className="h-5 w-5 ms-2" />
-                  {submitting ? 'جارٍ إرسال الاستفسار...' : 'إرسال الاستفسار'}
+                  {submitting ? t('inquiry.submittingBtn') : t('inquiry.submitBtn')}
                 </Button>
               </form>
             </CardContent>

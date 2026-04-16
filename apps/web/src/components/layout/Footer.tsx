@@ -1,63 +1,20 @@
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Phone, Mail, Facebook, Instagram, MapPin, Youtube } from 'lucide-react';
 
 import { XIcon } from '@/components/icons/XIcon';
-import { useAuth } from '@/hooks/use-auth';
-import { pickLocalizedCopy } from '@/lib/localization';
 
 const quickLinks = [
-  {
-    href: '/tourism',
-    label: { ar: 'السياحة والمجتمع', en: 'Tourism & community' },
-  },
-  {
-    href: '/tourism/accommodation',
-    label: { ar: 'الإقامة', en: 'Accommodation' },
-  },
-  {
-    href: '/guides',
-    label: { ar: 'المرشدين', en: 'Guides' },
-  },
-  {
-    href: '/marketplace',
-    label: { ar: 'البورصة والأسعار', en: 'Marketplace & prices' },
-  },
-  {
-    href: '/logistics',
-    label: { ar: 'اللوجستيات والتنقل', en: 'Logistics & mobility' },
-  },
-  {
-    href: '/investment',
-    label: { ar: 'فرص الاستثمار', en: 'Investment opportunities' },
-  },
+  { href: '/tourism', labelKey: 'footer.link.tourism' },
+  { href: '/tourism/accommodation', labelKey: 'footer.link.accommodation' },
+  { href: '/guides', labelKey: 'footer.link.guides' },
+  { href: '/marketplace', labelKey: 'footer.link.marketplace' },
+  { href: '/logistics', labelKey: 'footer.link.logistics' },
+  { href: '/investment', labelKey: 'footer.link.investment' },
 ] as const;
 
 export function Footer() {
-  const { language } = useAuth();
-  const copy =
-    language === 'en'
-      ? {
-          brandName: 'Hena Wadeena',
-          description:
-            'Official digital gateway for New Valley. We connect the community, support the local economy, and share the story of the oasis with the world.',
-          quickLinks: 'Quick links',
-          contact: 'Contact us',
-          location: 'Kharga, New Valley, Egypt',
-          followUs: 'Follow us',
-          rights: '© 2026 Hena Wadeena. All rights reserved.',
-          visionLogoAlt: 'Egypt Vision 2030',
-        }
-      : {
-          brandName: 'هُنَا وَادِينَا',
-          description:
-            'البوابة الرقمية الرسمية للوادي الجديد - نربط المجتمع، ندعم الاقتصاد، ونحكي قصة وادينا للعالم.',
-          quickLinks: 'روابط سريعة',
-          contact: 'تواصل معنا',
-          location: 'الخارجة، الوادي الجديد، مصر',
-          followUs: 'تابعنا',
-          rights: '© 2026 هُنَا وَادِينَا. جميع الحقوق محفوظة.',
-          visionLogoAlt: 'رؤية مصر 2030',
-        };
+  const { t } = useTranslation('layout');
 
   return (
     <footer className="bg-card border-t border-border">
@@ -65,14 +22,20 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/icon-source.png" alt={copy.brandName} className="h-9 w-9 rounded-lg" />
-              <span className="text-xl font-bold text-foreground">{copy.brandName}</span>
+              <img
+                src="/icon-source.png"
+                alt={t('footer.brandName')}
+                className="h-9 w-9 rounded-lg"
+              />
+              <span className="text-xl font-bold text-foreground">{t('footer.brandName')}</span>
             </Link>
-            <p className="text-sm leading-relaxed text-muted-foreground">{copy.description}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t('footer.description')}
+            </p>
           </div>
 
           <div>
-            <h4 className="mb-4 font-semibold text-foreground">{copy.quickLinks}</h4>
+            <h4 className="mb-4 font-semibold text-foreground">{t('footer.quickLinks')}</h4>
             <ul className="space-y-2 text-sm">
               {quickLinks.map((link) => (
                 <li key={link.href}>
@@ -80,7 +43,7 @@ export function Footer() {
                     to={link.href}
                     className="text-muted-foreground transition-colors hover:text-primary"
                   >
-                    {pickLocalizedCopy(language, link.label)}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -88,11 +51,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-4 font-semibold text-foreground">{copy.contact}</h4>
+            <h4 className="mb-4 font-semibold text-foreground">{t('footer.contact')}</h4>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
-                {copy.location}
+                {t('footer.location')}
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
@@ -106,7 +69,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-4 font-semibold text-foreground">{copy.followUs}</h4>
+            <h4 className="mb-4 font-semibold text-foreground">{t('footer.followUs')}</h4>
             <div className="flex gap-3">
               <a
                 href="https://www.facebook.com/profile.php?id=61576495808108"
@@ -150,11 +113,11 @@ export function Footer() {
         <div className="mt-8 flex flex-col items-center justify-center gap-3 border-t border-border pt-8 text-center text-sm text-muted-foreground sm:flex-row">
           <img
             src="/images/vision-2030.svg"
-            alt={copy.visionLogoAlt}
+            alt={t('footer.visionLogoAlt')}
             className="h-12 w-12 shrink-0 object-contain"
             loading="lazy"
           />
-          <p>{copy.rights}</p>
+          <p>{t('footer.rights')}</p>
         </div>
       </div>
     </footer>
