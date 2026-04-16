@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 
 import AccommodationListPage from './AccommodationListPage';
 
@@ -61,9 +62,7 @@ vi.mock('@/components/ui/input', () => ({
     onChange?: (event: { target: { value: string } }) => void;
     placeholder?: string;
     className?: string;
-  }) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} className={className} />
-  ),
+  }) => <input value={value} onChange={onChange} placeholder={placeholder} className={className} />,
 }));
 
 vi.mock('@/components/ui/card', () => ({
@@ -89,6 +88,12 @@ vi.mock('@/components/motion/Skeleton', () => ({
   Skeleton: () => <div>loading</div>,
 }));
 
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({
+    language: 'ar',
+  }),
+}));
+
 vi.mock('@/hooks/use-listings', () => ({
   useListings: () => ({
     data: { data: [] },
@@ -99,6 +104,14 @@ vi.mock('@/hooks/use-listings', () => ({
 }));
 
 describe('AccommodationListPage', () => {
+  beforeEach(() => {
+    void i18n.changeLanguage('ar');
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
+  });
+
   it('keeps accommodation search and district select at the same filter height', () => {
     render(<AccommodationListPage />);
 

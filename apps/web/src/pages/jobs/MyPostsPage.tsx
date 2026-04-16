@@ -26,13 +26,9 @@ import {
 import { getInitials } from '@/lib/utils';
 import type { JobPost, JobApplication, PublicUserProfile } from '@/services/api';
 import { ReviewForm } from './_shared';
-
-const UPDATE_STATUS_LABEL: Record<'accepted' | 'rejected' | 'in_progress' | 'completed', string> = {
-  accepted: 'تم قبول الطلب',
-  rejected: 'تم رفض الطلب',
-  in_progress: 'بدأ العمل',
-  completed: 'تم إتمام العمل وتحويل الأجر',
-};
+import type { AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 // ── Applicant row ─────────────────────────────────────────────────────────────
 
@@ -41,11 +37,15 @@ function ApplicantRow({
   jobId,
   profile,
   posterRatings,
+  appLanguage,
+  t,
 }: {
   app: JobApplication;
   jobId: string;
   profile: PublicUserProfile | undefined;
   posterRatings: { applicationId: string }[];
+  appLanguage: AppLanguage;
+  t: TFunction;
 }) {
   const updateMutation = useUpdateApplicationMutation(jobId);
   const [showReview, setShowReview] = useState(false);
@@ -57,9 +57,10 @@ function ApplicantRow({
   async function updateStatus(newStatus: 'accepted' | 'rejected' | 'in_progress' | 'completed') {
     try {
       await updateMutation.mutateAsync({ appId: app.id, status: newStatus });
-      toast.success(UPDATE_STATUS_LABEL[newStatus]);
+      const label = t(`updateStatusLabels.${newStatus}`);
+      toast.success(label);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر تحديث الحالة');
+      toast.error(err instanceof Error ? err.message : t('updateStatusError'));
     }
   }
 
@@ -73,7 +74,7 @@ function ApplicantRow({
           </Avatar>
           <span className="font-medium text-sm">{profile?.full_name ?? '...'}</span>
           <Badge variant="outline" className="text-xs">
-            {applicationStatusLabel(app.status)}
+            {applicationStatusLabel(app.status, appLanguage)}
           </Badge>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -84,7 +85,7 @@ function ApplicantRow({
                 onClick={() => void updateStatus('accepted')}
                 disabled={updateMutation.isPending}
               >
-                قبول
+                {t('acceptBtn')}
               </Button>
               <Button
                 size="sm"
@@ -92,7 +93,7 @@ function ApplicantRow({
                 onClick={() => void updateStatus('rejected')}
                 disabled={updateMutation.isPending}
               >
-                رفض
+                {t('rejectBtn')}
               </Button>
             </>
           )}
@@ -103,7 +104,7 @@ function ApplicantRow({
               onClick={() => void updateStatus('in_progress')}
               disabled={updateMutation.isPending}
             >
-              بدء العمل
+              {t('startWorkBtn')}
             </Button>
           )}
           {app.status === 'in_progress' && (
@@ -112,23 +113,27 @@ function ApplicantRow({
               onClick={() => void updateStatus('completed')}
               disabled={updateMutation.isPending}
             >
-              إتمام
+              {t('completeBtn')}
             </Button>
           )}
           {app.status === 'completed' && !hasRated && !showReview && (
             <Button size="sm" variant="outline" onClick={() => setShowReview(true)}>
-              تقييم
+              {t('rateBtn')}
             </Button>
           )}
         </div>
       </div>
-      {app.noteAr && <p className="text-sm text-muted-foreground">ملاحظة: {app.noteAr}</p>}
+      {app.noteAr && (
+        <p className="text-sm text-muted-foreground">
+          {t('notePrefixLabel')} {app.noteAr}
+        </p>
+      )}
       {showReview && (
         <ReviewForm
           jobId={jobId}
           appId={app.id}
           direction="poster_rates_worker"
-          label="تقييم العامل"
+          label={t('rateWorkerBtn')}
           onDone={() => {
             setShowReview(false);
             setSubmittedReview(true);
@@ -144,9 +149,13 @@ function ApplicantRow({
 function JobAccordionRow({
   job,
   posterRatings,
+  appLanguage,
+  t,
 }: {
   job: JobPost;
   posterRatings: { applicationId: string }[];
+  appLanguage: AppLanguage;
+  t: TFunction;
 }) {
   const [open, setOpen] = useState(false);
   const { data: appsData, isLoading: appsLoading } = useJobApplications(open ? job.id : undefined);
@@ -163,13 +172,16 @@ function JobAccordionRow({
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           <span className="font-semibold text-foreground truncate">{job.title}</span>
           <Badge variant="secondary" className="shrink-0">
-            {jobStatusLabel(job.status)}
+            {jobStatusLabel(job.status, appLanguage)}
           </Badge>
           <span className="text-sm text-muted-foreground shrink-0">
             {formatArabicSeats(job.slots)}
           </span>
           <span className="text-sm text-muted-foreground shrink-0">
-            {formatPrice(job.compensation)} جنيه / {compensationTypeLabel(job.compensationType)}
+            {t('perCompensation', {
+              price: formatPrice(job.compensation),
+              compensation: compensationTypeLabel(job.compensationType, appLanguage),
+            })}
           </span>
         </div>
         {open ? (
@@ -184,7 +196,7 @@ function JobAccordionRow({
           {appsLoading ? (
             <Skeleton className="h-12 w-full" />
           ) : apps.length === 0 ? (
-            <p className="text-sm text-muted-foreground">لا توجد طلبات بعد.</p>
+            <p className="text-sm text-muted-foreground">{t('noApplicationsYet')}</p>
           ) : (
             apps.map((app) => (
               <ApplicantRow
@@ -193,6 +205,8 @@ function JobAccordionRow({
                 jobId={job.id}
                 profile={profiles.data?.[app.applicantId]}
                 posterRatings={posterRatings}
+                appLanguage={appLanguage}
+                t={t}
               />
             ))
           )}
@@ -206,7 +220,9 @@ function JobAccordionRow({
 
 export default function MyPostsPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, language } = useAuth();
+  const appLanguage = language as AppLanguage;
+  const { t } = useTranslation('jobs');
   const { data, isLoading, isError, refetch } = useMyPosts(true);
   const { data: myReviews } = useUserReviews(user?.id, 'reviewer');
   const jobs = data?.data ?? [];
@@ -217,7 +233,7 @@ export default function MyPostsPage() {
 
   if (isLoading) {
     return (
-      <Layout title="وظائفي المنشورة">
+      <Layout title={t('myPostsTitle')}>
         <div className="container py-10 space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
@@ -229,35 +245,41 @@ export default function MyPostsPage() {
 
   if (isError) {
     return (
-      <Layout title="وظائفي المنشورة">
+      <Layout title={t('myPostsTitle')}>
         <div className="container py-20 text-center space-y-4">
-          <p className="text-muted-foreground">تعذر تحميل وظائفك.</p>
-          <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+          <p className="text-muted-foreground">{t('loadErrorPosts')}</p>
+          <Button onClick={() => void refetch()}>{t('retryBtn')}</Button>
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout title="وظائفي المنشورة">
+    <Layout title={t('myPostsTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-foreground">وظائفي المنشورة</h1>
-            <Button onClick={() => void navigate('/jobs/post')}>نشر وظيفة جديدة</Button>
+            <h1 className="text-2xl font-bold text-foreground">{t('myPostsTitle')}</h1>
+            <Button onClick={() => void navigate('/jobs/post')}>{t('postNewJobBtn')}</Button>
           </div>
 
           {jobs.length === 0 ? (
             <Card className="border-border/50">
               <CardContent className="py-20 text-center space-y-4">
-                <p className="text-lg text-muted-foreground">لم تنشر وظائف بعد.</p>
-                <Button onClick={() => void navigate('/jobs/post')}>نشر وظيفة</Button>
+                <p className="text-lg text-muted-foreground">{t('emptyPosts')}</p>
+                <Button onClick={() => void navigate('/jobs/post')}>{t('createJobBtn')}</Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
               {jobs.map((job) => (
-                <JobAccordionRow key={job.id} job={job} posterRatings={posterRatings} />
+                <JobAccordionRow
+                  key={job.id}
+                  job={job}
+                  posterRatings={posterRatings}
+                  appLanguage={appLanguage}
+                  t={t}
+                />
               ))}
             </div>
           )}

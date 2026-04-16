@@ -9,25 +9,31 @@ import { PageTransition } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
 import { useAttraction, useNearbyAttractions } from '@/hooks/use-attractions';
 import {
-  attractionTypeLabels,
-  areaLabels,
-  bestSeasonLabels,
-  bestTimeOfDayLabels,
-  difficultyLabels,
-  piastresToEgp,
   formatRating,
+  attractionTypeLabel,
+  areaLabel,
+  bestSeasonLabel,
+  bestTimeOfDayLabel,
+  difficultyLabel,
+  piastresToEgp,
 } from '@/lib/format';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import type { AppLanguage } from '@/lib/localization';
 
 const AttractionDetailsPage = () => {
   const { slug = '' } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation('tourism');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
 
   const { data: attraction, isLoading, error, refetch } = useAttraction(slug);
   const { data: nearby } = useNearbyAttractions(slug);
 
   if (isLoading) {
     return (
-      <Layout title="تفاصيل المعلم">
+      <Layout title={t('attractions.detailsTitle')}>
         <div className="container py-20 flex justify-center">
           <div className="h-96 w-full max-w-2xl rounded-2xl bg-muted animate-pulse" />
         </div>
@@ -37,12 +43,12 @@ const AttractionDetailsPage = () => {
 
   if (error || !attraction) {
     return (
-      <Layout title="تفاصيل المعلم">
+      <Layout title={t('attractions.detailsTitle')}>
         <div className="container py-20 flex flex-col items-center gap-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
-          <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات المعلم السياحي</p>
+          <p className="text-lg text-muted-foreground">{t('attractions.errorLoadingDetails')}</p>
           <Button variant="outline" onClick={() => void refetch()}>
-            إعادة المحاولة
+            {t('attractions.retryBtn')}
           </Button>
         </div>
       </Layout>
@@ -52,13 +58,17 @@ const AttractionDetailsPage = () => {
   const heroImage = attraction.images?.[0] ?? attraction.thumbnail ?? '/placeholder.jpg';
 
   return (
-    <Layout title="تفاصيل المعلم">
+    <Layout title={t('attractions.detailsTitle')}>
       <PageTransition>
         {/* Hero Image */}
         <div className="relative h-72 md:h-96 overflow-hidden">
           <img
             src={heroImage}
-            alt={attraction.nameAr}
+            alt={
+              (appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+              attraction.nameAr ??
+              ''
+            }
             className="w-full h-full object-cover"
             fetchPriority="high"
             decoding="async"
@@ -70,7 +80,7 @@ const AttractionDetailsPage = () => {
             onClick={() => void navigate('/tourism/attractions')}
           >
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            رجوع
+            {t('attractions.backBtn')}
           </Button>
         </div>
 
@@ -79,18 +89,22 @@ const AttractionDetailsPage = () => {
           <SR>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{attractionTypeLabels[attraction.type]}</Badge>
-                <Badge variant="outline">{areaLabels[attraction.area]}</Badge>
+                <Badge variant="secondary">
+                  {attractionTypeLabel(attraction.type, appLanguage)}
+                </Badge>
+                <Badge variant="outline">{areaLabel(attraction.area, appLanguage)}</Badge>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                {attraction.nameAr}
+                {(appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+                  attraction.nameAr ??
+                  ''}
               </h1>
               {attraction.ratingAvg != null && (
                 <div className="flex items-center gap-2 text-accent">
                   <Star className="h-5 w-5 fill-current" />
                   <span className="font-bold text-lg">{formatRating(attraction.ratingAvg)}</span>
                   <span className="text-muted-foreground text-sm">
-                    ({attraction.reviewCount} تقييم)
+                    {t('attractions.reviewsCount', { count: attraction.reviewCount })}
                   </span>
                 </div>
               )}
@@ -101,7 +115,9 @@ const AttractionDetailsPage = () => {
           {attraction.descriptionAr && (
             <SR>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                {attraction.descriptionAr}
+                {(appLanguage === 'en' ? attraction.descriptionEn : attraction.descriptionAr) ??
+                  attraction.descriptionAr ??
+                  ''}
               </p>
             </SR>
           )}
@@ -110,8 +126,12 @@ const AttractionDetailsPage = () => {
           {attraction.historyAr && (
             <SR>
               <div>
-                <h2 className="text-xl font-bold text-foreground mb-3">التاريخ</h2>
-                <p className="text-muted-foreground leading-relaxed">{attraction.historyAr}</p>
+                <h2 className="text-xl font-bold text-foreground mb-3">
+                  {t('attractions.historyTitle')}
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  {attraction.historyAr ?? ''}
+                </p>
               </div>
             </SR>
           )}
@@ -123,8 +143,12 @@ const AttractionDetailsPage = () => {
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center gap-2">
                     <Clock className="h-5 w-5 text-accent" />
-                    <span className="text-sm text-muted-foreground">المدة</span>
-                    <span className="font-semibold">{attraction.durationHours} ساعة</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('attractions.durationTitle')}
+                    </span>
+                    <span className="font-semibold">
+                      {t('attractions.hours', { count: attraction.durationHours })}
+                    </span>
                   </CardContent>
                 </Card>
               )}
@@ -132,8 +156,12 @@ const AttractionDetailsPage = () => {
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center gap-2">
                     <Users className="h-5 w-5 text-accent" />
-                    <span className="text-sm text-muted-foreground">الصعوبة</span>
-                    <span className="font-semibold">{difficultyLabels[attraction.difficulty]}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('attractions.difficultyTitle')}
+                    </span>
+                    <span className="font-semibold">
+                      {difficultyLabel(attraction.difficulty, appLanguage)}
+                    </span>
                   </CardContent>
                 </Card>
               )}
@@ -141,8 +169,12 @@ const AttractionDetailsPage = () => {
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center gap-2">
                     <Calendar className="h-5 w-5 text-accent" />
-                    <span className="text-sm text-muted-foreground">أفضل موسم</span>
-                    <span className="font-semibold">{bestSeasonLabels[attraction.bestSeason]}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('attractions.bestSeasonTitle')}
+                    </span>
+                    <span className="font-semibold">
+                      {bestSeasonLabel(attraction.bestSeason, appLanguage)}
+                    </span>
                   </CardContent>
                 </Card>
               )}
@@ -150,9 +182,11 @@ const AttractionDetailsPage = () => {
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center gap-2">
                     <Sun className="h-5 w-5 text-accent" />
-                    <span className="text-sm text-muted-foreground">أفضل وقت</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('attractions.bestTimeTitle')}
+                    </span>
                     <span className="font-semibold">
-                      {bestTimeOfDayLabels[attraction.bestTimeOfDay]}
+                      {bestTimeOfDayLabel(attraction.bestTimeOfDay, appLanguage)}
                     </span>
                   </CardContent>
                 </Card>
@@ -164,7 +198,9 @@ const AttractionDetailsPage = () => {
           {attraction.openingHours && (
             <SR>
               <div>
-                <h2 className="text-xl font-bold text-foreground mb-2">مواعيد الفتح</h2>
+                <h2 className="text-xl font-bold text-foreground mb-2">
+                  {t('attractions.openingHoursTitle')}
+                </h2>
                 <p className="text-muted-foreground">{attraction.openingHours}</p>
               </div>
             </SR>
@@ -174,16 +210,30 @@ const AttractionDetailsPage = () => {
           {attraction.entryFee && (
             <SR>
               <div>
-                <h2 className="text-xl font-bold text-foreground mb-3">رسوم الدخول</h2>
+                <h2 className="text-xl font-bold text-foreground mb-3">
+                  {t('attractions.entryFeeTitle')}
+                </h2>
                 <div className="space-y-1 text-muted-foreground">
                   {attraction.entryFee.adultsPiasters != null && (
-                    <p>بالغين: {piastresToEgp(attraction.entryFee.adultsPiasters)}</p>
+                    <p>
+                      {t('attractions.adultsFeeLabel')}
+                      {piastresToEgp(attraction.entryFee.adultsPiasters)}{' '}
+                      {t('attractions.currency')}
+                    </p>
                   )}
                   {attraction.entryFee.childrenPiasters != null && (
-                    <p>أطفال: {piastresToEgp(attraction.entryFee.childrenPiasters)}</p>
+                    <p>
+                      {t('attractions.childrenFeeLabel')}
+                      {piastresToEgp(attraction.entryFee.childrenPiasters)}{' '}
+                      {t('attractions.currency')}
+                    </p>
                   )}
                   {attraction.entryFee.foreignersPiasters != null && (
-                    <p>أجانب: {piastresToEgp(attraction.entryFee.foreignersPiasters)}</p>
+                    <p>
+                      {t('attractions.foreignersFeeLabel')}
+                      {piastresToEgp(attraction.entryFee.foreignersPiasters)}{' '}
+                      {t('attractions.currency')}
+                    </p>
                   )}
                 </div>
               </div>
@@ -194,7 +244,9 @@ const AttractionDetailsPage = () => {
           {attraction.tips && attraction.tips.length > 0 && (
             <SR>
               <div>
-                <h2 className="text-xl font-bold text-foreground mb-3">نصائح للزيارة</h2>
+                <h2 className="text-xl font-bold text-foreground mb-3">
+                  {t('attractions.visitingTipsTitle')}
+                </h2>
                 <ul className="space-y-2">
                   {attraction.tips.map((tip, i) => (
                     <li key={i} className="flex items-start gap-2 text-muted-foreground">
@@ -210,17 +262,28 @@ const AttractionDetailsPage = () => {
           {attraction.location && (
             <SR>
               <div>
-                <h2 className="text-xl font-bold text-foreground mb-3">الموقع</h2>
+                <h2 className="text-xl font-bold text-foreground mb-3">
+                  {t('attractions.locationTitle')}
+                </h2>
                 <div className="space-y-4">
                   <InteractiveMap
                     locations={[
                       {
                         id: attraction.id,
-                        name: attraction.nameAr,
+                        name:
+                          (appLanguage === 'en' ? attraction.nameEn : attraction.nameAr) ??
+                          attraction.nameAr ??
+                          '',
                         lat: attraction.location.y,
                         lng: attraction.location.x,
-                        description: attraction.descriptionAr ?? undefined,
-                        type: attractionTypeLabels[attraction.type],
+                        description:
+                          ((appLanguage === 'en'
+                            ? attraction.descriptionEn
+                            : attraction.descriptionAr) ??
+                            attraction.descriptionAr ??
+                            '') ||
+                          undefined,
+                        type: attractionTypeLabel(attraction.type, appLanguage),
                         image: attraction.thumbnail ?? undefined,
                         color: '#0f766e',
                       },
@@ -239,7 +302,9 @@ const AttractionDetailsPage = () => {
           {nearby && nearby.length > 0 && (
             <SR>
               <div>
-                <h2 className="text-xl font-bold text-foreground mb-4">معالم قريبة</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">
+                  {t('attractions.nearbyAttractionsTitle')}
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {nearby.map((a) => (
                     <Link key={a.id} to={`/tourism/attraction/${a.slug}`} className="block">
@@ -247,18 +312,18 @@ const AttractionDetailsPage = () => {
                         <div className="aspect-[4/3] overflow-hidden">
                           <img
                             src={a.thumbnail ?? '/placeholder.jpg'}
-                            alt={a.nameAr}
+                            alt={(appLanguage === 'en' ? a.nameEn : a.nameAr) ?? a.nameAr ?? ''}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
                           />
                         </div>
                         <CardContent className="p-4">
                           <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {a.nameAr}
+                            {(appLanguage === 'en' ? a.nameEn : a.nameAr) ?? a.nameAr ?? ''}
                           </h4>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                             <Badge variant="outline" className="text-xs">
-                              {attractionTypeLabels[a.type]}
+                              {attractionTypeLabel(a.type, appLanguage)}
                             </Badge>
                             {a.ratingAvg != null && (
                               <span className="flex items-center gap-0.5 me-1">

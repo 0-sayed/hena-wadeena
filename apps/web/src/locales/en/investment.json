@@ -1,0 +1,127 @@
+{
+  "title": "Investment",
+  "hero": {
+    "title": "Investment opportunities",
+    "subtitle": "Discover investment opportunities in New Valley and connect with startups",
+    "searchPlaceholder": "Search for investment opportunities...",
+    "badge": "Investment opportunities"
+  },
+  "tabs": {
+    "opportunities": "Opportunities",
+    "startups": "Startups"
+  },
+  "status": {
+    "available": "Available",
+    "active": "Active"
+  },
+  "sectors": {
+    "agriculture": "Agriculture",
+    "tourism": "Tourism",
+    "industry": "Industry",
+    "real_estate": "Real estate",
+    "services": "Services",
+    "technology": "Technology",
+    "energy": "Energy"
+  },
+  "card": {
+    "expectedReturn": "Expected return: {{pct}}%",
+    "investmentRange": "{{min}}-{{max}} million {{currency}}"
+  },
+  "startupDetails": {
+    "title": "Startup Details",
+    "backBtn": "Back to investment",
+    "loadError": "Unable to load startup details.",
+    "verified": "Verified",
+    "status": "Status",
+    "about": "About the startup",
+    "availableInfo": "Available information",
+    "category": "Category",
+    "district": "District",
+    "notSpecified": "Not specified",
+    "lastUpdated": "Last updated",
+    "relatedOfferings": "Related offerings",
+    "contactInterest": "Contact and interest",
+    "sendInquiry": "Send inquiry",
+    "visitWebsite": "Visit website"
+  },
+  "contact": {
+    "title": "Contact Investor",
+    "backBtn": "Back",
+    "startupTitle": "Contact a startup",
+    "investmentTitle": "Contact for investment",
+    "intro": {
+      "loading": "Loading startup details before sending your inquiry.",
+      "target": "Your inquiry will be saved and sent directly to {{name}}.",
+      "startup": "Your inquiry will be saved and sent directly to the startup owner.",
+      "opportunity": "Your inquiry will be saved and sent directly to the opportunity owner."
+    },
+    "form": {
+      "fullName": "Full name",
+      "phone": "Phone number",
+      "email": "Email address",
+      "company": "Company name",
+      "investorType": "Investor type",
+      "investorTypePlaceholder": "Select investor type",
+      "investmentRange": "Expected investment range",
+      "investmentRangePlaceholder": "Select range",
+      "amount": "Proposed amount (EGP)",
+      "message": "Your message",
+      "messagePlaceholderStartup": "Describe the partnership or investment you want to discuss with this startup...",
+      "messagePlaceholderOpportunity": "Describe your interest in this opportunity or the kind of partnership you are seeking...",
+      "sendBtn": "Send inquiry",
+      "sendingBtn": "Sending..."
+    },
+    "toast": {
+      "signIn": "Sign in first to send your inquiry",
+      "investorOnly": "This feature is available to investors and admins only",
+      "unavailableStartup": "This startup is not available right now",
+      "unavailableOpportunity": "This opportunity is not available right now",
+      "fillRequired": "Please complete your name, email, and message",
+      "loadError": "Unable to load startup details right now",
+      "ownStartup": "You cannot send an inquiry to your own startup",
+      "successStartup": "Your inquiry was sent to the startup owner successfully",
+      "successOpportunity": "Your inquiry was sent successfully and will appear in the opportunity owner inbox",
+      "error": "Unable to send inquiry"
+    },
+    "types": {
+      "individual": "Individual investor",
+      "company": "Company",
+      "fund": "Investment fund",
+      "government": "Government institution",
+      "other": "Other"
+    },
+    "ranges": {
+      "under-1m": "Less than 1 million EGP",
+      "1m-5m": "1-5 million EGP",
+      "5m-10m": "5-10 million EGP",
+      "10m-50m": "10-50 million EGP",
+      "50m-plus": "More than 50 million EGP"
+    }
+  },
+  "details": {
+    "title": "Investment Opportunity Details",
+    "backBtn": "Back to investment",
+    "loadError": "Unable to load investment opportunity data.",
+    "retryBtn": "Retry",
+    "expectedReturn": "Expected return: {{pct}}%",
+    "projectDescription": "Project Description",
+    "incentives": "Incentives and Benefits",
+    "location": "Project Location",
+    "typeLabel": "Investment opportunity",
+    "noCoordinates": "No coordinates available for this opportunity yet.",
+    "documents": "Documents",
+    "attachedDocument": "Attached document",
+    "open": "Open",
+    "noDocuments": "No documents attached yet.",
+    "loginToViewDocuments": "Sign in as an investor or admin to view detailed documents.",
+    "investmentTitle": "Investment Details",
+    "requiredAmount": "Required Investment Size",
+    "investmentCurrency": "EGP",
+    "paybackPeriod": "Payback Period",
+    "paybackUnit": "year",
+    "inquiryBtn": "Send investment inquiry",
+    "contactInfo": "Contact Information",
+    "noContact": "No contact data available yet.",
+    "loginToViewContact": "Sign in as an investor or admin to view full contact data."
+  }
+}

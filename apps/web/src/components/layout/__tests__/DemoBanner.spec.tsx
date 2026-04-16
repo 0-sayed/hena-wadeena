@@ -21,9 +21,11 @@ describe('DemoBanner', () => {
 
     expect(screen.getByRole('status', { name: 'Demo mode notice' })).toBeInTheDocument();
     expect(
-      screen.getAllByText('DEMO MODE - All data on this platform is simulated for demonstration only'),
+      screen.getAllByText(
+        'DEMO MODE - All data on this platform is simulated for demonstration only',
+      ),
     ).toHaveLength(4);
     expect(container.querySelectorAll('[data-testid="demo-banner-icon"]')).toHaveLength(4);
-    expect(container.querySelector('.animate-ticker')).toBeInTheDocument();
+    expect(container.querySelector('.animate-ticker-ltr')).toBeInTheDocument();
   });
 });

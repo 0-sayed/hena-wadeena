@@ -1,0 +1,26 @@
+{
+  "title": "Wallet",
+  "balance": {
+    "label": "Current Balance",
+    "currencyLine": "EGP"
+  },
+  "topup": {
+    "btn": "Top up Wallet",
+    "title": "Top up Wallet",
+    "otherAmountPlaceholder": "Other amount...",
+    "submitBtn": "Top up Now",
+    "cancelBtn": "Cancel",
+    "success": "Wallet topped up successfully",
+    "invalidAmount": "Enter a valid amount",
+    "error": "Failed to top up wallet"
+  },
+  "transactions": {
+    "title": "Transaction History",
+    "empty": "No transactions yet",
+    "currency": "EGP",
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending"
+    }
+  }
+}

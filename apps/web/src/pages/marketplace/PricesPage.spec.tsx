@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PricesPage from './PricesPage';
 
@@ -132,6 +132,10 @@ describe('PricesPage', () => {
     mockUsePriceIndexPage.mockReset();
     mockUsePriceSummary.mockReset();
     mockNavigate.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('keeps price table header and body columns on the same logical alignment', () => {
@@ -318,5 +322,57 @@ describe('PricesPage', () => {
       20,
     );
     expect(screen.getByText('فول سوداني 2')).toBeInTheDocument();
+  });
+
+  it('renders server-paginated rows even when the current search text does not match locally', async () => {
+    vi.useFakeTimers();
+
+    mockUsePriceIndexPage.mockReturnValue({
+      data: {
+        data: [
+          {
+            commodity: {
+              id: 'commodity-1',
+              nameAr: 'طماطم',
+              nameEn: 'Tomatoes',
+              category: 'vegetables',
+              unit: 'kg',
+            },
+            region: 'kharga',
+            latestPrice: 1200,
+            changePercent: 0,
+            priceType: 'retail',
+          },
+        ],
+        total: 21,
+      },
+      isLoading: false,
+      isFetching: false,
+    });
+    mockUsePriceSummary.mockReturnValue({
+      data: {
+        topMovers: [],
+      },
+      isLoading: false,
+    });
+
+    render(<PricesPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('Search for a product...'), {
+      target: { value: 'zzzz' },
+    });
+    await act(() => vi.advanceTimersByTime(300));
+
+    expect(mockUsePriceIndexPage).toHaveBeenLastCalledWith(
+      {
+        q: 'zzzz',
+        category: undefined,
+        region: undefined,
+        price_type: 'retail',
+      },
+      1,
+      20,
+    );
+    expect(screen.getByText('طماطم')).toBeInTheDocument();
   });
 });

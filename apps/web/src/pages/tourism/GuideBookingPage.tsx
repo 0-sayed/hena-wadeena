@@ -33,11 +33,15 @@ import { useCreateBooking } from '@/hooks/use-bookings';
 import { usePackage } from '@/hooks/use-packages';
 import { formatRating, piastresToEgp } from '@/lib/format';
 import { getWalletSnapshot } from '@/lib/wallet-store';
+import { useTranslation } from 'react-i18next';
+import type { AppLanguage } from '@/lib/localization';
 
 const GuideBookingPage = () => {
   const navigate = useNavigate();
   const { packageId = '' } = useParams<{ packageId: string }>();
-  const { user, direction } = useAuth();
+  const { user, direction, language } = useAuth();
+  const appLanguage = language as AppLanguage;
+  const { t } = useTranslation('tourism');
 
   const { data: pkg, isLoading, error } = usePackage(packageId);
   const createBooking = useCreateBooking();
@@ -72,11 +76,11 @@ const GuideBookingPage = () => {
 
   const bookingSummary = useMemo(
     () => ({
-      packageTitle: pkg?.titleAr ?? '',
+      packageTitle: (appLanguage === 'en' ? pkg?.titleEn : pkg?.titleAr) ?? pkg?.titleAr ?? '',
       totalPriceLabel: piastresToEgp(totalPrice),
       balanceLabel: piastresToEgp(walletBalance),
     }),
-    [pkg?.titleAr, totalPrice, walletBalance],
+    [pkg?.titleAr, pkg?.titleEn, totalPrice, walletBalance, appLanguage],
   );
 
   const handleSubmit = () => {
@@ -89,7 +93,7 @@ const GuideBookingPage = () => {
     if (!pkg || !user) return;
 
     if (!canAfford) {
-      toast.error('رصيد المحفظة غير كافٍ. اشحن المحفظة ثم أعد المحاولة.');
+      toast.error(t('booking.insufficientBalanceToast'));
       setShowConfirm(false);
       void navigate('/wallet');
       return;
@@ -108,13 +112,13 @@ const GuideBookingPage = () => {
       {
         onSuccess: () => {
           isProcessingRef.current = false;
-          toast.success('تم إرسال طلب الحجز وسيتم تحديث المحفظة تلقائياً');
+          toast.success(t('booking.bookingSuccessToast'));
           setShowConfirm(false);
           void navigate('/bookings');
         },
         onError: (err) => {
           isProcessingRef.current = false;
-          toast.error(err instanceof Error ? err.message : 'تعذر إنشاء الحجز');
+          toast.error(err instanceof Error ? err.message : t('booking.bookingErrorToast'));
           setShowConfirm(false);
         },
       },
@@ -123,7 +127,7 @@ const GuideBookingPage = () => {
 
   if (isLoading) {
     return (
-      <Layout title="حجز مرشد">
+      <Layout title={t('booking.bookingTitle')}>
         <section className="py-8 md:py-12">
           <div className="container max-w-3xl px-4">
             <Skeleton h="h-96" className="rounded-2xl" />
@@ -135,12 +139,12 @@ const GuideBookingPage = () => {
 
   if (error || !pkg) {
     return (
-      <Layout title="حجز مرشد">
+      <Layout title={t('booking.bookingTitle')}>
         <div className="container flex flex-col items-center gap-4 py-20">
           <AlertCircle className="h-12 w-12 text-destructive" />
-          <p className="text-lg text-muted-foreground">تعذّر تحميل بيانات الباقة</p>
+          <p className="text-lg text-muted-foreground">{t('booking.packageLoadError')}</p>
           <Button variant="outline" onClick={() => void navigate(-1)}>
-            رجوع
+            {t('booking.backBtn')}
           </Button>
         </div>
       </Layout>
@@ -148,12 +152,12 @@ const GuideBookingPage = () => {
   }
 
   return (
-    <Layout title="حجز مرشد">
+    <Layout title={t('booking.bookingTitle')}>
       <section className="py-8 md:py-12">
         <div className="container max-w-3xl px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            رجوع
+            {t('booking.backBtn')}
           </Button>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -162,12 +166,16 @@ const GuideBookingPage = () => {
                 <div className="flex items-center gap-4">
                   <img
                     src={pkg.guideProfileImage ?? '/placeholder.jpg'}
-                    alt="مرشد"
+                    alt={t('packages.guideRole')}
                     className="h-14 w-14 rounded-full object-cover"
                     loading="lazy"
                   />
                   <div>
-                    <p className="line-clamp-1 text-sm text-muted-foreground">{pkg.guideBioAr}</p>
+                    <p className="line-clamp-1 text-sm text-muted-foreground">
+                      {(appLanguage === 'en' ? pkg.guideBioEn : pkg.guideBioAr) ??
+                        pkg.guideBioAr ??
+                        ''}
+                    </p>
                     <div className="flex items-center gap-1">
                       {pkg.guideRatingAvg != null && (
                         <>
@@ -180,7 +188,7 @@ const GuideBookingPage = () => {
                       {pkg.guideLicenseVerified && (
                         <Badge className="me-2 h-5 bg-green-500/10 text-[10px] text-green-600">
                           <Shield className="ms-1 h-3 w-3" />
-                          مرخّص
+                          {t('packages.licensedBadge')}
                         </Badge>
                       )}
                     </div>
@@ -188,15 +196,17 @@ const GuideBookingPage = () => {
                 </div>
 
                 <div className="space-y-2 border-t pt-4">
-                  <h3 className="text-lg font-bold">{pkg.titleAr}</h3>
+                  <h3 className="text-lg font-bold">
+                    {(appLanguage === 'en' ? pkg.titleEn : pkg.titleAr) ?? pkg.titleAr ?? ''}
+                  </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {pkg.durationHours} ساعة
+                      {t('packages.hours', { hours: pkg.durationHours })}
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      حتى {pkg.maxPeople} أفراد
+                      {t('packages.maxPeopleAlt', { max: pkg.maxPeople })}
                     </span>
                   </div>
                   {pkg.includes && pkg.includes.length > 0 && (
@@ -212,15 +222,15 @@ const GuideBookingPage = () => {
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>سعر الفرد</span>
+                    <span>{t('booking.pricePerPersonLabel')}</span>
                     <span>{piastresToEgp(pkg.price)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>عدد الأفراد</span>
+                    <span>{t('booking.peopleCountLabel')}</span>
                     <span>{peopleCount}</span>
                   </div>
                   <div className="mt-2 flex justify-between border-t pt-2 text-lg font-bold">
-                    <span>الإجمالي</span>
+                    <span>{t('booking.totalLabel')}</span>
                     <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
                   </div>
                 </div>
@@ -228,14 +238,14 @@ const GuideBookingPage = () => {
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Wallet className="h-4 w-4 text-primary" />
-                    رصيد المحفظة الحالي
+                    {t('booking.currentWalletBalance')}
                   </div>
                   <p className="mt-2 text-xl font-bold text-foreground">
                     {bookingSummary.balanceLabel}
                   </p>
                   {!canAfford && (
                     <p className="mt-2 text-sm text-destructive">
-                      الرصيد الحالي غير كافٍ لتأكيد هذا الحجز.
+                      {t('booking.insufficientBalanceWarning')}
                     </p>
                   )}
                 </div>
@@ -244,12 +254,12 @@ const GuideBookingPage = () => {
 
             <Card className="border-border/50 lg:order-1 lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-xl">تفاصيل الحجز</CardTitle>
+                <CardTitle className="text-xl">{t('booking.bookingDetailsTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="date">تاريخ الرحلة</Label>
+                    <Label htmlFor="date">{t('booking.tripDateLabel')}</Label>
                     <div className="relative">
                       <Calendar className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -265,7 +275,7 @@ const GuideBookingPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="time">وقت البدء</Label>
+                    <Label htmlFor="time">{t('booking.startTimeLabel')}</Label>
                     <div className="relative">
                       <Clock className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -280,7 +290,7 @@ const GuideBookingPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>عدد الأفراد</Label>
+                    <Label>{t('booking.peopleCountLabel')}</Label>
                     <div className="flex items-center gap-4">
                       <Button
                         type="button"
@@ -304,16 +314,16 @@ const GuideBookingPage = () => {
                         +
                       </Button>
                       <span className="text-sm text-muted-foreground">
-                        (الحد الأقصى {pkg.maxPeople})
+                        {t('booking.maxPeopleNote', { max: pkg.maxPeople })}
                       </span>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="notes">ملاحظات إضافية</Label>
+                    <Label htmlFor="notes">{t('booking.additionalNotesLabel')}</Label>
                     <Textarea
                       id="notes"
-                      placeholder="أخبرنا عن توقعاتك للرحلة..."
+                      placeholder={t('booking.notesPlaceholder')}
                       value={notes}
                       onChange={(event) => setNotes(event.target.value)}
                       maxLength={1000}
@@ -322,14 +332,14 @@ const GuideBookingPage = () => {
                   </div>
 
                   <div className="flex items-center justify-between rounded-lg bg-primary/5 p-4">
-                    <span className="text-muted-foreground">إجمالي التكلفة</span>
+                    <span className="text-muted-foreground">{t('booking.totalCostLabel')}</span>
                     <span className="text-2xl font-bold text-primary">
                       {bookingSummary.totalPriceLabel}
                     </span>
                   </div>
 
                   <Button className="w-full" size="lg" onClick={handleSubmit} disabled={!canSubmit}>
-                    مراجعة الحجز
+                    {t('booking.reviewBookingBtn')}
                   </Button>
                 </div>
               </CardContent>
@@ -341,43 +351,43 @@ const GuideBookingPage = () => {
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent className="sm:max-w-md" dir={direction}>
           <DialogHeader>
-            <DialogTitle>تأكيد الحجز</DialogTitle>
-            <DialogDescription>يرجى مراجعة تفاصيل الحجز قبل التأكيد</DialogDescription>
+            <DialogTitle>{t('booking.confirmBookingTitle')}</DialogTitle>
+            <DialogDescription>{t('booking.confirmBookingSubtitle')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">الباقة</span>
+              <span className="text-muted-foreground">{t('booking.packageLabel')}</span>
               <span className="font-medium">{bookingSummary.packageTitle}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">التاريخ</span>
+              <span className="text-muted-foreground">{t('booking.dateLabel')}</span>
               <span>{bookingDate}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">وقت البدء</span>
+              <span className="text-muted-foreground">{t('booking.startTimeLabel')}</span>
               <span>{startTime}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">عدد الأفراد</span>
+              <span className="text-muted-foreground">{t('booking.peopleCountLabel')}</span>
               <span>{peopleCount}</span>
             </div>
             {notes && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">ملاحظات</span>
+                <span className="text-muted-foreground">{t('booking.notesLabel')}</span>
                 <span className="max-w-[200px] text-start">{notes}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">الرصيد الحالي</span>
+              <span className="text-muted-foreground">{t('booking.currentWalletBalance')}</span>
               <span>{bookingSummary.balanceLabel}</span>
             </div>
             <div className="flex justify-between border-t pt-3 text-lg font-bold">
-              <span>الإجمالي</span>
+              <span>{t('booking.totalLabel')}</span>
               <span className="text-primary">{bookingSummary.totalPriceLabel}</span>
             </div>
             {!canAfford && (
               <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                الرصيد الحالي غير كافٍ. سيتم تحويلك إلى المحفظة لشحن الرصيد.
+                {t('booking.insufficientBalanceRedirectWarning')}
               </p>
             )}
           </div>
@@ -387,11 +397,11 @@ const GuideBookingPage = () => {
               onClick={() => setShowConfirm(false)}
               disabled={createBooking.isPending}
             >
-              تعديل
+              {t('booking.editBtn')}
             </Button>
             <Button onClick={() => void handleConfirm()} disabled={createBooking.isPending}>
               {createBooking.isPending && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-              تأكيد الحجز
+              {t('booking.confirmBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>

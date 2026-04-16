@@ -228,7 +228,7 @@ export function MissionCards() {
                     </p>
                     <div className="flex items-center gap-2 font-semibold text-primary">
                       {copy.cta}
-                      <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-2" />
+                      <ArrowLeft className="h-5 w-5 transition-transform duration-300 ltr:rotate-180 group-hover:ltr:translate-x-2 group-hover:rtl:-translate-x-2" />
                     </div>
                   </CardContent>
                 </Card>
@@ -268,11 +268,11 @@ export function MissionCards() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
-                      <span>{formatNewsDate(item.date, { monthFormat: 'short' })}</span>
+                      <span>{formatNewsDate(item.date, { monthFormat: 'short', language })}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
                       {copy.newsReadMore}
-                      <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
+                      <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 ltr:rotate-180 group-hover:ltr:translate-x-1 group-hover:rtl:-translate-x-1" />
                     </div>
                   </div>
                 </CardContent>

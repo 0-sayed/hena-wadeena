@@ -1,0 +1,20 @@
+{
+    "listingEditor.titleEdit": "Edit listing",
+    "listingEditor.titleAdd": "Add a new listing",
+    "listingEditor.description": "Add a product or service with pricing and location, then save to update the listings table.",
+    "listingEditor.nameLabel": "Name",
+    "listingEditor.priceLabel": "Price (EGP)",
+    "listingEditor.categoryLabel": "Category",
+    "listingEditor.districtLabel": "District",
+    "listingEditor.addressLabel": "Address",
+    "listingEditor.descriptionLabel": "Description",
+    "listingEditor.saving": "Saving...",
+    "listingEditor.updateBtn": "Update listing",
+    "listingEditor.addBtn": "Add listing",
+    "listingEditor.closeBtn": "Close",
+
+    "categories.shopping": "Shopping",
+    "categories.service": "Services",
+    "categories.healthcare": "Healthcare",
+    "categories.education": "Education"
+}

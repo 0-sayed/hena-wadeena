@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
+import i18n from '@/lib/i18n';
 import { authAPI } from '@/services/api';
 import type { AuthFlowResponse, AuthUser, LoginRequest, RegisterRequest } from '@/services/api';
 import * as authManager from '@/services/auth-manager';
@@ -15,7 +16,10 @@ interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  login(this: void, credentials: LoginRequest): Promise<{ status: 'authenticated' | 'pending_kyc' }>;
+  login(
+    this: void,
+    credentials: LoginRequest,
+  ): Promise<{ status: 'authenticated' | 'pending_kyc' }>;
   register(this: void, data: RegisterRequest): Promise<{ status: 'authenticated' | 'pending_kyc' }>;
   logout(this: void): void;
   updateUser(this: void, user: AuthUser): void;
@@ -182,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir = direction;
     document.body.dir = direction;
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    void i18n.changeLanguage(language);
   }, [direction, language]);
 
   const value = useMemo<AuthContextValue>(

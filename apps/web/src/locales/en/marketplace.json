@@ -1,0 +1,212 @@
+{
+  "title": "Marketplace",
+  "hero": {
+    "title": "Marketplace & prices",
+    "subtitle": "Local product prices, supplier directory, and direct contact",
+    "badge": "Marketplace & prices"
+  },
+  "tabs": {
+    "prices": "Price board",
+    "suppliers": "Supplier directory"
+  },
+  "filters": {
+    "selectCity": "Select city",
+    "searchProduct": "Search for a product..."
+  },
+  "table": {
+    "cityPrices": "Prices in {{city}}",
+    "product": "Product",
+    "category": "Category",
+    "price": "Price",
+    "change": "Change",
+    "priceUnit": "EGP/{{unit}}"
+  },
+  "suppliers": {
+    "searchPlaceholder": "Search for a supplier...",
+    "addBtn": "Add supplier",
+    "verified": "Verified",
+    "viewProfile": "View profile",
+    "visitWebsite": "Visit website"
+  },
+  "dialog": {
+    "addTitle": "Add a new supplier",
+    "addDesc": "Choose the main commodity from the list, or use \"Other\" to enter one manually.",
+    "form": {
+      "name": "Supplier name",
+      "primaryCommodity": "Primary commodity",
+      "other": "Other",
+      "customCommodity": "Custom commodity name",
+      "customPlaceholder": "Enter the commodity name",
+      "phone": "Phone number",
+      "website": "Website URL",
+      "logo": "Logo URL",
+      "description": "Description (Arabic)",
+      "commodities": "Linked commodities"
+    }
+  },
+  "toast": {
+    "nameReq": "Supplier name is required",
+    "commodityReq": "Choose the primary commodity",
+    "customNameReq": "Enter the custom commodity name",
+    "districtReq": "Choose the district",
+    "urlInvalid": "Website URL must start with http:// or https://",
+    "logoInvalid": "Logo URL must be a relative path, an http(s) URL, or a data URL",
+    "added": "Supplier added and published in the directory",
+    "error": "Unable to add the supplier"
+  },
+  "lastMarketUpdate": "Last market update: {{date}}",
+  "lastUpdateUnavailable": "Last update: unavailable",
+  "listingDetails": {
+    "title": "Ad Details",
+    "loadError": "Unable to load ad details.",
+    "backToMarket": "Back to Marketplace",
+    "retry": "Retry",
+    "back": "Back",
+    "undefinedDistrict": "Undefined",
+    "rating": "Rating: ",
+    "reviews": "({{count}} reviews)",
+    "descriptionTitle": "Description",
+    "amenitiesTitle": "Amenities",
+    "featuresTitle": "Additional Details",
+    "locationTitle": "Location",
+    "noCoordinates": "Precise coordinates are not available for this ad currently.",
+    "summaryTitle": "Ad Summary",
+    "priceLabel": "Price",
+    "priceUnit": "EGP/{{unit}}",
+    "unitFallback": "Unit",
+    "viewAccommodation": "View Accommodation Page",
+    "manageInquiries": "Follow up on Received Inquiries",
+    "sendInquiry": "Send Inquiry up to Owner",
+    "ownerTitle": "Ad Owner",
+    "ownerFallback": "Owner",
+    "ownerBadge": "Ad Owner",
+    "ownerSystemNote": "This ad is linked directly to its owner via the system, and you can send your inquiry from the designated button to reach their inbox.",
+    "contactTitle": "Contact Information",
+    "noContact": "No publicly available contact information for this ad."
+  },
+  "listingInquiry": {
+    "title": "Ad Inquiry",
+    "loadError": "Unable to load the requested ad.",
+    "backToMarket": "Back to Marketplace",
+    "back": "Back",
+    "isOwnerError": "You cannot send an inquiry to your own ad",
+    "idMissingError": "Ad is currently unavailable",
+    "validationError": "Please enter at least your name and a message",
+    "submitSuccess": "Inquiry sent successfully. You can follow it in the Sent Messages tab.",
+    "submitError": "Unable to send inquiry",
+    "cardTitle": "Send Inquiry about Ad",
+    "cardDescription": "Your message will be saved and linked to the ad \"{{title}}\" for \"{{owner}}\".",
+    "cardDescriptionNoOwner": "Your message will be saved and linked to the ad \"{{title}}\".",
+    "form": {
+      "name": "Name *",
+      "email": "Email",
+      "phone": "Phone Number",
+      "message": "Message *",
+      "messagePlaceholder": "Write your question or request regarding this ad..."
+    },
+    "button": {
+      "submitting": "Sending...",
+      "submit": "Send Inquiry"
+    }
+  },
+  "listingInquiries": {
+    "title": "Ad Inquiries",
+    "header": {
+      "title": "Ad Inquiries",
+      "subtitle": "Track received inquiries on your ads and messages you've sent to owners all in one place.",
+      "received": "Received",
+      "sent": "Sent"
+    },
+    "tabs": {
+      "received": "Received",
+      "sent": "Sent"
+    },
+    "status": {
+      "pending": "Unread",
+      "read": "Read",
+      "replied": "Replied"
+    },
+    "errors": {
+      "loadReceived": "Unable to load received inquiries at the moment.",
+      "loadSent": "Unable to load sent inquiries at the moment."
+    },
+    "empty": {
+      "received": "No inquiries received on your ads yet.",
+      "sent": "You haven't sent any inquiries yet. You can contact ad owners from the ad page itself."
+    },
+    "badges": {
+      "fromNotifications": "From Notifications"
+    },
+    "buttons": {
+      "viewAd": "View Ad",
+      "markAsRead": "Mark as Read",
+      "mail": "Email",
+      "call": "Call Directly",
+      "updateReply": "Update Reply",
+      "sendReply": "Send Reply"
+    },
+    "inquiry": {
+      "originalMessage": "Inquirer's Message",
+      "replyLabel": "In-Platform Reply",
+      "lastReplyAt": "Last reply {{time}}",
+      "replyPlaceholder": "Write your reply here to appear to the inquirer in their sent messages box...",
+      "replyNote": "The reply has been saved within this inquiry's record and can be seen by the user in the Sent Messages tab.",
+      "myOriginalMessage": "Your Original Message",
+      "ownerReply": "Owner's Reply",
+      "repliedAt": "Replied {{time}}",
+      "noReplyYet": "No reply yet. It will appear here once the owner responds, and you'll also receive platform notifications.",
+      "ownerFallback": "Ad Owner"
+    }
+  },
+  "prices": {
+    "title": "Market Prices",
+    "backToMarket": "Back to Marketplace",
+    "heroTitle": "Live Price Board",
+    "heroSubtitle": "Track agricultural product prices in New Valley moment by moment",
+    "stats": {
+      "available": "Products Available",
+      "rising": "Rising Products",
+      "falling": "Falling Products",
+      "stable": "Stable Products"
+    },
+    "movers": {
+      "gainers": "Top Gainers",
+      "losers": "Top Losers"
+    },
+    "filters": {
+      "all": "All",
+      "allCities": "All Cities",
+      "selectCity": "Select City",
+      "searchProduct": "Search for a product..."
+    },
+    "table": {
+      "product": "Product",
+      "category": "Category",
+      "city": "City",
+      "price": "Price",
+      "change": "Change",
+      "priceUnit": "EGP/{{unit}}"
+    },
+    "footer": {
+      "lastUpdated": "Last update: {{date}}",
+      "noData": "Currently no data available"
+    }
+  },
+  "supplierDetails": {
+    "title": "Supplier Details",
+    "backToMarket": "Back to Marketplace",
+    "loadError": "Supplier not found",
+    "verified": "Verified",
+    "aboutTitle": "About Supplier",
+    "productsTitle": "Products",
+    "table": {
+      "product": "Product",
+      "unit": "Unit"
+    },
+    "contactTitle": "Contact Information",
+    "regionSuffix": ", New Valley",
+    "callBtn": "Call Now",
+    "visitWebsite": "Visit Website",
+    "callAlert": "To contact {{name}}: {{phone}}"
+  }
+}

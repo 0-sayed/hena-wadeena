@@ -23,20 +23,28 @@ import { PageHero } from '@/components/layout/PageHero';
 import heroGuides from '@/assets/hero-guides.webp';
 import { useGuides } from '@/hooks/use-guides';
 import { usePublicUsers } from '@/hooks/use-users';
+import { useAuth } from '@/hooks/use-auth';
 import {
   areaLabels,
   formatRating,
-  languageLabels,
+  specialtyLabel,
+  languageLabel,
+  areaLabel,
   piastresToEgp,
-  specialtyLabels,
 } from '@/lib/format';
+import { matchesSearchQuery } from '@/lib/search';
 import type { GuideFilters, PublicUserProfile } from '@/services/api';
+import type { AppLanguage } from '@/lib/localization';
+import { useTranslation } from 'react-i18next';
 
-function getGuideName(profile?: PublicUserProfile) {
-  return profile?.display_name ?? profile?.full_name ?? 'مرشد سياحي';
+function getGuideName(profile: PublicUserProfile | undefined, defaultName: string) {
+  return profile?.display_name ?? profile?.full_name ?? defaultName;
 }
 
 const GuidesPage = () => {
+  const { t } = useTranslation('guides');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const [filters, setFilters] = useState<Omit<GuideFilters, 'page' | 'limit'>>({});
   const [searchInput, setSearchInput] = useState('');
 
@@ -58,16 +66,16 @@ const GuidesPage = () => {
   }, 300);
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearchInput(value);
-    debouncedSetSearch(value);
+    const nextValue = event.target.value;
+    setSearchInput(nextValue);
+    debouncedSetSearch(nextValue);
   };
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    debouncedSetSearch.cancel(); // discard any pending debounced call
     const trimmed = searchInput.trim();
     setSearchInput(trimmed);
+    debouncedSetSearch(trimmed); // cancel any pending debounce with stale untrimmed value
     setFilters((previous) => ({ ...previous, search: trimmed || undefined }));
   };
 
@@ -83,41 +91,59 @@ const GuidesPage = () => {
     setFilters((previous) => ({ ...previous, area: value === 'all' ? undefined : value }));
   };
 
+  const filteredGuides = useMemo(
+    () =>
+      guides.filter((guide) => {
+        const profile = publicUsers[guide.userId];
+
+        return matchesSearchQuery(searchInput, [
+          getGuideName(profile, t('guide.defaultName')),
+          guide.bioAr,
+          guide.bioEn,
+          ...guide.specialties,
+          ...guide.specialties.map((specialty) => specialtyLabel(specialty, appLanguage)),
+          ...guide.languages,
+          ...guide.languages.map((lang) => languageLabel(lang, appLanguage)),
+          ...guide.areasOfOperation,
+          ...guide.areasOfOperation.map((area) => areaLabel(area, appLanguage)),
+        ]);
+      }),
+    [guides, publicUsers, searchInput, appLanguage, t],
+  );
+
   return (
-    <Layout title="المرشدون السياحيون">
+    <Layout title={t('pageTitle')}>
       <PageTransition>
-        <PageHero image={heroGuides} alt="المرشدين السياحيين">
+        <PageHero image={heroGuides} alt={t('heroTitle')}>
           <SR>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-2">
               <Users className="h-5 w-5 text-accent" />
-              <span className="text-sm font-semibold text-card">المرشدين السياحيين</span>
+              <span className="text-sm font-semibold text-card">{t('heroBadge')}</span>
             </div>
           </SR>
           <SR delay={100}>
             <h1 className="mb-5 text-4xl font-bold text-card md:text-5xl lg:text-6xl">
-              المرشدين السياحيين
+              {t('heroTitle')}
             </h1>
           </SR>
           <SR delay={200}>
-            <p className="mb-10 text-lg text-card/90 md:text-xl">
-              اختر مرشدك واحجز رحلة مميزة في الوادي الجديد
-            </p>
+            <p className="mb-10 text-lg text-card/90 md:text-xl">{t('heroSubtitle')}</p>
           </SR>
           <SR delay={300}>
             <form onSubmit={handleSearch} className="relative mx-auto max-w-xl">
-              <button
-                type="submit"
-                aria-label="بحث"
-                className="search-inline-icon-lg absolute top-1/2 -translate-y-1/2 z-10 p-1 text-muted-foreground"
-              >
-                <Search className="h-5 w-5" />
-              </button>
+              <Search className="search-inline-icon-lg absolute top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالتخصص أو الوصف..."
+                placeholder={t('searchPlaceholder')}
                 value={searchInput}
                 onChange={handleSearchChange}
-                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm md:h-16 md:text-lg"
+                className="search-input-with-icon-lg h-16 rounded-2xl border-0 bg-card/90 text-lg shadow-lg backdrop-blur-sm ps-28 md:h-16 md:text-lg"
               />
+              <Button
+                type="submit"
+                className="absolute start-2 top-1/2 -translate-y-1/2 rounded-xl"
+              >
+                {t('searchBtn')}
+              </Button>
             </form>
           </SR>
         </PageHero>
@@ -126,13 +152,13 @@ const GuidesPage = () => {
           <div className="container flex flex-wrap gap-3 px-4">
             <Select onValueChange={handleLanguageChange} defaultValue="all">
               <SelectTrigger className="h-10 w-36">
-                <SelectValue placeholder="اللغة" />
+                <SelectValue placeholder={t('filter.language')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل اللغات</SelectItem>
-                {(Object.values(GuideLanguage) as GuideLanguage[]).map((language) => (
-                  <SelectItem key={language} value={language}>
-                    {languageLabels[language]}
+                <SelectItem value="all">{t('filter.allLanguages')}</SelectItem>
+                {(Object.values(GuideLanguage) as GuideLanguage[]).map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {languageLabel(lang, appLanguage)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -140,13 +166,13 @@ const GuidesPage = () => {
 
             <Select onValueChange={handleSpecialtyChange} defaultValue="all">
               <SelectTrigger className="h-10 w-36">
-                <SelectValue placeholder="التخصص" />
+                <SelectValue placeholder={t('filter.specialty')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل التخصصات</SelectItem>
+                <SelectItem value="all">{t('filter.allSpecialties')}</SelectItem>
                 {(Object.values(GuideSpecialty) as GuideSpecialty[]).map((specialty) => (
                   <SelectItem key={specialty} value={specialty}>
-                    {specialtyLabels[specialty]}
+                    {specialtyLabel(specialty, appLanguage)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -154,13 +180,13 @@ const GuidesPage = () => {
 
             <Select onValueChange={handleAreaChange} defaultValue="all">
               <SelectTrigger className="h-10 w-36">
-                <SelectValue placeholder="المنطقة" />
+                <SelectValue placeholder={t('filter.area')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل المناطق</SelectItem>
-                {Object.entries(areaLabels).map(([value, label]) => (
+                <SelectItem value="all">{t('filter.allAreas')}</SelectItem>
+                {Object.keys(areaLabels).map((value) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {areaLabel(value, appLanguage)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -179,17 +205,20 @@ const GuidesPage = () => {
             ) : isError ? (
               <div className="space-y-4 py-12 text-center">
                 <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
-                <p className="text-lg text-muted-foreground">حدث خطأ أثناء تحميل المرشدين</p>
+                <p className="text-lg text-muted-foreground">{t('loadError')}</p>
                 <Button variant="outline" onClick={() => void refetch()}>
-                  إعادة المحاولة
+                  {t('retryBtn')}
                 </Button>
               </div>
             ) : (
               <>
                 <SR stagger>
                   <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-                    {guides.map((guide) => {
-                      const guideName = getGuideName(publicUsers[guide.userId]);
+                    {filteredGuides.map((guide) => {
+                      const guideName = getGuideName(
+                        publicUsers[guide.userId],
+                        t('guide.defaultName'),
+                      );
 
                       return (
                         <Link
@@ -208,7 +237,7 @@ const GuidesPage = () => {
                                 />
                                 {guide.licenseVerified && (
                                   <Badge className="absolute start-3 top-3 bg-green-500 text-white shadow-lg">
-                                    ✓ مرخّص
+                                    ✓ {t('guide.licensedBadge')}
                                   </Badge>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -218,24 +247,22 @@ const GuidesPage = () => {
                                 <div className="space-y-1">
                                   <h2 className="text-xl font-bold text-foreground">{guideName}</h2>
                                   <p className="line-clamp-2 text-sm text-muted-foreground">
-                                    {guide.bioAr ??
-                                      guide.bioEn ??
-                                      'مرشد معتمد لرحلات الوادي الجديد'}
+                                    {guide.bioAr ?? guide.bioEn ?? t('guide.defaultBio')}
                                   </p>
                                 </div>
 
                                 <div className="flex flex-wrap gap-1.5">
                                   {guide.specialties.map((specialty) => (
                                     <Badge key={specialty} variant="outline" className="text-xs">
-                                      {specialtyLabels[specialty as GuideSpecialty] ?? specialty}
+                                      {specialtyLabel(specialty, appLanguage)}
                                     </Badge>
                                   ))}
                                 </div>
 
                                 <div className="flex flex-wrap gap-1.5">
-                                  {guide.languages.map((language) => (
-                                    <Badge key={language} variant="secondary" className="text-xs">
-                                      {languageLabels[language as GuideLanguage] ?? language}
+                                  {guide.languages.map((lang) => (
+                                    <Badge key={lang} variant="secondary" className="text-xs">
+                                      {languageLabel(lang, appLanguage)}
                                     </Badge>
                                   ))}
                                 </div>
@@ -254,13 +281,15 @@ const GuidesPage = () => {
                                     <span className="text-xl font-bold text-primary">
                                       {piastresToEgp(guide.basePrice)}
                                     </span>
-                                    <span className="ms-1 text-sm text-muted-foreground">/يوم</span>
+                                    <span className="ms-1 text-sm text-muted-foreground">
+                                      {t('guide.perDay')}
+                                    </span>
                                   </div>
                                 </div>
 
                                 {guide.packageCount > 0 && (
                                   <p className="text-xs text-muted-foreground">
-                                    {guide.packageCount} باقة متاحة
+                                    {t('guide.packagesAvailable', { count: guide.packageCount })}
                                   </p>
                                 )}
                               </div>
@@ -274,9 +303,12 @@ const GuidesPage = () => {
 
                 {guides.length === 0 && (
                   <div className="py-12 text-center">
-                    <p className="text-lg text-muted-foreground">
-                      {filters.search ? 'لا يوجد مرشدون مطابقون للبحث' : 'لا يوجد مرشدون متاحون'}
-                    </p>
+                    <p className="text-lg text-muted-foreground">{t('noGuides')}</p>
+                  </div>
+                )}
+                {guides.length > 0 && filteredGuides.length === 0 && (
+                  <div className="py-12 text-center">
+                    <p className="text-lg text-muted-foreground">{t('noMatchingGuides')}</p>
                   </div>
                 )}
 

@@ -30,10 +30,11 @@ export const NEWS_CATEGORY_COLORS: Record<NewsCategory, string> = {
 
 export function formatNewsDate(
   dateStr: string | null,
-  opts: { monthFormat?: 'long' | 'short'; nullValue?: string } = {},
+  opts: { monthFormat?: 'long' | 'short'; nullValue?: string; language?: 'ar' | 'en' } = {},
 ): string {
   if (!dateStr) return opts.nullValue ?? '';
-  return new Intl.DateTimeFormat('ar-EG', {
+  const locale = opts.language === 'en' ? 'en-US' : 'ar-EG';
+  return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: opts.monthFormat ?? 'long',
     day: 'numeric',

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@/components/layout/Layout';
@@ -19,7 +20,6 @@ import {
 import { usePublicUsers } from '@/hooks/use-users';
 import { pickLocalizedField } from '@/lib/localization';
 import {
-  formatArabicSeats,
   formatPrice,
   districtLabel,
   jobCategoryLabel,
@@ -27,12 +27,16 @@ import {
   applicationStatusLabel,
   compensationTypeLabel,
 } from '@/lib/format';
+import type { AppLanguage } from '@/lib/localization';
 import { getInitials } from '@/lib/utils';
 
 export default function JobDetailPage() {
+  const { t } = useTranslation('jobs');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated, language } = useAuth();
+  const appLanguage = language as AppLanguage;
+  const dateLocale = appLanguage === 'en' ? 'en-US' : 'ar-EG';
 
   const { data: job, isLoading, isError, refetch } = useJob(id);
   const posterProfiles = usePublicUsers(job ? [job.posterId] : []);
@@ -55,10 +59,10 @@ export default function JobDetailPage() {
     if (!id) return;
     try {
       await deleteMutation.mutateAsync(id);
-      toast.success('تم حذف الوظيفة');
+      toast.success(t('deleteSuccess'));
       void navigate('/jobs/my-posts');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر حذف الوظيفة');
+      toast.error(err instanceof Error ? err.message : t('deleteError'));
     }
   }
   const [showApplyForm, setShowApplyForm] = useState(false);
@@ -70,16 +74,16 @@ export default function JobDetailPage() {
   async function handleApply() {
     try {
       await applyMutation.mutateAsync({ noteAr: noteAr.trim() || undefined });
-      toast.success('تم تقديم طلبك بنجاح');
+      toast.success(t('applySuccess'));
       setShowApplyForm(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر تقديم الطلب');
+      toast.error(err instanceof Error ? err.message : t('applyError'));
     }
   }
 
   if (isLoading) {
     return (
-      <Layout title="تفاصيل الوظيفة">
+      <Layout title={t('detailTitle')}>
         <div className="container py-10 space-y-6">
           <Skeleton h="h-10" className="w-32 rounded-xl" />
           <Skeleton h="h-64" className="rounded-2xl" />
@@ -91,14 +95,14 @@ export default function JobDetailPage() {
 
   if (isError || !job) {
     return (
-      <Layout title="تفاصيل الوظيفة">
+      <Layout title={t('detailTitle')}>
         <div className="container py-20 text-center space-y-4">
-          <p className="text-lg text-muted-foreground">تعذر تحميل تفاصيل الوظيفة.</p>
+          <p className="text-lg text-muted-foreground">{t('loadErrorDetail')}</p>
           <div className="flex items-center justify-center gap-3">
             <Button variant="outline" onClick={() => void navigate('/jobs')}>
-              العودة إلى لوحة التوظيف
+              {t('backToBoardBtn')}
             </Button>
-            <Button onClick={() => void refetch()}>إعادة المحاولة</Button>
+            <Button onClick={() => void refetch()}>{t('retryBtn')}</Button>
           </div>
         </div>
       </Layout>
@@ -114,12 +118,12 @@ export default function JobDetailPage() {
     !myApplication;
 
   return (
-    <Layout title="تفاصيل الوظيفة">
+    <Layout title={t('detailTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate(-1)} className="mb-6">
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            العودة
+            {t('backBtn')}
           </Button>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -128,25 +132,35 @@ export default function JobDetailPage() {
               <Card className="border-border/50">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{jobCategoryLabel(job.category)}</Badge>
-                    <Badge variant="outline">{jobStatusLabel(job.status)}</Badge>
+                    <Badge variant="secondary">{jobCategoryLabel(job.category, appLanguage)}</Badge>
+                    <Badge variant="outline">{jobStatusLabel(job.status, appLanguage)}</Badge>
                   </div>
                   <h1 className="text-2xl font-bold text-foreground md:text-3xl">{job.title}</h1>
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <span>{districtLabel(job.area)}</span>
+                    <span>{districtLabel(job.area, appLanguage)}</span>
                     <span>
-                      {formatPrice(job.compensation)} جنيه /{' '}
-                      {compensationTypeLabel(job.compensationType)}
+                      {t('perCompensation', {
+                        price: `${formatPrice(job.compensation)} ${t('currency')}`,
+                        compensation: compensationTypeLabel(job.compensationType, appLanguage),
+                      })}
                     </span>
-                    <span>{formatArabicSeats(job.slots)}</span>
+                    <span>{t('slotsCount', { count: job.slots })}</span>
                   </div>
                   {(job.startsAt ?? job.endsAt) && (
                     <div className="text-sm text-muted-foreground">
                       {job.startsAt && (
-                        <span>من {new Date(job.startsAt).toLocaleDateString('ar-EG')} </span>
+                        <span>
+                          {t('fromDate', {
+                            date: new Date(job.startsAt).toLocaleDateString(dateLocale),
+                          })}{' '}
+                        </span>
                       )}
                       {job.endsAt && (
-                        <span>إلى {new Date(job.endsAt).toLocaleDateString('ar-EG')}</span>
+                        <span>
+                          {t('toDate', {
+                            date: new Date(job.endsAt).toLocaleDateString(dateLocale),
+                          })}
+                        </span>
                       )}
                     </div>
                   )}
@@ -155,7 +169,7 @@ export default function JobDetailPage() {
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">الوصف</CardTitle>
+                  <CardTitle className="text-lg">{t('descriptionTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
@@ -172,9 +186,9 @@ export default function JobDetailPage() {
                 <Card className="border-border/50 bg-muted/30">
                   <CardContent className="p-4 flex items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">طلبك الحالي</p>
+                      <p className="text-sm font-medium">{t('currentApplication')}</p>
                       <Badge variant="outline">
-                        {applicationStatusLabel(myApplication.status)}
+                        {applicationStatusLabel(myApplication.status, appLanguage)}
                       </Badge>
                     </div>
                   </CardContent>
@@ -185,8 +199,8 @@ export default function JobDetailPage() {
               {!isAuthenticated && job.status === 'open' && (
                 <Card className="border-border/50">
                   <CardContent className="p-6 text-center">
-                    <p className="mb-4 text-muted-foreground">سجّل دخولك للتقديم على هذه الوظيفة</p>
-                    <Button onClick={() => void navigate('/login')}>تسجيل الدخول</Button>
+                    <p className="mb-4 text-muted-foreground">{t('loginToApply')}</p>
+                    <Button onClick={() => void navigate('/login')}>{t('loginBtn')}</Button>
                   </CardContent>
                 </Card>
               )}
@@ -194,23 +208,23 @@ export default function JobDetailPage() {
               {canApply && !showApplyForm && (
                 <Button className="w-full" size="lg" onClick={() => setShowApplyForm(true)}>
                   <Briefcase className="ms-2 h-5 w-5" />
-                  تقديم طلب
+                  {t('applyBtn')}
                 </Button>
               )}
 
               {canApply && showApplyForm && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">تقديم طلب</CardTitle>
+                    <CardTitle className="text-lg">{t('applyForm.title')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <label htmlFor="noteAr" className="text-sm font-medium">
-                        ملاحظة (اختياري)
+                        {t('applyForm.noteLabel')}
                       </label>
                       <Textarea
                         id="noteAr"
-                        placeholder="اكتب ملاحظة للناشر..."
+                        placeholder={t('applyForm.notePlaceholder')}
                         value={noteAr}
                         onChange={(e) => setNoteAr(e.target.value)}
                         rows={3}
@@ -218,10 +232,12 @@ export default function JobDetailPage() {
                     </div>
                     <div className="flex gap-3">
                       <Button onClick={() => void handleApply()} disabled={applyMutation.isPending}>
-                        {applyMutation.isPending ? 'جارٍ التقديم...' : 'إرسال الطلب'}
+                        {applyMutation.isPending
+                          ? t('applyForm.applyingStatus')
+                          : t('applyForm.submitBtn')}
                       </Button>
                       <Button variant="outline" onClick={() => setShowApplyForm(false)}>
-                        إلغاء
+                        {t('applyForm.cancelBtn')}
                       </Button>
                     </div>
                   </CardContent>
@@ -234,7 +250,7 @@ export default function JobDetailPage() {
               {/* Poster info */}
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">ناشر الوظيفة</CardTitle>
+                  <CardTitle className="text-lg">{t('posterInfo')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-3">
@@ -243,7 +259,7 @@ export default function JobDetailPage() {
                       <AvatarFallback>{posterInitials}</AvatarFallback>
                     </Avatar>
                     <p className="font-semibold text-foreground">
-                      {poster?.full_name ?? 'صاحب العمل'}
+                      {poster?.full_name ?? t('employerFallback')}
                     </p>
                   </div>
                 </CardContent>
@@ -253,14 +269,14 @@ export default function JobDetailPage() {
               {isPoster && (
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">إدارة الوظيفة</CardTitle>
+                    <CardTitle className="text-lg">{t('manageJobTitle')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <Button asChild variant="outline" className="w-full">
-                      <Link to="/jobs/my-posts">إدارة الطلبات</Link>
+                      <Link to="/jobs/my-posts">{t('manageApplicationsBtn')}</Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full">
-                      <Link to={`/jobs/${id ?? ''}/edit`}>تعديل الوظيفة</Link>
+                      <Link to={`/jobs/${id ?? ''}/edit`}>{t('editJobBtn')}</Link>
                     </Button>
                     {!showDeleteConfirm ? (
                       <Button
@@ -268,11 +284,11 @@ export default function JobDetailPage() {
                         className="w-full text-destructive hover:bg-destructive/10"
                         onClick={() => setShowDeleteConfirm(true)}
                       >
-                        حذف الوظيفة
+                        {t('deleteJobBtn')}
                       </Button>
                     ) : (
                       <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 space-y-2">
-                        <p className="text-sm text-destructive">هل أنت متأكد من حذف هذه الوظيفة؟</p>
+                        <p className="text-sm text-destructive">{t('deleteConfirm')}</p>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -280,14 +296,14 @@ export default function JobDetailPage() {
                             onClick={() => void handleDelete()}
                             disabled={deleteMutation.isPending}
                           >
-                            {deleteMutation.isPending ? 'جارٍ...' : 'تأكيد الحذف'}
+                            {deleteMutation.isPending ? t('deletingStatus') : t('confirmDeleteBtn')}
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => setShowDeleteConfirm(false)}
                           >
-                            إلغاء
+                            {t('cancelBtn')}
                           </Button>
                         </div>
                       </div>

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import i18n from 'i18next';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,12 @@ const mockJob = {
 
 describe('JobBoardPage', () => {
   beforeEach(() => {
+    void i18n.changeLanguage('ar');
     mockUseAuth.mockReturnValue({ user: null, isAuthenticated: false });
+  });
+
+  afterEach(() => {
+    void i18n.changeLanguage('en');
   });
 
   it('renders skeleton while loading', () => {

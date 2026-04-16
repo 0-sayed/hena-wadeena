@@ -45,6 +45,7 @@ import {
 } from '@/lib/format';
 import { Skeleton, TableRowSkeleton } from '@/components/motion/Skeleton';
 import { PriceTrendModal } from '@/components/market/PriceTrendModal';
+import { useTranslation } from 'react-i18next';
 import type { NvDistrict } from '@hena-wadeena/types';
 
 const PRICE_TABLE_PAGE_SIZE = 20;
@@ -75,8 +76,9 @@ function getVisiblePageTokens(currentPage: number, totalPages: number): PageToke
 }
 
 const PricesPage = () => {
+  const { t } = useTranslation('marketplace');
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, language } = useAuth();
   const { data: priceAlerts = [] } = usePriceAlerts();
   const alertedCommodityIds = useMemo(
     () => new Set(priceAlerts.map((a) => a.commodityId)),
@@ -143,7 +145,7 @@ const PricesPage = () => {
   // entries (which carry region info) if the summary bucket is empty, so the
   // UI stays populated while still reflecting the latest page.
   type MoverCard = {
-    commodity: { id: string; nameAr: string };
+    commodity: { id: string; nameAr: string; nameEn?: string | null };
     changePercent: number;
     region?: string;
   };
@@ -162,7 +164,7 @@ const PricesPage = () => {
     .sort((a, b) => (b.changePercent ?? 0) - (a.changePercent ?? 0))
     .slice(0, 5)
     .map((e) => ({
-      commodity: { id: e.commodity.id, nameAr: e.commodity.nameAr },
+      commodity: { id: e.commodity.id, nameAr: e.commodity.nameAr, nameEn: e.commodity.nameEn },
       changePercent: e.changePercent ?? 0,
       region: e.region,
     }));
@@ -171,7 +173,7 @@ const PricesPage = () => {
     .sort((a, b) => (a.changePercent ?? 0) - (b.changePercent ?? 0))
     .slice(0, 5)
     .map((e) => ({
-      commodity: { id: e.commodity.id, nameAr: e.commodity.nameAr },
+      commodity: { id: e.commodity.id, nameAr: e.commodity.nameAr, nameEn: e.commodity.nameEn },
       changePercent: e.changePercent ?? 0,
       region: e.region,
     }));
@@ -184,21 +186,19 @@ const PricesPage = () => {
   const pageEnd = Math.min(currentPage * PRICE_TABLE_PAGE_SIZE, totalProducts);
 
   return (
-    <Layout title="أسعار السوق">
+    <Layout title={t('prices.title')}>
       {/* Hero */}
       <section className="bg-gradient-to-bl from-accent/20 via-background to-background py-12 md:py-16">
         <div className="container px-4">
           <Button variant="ghost" onClick={() => void navigate('/marketplace')} className="mb-4">
             <ArrowRight className="h-4 w-4 ltr:rotate-180" />
-            العودة للبورصة
+            {t('prices.backToMarket')}
           </Button>
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              لوحة الأسعار المباشرة
+              {t('prices.heroTitle')}
             </h1>
-            <p className="text-lg text-muted-foreground">
-              تابع أسعار المنتجات الزراعية في الوادي الجديد لحظة بلحظة
-            </p>
+            <p className="text-lg text-muted-foreground">{t('prices.heroSubtitle')}</p>
           </div>
         </div>
       </section>
@@ -216,7 +216,7 @@ const PricesPage = () => {
                 <CardContent className="p-4 text-center">
                   <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
                   <p className="text-2xl font-bold">{totalProducts}</p>
-                  <p className="text-sm text-muted-foreground">منتج متاح</p>
+                  <p className="text-sm text-muted-foreground">{t('prices.stats.available')}</p>
                 </CardContent>
               </Card>
             </div>
@@ -228,7 +228,7 @@ const PricesPage = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  الأكثر ارتفاعاً
+                  {t('prices.movers.gainers')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -244,14 +244,20 @@ const PricesPage = () => {
                         className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/50"
                       >
                         <div className="flex min-w-0 items-center gap-2">
-                          <span className="truncate font-medium">{mover.commodity.nameAr}</span>
+                          <span className="truncate font-medium">
+                            {(language === 'en'
+                              ? mover.commodity.nameEn
+                              : mover.commodity.nameAr) ??
+                              mover.commodity.nameAr ??
+                              ''}
+                          </span>
                           {mover.region && (
                             <Badge
                               variant="outline"
-                              aria-label={`مدينة المنتج الأكثر ارتفاعا ${districtLabel(mover.region)}`}
+                              aria-label={`مدينة المنتج الأكثر ارتفاعا ${districtLabel(mover.region, language)}`}
                               className="shrink-0 text-xs"
                             >
-                              {districtLabel(mover.region)}
+                              {districtLabel(mover.region, language)}
                             </Badge>
                           )}
                         </div>
@@ -269,7 +275,7 @@ const PricesPage = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <TrendingDown className="h-5 w-5 text-destructive" />
-                  الأكثر انخفاضاً
+                  {t('prices.movers.losers')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -285,14 +291,20 @@ const PricesPage = () => {
                         className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/50"
                       >
                         <div className="flex min-w-0 items-center gap-2">
-                          <span className="truncate font-medium">{mover.commodity.nameAr}</span>
+                          <span className="truncate font-medium">
+                            {(language === 'en'
+                              ? mover.commodity.nameEn
+                              : mover.commodity.nameAr) ??
+                              mover.commodity.nameAr ??
+                              ''}
+                          </span>
                           {mover.region && (
                             <Badge
                               variant="outline"
-                              aria-label={`مدينة المنتج الأكثر انخفاضا ${districtLabel(mover.region)}`}
+                              aria-label={`مدينة المنتج الأكثر انخفاضا ${districtLabel(mover.region, language)}`}
                               className="shrink-0 text-xs"
                             >
-                              {districtLabel(mover.region)}
+                              {districtLabel(mover.region, language)}
                             </Badge>
                           )}
                         </div>
@@ -311,12 +323,14 @@ const PricesPage = () => {
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <Select value={selectedCity} onValueChange={setSelectedCity}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="اختر المدينة" />
+                <SelectValue placeholder={t('prices.filters.selectCity')} />
               </SelectTrigger>
               <SelectContent>
                 {DISTRICTS_WITH_ALL.map((city) => (
                   <SelectItem key={city.id} value={city.id}>
-                    {city.name}
+                    {city.id === 'all'
+                      ? t('prices.filters.allCities')
+                      : districtLabel(city.id, language)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -330,7 +344,7 @@ const PricesPage = () => {
                   size="sm"
                   onClick={() => setSelectedCategory(opt.id)}
                 >
-                  {opt.label}
+                  {opt.id ? categoryLabel(opt.id, language) : t('prices.filters.all')}
                 </Button>
               ))}
             </div>
@@ -338,7 +352,7 @@ const PricesPage = () => {
             <div className="relative flex-1 md:max-w-xs me-auto">
               <Search className="search-inline-icon-md absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث عن منتج..."
+                placeholder={t('prices.filters.searchProduct')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-input-with-icon-md"
@@ -352,11 +366,11 @@ const PricesPage = () => {
               <Table className="min-w-[48rem] table-fixed">
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="px-6 py-4">المنتج</TableHead>
-                    <TableHead className="px-6 py-4">التصنيف</TableHead>
-                    <TableHead className="px-6 py-4">المدينة</TableHead>
-                    <TableHead className="px-6 py-4">السعر</TableHead>
-                    <TableHead className="px-6 py-4">التغير</TableHead>
+                    <TableHead className="px-6 py-4">{t('prices.table.product')}</TableHead>
+                    <TableHead className="px-6 py-4">{t('prices.table.category')}</TableHead>
+                    <TableHead className="px-6 py-4">{t('prices.table.city')}</TableHead>
+                    <TableHead className="px-6 py-4">{t('prices.table.price')}</TableHead>
+                    <TableHead className="px-6 py-4">{t('prices.table.change')}</TableHead>
                     <TableHead className="w-16 px-6 py-4" />
                   </TableRow>
                 </TableHeader>
@@ -377,16 +391,20 @@ const PricesPage = () => {
                         >
                           <TableCell className="px-6 py-4 text-start">
                             <span className="font-medium text-foreground">
-                              {entry.commodity.nameAr}
+                              {(language === 'en'
+                                ? entry.commodity.nameEn
+                                : entry.commodity.nameAr) ??
+                                entry.commodity.nameAr ??
+                                ''}
                             </span>
                           </TableCell>
                           <TableCell className="px-6 py-4 text-start">
                             <Badge variant="outline">
-                              {categoryLabel(entry.commodity.category)}
+                              {categoryLabel(entry.commodity.category, language)}
                             </Badge>
                           </TableCell>
                           <TableCell className="px-6 py-4 text-start text-muted-foreground">
-                            {districtLabel(entry.region)}
+                            {districtLabel(entry.region, language)}
                           </TableCell>
                           <TableCell className="px-6 py-4 text-start">
                             <div className="flex flex-wrap items-baseline gap-1">
@@ -394,7 +412,9 @@ const PricesPage = () => {
                                 {formatPrice(entry.latestPrice)}
                               </span>
                               <span className="text-sm text-muted-foreground">
-                                جنيه/{unitLabel(entry.commodity.unit)}
+                                {t('prices.table.priceUnit', {
+                                  unit: unitLabel(entry.commodity.unit, language),
+                                })}
                               </span>
                             </div>
                           </TableCell>
@@ -482,8 +502,19 @@ const PricesPage = () => {
 
           <p className="text-center text-sm text-muted-foreground mt-4">
             {summary?.lastUpdated
-              ? `آخر تحديث: ${new Date(summary.lastUpdated).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-              : 'لا تتوفر بيانات حاليا'}
+              ? t('prices.footer.lastUpdated', {
+                  date: new Date(summary.lastUpdated).toLocaleDateString(
+                    language === 'ar' ? 'ar-EG' : 'en-US',
+                    {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    },
+                  ),
+                })
+              : t('prices.footer.noData')}
           </p>
         </div>
       </section>

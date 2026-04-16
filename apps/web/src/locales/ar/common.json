@@ -1,0 +1,44 @@
+{
+    "search": "بحث",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "profile": "الملف الشخصي",
+    "wallet": "المحفظة",
+    "bookings": "حجوزاتي",
+    "notifications": "الإشعارات",
+    "explore": "استكشف",
+    "viewAll": "عرض الكل",
+    "viewProfile": "عرض الملف",
+    "details": "التفاصيل",
+    "contact": "تواصل",
+    "inquiry": "استفسار",
+    "loading": "جاري التحميل...",
+    "beta": "تجريبي",
+    "roleCrud": {
+        "statsTotal": "الإجمالي",
+        "statsActive": "نشط",
+        "statsPending": "قيد التنفيذ",
+        "notesLabel": "ملاحظات",
+        "notesPlaceholder": "ملاحظات إضافية",
+        "inputPlaceholder": "أدخل {{entity}}",
+        "addBtn": "إضافة",
+        "updateBtn": "تحديث",
+        "cancelBtn": "إلغاء",
+        "statusHeader": "الحالة",
+        "notesHeader": "ملاحظات",
+        "actionsHeader": "إجراءات",
+        "statusActive": "نشط",
+        "statusPending": "قيد التنفيذ",
+        "statusArchived": "مؤرشف",
+        "toggleStatus": "تبديل الحالة"
+    },
+    "errors": {
+        "notFound": {
+            "title": "الصفحة غير موجودة",
+            "heading": "الصفحة غير موجودة",
+            "description": "عذراً، لم نتمكن من العثور على الصفحة التي تبحث عنها. ربما تم نقلها أو حذفها.",
+            "backToHome": "العودة للرئيسية"
+        }
+    }
+}

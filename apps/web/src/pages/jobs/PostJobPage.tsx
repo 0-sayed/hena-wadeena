@@ -15,8 +15,18 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateJobMutation } from '@/hooks/use-jobs';
-import { JOB_CATEGORY_OPTIONS, COMPENSATION_TYPE_OPTIONS, DISTRICTS } from '@/lib/format';
+import {
+  JOB_CATEGORY_OPTIONS,
+  COMPENSATION_TYPE_OPTIONS,
+  DISTRICTS,
+  jobCategoryLabel,
+  compensationTypeLabel,
+  districtLabel,
+} from '@/lib/format';
 import { JobCategory, CompensationType } from '@/lib/format';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import type { AppLanguage } from '@/lib/localization';
 import { parseCompensationToPiasters, parseSlots } from '@/pages/jobs/job-form.utils';
 
 type FormState = {
@@ -47,6 +57,9 @@ const empty: FormState = {
 
 export default function PostJobPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('jobs');
+  const { language } = useAuth();
+  const appLanguage = language as AppLanguage;
   const [form, setForm] = useState<FormState>(empty);
   const createMutation = useCreateJobMutation();
 
@@ -60,21 +73,21 @@ export default function PostJobPage() {
     e.preventDefault();
 
     if (!form.title.trim()) {
-      toast.error('عنوان الوظيفة مطلوب');
+      toast.error(t('errors.titleRequired'));
       return;
     }
     if (!form.descriptionAr.trim()) {
-      toast.error('الوصف بالعربية مطلوب');
+      toast.error(t('errors.descriptionArRequired'));
       return;
     }
     const compensation = parseCompensationToPiasters(form.compensationEgp);
     if (compensation === null) {
-      toast.error('أدخل قيمة تعويض صحيحة');
+      toast.error(t('errors.compensationInvalid'));
       return;
     }
     const slots = parseSlots(form.slots);
     if (slots === null) {
-      toast.error('عدد المقاعد يجب أن يكون 1 على الأقل');
+      toast.error(t('errors.slotsInvalid'));
       return;
     }
 
@@ -91,60 +104,60 @@ export default function PostJobPage() {
         startsAt: form.startsAt ? toIsoDateTime(form.startsAt) : undefined,
         endsAt: form.endsAt ? toIsoDateTime(form.endsAt) : undefined,
       });
-      toast.success('تم نشر الوظيفة بنجاح');
+      toast.success(t('postSuccess'));
       void navigate(`/jobs/${job.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر نشر الوظيفة');
+      toast.error(err instanceof Error ? err.message : t('postError'));
     }
   }
 
   return (
-    <Layout title="نشر وظيفة">
+    <Layout title={t('postJobTitle')}>
       <section className="py-8 md:py-12">
         <div className="container px-4 max-w-2xl">
-          <h1 className="mb-8 text-2xl font-bold text-foreground">نشر وظيفة جديدة</h1>
+          <h1 className="mb-8 text-2xl font-bold text-foreground">{t('postNewJobBtn')}</h1>
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
             <Card className="border-border/50">
               <CardHeader>
-                <CardTitle className="text-lg">تفاصيل الوظيفة</CardTitle>
+                <CardTitle className="text-lg">{t('jobDetailsTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">عنوان الوظيفة *</Label>
+                  <Label htmlFor="title">{t('jobTitleLabel')}</Label>
                   <Input
                     id="title"
                     value={form.title}
                     onChange={(e) => set('title', e.target.value)}
-                    placeholder="مثال: عامل حصاد التمور"
+                    placeholder={t('jobTitlePlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="descriptionAr">الوصف بالعربية *</Label>
+                  <Label htmlFor="descriptionAr">{t('descArLabel')}</Label>
                   <Textarea
                     id="descriptionAr"
                     rows={4}
                     value={form.descriptionAr}
                     onChange={(e) => set('descriptionAr', e.target.value)}
-                    placeholder="صف متطلبات الوظيفة..."
+                    placeholder={t('descArPlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="descriptionEn">الوصف بالإنجليزية (اختياري)</Label>
+                  <Label htmlFor="descriptionEn">{t('descEnLabel')}</Label>
                   <Textarea
                     id="descriptionEn"
                     rows={3}
                     value={form.descriptionEn}
                     onChange={(e) => set('descriptionEn', e.target.value)}
                     dir="ltr"
-                    placeholder="Job description in English..."
+                    placeholder={t('descEnPlaceholder')}
                   />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>الفئة</Label>
+                    <Label>{t('categoryLabel')}</Label>
                     <Select
                       value={form.category}
                       onValueChange={(v) => set('category', v as JobCategory)}
@@ -155,7 +168,7 @@ export default function PostJobPage() {
                       <SelectContent>
                         {JOB_CATEGORY_OPTIONS.map((opt) => (
                           <SelectItem key={opt.id} value={opt.id}>
-                            {opt.label}
+                            {jobCategoryLabel(opt.id, appLanguage)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -163,7 +176,7 @@ export default function PostJobPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>المنطقة</Label>
+                    <Label>{t('areaLabel')}</Label>
                     <Select value={form.area} onValueChange={(v) => set('area', v)}>
                       <SelectTrigger>
                         <SelectValue />
@@ -171,7 +184,7 @@ export default function PostJobPage() {
                       <SelectContent>
                         {DISTRICTS.map((d) => (
                           <SelectItem key={d.id} value={d.id}>
-                            {d.name}
+                            {districtLabel(d.id, appLanguage)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -181,7 +194,9 @@ export default function PostJobPage() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="compensation">التعويض (جنيه) *</Label>
+                    <Label htmlFor="compensation">
+                      {t('compensationLabel', { currency: appLanguage === 'en' ? 'EGP' : 'جنيه' })}
+                    </Label>
                     <Input
                       id="compensation"
                       type="number"
@@ -194,7 +209,7 @@ export default function PostJobPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>نوع التعويض</Label>
+                    <Label>{t('compensationTypeLabel')}</Label>
                     <Select
                       value={form.compensationType}
                       onValueChange={(v) => set('compensationType', v as CompensationType)}
@@ -205,7 +220,7 @@ export default function PostJobPage() {
                       <SelectContent>
                         {COMPENSATION_TYPE_OPTIONS.map((opt) => (
                           <SelectItem key={opt.id} value={opt.id}>
-                            {opt.label}
+                            {compensationTypeLabel(opt.id, appLanguage)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -214,7 +229,7 @@ export default function PostJobPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="slots">عدد المقاعد</Label>
+                  <Label htmlFor="slots">{t('slotsLabel')}</Label>
                   <Input
                     id="slots"
                     type="number"
@@ -226,7 +241,7 @@ export default function PostJobPage() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="startsAt">تاريخ البداية (اختياري)</Label>
+                    <Label htmlFor="startsAt">{t('startDateLabel')}</Label>
                     <Input
                       id="startsAt"
                       type="date"
@@ -235,7 +250,7 @@ export default function PostJobPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endsAt">تاريخ النهاية (اختياري)</Label>
+                    <Label htmlFor="endsAt">{t('endDateLabel')}</Label>
                     <Input
                       id="endsAt"
                       type="date"
@@ -249,7 +264,7 @@ export default function PostJobPage() {
 
             <div className="flex gap-3">
               <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'جارٍ النشر...' : 'نشر الوظيفة'}
+                {createMutation.isPending ? t('postingStatus') : t('postBtn')}
               </Button>
               <Button
                 type="button"
@@ -257,7 +272,7 @@ export default function PostJobPage() {
                 disabled={createMutation.isPending}
                 onClick={() => void navigate('/jobs')}
               >
-                إلغاء
+                {t('cancelBtn')}
               </Button>
             </div>
           </form>
