@@ -122,7 +122,7 @@ const Index = () => {
   const visibleRoleLinks = filterLinks(roleLinks, user?.role);
 
   return (
-    <Layout>
+    <Layout title={t('pageTitle')}>
       <HeroSection />
       <VisionStrip />
       <QuickAccess />

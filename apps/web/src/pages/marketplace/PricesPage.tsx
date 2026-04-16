@@ -181,16 +181,7 @@ const PricesPage = () => {
   const gainers = summaryGainers.length > 0 ? summaryGainers : entryGainers;
   const losers = summaryLosers.length > 0 ? summaryLosers : entryLosers;
 
-  const filteredProducts = entries.filter((e) => {
-    const name = (
-      (language === 'en' ? e.commodity.nameEn : e.commodity.nameAr) ??
-      e.commodity.nameAr ??
-      ''
-    ).toLowerCase();
-    const category = categoryLabel(e.commodity.category, language).toLowerCase();
-    const query = debouncedSearch.toLowerCase();
-    return name.includes(query) || category.includes(query);
-  });
+  const filteredProducts = entries;
   const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * PRICE_TABLE_PAGE_SIZE + 1;
   const pageEnd = Math.min(currentPage * PRICE_TABLE_PAGE_SIZE, totalProducts);
 
