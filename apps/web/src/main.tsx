@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from 'next-themes';
+import '@/lib/i18n'; // initialize i18next before React renders
 import App from './App.tsx';
 import './index.css';
 
