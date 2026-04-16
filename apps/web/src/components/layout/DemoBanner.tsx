@@ -24,7 +24,7 @@ export function DemoBanner() {
       dir="ltr"
     >
       <div
-        className="animate-ticker flex h-full w-max items-center whitespace-nowrap text-[10px] font-semibold tracking-wide sm:text-xs"
+        className={`${language === 'ar' ? 'animate-ticker-rtl' : 'animate-ticker-ltr'} flex h-full w-max items-center whitespace-nowrap text-[10px] font-semibold tracking-wide sm:text-xs`}
         style={{ animationDelay: tickerDelay }}
       >
         {NOTICE_REPEATS.map((repeat) => (

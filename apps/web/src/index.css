@@ -680,7 +680,7 @@ textarea {
   }
 
   /* ── Demo ticker ───────────────────────────────────── */
-  @keyframes ticker {
+  @keyframes ticker-rtl {
     0% {
       transform: translateX(0);
     }
@@ -688,10 +688,22 @@ textarea {
       transform: translateX(-25%);
     }
   }
-  .animate-ticker {
-    animation: ticker 40s linear infinite;
+  @keyframes ticker-ltr {
+    0% {
+      transform: translateX(-25%);
+    }
+    100% {
+      transform: translateX(0);
+    }
   }
-  .animate-ticker:hover {
+  .animate-ticker-rtl {
+    animation: ticker-rtl 40s linear infinite;
+  }
+  .animate-ticker-ltr {
+    animation: ticker-ltr 40s linear infinite;
+  }
+  .animate-ticker-rtl:hover,
+  .animate-ticker-ltr:hover {
     animation-play-state: paused;
   }
 
