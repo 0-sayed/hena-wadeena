@@ -217,19 +217,22 @@ const AttractionDetailsPage = () => {
                   {attraction.entryFee.adultsPiasters != null && (
                     <p>
                       {t('attractions.adultsFeeLabel')}
-                      {piastresToEgp(attraction.entryFee.adultsPiasters)} {t('list.currency')}
+                      {piastresToEgp(attraction.entryFee.adultsPiasters)}{' '}
+                      {t('attractions.currency')}
                     </p>
                   )}
                   {attraction.entryFee.childrenPiasters != null && (
                     <p>
                       {t('attractions.childrenFeeLabel')}
-                      {piastresToEgp(attraction.entryFee.childrenPiasters)} {t('list.currency')}
+                      {piastresToEgp(attraction.entryFee.childrenPiasters)}{' '}
+                      {t('attractions.currency')}
                     </p>
                   )}
                   {attraction.entryFee.foreignersPiasters != null && (
                     <p>
                       {t('attractions.foreignersFeeLabel')}
-                      {piastresToEgp(attraction.entryFee.foreignersPiasters)} {t('list.currency')}
+                      {piastresToEgp(attraction.entryFee.foreignersPiasters)}{' '}
+                      {t('attractions.currency')}
                     </p>
                   )}
                 </div>

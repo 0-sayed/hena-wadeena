@@ -162,4 +162,54 @@ describe('AttractionDetailsPage', () => {
       screen.queryByText((content) => content.includes('25.4520') && content.includes('30.5470')),
     ).not.toBeInTheDocument();
   });
+
+  it('renders entry fee currency from the tourism namespace', () => {
+    mockUseAttraction.mockReturnValue({
+      data: {
+        id: 'attr-1',
+        slug: 'temple-of-hibis',
+        nameAr: 'معبد هيبس',
+        nameEn: 'Temple of Hibis',
+        type: 'historical',
+        area: 'kharga',
+        descriptionAr: 'وصف المعلم',
+        descriptionEn: null,
+        historyAr: null,
+        bestSeason: null,
+        bestTimeOfDay: null,
+        entryFee: {
+          adultsPiasters: 5000,
+          childrenPiasters: null,
+          foreignersPiasters: null,
+        },
+        openingHours: null,
+        durationHours: 2,
+        difficulty: null,
+        tips: [],
+        nearbySlugs: [],
+        location: null,
+        images: [],
+        thumbnail: null,
+        isActive: true,
+        isFeatured: true,
+        ratingAvg: 4.8,
+        reviewCount: 12,
+        createdAt: '',
+        updatedAt: '',
+      },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(<AttractionDetailsPage />);
+
+    expect(
+      screen.getByText((_, element) => {
+        const text = element?.textContent ?? '';
+        return element?.tagName.toLowerCase() === 'p' && text.includes('بالغين:') && text.includes('جنيه');
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/list\.currency/)).not.toBeInTheDocument();
+  });
 });
