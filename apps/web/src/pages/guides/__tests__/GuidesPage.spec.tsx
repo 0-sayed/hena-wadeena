@@ -221,6 +221,16 @@ describe('GuidesPage', () => {
     expect(screen.queryByText('محمود')).not.toBeInTheDocument();
   });
 
+  it('trims search text before sending it to backend filters', () => {
+    render(<GuidesPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('ابحث بالتخصص أو الوصف...'), {
+      target: { value: '  مغا  ' },
+    });
+
+    expect(mockUseGuides).toHaveBeenLastCalledWith({ search: 'مغا' });
+  });
+
   it('uses the roomy hero search field sizing', () => {
     render(<GuidesPage />);
 
