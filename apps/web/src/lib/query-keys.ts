@@ -143,7 +143,10 @@ export const queryKeys = {
     byBooking: (bookingId: string) => ['desert-trips', 'booking', bookingId] as const,
   },
   incidents: {
-    list: (filters?: Record<string, unknown>) => ['incidents', 'list', filters] as const,
+    list: (filters?: Record<string, unknown>) =>
+      filters !== undefined
+        ? (['incidents', 'list', filters] as const)
+        : (['incidents', 'list'] as const),
     mine: (filters?: Record<string, unknown>) =>
       filters !== undefined
         ? (['incidents', 'mine', filters] as const)

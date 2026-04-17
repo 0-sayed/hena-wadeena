@@ -56,7 +56,7 @@ describe('incident mutations', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(invalidateSpy).toHaveBeenNthCalledWith(1, {
-      queryKey: ['incidents', 'list', undefined],
+      queryKey: ['incidents', 'list'],
     });
     expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
       queryKey: ['incidents', 'mine'],
