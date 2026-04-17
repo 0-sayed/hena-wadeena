@@ -19,7 +19,7 @@ import { useListings } from '@/hooks/use-listings';
 import { usePois } from '@/hooks/use-map';
 import { useAuth } from '@/hooks/use-auth';
 import { districtLabel } from '@/lib/format';
-import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
+import { pickLocalizedCopy, pickLocalizedField, type AppLanguage } from '@/lib/localization';
 import type { NvDistrict } from '@hena-wadeena/types';
 import type { Listing, BenefitInfo } from '@/services/api';
 
@@ -98,7 +98,12 @@ function SubsidyCard({ benefit, language }: { benefit: BenefitInfo; language: Ap
         <CardTitle className="text-base">{name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm leading-relaxed">{benefit.enrollmentNotesAr}</p>
+        <p className="text-sm leading-relaxed">
+          {pickLocalizedField(language, {
+            ar: benefit.enrollmentNotesAr,
+            en: benefit.enrollmentNotesEn,
+          })}
+        </p>
       </CardContent>
     </Card>
   );
@@ -129,7 +134,6 @@ export default function SolarPage() {
   const { data: benefitsData } = useBenefits();
 
   const installers = installersData?.data ?? [];
-  const installations = installationsData?.data ?? [];
 
   const solarBenefits = useMemo(
     () => benefitsData?.filter((b: BenefitInfo) => b.slug.includes('solar')) ?? [],
@@ -138,7 +142,7 @@ export default function SolarPage() {
 
   const installationLocations = useMemo(
     () =>
-      installations.map((poi) => ({
+      (installationsData?.data ?? []).map((poi) => ({
         id: poi.id,
         name: language === 'en' && poi.nameEn ? poi.nameEn : poi.nameAr,
         lat: poi.location.y,
@@ -147,7 +151,7 @@ export default function SolarPage() {
         type: pickLocalizedCopy(language, { ar: 'منشأة شمسية', en: 'Solar installation' }),
         color: '#f59e0b',
       })),
-    [installations, language],
+    [installationsData?.data, language],
   );
 
   const copy = {

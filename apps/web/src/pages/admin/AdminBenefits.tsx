@@ -39,6 +39,7 @@ interface BenefitFormData {
   officePhone: string;
   officeAddressAr: string;
   enrollmentNotesAr: string;
+  enrollmentNotesEn: string;
 }
 
 const EMPTY_FORM: BenefitFormData = {
@@ -51,6 +52,7 @@ const EMPTY_FORM: BenefitFormData = {
   officePhone: '',
   officeAddressAr: '',
   enrollmentNotesAr: '',
+  enrollmentNotesEn: '',
 };
 
 function benefitToForm(b: BenefitInfo): BenefitFormData {
@@ -64,6 +66,7 @@ function benefitToForm(b: BenefitInfo): BenefitFormData {
     officePhone: b.officePhone,
     officeAddressAr: b.officeAddressAr,
     enrollmentNotesAr: b.enrollmentNotesAr,
+    enrollmentNotesEn: b.enrollmentNotesEn ?? '',
   };
 }
 
@@ -107,6 +110,7 @@ export default function AdminBenefits() {
       officePhone: form.officePhone.trim(),
       officeAddressAr: form.officeAddressAr.trim(),
       enrollmentNotesAr: form.enrollmentNotesAr.trim(),
+      enrollmentNotesEn: form.enrollmentNotesEn.trim() || undefined,
     };
     try {
       if (editing) {
@@ -288,6 +292,16 @@ export default function AdminBenefits() {
                 id="enrollmentNotesAr"
                 value={form.enrollmentNotesAr}
                 onChange={(e) => set('enrollmentNotesAr', e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="enrollmentNotesEn">ملاحظات التسجيل بالإنجليزية</Label>
+              <Textarea
+                id="enrollmentNotesEn"
+                dir="ltr"
+                value={form.enrollmentNotesEn}
+                onChange={(e) => set('enrollmentNotesEn', e.target.value)}
                 rows={4}
               />
             </div>

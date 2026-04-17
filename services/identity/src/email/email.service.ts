@@ -9,7 +9,14 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
   constructor(@Inject(ConfigService) private readonly config: ConfigService) {
-    this.resend = new Resend(this.config.get<string>('RESEND_API_KEY') ?? 'dev-no-email');
+    const resendApiKey = this.config.get<string>('RESEND_API_KEY');
+    const nodeEnv = this.config.get<string>('NODE_ENV') ?? 'development';
+
+    if (!resendApiKey && nodeEnv === 'production') {
+      throw new Error('RESEND_API_KEY is required in production');
+    }
+
+    this.resend = new Resend(resendApiKey ?? 'dev-no-email');
     this.from = this.config.get<string>('EMAIL_FROM', 'Hena Wadeena <noreply@henawadeena.com>');
   }
 

@@ -43,6 +43,7 @@ export class BenefitsService {
     if (dto.officePhone !== undefined) updates.officePhone = dto.officePhone;
     if (dto.officeAddressAr !== undefined) updates.officeAddressAr = dto.officeAddressAr;
     if (dto.enrollmentNotesAr !== undefined) updates.enrollmentNotesAr = dto.enrollmentNotesAr;
+    if (dto.enrollmentNotesEn !== undefined) updates.enrollmentNotesEn = dto.enrollmentNotesEn;
     const rows = await this.db
       .update(benefitInfo)
       .set(updates)

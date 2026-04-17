@@ -35,7 +35,7 @@ describe('listing seed data', () => {
       expect(listing.lat).toBeGreaterThan(0);
       expect(listing.lon).toBeGreaterThan(0);
       expect(listing.features).toBeDefined();
-      expect((listing.features as Record<string, unknown>)['nrea_cert_number']).toBeTruthy();
+      expect(listing.features!['nrea_cert_number']).toBeTruthy();
     }
   });
 });

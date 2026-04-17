@@ -16,6 +16,7 @@ const mockBenefit = {
   officePhone: '0922500001',
   officeAddressAr: 'شارع جمال عبد الناصر',
   enrollmentNotesAr: 'تقدم بطلب في مكتب التضامن',
+  enrollmentNotesEn: 'Apply at the solidarity office in person.',
   updatedAt: new Date('2026-01-01'),
 };
 
@@ -69,6 +70,7 @@ describe('BenefitsService', () => {
         officePhone: '0922500001',
         officeAddressAr: 'شارع جمال عبد الناصر',
         enrollmentNotesAr: 'تقدم بطلب في مكتب التضامن',
+        enrollmentNotesEn: 'Apply at the solidarity office in person.',
       };
       const result = await service.create(dto as never);
       expect(result).toEqual(mockBenefit);
@@ -112,6 +114,25 @@ describe('BenefitsService', () => {
       await service.update('takaful-wa-karama', { officePhone: '09' } as never);
       expect(mockDb.set).toHaveBeenCalledWith(
         expect.objectContaining({ updatedAt: expect.any(Date) }),
+      );
+    });
+
+    it('persists English enrollment notes when provided', async () => {
+      const updated = {
+        ...mockBenefit,
+        enrollmentNotesEn: 'Apply through the local office or the NREA branch.',
+      };
+      mockDb.returning.mockResolvedValueOnce([updated]);
+
+      await service.update('takaful-wa-karama', {
+        enrollmentNotesEn: 'Apply through the local office or the NREA branch.',
+      } as never);
+
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enrollmentNotesEn: 'Apply through the local office or the NREA branch.',
+          updatedAt: expect.any(Date),
+        }),
       );
     });
 

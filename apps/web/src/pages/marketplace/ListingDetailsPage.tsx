@@ -28,30 +28,44 @@ import {
   listingCategoryLabel,
   transactionLabel,
 } from '@/lib/format';
+import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 
-const FEATURE_KEY_LABELS: Record<string, string> = {
-  nrea_cert_number: 'رقم شهادة NREA',
-  services: 'الخدمات',
-  brands: 'العلامات التجارية',
-  capacity_kw: 'السعة (كيلوواط)',
-  warranty_years: 'سنوات الضمان',
-  panel_type: 'نوع الألواح',
-  inverter_type: 'نوع العاكس',
+const FEATURE_KEY_LABELS: Record<string, { ar: string; en: string }> = {
+  nrea_cert_number: { ar: 'رقم شهادة NREA', en: 'NREA certificate number' },
+  services: { ar: 'الخدمات', en: 'Services' },
+  brands: { ar: 'العلامات التجارية', en: 'Brands' },
+  capacity_kw: { ar: 'السعة (كيلوواط)', en: 'Capacity (kW)' },
+  warranty_years: { ar: 'سنوات الضمان', en: 'Warranty years' },
+  panel_type: { ar: 'نوع الألواح', en: 'Panel type' },
+  inverter_type: { ar: 'نوع العاكس', en: 'Inverter type' },
 };
 
-const FEATURE_VALUE_LABELS: Record<string, string> = {
-  residential: 'سكني',
-  agricultural: 'زراعي',
-  commercial: 'تجاري',
-  industrial: 'صناعي',
+const FEATURE_VALUE_LABELS: Record<string, { ar: string; en: string }> = {
+  residential: { ar: 'سكني', en: 'Residential' },
+  agricultural: { ar: 'زراعي', en: 'Agricultural' },
+  commercial: { ar: 'تجاري', en: 'Commercial' },
+  industrial: { ar: 'صناعي', en: 'Industrial' },
 };
 
-function formatFeatureValue(value: unknown): string {
+function formatFeatureLabel(key: string, language: AppLanguage): string {
+  const entry = FEATURE_KEY_LABELS[key];
+  if (!entry) return key;
+  return pickLocalizedCopy(language, entry);
+}
+
+function formatFeatureValue(value: unknown, language: AppLanguage): string {
   if (Array.isArray(value)) {
-    return value.map((v) => FEATURE_VALUE_LABELS[String(v)] ?? String(v)).join('، ');
+    return value
+      .map((v) => {
+        const entry = FEATURE_VALUE_LABELS[String(v)];
+        return entry ? pickLocalizedCopy(language, entry) : String(v);
+      })
+      .join(language === 'en' ? ', ' : '، ');
   }
+
   const str = String(value);
-  return FEATURE_VALUE_LABELS[str] ?? str;
+  const entry = FEATURE_VALUE_LABELS[str];
+  return entry ? pickLocalizedCopy(language, entry) : str;
 }
 
 function getContactField(
@@ -65,7 +79,8 @@ function getContactField(
 export default function ListingDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, language: rawLanguage } = useAuth();
+  const language: AppLanguage = rawLanguage === 'en' ? 'en' : 'ar';
   const { data: listing, isLoading, isError, refetch } = useListing(id);
   const ownerProfiles = usePublicUsers(listing ? [listing.ownerId] : []);
 
@@ -251,9 +266,11 @@ export default function ListingDetailsPage() {
                         <div key={key} className="rounded-lg border border-border/60 p-4 text-sm">
                           <p className="mb-1 flex items-center gap-2 font-medium text-foreground">
                             <Tag className="h-4 w-4 text-primary" />
-                            {FEATURE_KEY_LABELS[key] ?? key}
+                            {formatFeatureLabel(key, language)}
                           </p>
-                          <p className="text-muted-foreground">{formatFeatureValue(value)}</p>
+                          <p className="text-muted-foreground">
+                            {formatFeatureValue(value, language)}
+                          </p>
                         </div>
                       ))}
                     </div>

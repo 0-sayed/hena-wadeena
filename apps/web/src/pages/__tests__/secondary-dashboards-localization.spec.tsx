@@ -60,11 +60,25 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 vi.mock('@/components/ui/card', () => ({
-  Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-  CardDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  Card: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  CardContent: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  CardHeader: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  CardTitle: ({
+    children,
+    className,
+  }: {
+    children: ReactNode;
+    className?: string;
+  }) => <h2 className={className}>{children}</h2>,
+  CardDescription: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <p className={className}>{children}</p>
+  ),
 }));
 
 vi.mock('@/components/ui/table', () => ({
@@ -188,6 +202,14 @@ describe('Secondary dashboard localization', () => {
     expect(screen.getAllByText('Latest listings').length).toBeGreaterThan(0);
     expect(screen.getByText('Government services')).toBeInTheDocument();
     expect(screen.getByText('Verified')).toBeInTheDocument();
+  });
+
+  it('balances the resident quick links grid when four cards are present', () => {
+    render(<ResidentDashboard />);
+
+    const quickLinksGrid = screen.getByText('Solar energy').closest('a')?.parentElement;
+
+    expect(quickLinksGrid).toHaveClass('sm:grid-cols-2', 'lg:grid-cols-4');
   });
 
   it('renders StudentDashboard in English mode', () => {

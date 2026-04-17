@@ -79,4 +79,37 @@ describe('SolarPage', () => {
     renderPage();
     expect(screen.getByTestId('interactive-map')).toBeDefined();
   });
+
+  it('shows English enrollment notes when provided for solar subsidies', () => {
+    mockUseAuth.mockReturnValueOnce({ language: 'en', isAuthenticated: false, user: null });
+    mockUseBenefits.mockReturnValueOnce({
+      data: [
+        {
+          id: 'benefit-1',
+          slug: 'solar-pump-grant',
+          nameAr: 'دعم مضخة الطاقة الشمسية الزراعية',
+          nameEn: 'Agricultural Solar Pump Grant',
+          ministryAr: 'الهيئة الجديدة للطاقة المتجددة (NREA)',
+          documentsAr: [],
+          officeNameAr: 'وحدة NREA الزراعية - الخارجة',
+          officePhone: '0922500006',
+          officeAddressAr: 'منطقة الخدمات، الخارجة، الوادي الجديد',
+          enrollmentNotesAr: 'يُقدَّم الطلب عبر الجمعية الزراعية المحلية.',
+          enrollmentNotesEn:
+            'Apply through the local agricultural association or directly at the NREA office.',
+          createdAt: '2026-04-17T00:00:00.000Z',
+          updatedAt: '2026-04-17T00:00:00.000Z',
+        },
+      ],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByText(
+        'Apply through the local agricultural association or directly at the NREA office.',
+      ),
+    ).toBeInTheDocument();
+  });
 });

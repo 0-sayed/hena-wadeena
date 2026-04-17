@@ -2319,6 +2319,7 @@ export interface BenefitInfo {
   officePhone: string;
   officeAddressAr: string;
   enrollmentNotesAr: string;
+  enrollmentNotesEn?: string | null;
   createdAt: string;
   updatedAt: string;
 }

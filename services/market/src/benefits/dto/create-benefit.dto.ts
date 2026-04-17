@@ -14,6 +14,7 @@ const createBenefitSchema = z.object({
   officePhone: z.string().min(1),
   officeAddressAr: z.string().min(1),
   enrollmentNotesAr: z.string().min(1),
+  enrollmentNotesEn: z.string().min(1).optional(),
 });
 
 export class CreateBenefitDto extends createZodDto(createBenefitSchema) {}

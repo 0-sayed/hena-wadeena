@@ -38,7 +38,7 @@ interface InteractiveMapProps {
   popupTrigger?: MapPopupTrigger;
   geoJsonLayer?: {
     data: FeatureCollection;
-    style?: (feature: Feature) => L.PathOptions;
+    style?: (feature?: Feature) => L.PathOptions;
     onEachFeature?: (feature: Feature, layer: L.Layer) => void;
   };
 }

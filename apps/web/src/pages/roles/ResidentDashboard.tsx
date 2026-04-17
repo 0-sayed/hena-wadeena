@@ -233,7 +233,7 @@ function QuickLinks({ appLanguage }: { appLanguage: AppLanguage }) {
           {pickLocalizedCopy(appLanguage, { ar: 'روابط سريعة', en: 'Quick links' })}
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-3">
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {links.map(({ to, icon: Icon, label, description }) => (
           <Link
             key={to}

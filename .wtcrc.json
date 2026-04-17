@@ -1,6 +1,6 @@
 {
   "envOverrides": {
-    "DATABASE_URL": "postgresql://hena:postgres@localhost:${POSTGRES_PORT}/wadeena_db",
+    "DATABASE_URL": "postgresql://hena:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/wadeena_db",
     "REDIS_URL": "redis://localhost:${REDIS_PORT}",
     "QDRANT_URL": "http://localhost:${QDRANT_PORT}"
   }

@@ -16,6 +16,8 @@ export const benefitInfoData = [
     officeAddressAr: 'شارع جمال عبد الناصر، الخارجة، محافظة الوادي الجديد',
     enrollmentNotesAr:
       'تقدم بطلب في مكتب التضامن الاجتماعي بالخارجة. يُراجَع الطلب خلال 30 يومًا. البرنامج مفتوح على مدار العام.',
+    enrollmentNotesEn:
+      'Apply at the Kharga social solidarity office. Applications are reviewed within 30 days, and the program stays open year-round.',
   },
   {
     id: '019500a0-0002-7000-8000-000000000002',
@@ -34,6 +36,8 @@ export const benefitInfoData = [
     officeAddressAr: 'منطقة الخدمات الحكومية، الخارجة، الوادي الجديد',
     enrollmentNotesAr:
       'يُقدَّم الطلب في مكتب الإسكان المحلي. تُجرى زيارة ميدانية للتحقق من الأهلية قبل الموافقة.',
+    enrollmentNotesEn:
+      'Submit the application at the local housing office. A field visit is completed to confirm eligibility before approval.',
   },
   {
     id: '019500a0-0003-7000-8000-000000000003',
@@ -51,6 +55,8 @@ export const benefitInfoData = [
     officeAddressAr: 'شارع التحرير، الخارجة، الوادي الجديد',
     enrollmentNotesAr:
       'يمكن تصحيح بيانات البطاقة أو إضافة أفراد في مكتب التموين. البطاقة مرتبطة بمحل الإقامة.',
+    enrollmentNotesEn:
+      'You can correct card details or add family members at the supply office. The card remains tied to the place of residence.',
   },
   {
     id: '019500a0-0004-7000-8000-000000000004',
@@ -69,6 +75,8 @@ export const benefitInfoData = [
     officeAddressAr: 'شارع جمال عبد الناصر، الخارجة، محافظة الوادي الجديد',
     enrollmentNotesAr:
       'يُقدَّم الطلب مع التقرير الطبي. يستغرق التقييم حتى 60 يومًا. يُصرف المعاش شهريًا بعد الموافقة.',
+    enrollmentNotesEn:
+      'Submit the application with the certified medical report. Assessment can take up to 60 days, and payments start monthly after approval.',
   },
   {
     id: '019500a0-0005-7000-8000-000000000005',
@@ -87,6 +95,8 @@ export const benefitInfoData = [
     officeAddressAr: 'شارع جمال عبد الناصر، الخارجة، محافظة الوادي الجديد',
     enrollmentNotesAr:
       'متاح لمن تجاوز 65 عامًا وليس لديه معاش تأميني. يُراجَع الطلب وتُجرى زيارة ميدانية.',
+    enrollmentNotesEn:
+      'Available to residents over 65 who do not receive an insurance pension. The application is reviewed and followed by a field visit.',
   },
   {
     id: '019500a0-0006-7000-8000-000000000006',
@@ -105,5 +115,7 @@ export const benefitInfoData = [
     officeAddressAr: 'منطقة الخدمات، الخارجة، الوادي الجديد',
     enrollmentNotesAr:
       'يُقدَّم الطلب عبر الجمعية الزراعية المحلية أو مباشرةً في مكتب NREA. يشمل الدعم تركيب المضخة بالكامل أو خصمًا يصل إلى 80%.',
+    enrollmentNotesEn:
+      'Apply through the local agricultural association or directly at the NREA office. The grant covers a full pump installation or up to an 80% discount.',
   },
 ];
