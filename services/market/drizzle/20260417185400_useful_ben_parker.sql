@@ -1,0 +1,2 @@
+DROP INDEX "market"."artisan_profiles_user_id_idx";--> statement-breakpoint
+CREATE UNIQUE INDEX "artisan_profiles_user_id_idx" ON "market"."artisan_profiles" USING btree ("user_id") WHERE "market"."artisan_profiles"."deleted_at" IS NULL;

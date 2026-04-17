@@ -221,7 +221,6 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       href: '/artisans',
       label: labels.artisans,
       matcher: (pathname) => pathname.startsWith('/artisans'),
-      mobileOnly: true,
     },
   ];
 }

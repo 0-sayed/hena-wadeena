@@ -56,6 +56,21 @@ const mockInquiryRow = {
   readAt: null,
 };
 
+function extractColumnNames(node: unknown): string[] {
+  if (node === null || typeof node !== 'object') {
+    return [];
+  }
+
+  const maybeNamedNode = node as { name?: unknown; queryChunks?: unknown[] };
+  const names =
+    typeof maybeNamedNode.name === 'string' ? [maybeNamedNode.name] : [];
+  const chunkNames = Array.isArray(maybeNamedNode.queryChunks)
+    ? maybeNamedNode.queryChunks.flatMap((chunk) => extractColumnNames(chunk))
+    : [];
+
+  return [...names, ...chunkNames];
+}
+
 describe('ArtisansService', () => {
   let service: ArtisansService;
   let mockDb: ReturnType<typeof createMockDb>;
@@ -167,7 +182,7 @@ describe('ArtisansService', () => {
   });
 
   describe('createProduct', () => {
-    it('creates a product, generates a QR code, and returns mapped product', async () => {
+    it('inserts the product before generating a QR code and returns the product with the stored QR key', async () => {
       // findProfileByUserId
       mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
       // insert().returning()
@@ -187,6 +202,7 @@ describe('ArtisansService', () => {
         imageKeys: [],
         available: true,
       } as never);
+      const generatedProductId = mockQr.generateAndUpload.mock.calls[0]?.[0];
 
       expect(result).toEqual(
         expect.objectContaining({
@@ -196,8 +212,30 @@ describe('ArtisansService', () => {
           qrCodeKey: qrKey,
         }),
       );
-      expect(mockQr.generateAndUpload).toHaveBeenCalledWith(mockProductRow.id);
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: generatedProductId,
+          qrCodeKey: null,
+        }),
+      );
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          qrCodeKey: qrKey,
+          updatedAt: expect.any(Date),
+        }),
+      );
+      const insertCallOrder = mockDb.values.mock.invocationCallOrder[0];
+      const qrCallOrder = mockQr.generateAndUpload.mock.invocationCallOrder[0];
+
+      expect(insertCallOrder).toBeDefined();
+      expect(qrCallOrder).toBeDefined();
+      if (insertCallOrder === undefined || qrCallOrder === undefined) {
+        throw new Error('Expected insert and QR generation to be called');
+      }
+      expect(insertCallOrder).toBeLessThan(qrCallOrder);
+      expect(mockQr.generateAndUpload).toHaveBeenCalledWith(expect.any(String));
       expect(mockDb.insert).toHaveBeenCalled();
+      expect(mockDb.update).toHaveBeenCalled();
     });
 
     it('throws NotFoundException when the user has no artisan profile', async () => {
@@ -305,6 +343,33 @@ describe('ArtisansService', () => {
     });
   });
 
+  describe('public visibility filters', () => {
+    it('requires verified artisans for public artisan details', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.orderBy.mockResolvedValueOnce([mockProductRow]);
+
+      await service.getArtisanById(mockProfileRow.id);
+
+      expect(extractColumnNames(mockDb.where.mock.calls[0]?.[0])).toEqual(
+        expect.arrayContaining(['id', 'deleted_at', 'verified_at']),
+      );
+    });
+
+    it('requires available products and verified artisans for public product details', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProductRow]);
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+
+      await service.getProductForPublic(mockProductRow.id);
+
+      expect(extractColumnNames(mockDb.where.mock.calls[0]?.[0])).toEqual(
+        expect.arrayContaining(['id', 'deleted_at', 'available']),
+      );
+      expect(extractColumnNames(mockDb.where.mock.calls[1]?.[0])).toEqual(
+        expect.arrayContaining(['id', 'deleted_at', 'verified_at']),
+      );
+    });
+  });
+
   describe('updateInquiryStatus', () => {
     it('updates the inquiry status for the owning artisan', async () => {
       // findProfileByUserId
@@ -370,21 +435,14 @@ describe('ArtisansService', () => {
       );
     });
 
-    it('clears verifiedAt when the artisan is already verified (toggle)', async () => {
+    it('returns the existing verification state when the artisan is already verified', async () => {
       const alreadyVerified = { ...mockProfileRow, verifiedAt: new Date('2026-01-02') };
       mockDb.limit.mockResolvedValueOnce([alreadyVerified]);
-      const unverified = { ...mockProfileRow, verifiedAt: null };
-      mockDb.returning.mockResolvedValueOnce([unverified]);
 
       const result = await service.adminVerifyArtisan(mockProfileRow.id);
 
-      expect(result.verifiedAt).toBeNull();
-      expect(mockDb.set).toHaveBeenCalledWith(
-        expect.objectContaining({
-          verifiedAt: null,
-          updatedAt: expect.any(Date),
-        }),
-      );
+      expect(result.verifiedAt).toBe('2026-01-02T00:00:00.000Z');
+      expect(mockDb.update).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundException when artisan does not exist', async () => {

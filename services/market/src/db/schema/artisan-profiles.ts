@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { index, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { craftTypeEnum } from '../enums';
@@ -25,7 +25,9 @@ export const artisanProfiles = marketSchema.table(
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (table) => [
-    uniqueIndex('artisan_profiles_user_id_idx').on(table.userId),
+    uniqueIndex('artisan_profiles_user_id_idx')
+      .on(table.userId)
+      .where(sql`${table.deletedAt} IS NULL`),
     index('artisan_profiles_area_idx').on(table.area),
     index('artisan_profiles_verified_at_idx').on(table.verifiedAt),
     index('artisan_profiles_craft_types_idx').using('gin', table.craftTypes),

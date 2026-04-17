@@ -125,11 +125,41 @@ export class ArtisansService {
     return row ?? null;
   }
 
+  private async findPublicProfileById(id: string): Promise<ProfileRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(artisanProfiles)
+      .where(
+        and(
+          eq(artisanProfiles.id, id),
+          isNull(artisanProfiles.deletedAt),
+          isNotNull(artisanProfiles.verifiedAt),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
   private async findProductById(productId: string): Promise<ProductRow | null> {
     const [row] = await this.db
       .select()
       .from(artisanProducts)
       .where(and(eq(artisanProducts.id, productId), isNull(artisanProducts.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  }
+
+  private async findPublicProductById(productId: string): Promise<ProductRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(artisanProducts)
+      .where(
+        and(
+          eq(artisanProducts.id, productId),
+          isNull(artisanProducts.deletedAt),
+          eq(artisanProducts.available, true),
+        ),
+      )
       .limit(1);
     return row ?? null;
   }
@@ -168,7 +198,7 @@ export class ArtisansService {
 
   async getArtisanById(id: string): Promise<ArtisanProfileWithProducts> {
     const [profileRow, productRows] = await Promise.all([
-      this.findProfileById(id),
+      this.findPublicProfileById(id),
       this.db
         .select()
         .from(artisanProducts)
@@ -293,10 +323,10 @@ export class ArtisansService {
   async getProductForPublic(
     productId: string,
   ): Promise<ArtisanProduct & { artisan: ArtisanProfile }> {
-    const productRow = await this.findProductById(productId);
+    const productRow = await this.findPublicProductById(productId);
     if (!productRow) throw new NotFoundException('Product not found');
 
-    const profileRow = await this.findProfileById(productRow.artisanId);
+    const profileRow = await this.findPublicProfileById(productRow.artisanId);
     if (!profileRow) throw new NotFoundException('Artisan not found');
 
     return {
@@ -311,8 +341,6 @@ export class ArtisansService {
 
     const id = generateId();
     const now = new Date();
-
-    const qrKey = await this.qrService.generateAndUpload(id);
 
     const inserted = firstOrThrow(
       await this.db
@@ -329,14 +357,21 @@ export class ArtisansService {
           minOrderQty: dto.minOrderQty,
           imageKeys: dto.imageKeys,
           available: dto.available,
-          qrCodeKey: qrKey,
+          qrCodeKey: null,
           createdAt: now,
           updatedAt: now,
         })
         .returning(),
     );
 
-    return mapProduct(inserted);
+    const qrKey = await this.qrService.generateAndUpload(id);
+    const [withQr] = await this.db
+      .update(artisanProducts)
+      .set({ qrCodeKey: qrKey, updatedAt: new Date() })
+      .where(and(eq(artisanProducts.id, id), isNull(artisanProducts.deletedAt)))
+      .returning();
+
+    return mapProduct(withQr ?? inserted);
   }
 
   async listMyProducts(
@@ -549,13 +584,14 @@ export class ArtisansService {
     const profile = await this.findProfileById(id);
     if (!profile) throw new NotFoundException('Artisan not found');
 
-    // Toggle: if already verified, remove verification; if not, set it
-    const verifiedAt = profile.verifiedAt ? null : new Date();
+    if (profile.verifiedAt) {
+      return mapProfile(profile);
+    }
 
     const updated = firstOrThrow(
       await this.db
         .update(artisanProfiles)
-        .set({ verifiedAt, updatedAt: new Date() })
+        .set({ verifiedAt: new Date(), updatedAt: new Date() })
         .where(and(eq(artisanProfiles.id, id), isNull(artisanProfiles.deletedAt)))
         .returning(),
     );

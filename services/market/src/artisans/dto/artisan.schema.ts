@@ -51,10 +51,7 @@ export const queryArtisansSchema = z.object({
 
 export const queryProductsSchema = z.object({
   craftType: z.enum(CRAFT_TYPES).optional(),
-  available: z
-    .string()
-    .optional()
-    .transform((v) => (v === undefined ? undefined : v === 'true')),
+  available: z.enum(['true', 'false']).transform((value) => value === 'true').optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0),
 });
