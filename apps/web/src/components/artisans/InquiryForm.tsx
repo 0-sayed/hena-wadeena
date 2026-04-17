@@ -1,7 +1,12 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { toNestErrors, validateFieldsNatively } from '@hookform/resolvers';
+import {
+  appendErrors,
+  type FieldError,
+  type Resolver,
+  useForm,
+} from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { ZodError, z } from 'zod';
 
 import { useSubmitInquiry } from '@/hooks/use-artisans';
 import { Button } from '../ui/button';
@@ -19,6 +24,86 @@ const inquirySchema = z.object({
 
 type InquiryFormData = z.infer<typeof inquirySchema>;
 
+function parseInquiryErrorSchema(
+  zodErrors: z.ZodIssue[],
+  validateAllFieldCriteria: boolean,
+): Record<string, FieldError> {
+  const errors: Record<string, FieldError> = {};
+
+  for (; zodErrors.length; ) {
+    const error = zodErrors[0];
+    const { code, message, path } = error;
+    const fieldPath = path.join('.');
+
+    if (!errors[fieldPath]) {
+      if ('unionErrors' in error) {
+        const unionError = error.unionErrors[0]?.errors[0];
+
+        errors[fieldPath] = {
+          message: unionError?.message ?? message,
+          type: unionError?.code ?? code,
+        };
+      } else {
+        errors[fieldPath] = { message, type: code };
+      }
+    }
+
+    if ('unionErrors' in error) {
+      error.unionErrors.forEach((unionError) =>
+        unionError.errors.forEach((nestedError) => zodErrors.push(nestedError)),
+      );
+    }
+
+    if (validateAllFieldCriteria) {
+      const messages = errors[fieldPath].types?.[error.code];
+
+      errors[fieldPath] = appendErrors(
+        fieldPath,
+        validateAllFieldCriteria,
+        errors,
+        code,
+        messages
+          ? ([] as string[]).concat(messages as string[], error.message)
+          : error.message,
+      ) as FieldError;
+    }
+
+    zodErrors.shift();
+  }
+
+  return errors;
+}
+
+const inquiryResolver: Resolver<InquiryFormData> = async (values, _, options) => {
+  try {
+    const parsedValues = await inquirySchema.parseAsync(values);
+
+    if (options.shouldUseNativeValidation) {
+      validateFieldsNatively({}, options);
+    }
+
+    return {
+      values: parsedValues,
+      errors: {},
+    };
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return {
+        values: {},
+        errors: toNestErrors(
+          parseInquiryErrorSchema(
+            error.errors,
+            !options.shouldUseNativeValidation && options.criteriaMode === 'all',
+          ),
+          options,
+        ),
+      };
+    }
+
+    throw error;
+  }
+};
+
 interface InquiryFormProps {
   productId: string;
   productName: string;
@@ -30,7 +115,7 @@ export function InquiryForm({ productId, productName, minOrderQty, onSuccess }: 
   const submitInquiry = useSubmitInquiry();
 
   const form = useForm<InquiryFormData>({
-    resolver: zodResolver(inquirySchema),
+    resolver: inquiryResolver,
     defaultValues: {
       name: '',
       email: '',
@@ -66,7 +151,7 @@ export function InquiryForm({ productId, productName, minOrderQty, onSuccess }: 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={(event) => void form.handleSubmit(onSubmit)(event)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
