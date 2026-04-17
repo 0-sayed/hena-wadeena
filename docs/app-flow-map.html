@@ -1182,6 +1182,22 @@
             'Admin: update benefit info',
           ],
         },
+        {
+          id: 'solar',
+          label: 'Solar Energy Map',
+          route: '/solar',
+          domain: 'benefits',
+          access: 'public',
+          desc: 'Solar community hub combining installer discovery, community installations, and solar subsidy guidance.',
+          tabs: ['Installers', 'Community map', 'Subsidies'],
+          features: [
+            'District filter for solar installers',
+            'Localized service tags for installer capabilities',
+            'Community solar installation map',
+            'Solar-related subsidy cards sourced from benefits data',
+            'NREA guidance link',
+          ],
+        },
 
         // ── SEARCH ────────────────────────────────────────────────────────────────
         {
@@ -1357,7 +1373,7 @@
           route: '/admin/overview',
           domain: 'admin',
           access: 'admin',
-          desc: 'Admin hub with 9 sidebar sections. Shows platform-wide stats.',
+          desc: 'Admin hub with 10 sidebar sections. Shows platform-wide stats.',
           features: [
             'Stat cards (8): total users / pending KYC / listings awaiting review / pending POIs / active guides / pending bookings / total listings / investment opportunities',
             'Clickable stat cards linking to relevant sub-pages',
@@ -1501,6 +1517,20 @@
           ],
         },
         {
+          id: 'admin-benefits',
+          label: 'Admin: Benefits',
+          route: '/admin/benefits',
+          domain: 'admin',
+          access: 'admin',
+          desc: 'Manage benefit programs and solar-support copy shown to residents in the public benefits flows.',
+          features: [
+            'Benefit program table',
+            'Create / edit / delete benefit records',
+            'Arabic and English enrollment note management',
+            'Contact office and required document fields',
+          ],
+        },
+        {
           id: 'site-status',
           label: 'Site Status Board',
           route: '/tourism/sites',
@@ -1586,7 +1616,8 @@
         jobs: { x: 30 + GAP * 19 + 50, y: ROW.public },
         'job-detail': { x: 30 + GAP * 20 + 50, y: ROW.public },
         benefits: { x: 30 + GAP * 21 + 60, y: ROW.public },
-        search: { x: 30 + GAP * 22 + 70, y: ROW.public },
+        solar: { x: 30 + GAP * 22 + 70, y: ROW.public },
+        search: { x: 30 + GAP * 23 + 80, y: ROW.public },
 
         // AUTH ROW (y=320)
         login: { x: 30, y: ROW.auth },
@@ -1638,14 +1669,15 @@
         'admin-listings': { x: 30 + GAP * 7, y: ROW.admin },
         'admin-ai': { x: 30 + GAP * 8, y: ROW.admin },
         'admin-news': { x: 30 + GAP * 9, y: ROW.admin },
+        'admin-benefits': { x: 30 + GAP * 10, y: ROW.admin },
 
         // EXTRA public nodes (appended after search)
-        'site-status': { x: 30 + GAP * 23 + 80, y: ROW.public },
-        produce: { x: 30 + GAP * 24 + 90, y: ROW.public },
-        news: { x: 30 + GAP * 25 + 100, y: ROW.public },
-        'news-detail': { x: 30 + GAP * 26 + 100, y: ROW.public },
-        artisans: { x: 30 + GAP * 27 + 110, y: ROW.public },
-        'artisan-detail': { x: 30 + GAP * 28 + 110, y: ROW.public },
+        'site-status': { x: 30 + GAP * 24 + 90, y: ROW.public },
+        produce: { x: 30 + GAP * 25 + 100, y: ROW.public },
+        news: { x: 30 + GAP * 26 + 110, y: ROW.public },
+        'news-detail': { x: 30 + GAP * 27 + 110, y: ROW.public },
+        artisans: { x: 30 + GAP * 28 + 120, y: ROW.public },
+        'artisan-detail': { x: 30 + GAP * 29 + 120, y: ROW.public },
         'artisan-product': { x: 30 + GAP * 15 + 50, y: ROW.actions },
       };
 
@@ -1668,6 +1700,7 @@
         { from: 'home', to: 'investment', type: 'nav' },
         { from: 'home', to: 'jobs', type: 'nav' },
         { from: 'home', to: 'benefits', type: 'nav' },
+        { from: 'home', to: 'solar', type: 'nav' },
         { from: 'home', to: 'search', type: 'nav' },
         { from: 'home', to: 'login', type: 'nav' },
 
@@ -1743,6 +1776,7 @@
         { from: 'admin', to: 'admin-map', type: 'nav' },
         { from: 'admin', to: 'admin-crops', type: 'nav' },
         { from: 'admin', to: 'admin-listings', type: 'nav' },
+        { from: 'admin', to: 'admin-benefits', type: 'nav' },
         { from: 'admin-users', to: 'admin-user-detail', type: 'nav' },
         { from: 'suggest-poi', to: 'admin-map', type: 'role' },
 
@@ -1756,6 +1790,12 @@
 
         // Marketplace produce
         { from: 'marketplace', to: 'produce', type: 'nav' },
+
+        // Solar
+        { from: 'benefits', to: 'solar', type: 'nav' },
+        { from: 'resident-dashboard', to: 'solar', type: 'role' },
+        { from: 'farmer-dashboard', to: 'solar', type: 'role' },
+        { from: 'admin-benefits', to: 'benefits', type: 'nav' },
 
         // News
         { from: 'home', to: 'news', type: 'nav' },
@@ -1825,7 +1865,7 @@
         {
           id: 'farmer',
           label: 'Farmer Journey',
-          domains: ['home', 'auth', 'marketplace', 'profile', 'dashboard'],
+          domains: ['home', 'auth', 'marketplace', 'benefits', 'profile', 'dashboard'],
           role: 'FARMER',
         },
         {

@@ -21,4 +21,21 @@ describe('listing seed data', () => {
       );
     }
   });
+
+  it('includes four published solar_installer listings in the showcase layer', () => {
+    const solarListings = showcaseListings.filter(
+      (listing) => listing.category === 'solar_installer' && listing.isPublished,
+    );
+
+    expect(solarListings).toHaveLength(4);
+    expect(new Set(solarListings.map((l) => l.slug)).size).toBe(4);
+
+    for (const listing of solarListings) {
+      expect(listing.district).toBeTruthy();
+      expect(listing.lat).toBeGreaterThan(0);
+      expect(listing.lon).toBeGreaterThan(0);
+      expect(listing.features).toBeDefined();
+      expect(listing.features!['nrea_cert_number']).toBeTruthy();
+    }
+  });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Feature, FeatureCollection } from 'geojson';
 import L from 'leaflet';
 import { ExternalLink } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -35,6 +36,11 @@ interface InteractiveMapProps {
   googleMapsUrl?: string;
   showGoogleMapsButton?: boolean;
   popupTrigger?: MapPopupTrigger;
+  geoJsonLayer?: {
+    data: FeatureCollection;
+    style?: (feature?: Feature) => L.PathOptions;
+    onEachFeature?: (feature: Feature, layer: L.Layer) => void;
+  };
 }
 
 // Fix default marker icon (bundlers often fail to resolve these assets)
@@ -78,6 +84,7 @@ export function InteractiveMap({
   googleMapsUrl,
   showGoogleMapsButton = true,
   popupTrigger = 'click',
+  geoJsonLayer,
 }: InteractiveMapProps) {
   const [isClient, setIsClient] = useState(false);
   const [mapReady, setMapReady] = useState(0);
@@ -85,6 +92,7 @@ export function InteractiveMap({
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const polylinesLayerRef = useRef<L.LayerGroup | null>(null);
+  const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
   const lastFitSignatureRef = useRef<string | null>(null);
 
   const normalizedClassName = useMemo(() => className ?? '', [className]);
@@ -142,6 +150,7 @@ export function InteractiveMap({
       mapRef.current = null;
       markersLayerRef.current = null;
       polylinesLayerRef.current = null;
+      geoJsonLayerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
@@ -221,6 +230,22 @@ export function InteractiveMap({
       line.addTo(polylinesLayerRef.current!);
     });
   }, [polylines, mapReady]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    if (geoJsonLayerRef.current) {
+      geoJsonLayerRef.current.remove();
+      geoJsonLayerRef.current = null;
+    }
+
+    if (!geoJsonLayer) return;
+
+    geoJsonLayerRef.current = L.geoJSON(geoJsonLayer.data, {
+      style: geoJsonLayer.style,
+      onEachFeature: geoJsonLayer.onEachFeature,
+    }).addTo(mapRef.current);
+  }, [geoJsonLayer, mapReady]);
 
   const googleMapsButton = (
     <div className="ms-auto flex w-full justify-end">

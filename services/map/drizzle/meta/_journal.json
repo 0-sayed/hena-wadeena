@@ -36,6 +36,20 @@
       "when": 1775627064113,
       "tag": "20260408054424_add-site-status-board",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776372903964,
+      "tag": "20260416205503_wet_rattler",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776373406470,
+      "tag": "20260416210326_t52-solar-installation",
+      "breakpoints": true
     }
   ]
 }

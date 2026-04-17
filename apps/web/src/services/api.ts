@@ -8,6 +8,8 @@
 import {
   CommodityCategory,
   CommodityUnit,
+  IncidentStatus as SharedIncidentStatus,
+  IncidentType as SharedIncidentType,
   NvDistrict,
   PriceType,
   UserRole,
@@ -1501,7 +1503,8 @@ export type PoiCategory =
   | 'accommodation'
   | 'restaurant'
   | 'service'
-  | 'government';
+  | 'government'
+  | 'solar_installation';
 
 export type PoiStatus = 'pending' | 'approved' | 'rejected';
 
@@ -1572,6 +1575,87 @@ export interface CarpoolPassenger {
 export interface RideWithPassengers extends CarpoolRide {
   passengers?: CarpoolPassenger[];
 }
+
+export type IncidentType = `${SharedIncidentType}`;
+export type IncidentStatus = `${SharedIncidentStatus}`;
+
+export interface EnvironmentalIncident {
+  id: string;
+  reporterId: string;
+  incidentType: IncidentType;
+  status: IncidentStatus;
+  location: { x: number; y: number };
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  photos: string[];
+  eeaaReference: string | null;
+  adminNotes: string | null;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const incidentsAPI = {
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    status?: IncidentStatus;
+    incidentType?: IncidentType;
+  }) =>
+    apiFetch<PaginatedResponse<EnvironmentalIncident>>(
+      `/map/environmental-incidents${toQueryString(params)}`,
+    ),
+
+  report: (body: {
+    incidentType: IncidentType;
+    latitude: number;
+    longitude: number;
+    descriptionAr?: string;
+    descriptionEn?: string;
+    photos?: string[];
+  }) =>
+    apiFetchWithRefresh<EnvironmentalIncident>('/map/environmental-incidents', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  myIncidents: (params?: { page?: number; limit?: number }) =>
+    apiFetchWithRefresh<PaginatedResponse<EnvironmentalIncident>>(
+      `/map/environmental-incidents/my${toQueryString(params)}`,
+    ),
+
+  adminList: (params?: {
+    page?: number;
+    limit?: number;
+    status?: IncidentStatus;
+    incidentType?: IncidentType;
+  }) =>
+    apiFetchWithRefresh<PaginatedResponse<EnvironmentalIncident>>(
+      `/admin/map/environmental-incidents${toQueryString(params)}`,
+    ),
+
+  adminGet: (id: string) =>
+    apiFetchWithRefresh<EnvironmentalIncident>(`/admin/map/environmental-incidents/${id}`),
+
+  adminUpdate: (
+    id: string,
+    body: { status?: IncidentStatus; adminNotes?: string; eeaaReference?: string },
+  ) =>
+    apiFetchWithRefresh<EnvironmentalIncident>(`/admin/map/environmental-incidents/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  getUploadUrl: (body: { filename: string; contentType: string }) =>
+    apiFetchWithRefresh<{ uploadUrl: string; key: string }>(
+      '/map/environmental-incidents/upload-url',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    ),
+};
 
 export const mapAPI = {
   // ── POIs ──
@@ -2330,13 +2414,21 @@ export interface BenefitInfo {
   officePhone: string;
   officeAddressAr: string;
   enrollmentNotesAr: string;
+  enrollmentNotesEn?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+export type CreateBenefitBody = Omit<BenefitInfo, 'id' | 'createdAt' | 'updatedAt'>;
+
 export const benefitsAPI = {
   list: () => apiFetch<BenefitInfo[]>('/benefits'),
   getBySlug: (slug: string) => apiFetch<BenefitInfo>(`/benefits/${slug}`),
+  create: (body: CreateBenefitBody) =>
+    apiFetchWithRefresh<BenefitInfo>('/benefits', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   update: (
     slug: string,
     body: Partial<Omit<BenefitInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt'>>,
@@ -2345,6 +2437,7 @@ export const benefitsAPI = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+  delete: (slug: string) => apiFetchWithRefresh<void>(`/benefits/${slug}`, { method: 'DELETE' }),
 };
 
 // ── Employment Board ────────────────────────────────────────────────────────

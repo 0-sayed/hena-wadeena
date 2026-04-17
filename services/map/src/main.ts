@@ -1,6 +1,6 @@
 import { configureApp } from '@hena-wadeena/nest-common';
-import { NestFactory } from '@nestjs/core';
 import { resolveWorktreePort } from '@hena-wadeena/types';
+import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 

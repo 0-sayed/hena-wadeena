@@ -18,6 +18,7 @@ export const listingCategoryEnum = marketSchema.enum('listing_category', [
   'healthcare',
   'shopping',
   'agricultural_produce',
+  'solar_installer',
 ]);
 export const listingStatusEnum = marketSchema.enum('listing_status', [
   'draft',

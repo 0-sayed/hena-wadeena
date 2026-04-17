@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { Droplets, DollarSign, Zap, Gauge, Plus, Sun, ExternalLink } from 'lucide-react';
 import { egpToPiasters, NvDistrict } from '@hena-wadeena/types';
 import { toast } from 'sonner';
@@ -462,7 +463,17 @@ export default function FarmerDashboard() {
               </div>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-wrap gap-4">
+            <Link
+              to="/solar"
+              className="flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <Sun className="h-3 w-3" />
+              {pickLocalizedCopy(appLanguage, {
+                ar: 'ابحث عن مزود تركيب',
+                en: 'Find an installer',
+              })}
+            </Link>
             <a
               href={solar.nrea_url}
               target="_blank"

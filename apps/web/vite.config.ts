@@ -88,6 +88,8 @@ export default defineConfig(({ mode }) => {
         '/api/v1/reviews': { target: marketUrl, changeOrigin: true },
         '/api/v1/guide-reviews': { target: guideBookingUrl, changeOrigin: true },
         '/api/v1/attractions': { target: guideBookingUrl, changeOrigin: true },
+        // Admin map routes — must appear before generic /api/v1/map
+        '/api/v1/admin/map': { target: mapUrl, changeOrigin: true },
         // Map service
         '/api/v1/map': { target: mapUrl, changeOrigin: true },
         '/api/v1/carpool': { target: mapUrl, changeOrigin: true },

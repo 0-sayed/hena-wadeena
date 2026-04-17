@@ -38,8 +38,13 @@ const config: KnipConfig = {
     },
   },
   ignoreWorkspaces: ['apps/web'],
-  // Web app is tracked separately from knip's workspace scan
-  ignore: ['apps/web/**'],
+  // Temporarily disabled modules and web app
+  ignore: [
+    'apps/web/**',
+    // Legacy jobs controller/module are kept for reference while the split job-posts/job-applications stack owns runtime traffic.
+    'services/market/src/jobs/jobs.controller.ts',
+    'services/market/src/jobs/jobs.module.ts',
+  ],
   // Enum members in packages/types are forward-looking public API for services not yet implemented
   exclude: ['enumMembers'],
   // LinkedCommodity etc. are exported for TS return-type inference (knip can't detect this)

@@ -16,19 +16,23 @@ vi.mock('resend', () => ({
 describe('EmailService', () => {
   let service: EmailService;
 
-  beforeEach(() => {
-    const mockConfig = {
-      get: vi.fn((key: string) => {
-        const config: Record<string, string> = {
+  function createConfig(overrides: Record<string, string | undefined> = {}) {
+    return {
+      get: vi.fn((key: string, defaultValue?: string) => {
+        const config: Record<string, string | undefined> = {
+          NODE_ENV: 'test',
           RESEND_API_KEY: 'test-key',
           EMAIL_FROM: 'test@henawadeena.com',
           FRONTEND_URL: 'http://localhost:8080',
+          ...overrides,
         };
-        return config[key];
+        return config[key] ?? defaultValue;
       }),
     } as unknown as ConfigService;
+  }
 
-    service = new EmailService(mockConfig);
+  beforeEach(() => {
+    service = new EmailService(createConfig());
   });
 
   it('should be defined', () => {
@@ -45,5 +49,15 @@ describe('EmailService', () => {
 
   it('should send password reset confirmation email', async () => {
     await expect(service.sendPasswordResetConfirmation('user@example.com')).resolves.not.toThrow();
+  });
+
+  it('allows missing Resend credentials outside production', () => {
+    expect(() => new EmailService(createConfig({ RESEND_API_KEY: undefined }))).not.toThrow();
+  });
+
+  it('throws when RESEND_API_KEY is missing in production', () => {
+    expect(() =>
+      new EmailService(createConfig({ NODE_ENV: 'production', RESEND_API_KEY: undefined })),
+    ).toThrow('RESEND_API_KEY is required in production');
   });
 });

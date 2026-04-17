@@ -142,6 +142,18 @@ export const queryKeys = {
   desertTrips: {
     byBooking: (bookingId: string) => ['desert-trips', 'booking', bookingId] as const,
   },
+  incidents: {
+    list: (filters?: Record<string, unknown>) =>
+      filters !== undefined
+        ? (['incidents', 'list', filters] as const)
+        : (['incidents', 'list'] as const),
+    mine: (filters?: Record<string, unknown>) =>
+      filters !== undefined
+        ? (['incidents', 'mine', filters] as const)
+        : (['incidents', 'mine'] as const),
+    adminList: (filters?: Record<string, unknown>) => ['incidents', 'admin', filters] as const,
+    adminDetail: (id: string) => ['incidents', 'admin', id] as const,
+  },
   home: {
     stats: () => ['home', 'stats'] as const,
   },
