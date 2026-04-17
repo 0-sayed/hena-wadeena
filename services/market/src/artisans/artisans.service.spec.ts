@@ -62,8 +62,7 @@ function extractColumnNames(node: unknown): string[] {
   }
 
   const maybeNamedNode = node as { name?: unknown; queryChunks?: unknown[] };
-  const names =
-    typeof maybeNamedNode.name === 'string' ? [maybeNamedNode.name] : [];
+  const names = typeof maybeNamedNode.name === 'string' ? [maybeNamedNode.name] : [];
   const chunkNames = Array.isArray(maybeNamedNode.queryChunks)
     ? maybeNamedNode.queryChunks.flatMap((chunk) => extractColumnNames(chunk))
     : [];
@@ -285,6 +284,35 @@ describe('ArtisansService', () => {
 
       expect(mockQr.deleteByKey).toHaveBeenCalledWith(qrKey);
       expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deletedAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('still soft deletes the inserted product when QR cleanup fails', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.returning.mockResolvedValueOnce([mockProductRow]);
+
+      const qrKey = `artisans/qr/${mockProductRow.id}.png`;
+      mockQr.generateAndUpload.mockResolvedValueOnce(qrKey);
+      mockDb.returning.mockRejectedValueOnce(new Error('db update failed'));
+      mockQr.deleteByKey.mockRejectedValueOnce(new Error('s3 cleanup failed'));
+
+      await expect(
+        service.createProduct(mockProfileRow.userId, {
+          nameAr: 'سلة نخيل',
+          craftType: 'palm_leaf',
+          minOrderQty: 1,
+          imageKeys: [],
+          available: true,
+        } as never),
+      ).rejects.toThrow('db update failed');
+
+      expect(mockQr.deleteByKey).toHaveBeenCalledWith(qrKey);
+      expect(mockDb.update).toHaveBeenCalledTimes(2);
+      expect(mockDb.set).toHaveBeenLastCalledWith(
         expect.objectContaining({
           deletedAt: expect.any(Date),
           updatedAt: expect.any(Date),

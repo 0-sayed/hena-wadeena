@@ -380,7 +380,13 @@ export class ArtisansService {
       return mapProduct(withQr ?? inserted);
     } catch (error) {
       if (qrKey) {
-        await this.qrService.deleteByKey(qrKey);
+        try {
+          await this.qrService.deleteByKey(qrKey);
+        } catch (cleanupError) {
+          this.logger.warn(
+            `Failed to clean up artisan product QR asset ${qrKey}: ${String(cleanupError)}`,
+          );
+        }
       }
 
       await this.db
