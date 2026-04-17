@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   BarChart3,
   Bot,
+  Gift,
   Home,
   Leaf,
   LogOut,
@@ -74,6 +75,11 @@ const navItems = [
     to: '/admin/news',
     label: { ar: 'الأخبار', en: 'News' },
     icon: Newspaper,
+  },
+  {
+    to: '/admin/benefits',
+    label: { ar: 'برامج الدعم', en: 'Benefits' },
+    icon: Gift,
   },
 ] as const;
 

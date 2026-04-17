@@ -67,6 +67,7 @@ const LISTING_CATEGORY_IMGS: Record<string, ImgPair> = {
   education: ['/images/seed/pvFtrzwuc6g.jpg', '/images/seed/umfgtmwR__Y.jpg'],
   healthcare: ['/images/seed/xrnNNnq6djg.jpg', '/images/seed/7vYn0kIq4Kw.jpg'],
   shopping: ['/images/seed/MB2eoqiNKiw.jpg', '/images/seed/xrnNNnq6djg.jpg'],
+  solar_installer: ['/images/seed/E4XEBPEkgUs.jpg', '/images/seed/hp6Xj7LyZ1E.jpg'],
 };
 
 function getListingImages(slug: string, category: string): ImgPair {
@@ -154,6 +155,7 @@ async function main() {
         isPublished: l.isPublished,
         images: l.images ?? getListingImages(l.slug, l.category),
         location: point(l.lat, l.lon),
+        features: l.features,
       })),
     )
     .onConflictDoNothing()

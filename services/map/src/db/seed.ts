@@ -23,6 +23,7 @@ const FALLBACK_CATEGORY_IMGS: Record<string, string> = {
   restaurant: '/images/seed/MB2eoqiNKiw.jpg',
   service: '/images/seed/umfgtmwR__Y.jpg',
   government: '/images/seed/umfgtmwR__Y.jpg',
+  solar_installation: '/images/seed/E4XEBPEkgUs.jpg',
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ async function main() {
             `https://picsum.photos/seed/${p.id.slice(-8)}/800/600`,
         ],
         location: point(p.lat, p.lon),
+        metadata: p.metadata,
       })),
     )
     .onConflictDoNothing()

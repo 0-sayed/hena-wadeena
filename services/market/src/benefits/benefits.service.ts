@@ -5,6 +5,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { benefitInfo } from '../db/schema/benefit-info';
 
+import type { CreateBenefitDto } from './dto/create-benefit.dto';
 import { UpdateBenefitDto } from './dto/update-benefit.dto';
 
 @Injectable()
@@ -21,6 +22,17 @@ export class BenefitsService {
     return rows[0];
   }
 
+  async create(dto: CreateBenefitDto) {
+    const rows = await this.db.insert(benefitInfo).values(dto).returning();
+    return rows[0];
+  }
+
+  async delete(slug: string) {
+    const rows = await this.db.delete(benefitInfo).where(eq(benefitInfo.slug, slug)).returning();
+    if (!rows[0]) throw new NotFoundException(`Benefit '${slug}' not found`);
+    return rows[0];
+  }
+
   async update(slug: string, dto: UpdateBenefitDto) {
     const updates: Partial<typeof benefitInfo.$inferInsert> = { updatedAt: new Date() };
     if (dto.nameAr !== undefined) updates.nameAr = dto.nameAr;
@@ -31,6 +43,7 @@ export class BenefitsService {
     if (dto.officePhone !== undefined) updates.officePhone = dto.officePhone;
     if (dto.officeAddressAr !== undefined) updates.officeAddressAr = dto.officeAddressAr;
     if (dto.enrollmentNotesAr !== undefined) updates.enrollmentNotesAr = dto.enrollmentNotesAr;
+    if (dto.enrollmentNotesEn !== undefined) updates.enrollmentNotesEn = dto.enrollmentNotesEn;
     const rows = await this.db
       .update(benefitInfo)
       .set(updates)

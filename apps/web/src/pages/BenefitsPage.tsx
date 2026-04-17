@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useBenefits } from '@/hooks/use-benefits';
-import { pickLocalizedCopy } from '@/lib/localization';
+import { pickLocalizedCopy, pickLocalizedField } from '@/lib/localization';
 import type { BenefitInfo } from '@/services/api';
 import { getMatchedSlugs } from '@/lib/benefits-eligibility';
 import type { WizardAnswers, IncomeBracket, Employment } from '@/lib/benefits-eligibility';
@@ -563,7 +563,12 @@ function BenefitCard({ benefit, lang }: { benefit: BenefitInfo; lang: 'ar' | 'en
         {/* Enrollment notes */}
         <div className="flex gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-900 dark:bg-blue-950/30">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-          <p className="text-blue-800 dark:text-blue-200">{benefit.enrollmentNotesAr}</p>
+          <p className="text-blue-800 dark:text-blue-200">
+            {pickLocalizedField(lang, {
+              ar: benefit.enrollmentNotesAr,
+              en: benefit.enrollmentNotesEn,
+            })}
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -6,6 +6,7 @@ import {
   Landmark,
   ChevronLeft,
   ChevronRight,
+  Sun,
 } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -214,6 +215,15 @@ function QuickLinks({ appLanguage }: { appLanguage: AppLanguage }) {
         en: 'Check which government programs you qualify for',
       }),
     },
+    {
+      to: '/solar',
+      icon: Sun,
+      label: pickLocalizedCopy(appLanguage, { ar: 'الطاقة الشمسية', en: 'Solar energy' }),
+      description: pickLocalizedCopy(appLanguage, {
+        ar: 'مزودو التركيب، الخريطة المجتمعية، ومنح الدعم',
+        en: 'Find installers, view the community map, and explore subsidies',
+      }),
+    },
   ];
 
   return (
@@ -223,7 +233,7 @@ function QuickLinks({ appLanguage }: { appLanguage: AppLanguage }) {
           {pickLocalizedCopy(appLanguage, { ar: 'روابط سريعة', en: 'Quick links' })}
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-3">
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {links.map(({ to, icon: Icon, label, description }) => (
           <Link
             key={to}

@@ -60,6 +60,7 @@ import ContactPage from './pages/investment/ContactPage';
 import StartupDetailsPage from './pages/investment/StartupDetailsPage';
 
 import BenefitsPage from './pages/BenefitsPage';
+import SolarPage from './pages/SolarPage';
 import NewsPage from './pages/news/NewsPage';
 import NewsDetailPage from './pages/news/NewsDetailPage';
 import JobBoardPage from './pages/jobs/JobBoardPage';
@@ -88,6 +89,7 @@ const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 const AdminCrops = lazy(() => import('@/pages/admin/AdminCrops'));
 const AdminAiDocuments = lazy(() => import('@/pages/admin/AdminAiDocuments'));
 const AdminNews = lazy(() => import('@/pages/admin/AdminNews'));
+const AdminBenefits = lazy(() => import('@/pages/admin/AdminBenefits'));
 const AdminIncidents = lazy(() => import('@/pages/admin/AdminIncidents'));
 const IncidentsPage = lazy(() => import('@/pages/incidents/IncidentsPage'));
 const ReportIncidentPage = lazy(() => import('@/pages/incidents/ReportIncidentPage'));
@@ -174,6 +176,7 @@ const App = () => (
                 <Route path="crops" element={<AdminCrops />} />
                 <Route path="ai" element={<AdminAiDocuments />} />
                 <Route path="news" element={<AdminNews />} />
+                <Route path="benefits" element={<AdminBenefits />} />
                 <Route path="incidents" element={<AdminIncidents />} />
               </Route>
             </Route>
@@ -213,6 +216,7 @@ const App = () => (
             <Route path="/news/:slug" element={<NewsDetailPage />} />
 
             <Route path="/benefits" element={<BenefitsPage />} />
+            <Route path="/solar" element={<SolarPage />} />
 
             {/* ── Jobs — static routes first, then dynamic ────── */}
             <Route path="/jobs" element={<JobBoardPage />} />
