@@ -18,8 +18,11 @@ export function ArtisanCard({ artisan }: ArtisanCardProps) {
   const resolvedImage = resolveMediaUrl(artisan.profileImageKey);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const hasLoadError = resolvedImage != null && failedSrc === resolvedImage;
-  const localizedBio =
-    language === 'en' ? (artisan.bioEn ?? artisan.bioAr) : (artisan.bioAr ?? artisan.bioEn);
+  const localizedBioCandidates =
+    language === 'en' ? [artisan.bioEn, artisan.bioAr] : [artisan.bioAr, artisan.bioEn];
+  const localizedBio = localizedBioCandidates.find(
+    (bio) => typeof bio === 'string' && bio.trim().length > 0,
+  );
 
   return (
     <Link to={`/artisans/${artisan.id}`} className="block">

@@ -224,7 +224,7 @@ export class ArtisansService {
     artisanId: string,
     query: QueryProductsDto,
   ): Promise<PaginatedResponse<ArtisanProduct>> {
-    const profileRow = await this.findProfileById(artisanId);
+    const profileRow = await this.findPublicProfileById(artisanId);
     if (!profileRow) throw new NotFoundException('Artisan not found');
 
     const conditions = [
@@ -364,14 +364,22 @@ export class ArtisansService {
         .returning(),
     );
 
-    const qrKey = await this.qrService.generateAndUpload(id);
-    const [withQr] = await this.db
-      .update(artisanProducts)
-      .set({ qrCodeKey: qrKey, updatedAt: new Date() })
-      .where(and(eq(artisanProducts.id, id), isNull(artisanProducts.deletedAt)))
-      .returning();
+    try {
+      const qrKey = await this.qrService.generateAndUpload(id);
+      const [withQr] = await this.db
+        .update(artisanProducts)
+        .set({ qrCodeKey: qrKey, updatedAt: new Date() })
+        .where(and(eq(artisanProducts.id, id), isNull(artisanProducts.deletedAt)))
+        .returning();
 
-    return mapProduct(withQr ?? inserted);
+      return mapProduct(withQr ?? inserted);
+    } catch (error) {
+      await this.db
+        .update(artisanProducts)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(artisanProducts.id, id), isNull(artisanProducts.deletedAt)));
+      throw error;
+    }
   }
 
   async listMyProducts(

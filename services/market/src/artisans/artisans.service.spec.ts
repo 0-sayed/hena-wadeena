@@ -238,6 +238,30 @@ describe('ArtisansService', () => {
       expect(mockDb.update).toHaveBeenCalled();
     });
 
+    it('soft deletes the inserted product when QR generation fails', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.returning.mockResolvedValueOnce([mockProductRow]);
+      mockQr.generateAndUpload.mockRejectedValueOnce(new Error('qr upload failed'));
+
+      await expect(
+        service.createProduct(mockProfileRow.userId, {
+          nameAr: 'سلة نخيل',
+          craftType: 'palm_leaf',
+          minOrderQty: 1,
+          imageKeys: [],
+          available: true,
+        } as never),
+      ).rejects.toThrow('qr upload failed');
+
+      expect(mockDb.update).toHaveBeenCalled();
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deletedAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        }),
+      );
+    });
+
     it('throws NotFoundException when the user has no artisan profile', async () => {
       mockDb.limit.mockResolvedValueOnce([]);
 
@@ -251,6 +275,24 @@ describe('ArtisansService', () => {
         } as never),
       ).rejects.toThrow(NotFoundException);
       expect(mockQr.generateAndUpload).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getArtisanProducts', () => {
+    it('uses public artisan visibility gates before listing products', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.offset.mockResolvedValueOnce([mockProductRow]);
+      mockDb.then.mockImplementationOnce((resolve?: (value: unknown[]) => void) => {
+        resolve?.([{ count: 1 }]);
+      });
+
+      await service.getArtisanProducts(mockProfileRow.id, {
+        limit: 20,
+        offset: 0,
+      } as never);
+
+      const profileWhere = mockDb.where.mock.calls[0]?.[0];
+      expect(extractColumnNames(profileWhere)).toContain('verified_at');
     });
   });
 

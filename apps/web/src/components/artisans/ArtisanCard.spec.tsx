@@ -43,4 +43,32 @@ describe('ArtisanCard', () => {
     expect(screen.getByText('English bio')).toBeInTheDocument();
     expect(screen.queryByText('نبذة عربية')).not.toBeInTheDocument();
   });
+
+  it('falls back to the other locale when the preferred bio is an empty string', () => {
+    mockUseAuth.mockReturnValue({ language: 'en' });
+
+    render(
+      <MemoryRouter>
+        <ArtisanCard
+          artisan={{
+            id: 'artisan-1',
+            userId: 'user-1',
+            nameAr: 'حرفي',
+            nameEn: 'Artisan',
+            bioAr: 'نبذة عربية',
+            bioEn: '',
+            craftTypes: ['palm_leaf'],
+            area: 'kharga',
+            whatsapp: '+201234567890',
+            profileImageKey: null,
+            verifiedAt: '2026-04-17T00:00:00.000Z',
+            createdAt: '2026-04-17T00:00:00.000Z',
+            updatedAt: '2026-04-17T00:00:00.000Z',
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('نبذة عربية')).toBeInTheDocument();
+  });
 });
