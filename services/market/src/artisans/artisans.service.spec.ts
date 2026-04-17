@@ -325,6 +325,30 @@ describe('ArtisansService', () => {
       );
     });
 
+    it('preserves the original QR persistence error when the rollback soft delete also fails', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.returning.mockResolvedValueOnce([mockProductRow]);
+
+      const qrKey = `artisans/qr/${mockProductRow.id}.png`;
+      mockQr.generateAndUpload.mockResolvedValueOnce(qrKey);
+      mockDb.returning.mockRejectedValueOnce(new Error('db update failed'));
+      mockDb.then.mockImplementationOnce(
+        (_resolve?: (value: unknown[]) => void, reject?: (reason?: unknown) => void) => {
+          reject?.(new Error('soft delete failed'));
+        },
+      );
+
+      await expect(
+        service.createProduct(mockProfileRow.userId, {
+          nameAr: 'سلة نخيل',
+          craftType: 'palm_leaf',
+          minOrderQty: 1,
+          imageKeys: [],
+          available: true,
+        } as never),
+      ).rejects.toThrow('db update failed');
+    });
+
     it('throws NotFoundException when the user has no artisan profile', async () => {
       mockDb.limit.mockResolvedValueOnce([]);
 

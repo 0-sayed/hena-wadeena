@@ -390,10 +390,16 @@ export class ArtisansService {
         }
       }
 
-      await this.db
-        .update(artisanProducts)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(artisanProducts.id, id), isNull(artisanProducts.deletedAt)));
+      try {
+        await this.db
+          .update(artisanProducts)
+          .set({ deletedAt: new Date(), updatedAt: new Date() })
+          .where(and(eq(artisanProducts.id, id), isNull(artisanProducts.deletedAt)));
+      } catch (compensateError) {
+        this.logger.error(
+          `Failed to soft-delete orphaned artisan product ${id}: ${String(compensateError)}`,
+        );
+      }
       throw error;
     }
   }
