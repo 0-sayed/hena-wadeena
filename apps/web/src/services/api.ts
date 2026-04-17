@@ -2598,22 +2598,15 @@ export type UpdateInquiryStatusRequest = UpdateInquiryStatusPayload;
 
 export const artisansAPI = {
   // Public
-  list: (params?: ListArtisansParams) =>
-    apiFetchWithRefresh<PaginatedResponse<ArtisanProfile>>(
-      `/artisans${toQueryString(params ?? {})}`,
-    ),
+  list: (params?: ListArtisansParams) => apiFetch<PaginatedResponse<ArtisanProfile>>(`/artisans${toQueryString(params ?? {})}`),
 
-  getById: (id: string) => apiFetchWithRefresh<ArtisanProfileWithProducts>(`/artisans/${id}`),
+  getById: (id: string) => apiFetch<ArtisanProfileWithProducts>(`/artisans/${id}`),
 
   getProducts: (artisanId: string, params?: ListProductsParams) =>
-    apiFetchWithRefresh<PaginatedResponse<ArtisanProduct>>(
-      `/artisans/${artisanId}/products${toQueryString(params ?? {})}`,
-    ),
+    apiFetch<PaginatedResponse<ArtisanProduct>>(`/artisans/${artisanId}/products${toQueryString(params ?? {})}`),
 
   getProduct: (productId: string) =>
-    apiFetchWithRefresh<ArtisanProduct & { artisan: ArtisanProfile }>(
-      `/artisans/products/${productId}`,
-    ),
+    apiFetch<ArtisanProduct & { artisan: ArtisanProfile }>(`/artisans/products/${productId}`),
 
   submitInquiry: (productId: string, body: SubmitInquiryRequest) =>
     apiFetchWithRefresh<WholesaleInquiry>(`/artisans/products/${productId}/inquiries`, {

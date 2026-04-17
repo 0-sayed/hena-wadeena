@@ -163,8 +163,9 @@ export const queryKeys = {
       ['artisans', artisanId, 'products', filters] as const,
     product: (productId: string) => ['artisans', 'products', productId] as const,
     myProfile: () => ['artisans', 'me', 'profile'] as const,
+    myProductsBase: () => ['artisans', 'me', 'products'] as const,
     myProducts: (filters?: Record<string, unknown>) =>
-      ['artisans', 'me', 'products', filters] as const,
+      [...queryKeys.artisans.myProductsBase(), filters] as const,
     myInquiries: () => ['artisans', 'me', 'inquiries'] as const,
     adminList: (filters?: Record<string, unknown>) => ['artisans', 'admin', filters] as const,
   },

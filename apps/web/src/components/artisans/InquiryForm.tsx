@@ -14,15 +14,25 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 
-const inquirySchema = z.object({
+const inquirySchemaBase = z.object({
   name: z.string().min(2, 'الاسم مطلوب'),
   email: z.string().email('بريد إلكتروني غير صالح').optional().or(z.literal('')),
   phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'رقم هاتف غير صالح'),
   message: z.string().optional(),
-  quantity: z.coerce.number().int().min(1).optional(),
+  quantity: z.coerce.number().int().optional(),
 });
 
-type InquiryFormData = z.infer<typeof inquirySchema>;
+type InquiryFormData = z.infer<typeof inquirySchemaBase>;
+
+function createInquirySchema(minOrderQty: number) {
+  return inquirySchemaBase.extend({
+    quantity: z.coerce
+      .number()
+      .int()
+      .min(minOrderQty, `الحد الأدنى للطلب هو ${minOrderQty}`)
+      .optional(),
+  });
+}
 
 function parseInquiryErrorSchema(
   zodErrors: z.ZodIssue[],
@@ -74,35 +84,37 @@ function parseInquiryErrorSchema(
   return errors;
 }
 
-const inquiryResolver: Resolver<InquiryFormData> = async (values, _, options) => {
-  try {
-    const parsedValues = await inquirySchema.parseAsync(values);
+function createInquiryResolver(inquirySchema: z.ZodType<InquiryFormData>): Resolver<InquiryFormData> {
+  return async (values, _, options) => {
+    try {
+      const parsedValues = await inquirySchema.parseAsync(values);
 
-    if (options.shouldUseNativeValidation) {
-      validateFieldsNatively({}, options);
-    }
+      if (options.shouldUseNativeValidation) {
+        validateFieldsNatively({}, options);
+      }
 
-    return {
-      values: parsedValues,
-      errors: {},
-    };
-  } catch (error) {
-    if (error instanceof ZodError) {
       return {
-        values: {},
-        errors: toNestErrors(
-          parseInquiryErrorSchema(
-            error.errors,
-            !options.shouldUseNativeValidation && options.criteriaMode === 'all',
-          ),
-          options,
-        ),
+        values: parsedValues,
+        errors: {},
       };
-    }
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return {
+          values: {},
+          errors: toNestErrors(
+            parseInquiryErrorSchema(
+              error.errors,
+              !options.shouldUseNativeValidation && options.criteriaMode === 'all',
+            ),
+            options,
+          ),
+        };
+      }
 
-    throw error;
-  }
-};
+      throw error;
+    }
+  };
+}
 
 interface InquiryFormProps {
   productId: string;
@@ -113,9 +125,10 @@ interface InquiryFormProps {
 
 export function InquiryForm({ productId, productName, minOrderQty, onSuccess }: InquiryFormProps) {
   const submitInquiry = useSubmitInquiry();
+  const inquirySchema = createInquirySchema(minOrderQty);
 
   const form = useForm<InquiryFormData>({
-    resolver: inquiryResolver,
+    resolver: createInquiryResolver(inquirySchema),
     defaultValues: {
       name: '',
       email: '',

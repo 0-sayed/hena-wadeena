@@ -103,7 +103,7 @@ export function useCreateArtisanProduct() {
   return useMutation({
     mutationFn: (body: CreateArtisanProductRequest) => artisansAPI.createProduct(body),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.myProducts() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.myProductsBase() });
     },
   });
 }
@@ -114,7 +114,7 @@ export function useUpdateArtisanProduct() {
     mutationFn: ({ id, ...body }: { id: string } & UpdateArtisanProductRequest) =>
       artisansAPI.updateProduct(id, body),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.myProducts() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.myProductsBase() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.product(variables.id) });
     },
   });
@@ -125,7 +125,7 @@ export function useDeleteArtisanProduct() {
   return useMutation({
     mutationFn: (productId: string) => artisansAPI.deleteProduct(productId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.myProducts() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.artisans.myProductsBase() });
     },
   });
 }

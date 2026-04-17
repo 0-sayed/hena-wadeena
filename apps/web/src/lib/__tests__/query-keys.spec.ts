@@ -112,4 +112,8 @@ describe('queryKeys', () => {
   it('jobs.userReviews includes userId', () => {
     expect(queryKeys.jobs.userReviews('user-1')).toEqual(['jobs', 'reviews', 'user-1']);
   });
+
+  it('artisans.myProductsBase returns the shared list prefix', () => {
+    expect(queryKeys.artisans.myProductsBase()).toEqual(['artisans', 'me', 'products']);
+  });
 });

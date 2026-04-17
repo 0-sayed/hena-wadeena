@@ -2,6 +2,7 @@ import { ARTISAN_AREAS, CRAFT_TYPES, WHOLESALE_INQUIRY_STATUSES } from '@hena-wa
 import { z } from 'zod';
 
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+const mediaKeySchema = z.string().trim().min(1, 'Media key cannot be empty');
 
 export const createArtisanProfileSchema = z.object({
   nameAr: z.string().min(1).max(255),
@@ -11,7 +12,7 @@ export const createArtisanProfileSchema = z.object({
   craftTypes: z.array(z.enum(CRAFT_TYPES)).min(1),
   area: z.enum(ARTISAN_AREAS),
   whatsapp: z.string().regex(phoneRegex, 'Invalid phone number (E.164 format required)'),
-  profileImageKey: z.string().optional().nullable(),
+  profileImageKey: mediaKeySchema.optional().nullable(),
 });
 
 export const updateArtisanProfileSchema = createArtisanProfileSchema.partial();
@@ -24,7 +25,7 @@ export const createArtisanProductSchema = z.object({
   craftType: z.enum(CRAFT_TYPES),
   price: z.number().int().min(1).optional().nullable(),
   minOrderQty: z.number().int().min(1).default(1),
-  imageKeys: z.array(z.string()).max(5).default([]),
+  imageKeys: z.array(mediaKeySchema).max(5).default([]),
   available: z.boolean().default(true),
 });
 

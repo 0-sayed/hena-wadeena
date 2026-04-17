@@ -18,6 +18,8 @@ export function ArtisanCard({ artisan }: ArtisanCardProps) {
   const resolvedImage = resolveMediaUrl(artisan.profileImageKey);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const hasLoadError = resolvedImage != null && failedSrc === resolvedImage;
+  const localizedBio =
+    language === 'en' ? (artisan.bioEn ?? artisan.bioAr) : (artisan.bioAr ?? artisan.bioEn);
 
   return (
     <Link to={`/artisans/${artisan.id}`} className="block">
@@ -57,8 +59,8 @@ export function ArtisanCard({ artisan }: ArtisanCardProps) {
             ))}
           </div>
 
-          {artisan.bioAr && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">{artisan.bioAr}</p>
+          {localizedBio && (
+            <p className="line-clamp-2 text-sm text-muted-foreground">{localizedBio}</p>
           )}
         </CardContent>
       </Card>
