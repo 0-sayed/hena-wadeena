@@ -56,6 +56,41 @@ describe('BenefitsService', () => {
     });
   });
 
+  describe('create', () => {
+    it('inserts and returns the created benefit', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockBenefit]);
+      const dto = {
+        slug: 'takaful-wa-karama',
+        nameAr: 'تكافل وكرامة',
+        nameEn: 'Takaful wa Karama',
+        ministryAr: 'وزارة التضامن الاجتماعي',
+        documentsAr: ['بطاقة الرقم القومي'],
+        officeNameAr: 'مكتب الخارجة',
+        officePhone: '0922500001',
+        officeAddressAr: 'شارع جمال عبد الناصر',
+        enrollmentNotesAr: 'تقدم بطلب في مكتب التضامن',
+      };
+      const result = await service.create(dto as never);
+      expect(result).toEqual(mockBenefit);
+      expect(mockDb.insert).toHaveBeenCalled();
+      expect(mockDb.values).toHaveBeenCalledWith(dto);
+    });
+  });
+
+  describe('delete', () => {
+    it('removes the record and returns it', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockBenefit]);
+      const result = await service.delete('takaful-wa-karama');
+      expect(result).toEqual(mockBenefit);
+      expect(mockDb.delete).toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when slug does not exist', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+      await expect(service.delete('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('update', () => {
     it('persists partial changes and returns updated record', async () => {
       const updated = { ...mockBenefit, officePhone: '0911111111' };

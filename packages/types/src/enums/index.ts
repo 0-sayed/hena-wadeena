@@ -56,6 +56,7 @@ export enum ListingCategory {
   HEALTHCARE = 'healthcare',
   SHOPPING = 'shopping',
   AGRICULTURAL_PRODUCE = 'agricultural_produce',
+  SOLAR_INSTALLER = 'solar_installer',
 }
 
 export enum BookingStatus {
@@ -92,6 +93,7 @@ export enum PoiCategory {
   RESTAURANT = 'restaurant',
   SERVICE = 'service',
   GOVERNMENT = 'government',
+  SOLAR_INSTALLATION = 'solar_installation',
 }
 
 export enum PoiStatus {

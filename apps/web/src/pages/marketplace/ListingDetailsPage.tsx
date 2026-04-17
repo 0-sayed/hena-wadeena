@@ -29,6 +29,31 @@ import {
   transactionLabel,
 } from '@/lib/format';
 
+const FEATURE_KEY_LABELS: Record<string, string> = {
+  nrea_cert_number: 'رقم شهادة NREA',
+  services: 'الخدمات',
+  brands: 'العلامات التجارية',
+  capacity_kw: 'السعة (كيلوواط)',
+  warranty_years: 'سنوات الضمان',
+  panel_type: 'نوع الألواح',
+  inverter_type: 'نوع العاكس',
+};
+
+const FEATURE_VALUE_LABELS: Record<string, string> = {
+  residential: 'سكني',
+  agricultural: 'زراعي',
+  commercial: 'تجاري',
+  industrial: 'صناعي',
+};
+
+function formatFeatureValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((v) => FEATURE_VALUE_LABELS[String(v)] ?? String(v)).join('، ');
+  }
+  const str = String(value);
+  return FEATURE_VALUE_LABELS[str] ?? str;
+}
+
 function getContactField(
   contact: Record<string, unknown> | null,
   key: 'name' | 'phone' | 'email' | 'website',
@@ -226,9 +251,9 @@ export default function ListingDetailsPage() {
                         <div key={key} className="rounded-lg border border-border/60 p-4 text-sm">
                           <p className="mb-1 flex items-center gap-2 font-medium text-foreground">
                             <Tag className="h-4 w-4 text-primary" />
-                            {key}
+                            {FEATURE_KEY_LABELS[key] ?? key}
                           </p>
-                          <p className="text-muted-foreground">{String(value)}</p>
+                          <p className="text-muted-foreground">{formatFeatureValue(value)}</p>
                         </div>
                       ))}
                     </div>

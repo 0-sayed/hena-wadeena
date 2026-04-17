@@ -1,6 +1,16 @@
 import { generateId } from '@hena-wadeena/nest-common';
 import { SQL, sql } from 'drizzle-orm';
-import { check, geometry, index, integer, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  geometry,
+  index,
+  integer,
+  jsonb,
+  real,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { poiCategoryEnum, poiStatusEnum } from '../enums';
 import { mapSchema } from '../schema';
@@ -26,6 +36,7 @@ export const pointsOfInterest = mapSchema.table(
     submittedBy: uuid('submitted_by').notNull(),
     approvedBy: uuid('approved_by'),
     rejectionReason: text('rejection_reason'),
+    metadata: jsonb('metadata'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

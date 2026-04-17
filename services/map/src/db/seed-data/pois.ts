@@ -13,7 +13,8 @@ export interface SeedPoi {
     | 'accommodation'
     | 'restaurant'
     | 'service'
-    | 'government';
+    | 'government'
+    | 'solar_installation';
   address: string;
   phone?: string;
   lat: number;
@@ -21,6 +22,7 @@ export interface SeedPoi {
   submittedBy: string;
   approvedBy?: string; // Optional for pending POIs
   images?: string[];
+  metadata?: Record<string, unknown>;
 }
 
 /** Pending POIs: user-submitted, awaiting admin review */
@@ -373,5 +375,142 @@ export const showcasePois: SeedPoi[] = [
     submittedBy: USER.ADMIN_SAYED,
     approvedBy: USER.ADMIN_SAYED,
     images: ['/images/seed/XaidrBZfEwU.jpg'],
+  },
+  {
+    id: POI.POI11,
+    nameAr: 'محطة ري بالطاقة الشمسية - مزرعة الأمل',
+    nameEn: 'Solar Pump Station — Al-Amal Farm',
+    description:
+      'منظومة ضخ مياه تعمل بالطاقة الشمسية بقدرة 15 كيلوواط. تروي مزرعة الأمل للتمور والزيتون وتوفر ما يعادل 2000 لتر يومياً بدون كهرباء شبكة.',
+    category: 'solar_installation',
+    address: 'طريق الداخلة الصحراوي، كيلو 12',
+    lat: 25.5231,
+    lon: 28.9803,
+    submittedBy: USER.FARMER_IBRAHIM,
+    approvedBy: USER.ADMIN_SAYED,
+    metadata: {
+      capacity_kw: 15,
+      monthly_kwh_savings: 450,
+      install_year: 2023,
+      system_type: 'pump',
+    },
+  },
+  {
+    id: POI.POI12,
+    nameAr: 'منزل أسرة محمد - نظام شمسي سكني',
+    nameEn: 'Mohamed Family Home — Rooftop Solar',
+    description:
+      'نظام شمسي سكني على سطح المنزل بقدرة 5 كيلوواط مع بطارية تخزين. يغطي 80٪ من احتياجات الكهرباء المنزلية ويوفر نحو 600 جنيه شهرياً.',
+    category: 'solar_installation',
+    address: 'حي الزهور، الخارجة',
+    lat: 25.4427,
+    lon: 30.5521,
+    submittedBy: USER.RESIDENT_MOHAMED,
+    approvedBy: USER.ADMIN_SAYED,
+    metadata: {
+      capacity_kw: 5,
+      monthly_kwh_savings: 150,
+      install_year: 2024,
+      system_type: 'rooftop',
+    },
+  },
+  {
+    id: POI.POI13,
+    nameAr: 'مدرسة الفرافرة الابتدائية - نظام شمسي',
+    nameEn: 'Farafra Primary School — Solar System',
+    description:
+      'نظام طاقة شمسية على سطح مدرسة الفرافرة الابتدائية بقدرة 10 كيلوواط. موّلت جزئياً بمنحة صندوق الطاقة المتجددة ويخدم 320 طالباً.',
+    category: 'solar_installation',
+    address: 'شارع المدارس، قصر الفرافرة',
+    lat: 27.0589,
+    lon: 27.9684,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+    metadata: {
+      capacity_kw: 10,
+      monthly_kwh_savings: 300,
+      install_year: 2022,
+      system_type: 'rooftop',
+    },
+  },
+  {
+    id: POI.POI14,
+    nameAr: 'محطة تحلية المياه الشمسية - باريس',
+    nameEn: 'Solar Water Desalination Station — Baris',
+    description:
+      'محطة تحلية مياه جوفية تعمل بالطاقة الشمسية بقدرة 20 كيلوواط. تنتج 5000 لتر يومياً من المياه الصالحة للشرب لخدمة 300 أسرة في منطقة باريس الجنوبية.',
+    category: 'solar_installation',
+    address: 'طريق باريس الجنوبية، جنوب الخارجة',
+    lat: 24.663,
+    lon: 30.597,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/solar-farm-1.jpg'],
+    metadata: {
+      capacity_kw: 20,
+      monthly_kwh_savings: 600,
+      install_year: 2023,
+      system_type: 'desalination',
+    },
+  },
+  {
+    id: POI.POI15,
+    nameAr: 'مزرعة الخارجة الشمسية - الطاقة الزراعية',
+    nameEn: 'Kharga Solar Farm — Agricultural Energy',
+    description:
+      'مزرعة شمسية بقدرة 50 كيلوواط تمد مضخات الري وورش التبريد بطاقة نظيفة. موّلت بمنحة الصندوق الاجتماعي للتنمية وتخدم 12 مزرعة مجاورة.',
+    category: 'solar_installation',
+    address: 'المنطقة الزراعية الشمالية، الخارجة',
+    lat: 25.563,
+    lon: 30.558,
+    submittedBy: USER.FARMER_IBRAHIM,
+    approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/solar-panel-1.jpg'],
+    metadata: {
+      capacity_kw: 50,
+      monthly_kwh_savings: 1500,
+      install_year: 2024,
+      system_type: 'ground_mount',
+    },
+  },
+  {
+    id: POI.POI16,
+    nameAr: 'منظومة إضاءة شوارع الداخلة الشمسية',
+    nameEn: 'Dakhla Solar Street Lighting Network',
+    description:
+      'شبكة إضاءة شوارع تعمل بالطاقة الشمسية تضم 80 عمود إنارة ذكي في مدينة قصر الداخلة. تعمل دون اتصال بالشبكة الكهربائية وتوفر 40000 جنيه سنوياً في فواتير الكهرباء.',
+    category: 'solar_installation',
+    address: 'شارع الجمهورية وشارع المدارس، موط، الداخلة',
+    lat: 25.689,
+    lon: 28.885,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/solar-village-1.jpg'],
+    metadata: {
+      capacity_kw: 8,
+      monthly_kwh_savings: 240,
+      install_year: 2023,
+      system_type: 'street_lighting',
+    },
+  },
+  {
+    id: POI.POI17,
+    nameAr: 'مركز صحي الفرافرة - طاقة شمسية مستقلة',
+    nameEn: 'Farafra Health Centre — Off-Grid Solar',
+    description:
+      'نظام شمسي مستقل عن الشبكة بقدرة 8 كيلوواط مع بنك بطاريات يكفي 12 ساعة. يضمن تشغيل الثلاجات الطبية وأجهزة العيادة على مدار الساعة في منطقة بعيدة عن الشبكة.',
+    category: 'solar_installation',
+    address: 'شارع الصحة، قصر الفرافرة',
+    lat: 27.062,
+    lon: 27.974,
+    submittedBy: USER.ADMIN_SAYED,
+    approvedBy: USER.ADMIN_SAYED,
+    images: ['/images/seed/solar-rooftop-1.jpg'],
+    metadata: {
+      capacity_kw: 8,
+      monthly_kwh_savings: 240,
+      install_year: 2021,
+      system_type: 'off_grid',
+    },
   },
 ];

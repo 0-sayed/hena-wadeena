@@ -73,6 +73,7 @@ const POI_CATEGORIES: { value: PoiCategory; label: string; color: string }[] = [
   { value: 'restaurant', label: 'مطعم', color: '#ea580c' },
   { value: 'service', label: 'خدمات', color: '#6b7280' },
   { value: 'government', label: 'حكومي', color: '#dc2626' },
+  { value: 'solar_installation', label: 'طاقة شمسية', color: '#f59e0b' },
 ];
 
 const poiCategoryLabelsEn: Record<PoiCategory, string> = {
@@ -84,6 +85,7 @@ const poiCategoryLabelsEn: Record<PoiCategory, string> = {
   restaurant: 'Restaurant',
   service: 'Services',
   government: 'Government',
+  solar_installation: 'Solar Installation',
 };
 
 const rideStatusLabels: Record<CarpoolRide['status'], { ar: string; en: string }> = {

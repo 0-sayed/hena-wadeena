@@ -137,12 +137,12 @@
 - [ ] **T45** White Desert Incident Reporting (schema + API) · S · ← T27
 - [ ] **T50** Public Transport Tracker (bus routes + departures + ETA board) · M · ← T21
 - [ ] **T51** Desert Emergency Dispatch (emergency resources + SOS + breadcrumbs) · M · ← T40, T21
-- [ ] **T52** Solar Community Map (installer category + community POIs + static overlay) · S · ← T21, T26
+- [x] **T52** Solar Community Map (installer category + community POIs + static overlay) · S · ← T21, T26
 - [ ] **F20** Artisan Market UI · M · ← T42
 - [ ] **F21** Heritage + White Desert UI · M · ← T43, T45
 - [ ] **F24** Transport Tracker UI (departure board + subscriptions) · M · ← T50
 - [ ] **F25** Emergency Dispatch UI (SOS button + resource map + breadcrumb) · M · ← T51
-- [ ] **F26** Solar Community Map UI (installer directory + community pins + irradiance layer) · S · ← T52
+- [x] **F26** Solar Community Map UI (installer directory + community pins + irradiance layer) · S · ← T52
 
 ## Phase 2 / Post-Hackathon ❌
 

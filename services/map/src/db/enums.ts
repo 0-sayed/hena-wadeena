@@ -9,6 +9,7 @@ export const poiCategoryEnum = mapSchema.enum('poi_category', [
   'restaurant',
   'service',
   'government',
+  'solar_installation',
 ]);
 
 export const poiStatusEnum = mapSchema.enum('poi_status', ['pending', 'approved', 'rejected']);

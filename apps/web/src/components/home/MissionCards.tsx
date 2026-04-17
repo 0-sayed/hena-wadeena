@@ -12,6 +12,7 @@ import {
   Sparkles,
   Newspaper,
   Calendar,
+  Sun,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -98,6 +99,17 @@ const missions = [
     icon: Briefcase,
     href: '/jobs',
     gradient: 'from-emerald-500 to-teal-600',
+  },
+  {
+    id: 'solar',
+    title: { ar: 'الطاقة الشمسية', en: 'Solar energy' },
+    description: {
+      ar: 'خريطة التركيبات الشمسية، مزودو الطاقة المعتمدون، وبرامج الدعم الحكومي.',
+      en: 'Community solar map, certified installers, and government subsidy programs.',
+    },
+    icon: Sun,
+    href: '/solar',
+    gradient: 'from-amber-400 to-orange-500',
   },
   {
     id: 'search',

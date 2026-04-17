@@ -6,6 +6,7 @@ import {
   Landmark,
   ChevronLeft,
   ChevronRight,
+  Sun,
 } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -212,6 +213,15 @@ function QuickLinks({ appLanguage }: { appLanguage: AppLanguage }) {
       description: pickLocalizedCopy(appLanguage, {
         ar: 'تحقق من البرامج الحكومية التي تؤهّلك',
         en: 'Check which government programs you qualify for',
+      }),
+    },
+    {
+      to: '/solar',
+      icon: Sun,
+      label: pickLocalizedCopy(appLanguage, { ar: 'الطاقة الشمسية', en: 'Solar energy' }),
+      description: pickLocalizedCopy(appLanguage, {
+        ar: 'مزودو التركيب، الخريطة المجتمعية، ومنح الدعم',
+        en: 'Find installers, view the community map, and explore subsidies',
       }),
     },
   ];

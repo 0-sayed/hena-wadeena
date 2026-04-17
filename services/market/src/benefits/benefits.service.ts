@@ -5,6 +5,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { benefitInfo } from '../db/schema/benefit-info';
 
+import type { CreateBenefitDto } from './dto/create-benefit.dto';
 import { UpdateBenefitDto } from './dto/update-benefit.dto';
 
 @Injectable()
@@ -17,6 +18,17 @@ export class BenefitsService {
 
   async findBySlug(slug: string) {
     const rows = await this.db.select().from(benefitInfo).where(eq(benefitInfo.slug, slug));
+    if (!rows[0]) throw new NotFoundException(`Benefit '${slug}' not found`);
+    return rows[0];
+  }
+
+  async create(dto: CreateBenefitDto) {
+    const rows = await this.db.insert(benefitInfo).values(dto).returning();
+    return rows[0];
+  }
+
+  async delete(slug: string) {
+    const rows = await this.db.delete(benefitInfo).where(eq(benefitInfo.slug, slug)).returning();
     if (!rows[0]) throw new NotFoundException(`Benefit '${slug}' not found`);
     return rows[0];
   }

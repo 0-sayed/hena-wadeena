@@ -127,6 +127,13 @@
       "when": 1776248229344,
       "tag": "20260415101709_mysterious_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1776373371331,
+      "tag": "20260416210251_t52-solar-installer-category",
+      "breakpoints": true
     }
   ]
 }

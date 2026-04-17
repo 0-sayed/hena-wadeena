@@ -1489,7 +1489,8 @@ export type PoiCategory =
   | 'accommodation'
   | 'restaurant'
   | 'service'
-  | 'government';
+  | 'government'
+  | 'solar_installation';
 
 export type PoiStatus = 'pending' | 'approved' | 'rejected';
 
@@ -2322,9 +2323,16 @@ export interface BenefitInfo {
   updatedAt: string;
 }
 
+export type CreateBenefitBody = Omit<BenefitInfo, 'id' | 'createdAt' | 'updatedAt'>;
+
 export const benefitsAPI = {
   list: () => apiFetch<BenefitInfo[]>('/benefits'),
   getBySlug: (slug: string) => apiFetch<BenefitInfo>(`/benefits/${slug}`),
+  create: (body: CreateBenefitBody) =>
+    apiFetchWithRefresh<BenefitInfo>('/benefits', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   update: (
     slug: string,
     body: Partial<Omit<BenefitInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt'>>,
@@ -2333,6 +2341,7 @@ export const benefitsAPI = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+  delete: (slug: string) => apiFetchWithRefresh<void>(`/benefits/${slug}`, { method: 'DELETE' }),
 };
 
 // ── Employment Board ────────────────────────────────────────────────────────
