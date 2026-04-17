@@ -124,4 +124,28 @@ describe('ListingDetailsPage', () => {
     expect(screen.getByText('Services')).toBeInTheDocument();
     expect(screen.getByText('Residential, Commercial')).toBeInTheDocument();
   });
+
+  it('localizes grid-connected and off-grid solar service values for English users', () => {
+    mockUseAuth.mockReturnValueOnce({
+      isAuthenticated: false,
+      language: 'en',
+      user: null,
+    });
+    mockUseListing.mockReturnValueOnce({
+      data: {
+        ...defaultListing,
+        category: 'solar_installer',
+        features: {
+          services: ['grid_connected', 'off_grid'],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    render(<ListingDetailsPage />);
+
+    expect(screen.getByText('Grid-connected, Off-grid')).toBeInTheDocument();
+  });
 });

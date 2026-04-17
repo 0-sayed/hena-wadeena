@@ -45,6 +45,8 @@ const FEATURE_VALUE_LABELS: Record<string, { ar: string; en: string }> = {
   agricultural: { ar: 'زراعي', en: 'Agricultural' },
   commercial: { ar: 'تجاري', en: 'Commercial' },
   industrial: { ar: 'صناعي', en: 'Industrial' },
+  grid_connected: { ar: 'متصل بالشبكة', en: 'Grid-connected' },
+  off_grid: { ar: 'مستقل', en: 'Off-grid' },
 };
 
 function formatFeatureLabel(key: string, language: AppLanguage): string {
