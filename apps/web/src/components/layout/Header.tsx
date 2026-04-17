@@ -39,6 +39,7 @@ type NavigationItem = {
   key: string;
   label: string;
   matcher: (pathname: string) => boolean;
+  mobileOnly?: boolean;
 };
 
 type HeaderCopy = {
@@ -145,6 +146,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           investment: 'Investment',
           jobs: 'Jobs',
           news: 'News',
+          artisans: 'Artisans',
         }
       : {
           home: 'الرئيسية',
@@ -156,6 +158,7 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           investment: 'الاستثمار',
           jobs: 'التوظيف',
           news: 'أخبار',
+          artisans: 'الحرفيات',
         };
 
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
@@ -216,6 +219,12 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       href: '/news',
       label: labels.news,
       matcher: (pathname) => pathname.startsWith('/news'),
+    },
+    {
+      key: 'artisans',
+      href: '/artisans',
+      label: labels.artisans,
+      matcher: (pathname) => pathname.startsWith('/artisans'),
     },
   ];
 }
@@ -363,19 +372,21 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {navigation.map((item) => (
-            <Link
-              key={item.key}
-              to={item.href}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive(item)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navigation
+            .filter((item) => !item.mobileOnly)
+            .map((item) => (
+              <Link
+                key={item.key}
+                to={item.href}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive(item)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">

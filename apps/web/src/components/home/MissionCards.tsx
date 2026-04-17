@@ -12,6 +12,7 @@ import {
   Sparkles,
   Newspaper,
   Calendar,
+  Palette,
   Sun,
 } from 'lucide-react';
 
@@ -100,6 +101,17 @@ const missions = [
     icon: Briefcase,
     href: '/jobs',
     gradient: 'from-emerald-500 to-teal-600',
+  },
+  {
+    id: 'artisans',
+    title: { ar: 'الحرفيات', en: 'Artisans' },
+    description: {
+      ar: 'اكتشف منتجات الحرف اليدوية الأصيلة، تواصل مع الحرفيات، واطلب بضائع مباشرة.',
+      en: 'Discover authentic handcraft products, connect with local artisans, and place direct orders.',
+    },
+    icon: Palette,
+    href: '/artisans',
+    gradient: 'from-pink-600 to-pink-600',
   },
   {
     id: 'solar',
@@ -228,7 +240,20 @@ export function MissionCards() {
               const Icon = mission.icon;
               return (
                 <Link key={mission.id} to={mission.href}>
-                  <Card className="group h-full overflow-hidden rounded-2xl border-border/50 transition-all duration-400 hover-lift hover:border-primary/40 hover:shadow-xl">
+                  <Card
+                    className={`group relative h-full overflow-hidden rounded-2xl transition-all duration-400 hover-lift hover:shadow-xl ${
+                      mission.id === 'artisans'
+                        ? 'border-pink-200 shadow-pink-100 hover:border-pink-400'
+                        : 'border-border/50 hover:border-primary/40'
+                    }`}
+                  >
+                    {mission.id === 'artisans' && (
+                      <div className="pointer-events-none absolute -left-10 top-5 z-10 w-40 -rotate-45 bg-pink-600 py-1.5 text-center shadow-md">
+                        <span className="text-[10px] font-bold tracking-wide text-white">
+                          {language === 'ar' ? 'تمكين المرأة المصرية' : 'Women Empowerment'}
+                        </span>
+                      </div>
+                    )}
                     <CardContent className="flex h-full flex-col p-6 sm:p-8">
                       <div
                         className={`icon-hover mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${mission.gradient} shadow-lg sm:h-[72px] sm:w-[72px]`}

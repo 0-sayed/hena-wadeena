@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
@@ -68,5 +68,27 @@ export class S3Service {
   /** Get the public CDN URL for a key (for public buckets) */
   getPublicUrl(key: string): string {
     return `https://${this.bucket}.s3.amazonaws.com/${key}`;
+  }
+
+  /** Upload a buffer directly to S3 (used for server-side generated files like QR codes) */
+  async uploadBuffer(key: string, buffer: Buffer, contentType: string): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      }),
+    );
+  }
+
+  /** Delete an object from S3 (used for cleanup/compensation flows) */
+  async deleteObject(key: string): Promise<void> {
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
   }
 }

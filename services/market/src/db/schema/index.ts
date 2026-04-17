@@ -24,6 +24,9 @@ export { produceListingDetails } from './produce-listing-details';
 export { priceAlertSubscriptions } from './price-alert-subscriptions';
 export { wellLogs } from './well-logs';
 export { newsArticles } from './news-articles';
+export * from './artisan-profiles';
+export * from './artisan-products';
+export { wholesaleInquiries } from './wholesale-inquiries';
 
 // Re-import for relation definitions
 import { businessCommodities } from './business-commodities';

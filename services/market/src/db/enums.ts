@@ -149,3 +149,17 @@ export const newsCategoryEnum = marketSchema.enum('news_category', [
   'culture',
   'events',
 ]);
+
+// Artisan market access
+export const craftTypeEnum = marketSchema.enum('craft_type', [
+  'palm_leaf',
+  'pottery',
+  'kilim',
+  'embroidery',
+  'other',
+]);
+export const wholesaleInquiryStatusEnum = marketSchema.enum('wholesale_inquiry_status', [
+  'pending',
+  'read',
+  'replied',
+]);

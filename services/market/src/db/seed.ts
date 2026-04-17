@@ -4,6 +4,8 @@ import postgres from 'postgres';
 import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils.js';
 
 import {
+  artisanProducts,
+  artisanProfiles,
   benefitInfo,
   businessCommodities,
   businessDirectories,
@@ -22,6 +24,7 @@ import {
 import { jobApplications } from './schema/job-applications.js';
 import { jobPosts } from './schema/job-posts.js';
 import { jobReviews } from './schema/job-reviews.js';
+import { essentialArtisanProducts, essentialArtisanProfiles } from './seed-data/artisans.js';
 import { benefitInfoData } from './seed-data/benefits.js';
 import { showcaseBusinessCommodities } from './seed-data/business-commodities.js';
 import { showcaseBusinesses } from './seed-data/business-directories.js';
@@ -413,6 +416,51 @@ async function main() {
     .onConflictDoNothing()
     .returning({ id: newsArticles.id });
 
+  // Artisan profiles and products — always seeded
+  const artisanProfilesResult = await db
+    .insert(artisanProfiles)
+    .values(
+      essentialArtisanProfiles.map((ap) => ({
+        id: ap.id,
+        userId: ap.userId,
+        nameAr: ap.nameAr,
+        nameEn: ap.nameEn ?? null,
+        bioAr: ap.bioAr ?? null,
+        bioEn: ap.bioEn ?? null,
+        craftTypes: ap.craftTypes,
+        area: ap.area,
+        whatsapp: ap.whatsapp,
+        profileImageKey: ap.profileImageKey ?? null,
+        verifiedAt: ap.verifiedAt ? new Date(ap.verifiedAt) : null,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: artisanProfiles.id });
+
+  const artisanProductsResult = await db
+    .insert(artisanProducts)
+    .values(
+      essentialArtisanProducts.map((p) => ({
+        id: p.id,
+        artisanId: p.artisanId,
+        nameAr: p.nameAr,
+        nameEn: p.nameEn ?? null,
+        descriptionAr: p.descriptionAr ?? null,
+        descriptionEn: p.descriptionEn ?? null,
+        craftType: p.craftType,
+        price: p.price ?? null,
+        minOrderQty: p.minOrderQty,
+        imageKeys: p.imageKeys,
+        available: p.available,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: artisanProducts.id });
+
   logSummary('market', layer, {
     commodities: commodityResult.length,
     listings: listingResult.length,
@@ -423,6 +471,8 @@ async function main() {
     jobReviews: jobReviewsResult.length,
     wellLogs: wellLogsResult.length,
     news: newsResult.length,
+    artisanProfiles: artisanProfilesResult.length,
+    artisanProducts: artisanProductsResult.length,
     ...(layer === 'showcase' && {
       businesses: businessCount,
       commodityPriceSnapshots: priceCount,

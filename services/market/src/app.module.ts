@@ -16,6 +16,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ZodValidationPipe } from 'nestjs-zod';
 
 import { AdminModule } from './admin/admin.module';
+import { ArtisansModule } from './artisans/artisans.module';
 import { AuthModule } from './auth/auth.module';
 import { BenefitsModule } from './benefits/benefits.module';
 import { BusinessDirectoryModule } from './business-directory/business-directory.module';
@@ -87,6 +88,7 @@ function requireEnv(key: string): string {
     JobApplicationsModule,
     JobPostsModule,
     NewsModule,
+    ArtisansModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

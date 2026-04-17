@@ -61,6 +61,7 @@ describe('Header localization', () => {
     expect(screen.getByAltText('Hena Wadeena')).toBeInTheDocument();
     expect(screen.getByText('Hena Wadeena')).toBeInTheDocument();
     expect(screen.getAllByLabelText('Search').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Artisans' })).toHaveAttribute('href', '/artisans');
     expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument();
   });

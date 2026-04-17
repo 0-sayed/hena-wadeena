@@ -25,6 +25,18 @@ import type {
   NewsArticle,
   CreateNewsArticlePayload,
   UpdateNewsArticlePayload,
+  ArtisanProfile,
+  ArtisanProduct,
+  ArtisanProfileWithProducts,
+  WholesaleInquiry,
+  QueryArtisansParams,
+  QueryProductsParams,
+  CreateArtisanProfilePayload,
+  UpdateArtisanProfilePayload,
+  CreateArtisanProductPayload,
+  UpdateArtisanProductPayload,
+  CreateWholesaleInquiryPayload,
+  UpdateInquiryStatusPayload,
 } from '@hena-wadeena/types';
 import type {
   AttractionType,
@@ -2654,6 +2666,101 @@ export const wellLogsAPI = {
     apiFetchWithRefresh<{ months: WellMonthlySummaryDto[]; solar: SolarEstimateDto | null }>(
       '/well-logs/summary',
     ),
+};
+
+// ── Artisan Market ────────────────────────────────────────────────────────────
+
+export type {
+  ArtisanProfile,
+  ArtisanProduct,
+  ArtisanProfileWithProducts,
+  WholesaleInquiry,
+  CraftType,
+  ArtisanArea,
+  WholesaleInquiryStatus,
+} from '@hena-wadeena/types';
+
+export type ListArtisansParams = QueryArtisansParams;
+export type ListProductsParams = QueryProductsParams;
+export type CreateArtisanProfileRequest = CreateArtisanProfilePayload;
+export type UpdateArtisanProfileRequest = UpdateArtisanProfilePayload;
+export type CreateArtisanProductRequest = CreateArtisanProductPayload;
+export type UpdateArtisanProductRequest = UpdateArtisanProductPayload;
+export type SubmitInquiryRequest = CreateWholesaleInquiryPayload;
+export type UpdateInquiryStatusRequest = UpdateInquiryStatusPayload;
+
+export const artisansAPI = {
+  // Public
+  list: (params?: ListArtisansParams) => apiFetch<PaginatedResponse<ArtisanProfile>>(`/artisans${toQueryString(params ?? {})}`),
+
+  getById: (id: string) => apiFetch<ArtisanProfileWithProducts>(`/artisans/${id}`),
+
+  getProducts: (artisanId: string, params?: ListProductsParams) =>
+    apiFetch<PaginatedResponse<ArtisanProduct>>(`/artisans/${artisanId}/products${toQueryString(params ?? {})}`),
+
+  getProduct: (productId: string) =>
+    apiFetch<ArtisanProduct & { artisan: ArtisanProfile }>(`/artisans/products/${productId}`),
+
+  submitInquiry: (productId: string, body: SubmitInquiryRequest) =>
+    apiFetchWithRefresh<WholesaleInquiry>(`/artisans/products/${productId}/inquiries`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  // Authenticated artisan
+  getMyProfile: () => apiFetchWithRefresh<ArtisanProfile>('/artisans/profile/me'),
+
+  createProfile: (body: CreateArtisanProfileRequest) =>
+    apiFetchWithRefresh<ArtisanProfile>('/artisans/profile', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateMyProfile: (body: UpdateArtisanProfileRequest) =>
+    apiFetchWithRefresh<ArtisanProfile>('/artisans/profile/me', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  listMyProducts: (params?: ListProductsParams) =>
+    apiFetchWithRefresh<PaginatedResponse<ArtisanProduct>>(
+      `/artisans/my-products${toQueryString(params ?? {})}`,
+    ),
+
+  createProduct: (body: CreateArtisanProductRequest) =>
+    apiFetchWithRefresh<ArtisanProduct>('/artisans/products', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateProduct: (productId: string, body: UpdateArtisanProductRequest) =>
+    apiFetchWithRefresh<ArtisanProduct>(`/artisans/products/${productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  deleteProduct: (productId: string) =>
+    apiFetchWithRefresh<void>(`/artisans/products/${productId}`, { method: 'DELETE' }),
+
+  listMyInquiries: () => apiFetchWithRefresh<WholesaleInquiry[]>('/artisans/inquiries'),
+
+  updateInquiryStatus: (inquiryId: string, body: UpdateInquiryStatusRequest) =>
+    apiFetchWithRefresh<WholesaleInquiry>(`/artisans/inquiries/${inquiryId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  // Admin
+  adminList: (params?: ListArtisansParams) =>
+    apiFetchWithRefresh<PaginatedResponse<ArtisanProfile>>(
+      `/admin/artisans${toQueryString(params ?? {})}`,
+    ),
+
+  adminVerify: (id: string) =>
+    apiFetchWithRefresh<ArtisanProfile>(`/admin/artisans/${id}/verify`, { method: 'PATCH' }),
+
+  adminDelete: (id: string) =>
+    apiFetchWithRefresh<void>(`/admin/artisans/${id}`, { method: 'DELETE' }),
 };
 
 // ── Re-exports from @hena-wadeena/types ─────────────────────────────────────

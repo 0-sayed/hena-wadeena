@@ -34,6 +34,23 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
+  migration-drift:
+    name: Migration Drift
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-node-pnpm
+      - name: Fetch base branch
+        run: git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+      - name: Verify schema changes include final generated migrations
+        env:
+          DATABASE_URL: postgresql://hena:hena_dev@localhost:5432/wadeena_db_test
+        run: bash scripts/check-drizzle-migrations.sh "origin/${{ github.base_ref }}"
+
   build:
     name: Build
     runs-on: ubuntu-latest
