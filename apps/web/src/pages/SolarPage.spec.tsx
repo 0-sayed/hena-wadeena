@@ -69,6 +69,15 @@ describe('SolarPage', () => {
     expect(screen.getByRole('tab', { name: /دعم ومنح/i })).toBeDefined();
   });
 
+  it('shows a neutral vision-alignment hero message without implying endorsement', () => {
+    renderPage();
+
+    expect(screen.getByText('في إطار رؤية مصر 2030')).toBeInTheDocument();
+    expect(
+      screen.getByText('دعم مجتمعي للتوسع في الطاقة النظيفة وحلول الطاقة الشمسية المحلية'),
+    ).toBeInTheDocument();
+  });
+
   it('shows loading state while fetching installers', () => {
     mockUseListings.mockReturnValueOnce({ data: undefined, isLoading: true });
     renderPage();

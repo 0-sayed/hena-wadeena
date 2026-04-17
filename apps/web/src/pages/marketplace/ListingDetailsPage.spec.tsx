@@ -148,4 +148,42 @@ describe('ListingDetailsPage', () => {
 
     expect(screen.getByText('Grid-connected, Off-grid')).toBeInTheDocument();
   });
+
+  it('localizes the listing title and static section labels for English users', () => {
+    mockUseAuth.mockReturnValueOnce({
+      isAuthenticated: false,
+      language: 'en',
+      user: null,
+    });
+    mockUseListing.mockReturnValueOnce({
+      data: {
+        ...defaultListing,
+        features: {
+          services: ['residential'],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    render(<ListingDetailsPage />);
+
+    expect(screen.getByRole('heading', { name: 'Dakhla farm oranges' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Description' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Additional details' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Location' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Listing summary' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Listing owner' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Contact details' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Listing summary and contact' })).toBeInTheDocument();
+  });
+
+  it('localizes the owner role label for Arabic users', () => {
+    render(<ListingDetailsPage />);
+
+    expect(screen.getByText('مقيم')).toBeInTheDocument();
+    expect(screen.queryByText('resident')).not.toBeInTheDocument();
+  });
 });

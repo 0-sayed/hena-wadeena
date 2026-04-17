@@ -155,9 +155,17 @@ export default function SolarPage() {
   );
 
   const copy = {
+    visionBadge: pickLocalizedCopy(language, {
+      ar: 'في إطار رؤية مصر 2030',
+      en: 'Aligned with Egypt Vision 2030',
+    }),
     subtitle: pickLocalizedCopy(language, {
       ar: 'مجتمع الطاقة الشمسية — محافظة الوادي الجديد',
       en: 'Solar Energy Community — New Valley Governorate',
+    }),
+    visionSupport: pickLocalizedCopy(language, {
+      ar: 'دعم مجتمعي للتوسع في الطاقة النظيفة وحلول الطاقة الشمسية المحلية',
+      en: 'Community support for expanding clean energy and local solar solutions',
     }),
     tabInstallers: pickLocalizedCopy(language, { ar: 'مزودو الطاقة', en: 'Installers' }),
     tabMap: pickLocalizedCopy(language, { ar: 'خريطة المجتمع', en: 'Community map' }),
@@ -185,6 +193,11 @@ export default function SolarPage() {
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8 text-center">
+          <div className="mb-3 flex justify-center">
+            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900">
+              {copy.visionBadge}
+            </Badge>
+          </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sun className="h-8 w-8 text-amber-500" />
             <h1 className="text-3xl font-bold">
@@ -195,6 +208,7 @@ export default function SolarPage() {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">{copy.subtitle}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{copy.visionSupport}</p>
         </div>
 
         <Tabs defaultValue="installers">
