@@ -74,11 +74,14 @@ function extractColumnNames(node: unknown): string[] {
 describe('ArtisansService', () => {
   let service: ArtisansService;
   let mockDb: ReturnType<typeof createMockDb>;
-  let mockQr: { generateAndUpload: ReturnType<typeof vi.fn> };
+  let mockQr: {
+    generateAndUpload: ReturnType<typeof vi.fn>;
+    deleteByKey: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDb = createMockDb();
-    mockQr = { generateAndUpload: vi.fn() };
+    mockQr = { generateAndUpload: vi.fn(), deleteByKey: vi.fn() };
     vi.clearAllMocks();
     service = new ArtisansService(mockDb as never, mockQr as never);
   });
@@ -262,6 +265,33 @@ describe('ArtisansService', () => {
       );
     });
 
+    it('deletes the uploaded QR asset when persisting the QR key fails', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.returning.mockResolvedValueOnce([mockProductRow]);
+
+      const qrKey = `artisans/qr/${mockProductRow.id}.png`;
+      mockQr.generateAndUpload.mockResolvedValueOnce(qrKey);
+      mockDb.returning.mockRejectedValueOnce(new Error('db update failed'));
+
+      await expect(
+        service.createProduct(mockProfileRow.userId, {
+          nameAr: 'سلة نخيل',
+          craftType: 'palm_leaf',
+          minOrderQty: 1,
+          imageKeys: [],
+          available: true,
+        } as never),
+      ).rejects.toThrow('db update failed');
+
+      expect(mockQr.deleteByKey).toHaveBeenCalledWith(qrKey);
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deletedAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        }),
+      );
+    });
+
     it('throws NotFoundException when the user has no artisan profile', async () => {
       mockDb.limit.mockResolvedValueOnce([]);
 
@@ -344,8 +374,10 @@ describe('ArtisansService', () => {
 
   describe('submitInquiry', () => {
     it('inserts an inquiry and returns the mapped domain object', async () => {
-      // findProductById
+      // findPublicProductById
       mockDb.limit.mockResolvedValueOnce([mockProductRow]);
+      // findPublicProfileById
+      mockDb.limit.mockResolvedValueOnce([{ ...mockProfileRow, verifiedAt: now }]);
       mockDb.returning.mockResolvedValueOnce([mockInquiryRow]);
 
       const result = await service.submitInquiry(mockProductRow.id, {
@@ -513,6 +545,25 @@ describe('ArtisansService', () => {
       mockDb.limit.mockResolvedValueOnce([]);
 
       await expect(service.adminDeleteArtisan('missing-id')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('submitInquiry', () => {
+    it('applies public visibility gates before accepting an inquiry', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProductRow]);
+      mockDb.limit.mockResolvedValueOnce([{ ...mockProfileRow, verifiedAt: now }]);
+      mockDb.returning.mockResolvedValueOnce([mockInquiryRow]);
+
+      await service.submitInquiry(mockProductRow.id, {
+        name: 'Ahmed',
+        phone: '+201111111111',
+      } as never);
+
+      const productWhere = mockDb.where.mock.calls[0]?.[0];
+      const profileWhere = mockDb.where.mock.calls[1]?.[0];
+
+      expect(extractColumnNames(productWhere)).toContain('available');
+      expect(extractColumnNames(profileWhere)).toContain('verified_at');
     });
   });
 });

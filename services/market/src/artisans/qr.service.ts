@@ -26,4 +26,8 @@ export class QrService {
 
     return key;
   }
+
+  async deleteByKey(key: string): Promise<void> {
+    await this.s3Service.deleteObject(key);
+  }
 }

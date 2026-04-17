@@ -364,8 +364,10 @@ export class ArtisansService {
         .returning(),
     );
 
+    let qrKey: string | null = null;
+
     try {
-      const qrKey = await this.qrService.generateAndUpload(id);
+      qrKey = await this.qrService.generateAndUpload(id);
       const [withQr] = await this.db
         .update(artisanProducts)
         .set({ qrCodeKey: qrKey, updatedAt: new Date() })
@@ -374,6 +376,10 @@ export class ArtisansService {
 
       return mapProduct(withQr ?? inserted);
     } catch (error) {
+      if (qrKey) {
+        await this.qrService.deleteByKey(qrKey);
+      }
+
       await this.db
         .update(artisanProducts)
         .set({ deletedAt: new Date(), updatedAt: new Date() })
@@ -485,8 +491,11 @@ export class ArtisansService {
     productId: string,
     dto: CreateWholesaleInquiryDto,
   ): Promise<WholesaleInquiry> {
-    const product = await this.findProductById(productId);
+    const product = await this.findPublicProductById(productId);
     if (!product) throw new NotFoundException('Product not found');
+
+    const profile = await this.findPublicProfileById(product.artisanId);
+    if (!profile) throw new NotFoundException('Product not found');
 
     const inserted = firstOrThrow(
       await this.db
@@ -494,7 +503,7 @@ export class ArtisansService {
         .values({
           id: generateId(),
           productId,
-          artisanId: product.artisanId,
+          artisanId: profile.id,
           name: dto.name,
           email: dto.email ?? null,
           phone: dto.phone,

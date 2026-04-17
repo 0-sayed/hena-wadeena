@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
@@ -78,6 +78,16 @@ export class S3Service {
         Key: key,
         Body: buffer,
         ContentType: contentType,
+      }),
+    );
+  }
+
+  /** Delete an object from S3 (used for cleanup/compensation flows) */
+  async deleteObject(key: string): Promise<void> {
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
       }),
     );
   }
