@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
+  AlertTriangle,
   Bell,
   Briefcase,
   CalendarCheck,
@@ -55,6 +56,7 @@ type HeaderCopy = {
   languageSwitchEnglishError: string;
   login: string;
   logout: string;
+  myIncidents: string;
   menu: string;
   mobileSearchPlaceholder: string;
   notifications: string;
@@ -87,6 +89,7 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
     languageSwitchEnglishError: 'تعذر التبديل إلى الإنجليزية',
     login: 'تسجيل الدخول',
     logout: 'تسجيل الخروج',
+    myIncidents: 'بلاغاتي البيئية',
     menu: 'فتح القائمة',
     mobileSearchPlaceholder: 'بحث في المنصة...',
     notifications: 'الإشعارات',
@@ -114,6 +117,7 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
     languageSwitchEnglishError: 'Could not switch to English',
     login: 'Log in',
     logout: 'Log out',
+    myIncidents: 'My Incidents',
     menu: 'Open menu',
     mobileSearchPlaceholder: 'Search the platform...',
     notifications: 'Notifications',
@@ -538,6 +542,14 @@ export function Header() {
                           {copy.wallet}
                         </Link>
                         <Link
+                          to="/incidents/mine"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+                        >
+                          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                          {copy.myIncidents}
+                        </Link>
+                        <Link
                           to="/notifications"
                           onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
@@ -767,6 +779,14 @@ export function Header() {
                     >
                       <Wallet className="h-5 w-5 text-muted-foreground" />
                       {copy.wallet}
+                    </Link>
+                    <Link
+                      to="/incidents/mine"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted"
+                    >
+                      <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                      {copy.myIncidents}
                     </Link>
                     <Link
                       to="/notifications"
