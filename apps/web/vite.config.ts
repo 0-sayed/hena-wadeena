@@ -71,6 +71,7 @@ export default defineConfig(({ mode }) => {
         '/api/v1/well-logs': { target: marketUrl, changeOrigin: true },
         '/api/v1/benefits': { target: marketUrl, changeOrigin: true },
         '/api/v1/news': { target: marketUrl, changeOrigin: true },
+        '/api/v1/artisans': { target: marketUrl, changeOrigin: true },
         // Admin routes — must appear before service-specific prefixes and before /api fallback
         '/api/v1/admin/users': { target: identityUrl, changeOrigin: true },
         '/api/v1/admin/guides': { target: guideBookingUrl, changeOrigin: true },
@@ -79,6 +80,7 @@ export default defineConfig(({ mode }) => {
         '/api/v1/admin/listings': { target: marketUrl, changeOrigin: true },
         '/api/v1/admin/stats': { target: marketUrl, changeOrigin: true },
         '/api/v1/admin/news': { target: marketUrl, changeOrigin: true },
+        '/api/v1/admin/artisans': { target: marketUrl, changeOrigin: true },
         // Guide-Booking service
         '/api/v1/guides': { target: guideBookingUrl, changeOrigin: true },
         '/api/v1/packages': { target: guideBookingUrl, changeOrigin: true },

@@ -31,6 +31,9 @@ import ChangePasswordPage from './pages/profile/ChangePasswordPage';
 
 import GuidesPage from './pages/guides/GuidesPage';
 import GuideProfilePage from './pages/guides/GuideProfilePage';
+import ArtisansPage from './pages/artisans/ArtisansPage';
+import ArtisanProfilePage from './pages/artisans/ArtisanProfilePage';
+import ArtisanProductPage from './pages/artisans/products/ArtisanProductPage';
 import GuideDashboard from './pages/roles/GuideDashboard';
 import MerchantDashboard from './pages/roles/MerchantDashboard';
 import DriverDashboard from './pages/roles/DriverDashboard';
@@ -144,6 +147,10 @@ const App = () => (
 
             <Route path="/guides" element={<GuidesPage />} />
             <Route path="/guides/:id" element={<GuideProfilePage />} />
+
+            <Route path="/artisans" element={<ArtisansPage />} />
+            <Route path="/artisans/products/:id" element={<ArtisanProductPage />} />
+            <Route path="/artisans/:id" element={<ArtisanProfilePage />} />
 
             <Route element={<RequireAuth />}>
               <Route

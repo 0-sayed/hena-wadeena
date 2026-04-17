@@ -182,6 +182,29 @@ export const WELL_LOG = {
   WL08: 'e1000000-0000-4000-8000-000000000008',
 } as const;
 
+// ─── Artisan Profiles ────────────────────────────────────────────────
+export const ARTISAN = {
+  FATIMA_KHARGA: '70f0c3c7-1d2c-4cb2-8840-c16d2f6a0001',
+  AISHA_DAKHLA: '70f0c3c7-1d2c-4cb2-8840-c16d2f6a0002',
+  MARYAM_FARAFRA: '70f0c3c7-1d2c-4cb2-8840-c16d2f6a0003',
+  KHADIJA_BARIS: '70f0c3c7-1d2c-4cb2-8840-c16d2f6a0004',
+  ZAHRA_BALAT: '70f0c3c7-1d2c-4cb2-8840-c16d2f6a0005',
+} as const;
+
+// ─── Artisan Products ────────────────────────────────────────────────
+export const ARTISAN_PRODUCT = {
+  PALM_BASKET_1: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0001',
+  PALM_BASKET_2: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0002',
+  GARRA_POTTERY_1: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0003',
+  GARRA_POTTERY_2: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0004',
+  KILIM_1: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0005',
+  KILIM_2: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0006',
+  EMBROIDERY_1: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0007',
+  EMBROIDERY_2: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0008',
+  PALM_TRAY_1: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0009',
+  POTTERY_VASE_1: '71f0c3c7-1d2c-4cb2-8840-c16d2f6a0010',
+} as const;
+
 // ─── KYC Records ─────────────────────────────────────────────────────
 export const KYC = {
   KYC01: '8a1b2c3d-4e5f-6789-abcd-ef0123456701',

@@ -69,4 +69,16 @@ export class S3Service {
   getPublicUrl(key: string): string {
     return `https://${this.bucket}.s3.amazonaws.com/${key}`;
   }
+
+  /** Upload a buffer directly to S3 (used for server-side generated files like QR codes) */
+  async uploadBuffer(key: string, buffer: Buffer, contentType: string): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      }),
+    );
+  }
 }

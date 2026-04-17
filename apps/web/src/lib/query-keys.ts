@@ -155,4 +155,17 @@ export const queryKeys = {
     detail: (slug: string) => ['news', slug] as const,
     adminList: (filters: Record<string, unknown>) => ['news', 'admin', filters] as const,
   },
+  artisans: {
+    lists: () => ['artisans'] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.artisans.lists(), filters] as const,
+    detail: (id: string) => ['artisans', id] as const,
+    products: (artisanId: string, filters?: Record<string, unknown>) =>
+      ['artisans', artisanId, 'products', filters] as const,
+    product: (productId: string) => ['artisans', 'products', productId] as const,
+    myProfile: () => ['artisans', 'me', 'profile'] as const,
+    myProducts: (filters?: Record<string, unknown>) =>
+      ['artisans', 'me', 'products', filters] as const,
+    myInquiries: () => ['artisans', 'me', 'inquiries'] as const,
+    adminList: (filters?: Record<string, unknown>) => ['artisans', 'admin', filters] as const,
+  },
 };
