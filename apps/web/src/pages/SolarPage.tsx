@@ -171,14 +171,6 @@ export default function SolarPage() {
       ar: 'لا توجد برامج دعم متاحة حالياً',
       en: 'No subsidy programs available right now',
     }),
-    legendVeryHigh: pickLocalizedCopy(language, {
-      ar: 'إشعاع عالي جداً (2800+ kWh/m²)',
-      en: 'Very high irradiance (2800+ kWh/m²)',
-    }),
-    legendHigh: pickLocalizedCopy(language, {
-      ar: 'إشعاع عالي (2600+ kWh/m²)',
-      en: 'High irradiance (2600+ kWh/m²)',
-    }),
     legendInstallation: pickLocalizedCopy(language, {
       ar: 'منشأة شمسية مجتمعية',
       en: 'Community solar installation',
@@ -266,20 +258,6 @@ export default function SolarPage() {
               />
 
               <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <span
-                    className="inline-block w-4 h-4 rounded"
-                    style={{ background: '#f97316', opacity: 0.5 }}
-                  />
-                  <span>{copy.legendVeryHigh}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span
-                    className="inline-block w-4 h-4 rounded"
-                    style={{ background: '#fb923c', opacity: 0.5 }}
-                  />
-                  <span>{copy.legendHigh}</span>
-                </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="inline-block w-3 h-3 rounded-full bg-amber-400 border-2 border-white shadow" />
                   <span>{copy.legendInstallation}</span>

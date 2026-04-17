@@ -97,6 +97,7 @@ export default function AdminBenefits() {
   }
 
   async function handleSubmit() {
+    const trimmedEnrollmentNotesEn = form.enrollmentNotesEn.trim();
     const payload = {
       slug: form.slug.trim(),
       nameAr: form.nameAr.trim(),
@@ -110,11 +111,15 @@ export default function AdminBenefits() {
       officePhone: form.officePhone.trim(),
       officeAddressAr: form.officeAddressAr.trim(),
       enrollmentNotesAr: form.enrollmentNotesAr.trim(),
-      enrollmentNotesEn: form.enrollmentNotesEn.trim() || undefined,
+      enrollmentNotesEn: trimmedEnrollmentNotesEn || undefined,
     };
     try {
       if (editing) {
-        const { slug: _slug, ...body } = payload;
+        const { slug: _slug, ...rest } = payload;
+        const body = {
+          ...rest,
+          enrollmentNotesEn: trimmedEnrollmentNotesEn || null,
+        };
         await updateMutation.mutateAsync({ slug: editing.slug, body });
         toast.success('تم تحديث البرنامج');
       } else {

@@ -136,6 +136,25 @@ describe('BenefitsService', () => {
       );
     });
 
+    it('clears English enrollment notes when explicitly set to null', async () => {
+      const updated = {
+        ...mockBenefit,
+        enrollmentNotesEn: null,
+      };
+      mockDb.returning.mockResolvedValueOnce([updated]);
+
+      await service.update('takaful-wa-karama', {
+        enrollmentNotesEn: null,
+      } as never);
+
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enrollmentNotesEn: null,
+          updatedAt: expect.any(Date),
+        }),
+      );
+    });
+
     it('throws NotFoundException when slug does not exist', async () => {
       mockDb.returning.mockResolvedValueOnce([]);
       await expect(service.update('nonexistent', { officePhone: '09' } as never)).rejects.toThrow(

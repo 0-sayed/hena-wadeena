@@ -80,6 +80,14 @@ describe('SolarPage', () => {
     expect(screen.getByTestId('interactive-map')).toBeDefined();
   });
 
+  it('does not show irradiance legend entries when no overlay layer is rendered', () => {
+    renderPage();
+
+    expect(screen.queryByText(/إشعاع عالي جداً/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/إشعاع عالي \(/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/منشأة شمسية مجتمعية/i)).toBeInTheDocument();
+  });
+
   it('shows English enrollment notes when provided for solar subsidies', () => {
     mockUseAuth.mockReturnValueOnce({ language: 'en', isAuthenticated: false, user: null });
     mockUseBenefits.mockReturnValueOnce({
