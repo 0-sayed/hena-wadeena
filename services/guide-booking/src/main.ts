@@ -7,7 +7,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await configureApp(app, {
-    port: resolveWorktreePort(8003, process.env.GUIDE_BOOKING_PORT, process.env),
+    port: resolveWorktreePort(8003, process.env.GUIDE_BOOKING_PORT ?? process.env.PORT, process.env),
     serviceName: 'GuideBooking',
   });
 }
