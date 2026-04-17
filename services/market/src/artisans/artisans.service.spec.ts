@@ -326,6 +326,37 @@ describe('ArtisansService', () => {
     });
   });
 
+  describe('updateProduct', () => {
+    it('cleans up an uploaded QR asset and returns the updated product when QR persistence fails', async () => {
+      mockDb.limit.mockResolvedValueOnce([mockProfileRow]);
+      mockDb.limit.mockResolvedValueOnce([mockProductRow]);
+
+      const updatedRow = {
+        ...mockProductRow,
+        nameAr: 'سلة نخيل مطورة',
+        updatedAt: new Date('2026-01-02'),
+      };
+      mockDb.returning.mockResolvedValueOnce([updatedRow]);
+
+      const qrKey = `artisans/qr/${mockProductRow.id}.png`;
+      mockQr.generateAndUpload.mockResolvedValueOnce(qrKey);
+      mockDb.returning.mockRejectedValueOnce(new Error('db update failed'));
+
+      const result = await service.updateProduct(mockProfileRow.userId, mockProductRow.id, {
+        nameAr: 'سلة نخيل مطورة',
+      } as never);
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: updatedRow.id,
+          nameAr: 'سلة نخيل مطورة',
+          qrCodeKey: null,
+        }),
+      );
+      expect(mockQr.deleteByKey).toHaveBeenCalledWith(qrKey);
+    });
+  });
+
   describe('deleteProduct', () => {
     it('soft deletes the product for the owning artisan', async () => {
       // findProfileByUserId

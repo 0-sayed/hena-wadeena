@@ -11,6 +11,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
@@ -100,6 +101,8 @@ function mapInquiry(row: InquiryRow): WholesaleInquiry {
 
 @Injectable()
 export class ArtisansService {
+  private readonly logger = new Logger(ArtisansService.name);
+
   constructor(
     @Inject(DRIZZLE_CLIENT) private readonly db: PostgresJsDatabase,
     private readonly qrService: QrService,
@@ -459,13 +462,32 @@ export class ArtisansService {
     );
 
     if (!updated.qrCodeKey) {
-      const qrKey = await this.qrService.generateAndUpload(updated.id);
-      const [withQr] = await this.db
-        .update(artisanProducts)
-        .set({ qrCodeKey: qrKey, updatedAt: new Date() })
-        .where(eq(artisanProducts.id, updated.id))
-        .returning();
-      return mapProduct(withQr ?? updated);
+      let qrKey: string | null = null;
+
+      try {
+        qrKey = await this.qrService.generateAndUpload(updated.id);
+        const [withQr] = await this.db
+          .update(artisanProducts)
+          .set({ qrCodeKey: qrKey, updatedAt: new Date() })
+          .where(eq(artisanProducts.id, updated.id))
+          .returning();
+        return mapProduct(withQr ?? updated);
+      } catch (error) {
+        if (qrKey) {
+          try {
+            await this.qrService.deleteByKey(qrKey);
+          } catch (cleanupError) {
+            this.logger.warn(
+              `Failed to clean up artisan product QR asset ${qrKey}: ${String(cleanupError)}`,
+            );
+          }
+        }
+
+        this.logger.warn(
+          `Failed to refresh artisan product QR code for ${updated.id}: ${String(error)}`,
+        );
+        return mapProduct(updated);
+      }
     }
 
     return mapProduct(updated);
