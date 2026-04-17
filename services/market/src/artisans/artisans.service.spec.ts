@@ -1,4 +1,9 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockDb } from '../shared/test-helpers';
@@ -473,6 +478,19 @@ describe('ArtisansService', () => {
           phone: '+201111111111',
         } as never),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when quantity is below the product minimum order quantity', async () => {
+      const productWithMinimum = { ...mockProductRow, minOrderQty: 10 };
+      mockDb.limit.mockResolvedValueOnce([productWithMinimum]);
+
+      await expect(
+        service.submitInquiry(mockProductRow.id, {
+          name: 'Ahmed',
+          phone: '+201111111111',
+          quantity: 1,
+        } as never),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

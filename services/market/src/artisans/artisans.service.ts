@@ -7,6 +7,7 @@ import type {
   WholesaleInquiry,
 } from '@hena-wadeena/types';
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -521,6 +522,11 @@ export class ArtisansService {
   ): Promise<WholesaleInquiry> {
     const product = await this.findPublicProductById(productId);
     if (!product) throw new NotFoundException('Product not found');
+    if (dto.quantity != null && dto.quantity < product.minOrderQty) {
+      throw new BadRequestException(
+        `Quantity must be at least the minimum order quantity of ${product.minOrderQty}`,
+      );
+    }
 
     const profile = await this.findPublicProfileById(product.artisanId);
     if (!profile) throw new NotFoundException('Product not found');
