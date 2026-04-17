@@ -3,7 +3,7 @@ import type { KnipConfig } from 'knip';
 const config: KnipConfig = {
   workspaces: {
     '.': {
-      entry: ['scripts/seed/seed-utils.ts', 'scripts/seed/shared-ids.ts'],
+      entry: ['scripts/db-reset.ts', 'scripts/seed/seed-utils.ts', 'scripts/seed/shared-ids.ts'],
       project: ['scripts/**/*.ts'],
     },
     'packages/types': {
