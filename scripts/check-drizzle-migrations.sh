@@ -28,7 +28,7 @@ schema_changed_services=()
 exit_code=0
 
 for service in "${services[@]}"; do
-  if ! printf '%s\n' "$changed_files" | rg -q "^services/${service}/src/db/(schema($|/)|schema\\.ts|enums\\.ts|relations\\.ts)$"; then
+  if ! printf '%s\n' "$changed_files" | rg -q "^services/${service}/src/db/(schema/.*|schema\\.ts|enums\\.ts|relations\\.ts)$"; then
     continue
   fi
 
