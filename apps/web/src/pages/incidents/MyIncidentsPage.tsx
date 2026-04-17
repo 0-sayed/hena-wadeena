@@ -89,7 +89,7 @@ export default function MyIncidentsPage() {
                   en: 'My Incident Reports',
                 })}
               </h1>
-              {!isLoading && (
+              {!isLoading && !isError && (
                 <p className="text-sm text-muted-foreground">
                   {pickLocalizedCopy(appLanguage, {
                     ar: `${total} بلاغ`,

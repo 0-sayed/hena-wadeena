@@ -42,7 +42,7 @@ describe('incident mutations', () => {
     mockAdminUpdate.mockResolvedValue({ id: 'incident-1' });
   });
 
-  it('invalidates the base my-incidents key after reporting', async () => {
+  it('invalidates the public and personal incident caches after reporting', async () => {
     const { queryClient, wrapper } = createWrapper();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(() => useReportIncident(), { wrapper });
@@ -55,7 +55,10 @@ describe('incident mutations', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(invalidateSpy).toHaveBeenCalledWith({
+    expect(invalidateSpy).toHaveBeenNthCalledWith(1, {
+      queryKey: ['incidents', 'list', undefined],
+    });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
       queryKey: ['incidents', 'mine'],
     });
   });

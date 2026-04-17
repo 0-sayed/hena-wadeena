@@ -72,11 +72,13 @@ describe('MyIncidentsPage', () => {
       data: undefined,
       isLoading: false,
       isError: true,
+      refetch: vi.fn(),
     });
 
     render(<MyIncidentsPage />);
 
     expect(screen.getByText('Could not load your incident reports')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.queryByText('0 reports')).not.toBeInTheDocument();
   });
 });

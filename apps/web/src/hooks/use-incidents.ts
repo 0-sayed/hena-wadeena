@@ -28,6 +28,7 @@ export function useReportIncident() {
   return useMutation({
     mutationFn: incidentsAPI.report,
     onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.incidents.list() });
       void qc.invalidateQueries({ queryKey: queryKeys.incidents.mine() });
     },
   });
