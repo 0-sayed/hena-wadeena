@@ -64,6 +64,9 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 - Custom SQL (triggers, functions, RLS policies, seed data) goes in a **separate** migration file: `drizzle-kit generate --custom --name=<description>`. This keeps generated DDL and hand-written SQL cleanly separated.
 - Migration files live at `services/<name>/drizzle/` with `meta/_journal.json` tracking apply order.
 - When reviewing migrations, only review `--custom` files — generated `.sql` files are derived from the schema and should not be nitpicked.
+- During local feature development, use `drizzle-kit push` to iterate on schema changes without creating throwaway migration files.
+- Before opening or finalizing a PR, generate one clean migration set with `drizzle-kit generate` so committed Drizzle files match the final schema state.
+- CI enforces this by failing when schema files change without matching `services/<name>/drizzle/` updates or when rerunning `drizzle-kit generate` produces diff.
 
 ### API
 - Global prefix: `/api/v1`
@@ -99,10 +102,10 @@ cd services/ai && uv sync && uv run uvicorn src.main:app --reload --port 8005
 ## Banned Behaviors
 
 - NEVER use `float` or `decimal` for money — always integer piasters
-- NEVER modify applied Drizzle migrations
-- NEVER delete existing Drizzle migration files or snapshots — `drizzle-kit generate` is append-only by design. Do NOT use `drizzle-kit drop`. If a migration looks wrong, leave it and fix forward with a new migration.
+- NEVER modify applied or shared Drizzle migrations
+- NEVER rewrite or delete Drizzle migrations that have been merged or applied to any shared/staging/production database — use fix-forward migrations instead
 - NEVER append custom SQL (triggers, functions, etc.) to generated migration files — use `drizzle-kit generate --custom` instead
-- NEVER use `drizzle-kit push` — always `drizzle-kit generate` + `migrate.ts` (dev and prod alike)
+- NEVER use `drizzle-kit push` in production/CI or as a substitute for committed migration files
 - NEVER import `@hena-wadeena/nest-common` from frontend code
 - NEVER add cross-schema JOINs in database queries
 - NEVER commit `.env` files or real secrets

@@ -446,6 +446,7 @@
         'auth',
         'tourism',
         'guides',
+        'artisans',
         'marketplace',
         'logistics',
         'investment',
@@ -757,6 +758,53 @@
             'Earnings summary',
             'Upload profile photos',
             'Reply to guest reviews',
+          ],
+        },
+
+        // ── ARTISANS ─────────────────────────────────────────────────────────────
+        {
+          id: 'artisans',
+          label: 'Artisans',
+          route: '/artisans',
+          domain: 'artisans',
+          access: 'public',
+          desc: 'Public marketplace for New Valley women artisans and their handmade products.',
+          features: [
+            'Verified artisan directory',
+            'Area filter',
+            'Craft type filter',
+            'Localized artisan cards',
+            'Direct links to artisan profiles',
+          ],
+        },
+        {
+          id: 'artisan-detail',
+          label: 'Artisan Profile',
+          route: '/artisans/:id',
+          domain: 'artisans',
+          access: 'public',
+          desc: 'Public artisan profile with bio, specialties, WhatsApp CTA, and product gallery.',
+          features: [
+            'Hero image + artisan avatar',
+            'Area and craft badges',
+            'Bio / story section',
+            'Product grid',
+            'WhatsApp contact button',
+          ],
+        },
+        {
+          id: 'artisan-product',
+          label: 'Artisan Product',
+          route: '/artisans/products/:id',
+          domain: 'artisans',
+          access: 'public',
+          desc: 'Public product detail page with purchase inquiry flow.',
+          features: [
+            'Product image gallery',
+            'Price or negotiable label',
+            'Minimum order quantity',
+            'WhatsApp CTA',
+            'Inquiry dialog for wholesale or direct purchase requests',
           ],
         },
 
@@ -1596,6 +1644,9 @@
         produce: { x: 30 + GAP * 24 + 90, y: ROW.public },
         news: { x: 30 + GAP * 25 + 100, y: ROW.public },
         'news-detail': { x: 30 + GAP * 26 + 100, y: ROW.public },
+        artisans: { x: 30 + GAP * 27 + 110, y: ROW.public },
+        'artisan-detail': { x: 30 + GAP * 28 + 110, y: ROW.public },
+        'artisan-product': { x: 30 + GAP * 15 + 50, y: ROW.actions },
       };
 
       nodes.forEach((n) => {
@@ -1611,6 +1662,7 @@
         // Home → section hubs
         { from: 'home', to: 'tourism', type: 'nav' },
         { from: 'home', to: 'guides', type: 'nav' },
+        { from: 'home', to: 'artisans', type: 'nav' },
         { from: 'home', to: 'marketplace', type: 'nav' },
         { from: 'home', to: 'logistics', type: 'nav' },
         { from: 'home', to: 'investment', type: 'nav' },
@@ -1640,6 +1692,11 @@
         // Guides
         { from: 'guides', to: 'guide-detail', type: 'nav' },
         { from: 'guide-detail', to: 'book-package', type: 'role' },
+
+        // Artisans
+        { from: 'artisans', to: 'artisan-detail', type: 'nav' },
+        { from: 'artisan-detail', to: 'artisan-product', type: 'nav' },
+        { from: 'artisan-product', to: 'artisan-detail', type: 'nav' },
 
         // Marketplace tree
         { from: 'marketplace', to: 'listing-detail', type: 'nav' },
@@ -1715,6 +1772,7 @@
             'home',
             'tourism',
             'guides',
+            'artisans',
             'marketplace',
             'logistics',
             'investment',
@@ -1777,6 +1835,12 @@
           role: null,
         },
         {
+          id: 'artisans-only',
+          label: 'Artisans Flow',
+          domains: ['home', 'artisans'],
+          role: null,
+        },
+        {
           id: 'admin',
           label: 'Admin View',
           domains: ['home', 'auth', 'admin', 'profile'],
@@ -1808,6 +1872,13 @@
           desc: 'Sign up → verify identity → start using the platform',
           color: '#3fb950',
           steps: ['home', 'login', 'register', 'kyc', 'profile'],
+        },
+        {
+          id: 'artisan-discovery',
+          label: 'Browse Artisan Products',
+          desc: 'Open the artisan directory, inspect a maker profile, then view a product and send an inquiry.',
+          color: '#f0883e',
+          steps: ['home', 'artisans', 'artisan-detail', 'artisan-product'],
         },
         {
           id: 'find-job',
