@@ -15,6 +15,10 @@ export const USER = {
   ADMIN_SHAWQI: '929c69fa-0f5a-46e4-9f2d-ac00c0aa026b',
   ADMIN_ABDELRAHMAN: 'e2a1b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c',
   ADMIN_SAMAR: 'f3b2c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d',
+  // Judges (hackathon evaluators)
+  JUDGE_DR_HATBA: 'a4b5c6d7-e8f9-4a0b-8c2d-3e4f5a6b7c81',
+  JUDGE_DR_ROMANI: 'a4b5c6d7-e8f9-4a0b-8c2d-3e4f5a6b7c82',
+  JUDGE_DR_HOSSAM: 'a4b5c6d7-e8f9-4a0b-8c2d-3e4f5a6b7c83',
   // Demo role users (essential layer)
   TOURIST_SALMA: 'fcba044d-04d6-40e8-a636-52665e50e770',
   RESIDENT_MOHAMED: '944ff4c9-5211-45f7-982c-0b06486e64bd',
