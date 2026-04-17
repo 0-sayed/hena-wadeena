@@ -8,6 +8,7 @@ export { carpoolRides } from './carpool-rides';
 export { carpoolPassengers } from './carpool-passengers';
 export { siteStatusUpdates } from './site-status-updates';
 export { siteStewards } from './site-stewards';
+export { environmentalIncidents } from './environmental-incidents';
 
 // Re-import for relation definitions
 import { carpoolPassengers } from './carpool-passengers';

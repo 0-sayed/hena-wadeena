@@ -3,8 +3,13 @@ import postgres from 'postgres';
 
 import { getLayer, logSummary, point } from '../../../../scripts/seed/seed-utils.js';
 
-import { carpoolRides as carpoolRidesTable, pointsOfInterest } from './schema/index.js';
+import {
+  carpoolRides as carpoolRidesTable,
+  environmentalIncidents,
+  pointsOfInterest,
+} from './schema/index.js';
 import { carpoolRides as rideData } from './seed-data/carpool.js';
+import { seedIncidents } from './seed-data/incidents.js';
 import { essentialPois, pendingPois, showcasePois } from './seed-data/pois.js';
 
 // ── Fallback images by category ──────────────────────────────────────────────
@@ -62,9 +67,33 @@ async function main() {
 
   let rideCount = 0;
   let passengerCount = 0;
+  let incidentCount = 0;
+
+  // 2. Environmental incidents — always seed
+  const incidentResult = await db
+    .insert(environmentalIncidents)
+    .values(
+      seedIncidents.map((i) => ({
+        id: i.id,
+        reporterId: i.reporterId,
+        incidentType: i.incidentType,
+        status: i.status,
+        descriptionAr: i.descriptionAr,
+        descriptionEn: i.descriptionEn,
+        location: point(i.lat, i.lon),
+        photos: i.photos,
+        eeaaReference: i.eeaaReference,
+        adminNotes: i.adminNotes,
+        resolvedBy: i.resolvedBy,
+        resolvedAt: i.resolvedBy ? new Date() : null,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: environmentalIncidents.id });
+  incidentCount = incidentResult.length;
 
   if (layer === 'showcase') {
-    // 2. Carpool rides — showcase only
+    // 3. Carpool rides — showcase only
     const rideResult = await db
       .insert(carpoolRidesTable)
       .values(
@@ -87,7 +116,7 @@ async function main() {
       .returning({ id: carpoolRidesTable.id });
     rideCount = rideResult.length;
 
-    // 3. Carpool passengers — showcase only
+    // 4. Carpool passengers — showcase only
     const { carpoolPassengers } = await import('./schema/index.js');
     const { showcaseCarPoolPassengers } = await import('./seed-data/passengers.js');
     const passengerResult = await db
@@ -134,7 +163,11 @@ async function main() {
   logSummary('map', layer, {
     pois: poiResult.length,
     pendingPois: pendingResult.length,
-    ...(layer === 'showcase' && { rides: rideCount, passengers: passengerCount }),
+    ...(layer === 'showcase' && {
+      rides: rideCount,
+      passengers: passengerCount,
+      incidents: incidentCount,
+    }),
   });
 }
 
