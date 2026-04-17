@@ -1,7 +1,9 @@
 import { UserRole } from '@hena-wadeena/types';
 import {
+  AlertTriangle,
   BarChart3,
   Bot,
+  Gift,
   Home,
   Leaf,
   LogOut,
@@ -55,6 +57,11 @@ const navItems = [
     icon: MapPin,
   },
   {
+    to: '/admin/incidents',
+    label: { ar: 'البلاغات البيئية', en: 'Incidents' },
+    icon: AlertTriangle,
+  },
+  {
     to: '/admin/crops',
     label: { ar: 'المحاصيل', en: 'Crops' },
     icon: Leaf,
@@ -68,6 +75,11 @@ const navItems = [
     to: '/admin/news',
     label: { ar: 'الأخبار', en: 'News' },
     icon: Newspaper,
+  },
+  {
+    to: '/admin/benefits',
+    label: { ar: 'برامج الدعم', en: 'Benefits' },
+    icon: Gift,
   },
 ] as const;
 

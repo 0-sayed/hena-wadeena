@@ -1,4 +1,4 @@
-import { LISTING, USER } from '../../../../../scripts/seed/shared-ids.js';
+import { LISTING, SOLAR_INSTALLER, USER } from '../../../../../scripts/seed/shared-ids.js';
 
 /** Listing seed record (location is set via raw SQL at insert time) */
 export interface SeedListing {
@@ -19,11 +19,13 @@ export interface SeedListing {
     | 'education'
     | 'healthcare'
     | 'shopping'
-    | 'agricultural_produce';
+    | 'agricultural_produce'
+    | 'solar_installer';
   price: number;
   district: string;
   address: string;
   images?: [string, string];
+  features?: Record<string, unknown>;
   slug: string;
   status: 'active';
   isVerified: boolean;
@@ -1089,6 +1091,107 @@ export const showcaseListings: SeedListing[] = [
     isPublished: false,
     lat: 25.495,
     lon: 28.975,
+  },
+
+  {
+    id: SOLAR_INSTALLER.SI01,
+    ownerId: USER.MERCHANT_KHALED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'شركة شمس الواحات للطاقة الشمسية',
+    titleEn: 'Shams Al-Wahat Solar Energy',
+    description:
+      'شركة متخصصة في تركيب الأنظمة الشمسية السكنية والزراعية في وادي الجديد. نوفر حلول طاقة شمسية موثوقة بشهادة الهيئة الوطنية للطاقة المتجددة.',
+    category: 'solar_installer',
+    price: 0,
+    district: 'kharga',
+    address: 'المنطقة الصناعية، الخارجة، وادي الجديد',
+    slug: 'shams-al-wahat-solar-energy',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.4401,
+    lon: 30.5488,
+    features: {
+      nrea_cert_number: 'NREA-NV-2024-001',
+      services: ['residential', 'agricultural'],
+      brands: ['Canadian Solar', 'Huawei FusionSolar'],
+    },
+  },
+  {
+    id: SOLAR_INSTALLER.SI02,
+    ownerId: USER.MERCHANT_KHALED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'الداخلة سولار للطاقة المتجددة',
+    titleEn: 'Dakhla Solar Renewable Energy',
+    description:
+      'شركة رائدة في مجال تركيب الألواح الشمسية وأنظمة الطاقة المتجددة في الداخلة. نقدم خدمات سكنية وتجارية بضمان لمدة 5 سنوات.',
+    category: 'solar_installer',
+    price: 0,
+    district: 'dakhla',
+    address: 'شارع التحرير، موط، الداخلة',
+    slug: 'dakhla-solar-renewable-energy',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.4892,
+    lon: 29.0013,
+    features: {
+      nrea_cert_number: 'NREA-NV-2024-002',
+      services: ['residential', 'commercial'],
+      brands: ['Jinko Solar', 'Sungrow'],
+    },
+  },
+  {
+    id: SOLAR_INSTALLER.SI03,
+    ownerId: USER.FARMER_IBRAHIM,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'مؤسسة النور للطاقة المتجددة',
+    titleEn: 'Al-Nour Renewable Energy Foundation',
+    description:
+      'متخصصون في تركيب منظومات ضخ المياه بالطاقة الشمسية للأراضي الزراعية. خبرة 10 سنوات في مجال الطاقة الشمسية الزراعية بالخارجة.',
+    category: 'solar_installer',
+    price: 0,
+    district: 'kharga',
+    address: 'طريق الفرافرة، الخارجة',
+    slug: 'al-nour-renewable-energy',
+    status: 'active',
+    isVerified: true,
+    isPublished: true,
+    lat: 25.4152,
+    lon: 30.5612,
+    features: {
+      nrea_cert_number: 'NREA-NV-2023-015',
+      services: ['agricultural'],
+      brands: ['LONGi Solar', 'Growatt'],
+    },
+  },
+  {
+    id: SOLAR_INSTALLER.SI04,
+    ownerId: USER.MERCHANT_KHALED,
+    listingType: 'business',
+    transaction: 'sale',
+    titleAr: 'طاقة الصحراء للحلول الشمسية',
+    titleEn: 'Desert Energy Solar Solutions',
+    description:
+      'نقدم حلول طاقة شمسية متكاملة لسكان الفرافرة. نثبت الألواح الشمسية وبطاريات التخزين والشبكات الذكية لتوفير طاقة نظيفة ومستدامة.',
+    category: 'solar_installer',
+    price: 0,
+    district: 'farafra',
+    address: 'ميدان الساعة، قصر الفرافرة',
+    slug: 'desert-energy-solar-solutions',
+    status: 'active',
+    isVerified: false,
+    isPublished: true,
+    lat: 27.0605,
+    lon: 27.9701,
+    features: {
+      nrea_cert_number: 'NREA-NV-2024-003',
+      services: ['residential'],
+      brands: ['RISEN Energy', 'Deye'],
+    },
   },
 ];
 

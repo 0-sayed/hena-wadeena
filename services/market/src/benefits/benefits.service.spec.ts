@@ -16,6 +16,7 @@ const mockBenefit = {
   officePhone: '0922500001',
   officeAddressAr: 'شارع جمال عبد الناصر',
   enrollmentNotesAr: 'تقدم بطلب في مكتب التضامن',
+  enrollmentNotesEn: 'Apply at the solidarity office in person.',
   updatedAt: new Date('2026-01-01'),
 };
 
@@ -56,6 +57,42 @@ describe('BenefitsService', () => {
     });
   });
 
+  describe('create', () => {
+    it('inserts and returns the created benefit', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockBenefit]);
+      const dto = {
+        slug: 'takaful-wa-karama',
+        nameAr: 'تكافل وكرامة',
+        nameEn: 'Takaful wa Karama',
+        ministryAr: 'وزارة التضامن الاجتماعي',
+        documentsAr: ['بطاقة الرقم القومي'],
+        officeNameAr: 'مكتب الخارجة',
+        officePhone: '0922500001',
+        officeAddressAr: 'شارع جمال عبد الناصر',
+        enrollmentNotesAr: 'تقدم بطلب في مكتب التضامن',
+        enrollmentNotesEn: 'Apply at the solidarity office in person.',
+      };
+      const result = await service.create(dto as never);
+      expect(result).toEqual(mockBenefit);
+      expect(mockDb.insert).toHaveBeenCalled();
+      expect(mockDb.values).toHaveBeenCalledWith(dto);
+    });
+  });
+
+  describe('delete', () => {
+    it('removes the record and returns it', async () => {
+      mockDb.returning.mockResolvedValueOnce([mockBenefit]);
+      const result = await service.delete('takaful-wa-karama');
+      expect(result).toEqual(mockBenefit);
+      expect(mockDb.delete).toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when slug does not exist', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+      await expect(service.delete('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('update', () => {
     it('persists partial changes and returns updated record', async () => {
       const updated = { ...mockBenefit, officePhone: '0911111111' };
@@ -77,6 +114,44 @@ describe('BenefitsService', () => {
       await service.update('takaful-wa-karama', { officePhone: '09' } as never);
       expect(mockDb.set).toHaveBeenCalledWith(
         expect.objectContaining({ updatedAt: expect.any(Date) }),
+      );
+    });
+
+    it('persists English enrollment notes when provided', async () => {
+      const updated = {
+        ...mockBenefit,
+        enrollmentNotesEn: 'Apply through the local office or the NREA branch.',
+      };
+      mockDb.returning.mockResolvedValueOnce([updated]);
+
+      await service.update('takaful-wa-karama', {
+        enrollmentNotesEn: 'Apply through the local office or the NREA branch.',
+      } as never);
+
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enrollmentNotesEn: 'Apply through the local office or the NREA branch.',
+          updatedAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('clears English enrollment notes when explicitly set to null', async () => {
+      const updated = {
+        ...mockBenefit,
+        enrollmentNotesEn: null,
+      };
+      mockDb.returning.mockResolvedValueOnce([updated]);
+
+      await service.update('takaful-wa-karama', {
+        enrollmentNotesEn: null,
+      } as never);
+
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enrollmentNotesEn: null,
+          updatedAt: expect.any(Date),
+        }),
       );
     });
 

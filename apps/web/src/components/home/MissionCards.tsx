@@ -12,10 +12,12 @@ import {
   Sparkles,
   Newspaper,
   Calendar,
+  Sun,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SR, FloatingBlob } from '@/components/motion/ScrollReveal';
+import { ProtectDesertStrip } from '@/components/home/ProtectDesertStrip';
 import { useAuth } from '@/hooks/use-auth';
 import { pickLocalizedCopy } from '@/lib/localization';
 import { NEWS_CATEGORY_COLORS, NEWS_CATEGORY_LABELS, formatNewsDate } from '@/lib/news-utils';
@@ -100,6 +102,17 @@ const missions = [
     gradient: 'from-emerald-500 to-teal-600',
   },
   {
+    id: 'solar',
+    title: { ar: 'الطاقة الشمسية', en: 'Solar energy' },
+    description: {
+      ar: 'خريطة التركيبات الشمسية، مزودو الطاقة المعتمدون، وبرامج الدعم الحكومي.',
+      en: 'Community solar map, certified installers, and government subsidy programs.',
+    },
+    icon: Sun,
+    href: '/solar',
+    gradient: 'from-amber-400 to-orange-500',
+  },
+  {
     id: 'search',
     title: { ar: 'البحث والمساعد الذكي', en: 'Search & AI assistant' },
     description: {
@@ -180,107 +193,117 @@ export function MissionCards() {
         };
 
   return (
-    <section className="relative overflow-hidden bg-muted/30 py-16 sm:py-20 md:py-24">
-      <FloatingBlob
-        className="start-0 top-0 -translate-x-1/2 -translate-y-1/2"
-        color="primary"
-        size="lg"
-        animation={1}
-      />
-      <FloatingBlob
-        className="bottom-0 end-0 translate-x-1/3 translate-y-1/3"
-        color="accent"
-        size="lg"
-        animation={2}
-      />
+    <>
+      {/* Service cards */}
+      <section className="relative overflow-hidden bg-muted/30 py-16 sm:py-20 md:py-24">
+        <FloatingBlob
+          className="start-0 top-0 -translate-x-1/2 -translate-y-1/2"
+          color="primary"
+          size="lg"
+          animation={1}
+        />
+        <FloatingBlob
+          className="bottom-0 end-0 translate-x-1/3 translate-y-1/3"
+          color="accent"
+          size="lg"
+          animation={2}
+        />
 
-      <div className="container relative px-4">
-        <SR direction="up" className="mb-12 text-center sm:mb-16">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">{copy.badge}</span>
-          </div>
-          <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
-            {copy.title}
-          </h2>
-          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
-            {copy.description}
-          </p>
-        </SR>
+        <div className="container relative px-4">
+          <SR direction="up" className="mb-12 text-center sm:mb-16">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">{copy.badge}</span>
+            </div>
+            <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
+              {copy.title}
+            </h2>
+            <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
+              {copy.description}
+            </p>
+          </SR>
 
-        <SR stagger className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 lg:gap-7">
-          {missions.map((mission) => {
-            const Icon = mission.icon;
-            return (
-              <Link key={mission.id} to={mission.href}>
+          <SR stagger className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 lg:gap-7">
+            {missions.map((mission) => {
+              const Icon = mission.icon;
+              return (
+                <Link key={mission.id} to={mission.href}>
+                  <Card className="group h-full overflow-hidden rounded-2xl border-border/50 transition-all duration-400 hover-lift hover:border-primary/40 hover:shadow-xl">
+                    <CardContent className="flex h-full flex-col p-6 sm:p-8">
+                      <div
+                        className={`icon-hover mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${mission.gradient} shadow-lg sm:h-[72px] sm:w-[72px]`}
+                      >
+                        <Icon className="h-9 w-9 text-primary-foreground" strokeWidth={1.8} />
+                      </div>
+                      <h3 className="mb-3 text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary">
+                        {pickLocalizedCopy(language, mission.title)}
+                      </h3>
+                      <p className="mb-6 flex-1 leading-relaxed text-muted-foreground">
+                        {pickLocalizedCopy(language, mission.description)}
+                      </p>
+                      <div className="flex items-center gap-2 font-semibold text-primary">
+                        {copy.cta}
+                        <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </SR>
+        </div>
+      </section>
+
+      <ProtectDesertStrip />
+
+      {/* News */}
+      <section className="bg-muted/30 pb-16 pt-12 sm:pb-20 sm:pt-16">
+        <div className="container px-4">
+          <SR direction="up" className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/50" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
+              <Newspaper className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">{copy.newsBadge}</span>
+            </div>
+            <div className="h-px flex-1 bg-border/50" />
+          </SR>
+
+          <SR
+            stagger
+            className="mx-auto mt-7 grid max-w-4xl grid-cols-1 gap-5 md:grid-cols-3 lg:gap-7"
+          >
+            {newsItems.map((item) => (
+              <Link key={item.id} to={item.href}>
                 <Card className="group h-full overflow-hidden rounded-2xl border-border/50 transition-all duration-400 hover-lift hover:border-primary/40 hover:shadow-xl">
-                  <CardContent className="flex h-full flex-col p-6 sm:p-8">
-                    <div
-                      className={`icon-hover mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${mission.gradient} shadow-lg sm:h-[72px] sm:w-[72px]`}
+                  <CardContent className="flex h-full flex-col p-6">
+                    <span
+                      className={`mb-4 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${NEWS_CATEGORY_COLORS[item.category]}`}
                     >
-                      <Icon className="h-9 w-9 text-primary-foreground" strokeWidth={1.8} />
-                    </div>
-                    <h3 className="mb-3 text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary">
-                      {pickLocalizedCopy(language, mission.title)}
+                      {NEWS_CATEGORY_LABELS[item.category]}
+                    </span>
+                    <h3 className="mb-3 flex-1 text-base font-bold leading-snug text-foreground transition-colors duration-300 group-hover:text-primary">
+                      {pickLocalizedCopy(language, item.title)}
                     </h3>
-                    <p className="mb-6 flex-1 leading-relaxed text-muted-foreground">
-                      {pickLocalizedCopy(language, mission.description)}
+                    <p className="mb-5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                      {pickLocalizedCopy(language, item.excerpt)}
                     </p>
-                    <div className="flex items-center gap-2 font-semibold text-primary">
-                      {copy.cta}
-                      <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-2" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>{formatNewsDate(item.date, { monthFormat: 'short' })}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                        {copy.newsReadMore}
+                        <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </Link>
-            );
-          })}
-        </SR>
-
-        <SR direction="up" className="mt-12 flex items-center gap-3 sm:mt-16">
-          <div className="h-px flex-1 bg-border/50" />
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
-            <Newspaper className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">{copy.newsBadge}</span>
-          </div>
-          <div className="h-px flex-1 bg-border/50" />
-        </SR>
-
-        <SR
-          stagger
-          className="mx-auto mt-7 grid max-w-4xl grid-cols-1 gap-5 md:grid-cols-3 lg:gap-7"
-        >
-          {newsItems.map((item) => (
-            <Link key={item.id} to={item.href}>
-              <Card className="group h-full overflow-hidden rounded-2xl border-border/50 transition-all duration-400 hover-lift hover:border-primary/40 hover:shadow-xl">
-                <CardContent className="flex h-full flex-col p-6">
-                  <span
-                    className={`mb-4 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${NEWS_CATEGORY_COLORS[item.category]}`}
-                  >
-                    {NEWS_CATEGORY_LABELS[item.category]}
-                  </span>
-                  <h3 className="mb-3 flex-1 text-base font-bold leading-snug text-foreground transition-colors duration-300 group-hover:text-primary">
-                    {pickLocalizedCopy(language, item.title)}
-                  </h3>
-                  <p className="mb-5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                    {pickLocalizedCopy(language, item.excerpt)}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>{formatNewsDate(item.date, { monthFormat: 'short' })}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-                      {copy.newsReadMore}
-                      <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </SR>
-      </div>
-    </section>
+            ))}
+          </SR>
+        </div>
+      </section>
+    </>
   );
 }

@@ -56,6 +56,7 @@ export enum ListingCategory {
   HEALTHCARE = 'healthcare',
   SHOPPING = 'shopping',
   AGRICULTURAL_PRODUCE = 'agricultural_produce',
+  SOLAR_INSTALLER = 'solar_installer',
 }
 
 export enum BookingStatus {
@@ -92,6 +93,7 @@ export enum PoiCategory {
   RESTAURANT = 'restaurant',
   SERVICE = 'service',
   GOVERNMENT = 'government',
+  SOLAR_INSTALLATION = 'solar_installation',
 }
 
 export enum PoiStatus {
@@ -261,4 +263,19 @@ export enum NewsCategory {
   INFRASTRUCTURE = 'infrastructure',
   CULTURE = 'culture',
   EVENTS = 'events',
+}
+
+export enum IncidentType {
+  LITTER = 'litter',
+  ILLEGAL_DUMPING = 'illegal_dumping',
+  VEHICLE_DAMAGE = 'vehicle_damage',
+  FIRE_REMAINS = 'fire_remains',
+  VANDALISM = 'vandalism',
+}
+
+export enum IncidentStatus {
+  REPORTED = 'reported',
+  UNDER_REVIEW = 'under_review',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed',
 }

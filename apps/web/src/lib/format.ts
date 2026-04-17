@@ -139,6 +139,7 @@ export const listingCategoryLabels: Record<ListingCategory, string> = {
   healthcare: 'رعاية صحية',
   shopping: 'تسوق',
   agricultural_produce: 'منتجات زراعية',
+  solar_installer: 'مزود طاقة شمسية',
 };
 
 const listingCategoryLabelsEn: Record<ListingCategory, string> = {
@@ -152,6 +153,7 @@ const listingCategoryLabelsEn: Record<ListingCategory, string> = {
   healthcare: 'Healthcare',
   shopping: 'Shopping',
   agricultural_produce: 'Agricultural Produce',
+  solar_installer: 'Solar Installer',
 };
 
 export function listingCategoryLabel(category: string, language: AppLanguage = 'ar'): string {

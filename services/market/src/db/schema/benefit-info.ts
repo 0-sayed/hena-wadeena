@@ -16,6 +16,7 @@ export const benefitInfo = marketSchema.table(
     officePhone: text('office_phone').notNull(),
     officeAddressAr: text('office_address_ar').notNull(),
     enrollmentNotesAr: text('enrollment_notes_ar').notNull(),
+    enrollmentNotesEn: text('enrollment_notes_en'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

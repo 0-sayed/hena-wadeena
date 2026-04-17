@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactElement } from 'react';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { UserRole } from '@hena-wadeena/types';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ChatWidget } from '@/components/ai/ChatWidget';
+import { IncidentFab } from '@/components/incidents/IncidentFab';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { RequireRole } from '@/components/auth/RequireRole';
 import { useAuth } from '@/hooks/use-auth';
@@ -59,6 +60,7 @@ import ContactPage from './pages/investment/ContactPage';
 import StartupDetailsPage from './pages/investment/StartupDetailsPage';
 
 import BenefitsPage from './pages/BenefitsPage';
+import SolarPage from './pages/SolarPage';
 import NewsPage from './pages/news/NewsPage';
 import NewsDetailPage from './pages/news/NewsDetailPage';
 import JobBoardPage from './pages/jobs/JobBoardPage';
@@ -87,6 +89,11 @@ const AdminMap = lazy(() => import('@/pages/admin/AdminMap'));
 const AdminCrops = lazy(() => import('@/pages/admin/AdminCrops'));
 const AdminAiDocuments = lazy(() => import('@/pages/admin/AdminAiDocuments'));
 const AdminNews = lazy(() => import('@/pages/admin/AdminNews'));
+const AdminBenefits = lazy(() => import('@/pages/admin/AdminBenefits'));
+const AdminIncidents = lazy(() => import('@/pages/admin/AdminIncidents'));
+const IncidentsPage = lazy(() => import('@/pages/incidents/IncidentsPage'));
+const ReportIncidentPage = lazy(() => import('@/pages/incidents/ReportIncidentPage'));
+const MyIncidentsPage = lazy(() => import('@/pages/incidents/MyIncidentsPage'));
 
 function DashboardRedirect() {
   const { user } = useAuth();
@@ -103,6 +110,10 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function withSuspense(element: ReactElement) {
+  return <Suspense fallback={null}>{element}</Suspense>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -165,6 +176,8 @@ const App = () => (
                 <Route path="crops" element={<AdminCrops />} />
                 <Route path="ai" element={<AdminAiDocuments />} />
                 <Route path="news" element={<AdminNews />} />
+                <Route path="benefits" element={<AdminBenefits />} />
+                <Route path="incidents" element={<AdminIncidents />} />
               </Route>
             </Route>
 
@@ -203,6 +216,7 @@ const App = () => (
             <Route path="/news/:slug" element={<NewsDetailPage />} />
 
             <Route path="/benefits" element={<BenefitsPage />} />
+            <Route path="/solar" element={<SolarPage />} />
 
             {/* ── Jobs — static routes first, then dynamic ────── */}
             <Route path="/jobs" element={<JobBoardPage />} />
@@ -251,6 +265,12 @@ const App = () => (
             </Route>
             <Route path="/logistics/ride/:id" element={<RideDetailPage />} />
 
+            <Route path="/incidents" element={withSuspense(<IncidentsPage />)} />
+            <Route element={<RequireAuth />}>
+              <Route path="/incidents/mine" element={withSuspense(<MyIncidentsPage />)} />
+              <Route path="/incidents/report" element={withSuspense(<ReportIncidentPage />)} />
+            </Route>
+
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/marketplace/ads/:id" element={<ListingDetailsPage />} />
             <Route path="/marketplace/prices" element={<PricesPage />} />
@@ -265,6 +285,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <ChatWidget />
+          <IncidentFab />
         </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>
