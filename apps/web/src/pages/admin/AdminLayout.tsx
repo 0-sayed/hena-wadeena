@@ -1,5 +1,6 @@
 import { UserRole } from '@hena-wadeena/types';
 import {
+  AlertTriangle,
   BarChart3,
   Bot,
   Gift,
@@ -54,6 +55,11 @@ const navItems = [
     to: '/admin/map',
     label: { ar: 'الخريطة', en: 'Map' },
     icon: MapPin,
+  },
+  {
+    to: '/admin/incidents',
+    label: { ar: 'البلاغات البيئية', en: 'Incidents' },
+    icon: AlertTriangle,
   },
   {
     to: '/admin/crops',

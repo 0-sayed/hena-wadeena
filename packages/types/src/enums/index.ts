@@ -264,3 +264,18 @@ export enum NewsCategory {
   CULTURE = 'culture',
   EVENTS = 'events',
 }
+
+export enum IncidentType {
+  LITTER = 'litter',
+  ILLEGAL_DUMPING = 'illegal_dumping',
+  VEHICLE_DAMAGE = 'vehicle_damage',
+  FIRE_REMAINS = 'fire_remains',
+  VANDALISM = 'vandalism',
+}
+
+export enum IncidentStatus {
+  REPORTED = 'reported',
+  UNDER_REVIEW = 'under_review',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed',
+}

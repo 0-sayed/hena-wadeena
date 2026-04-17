@@ -36,3 +36,18 @@ export const siteStatusEnum = mapSchema.enum('site_status', [
   'limited_access',
   'under_restoration',
 ]);
+
+export const incidentTypeEnum = mapSchema.enum('incident_type', [
+  'litter',
+  'illegal_dumping',
+  'vehicle_damage',
+  'fire_remains',
+  'vandalism',
+]);
+
+export const incidentStatusEnum = mapSchema.enum('incident_status', [
+  'reported',
+  'under_review',
+  'resolved',
+  'dismissed',
+]);
