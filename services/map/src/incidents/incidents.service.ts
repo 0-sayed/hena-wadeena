@@ -1,7 +1,12 @@
 import { DRIZZLE_CLIENT, generateId } from '@hena-wadeena/nest-common';
 import type { PaginatedResponse } from '@hena-wadeena/types';
 import { IncidentStatus } from '@hena-wadeena/types';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, count, desc, eq } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -33,7 +38,7 @@ export class IncidentsService {
       })
       .returning();
 
-    if (!row) throw new NotFoundException('Incident not found after insert');
+    if (!row) throw new InternalServerErrorException('Failed to create incident');
     return row;
   }
 
@@ -90,18 +95,23 @@ export class IncidentsService {
   async update(id: string, adminId: string, dto: UpdateIncidentDto): Promise<Incident> {
     const isTerminal =
       dto.status === IncidentStatus.RESOLVED || dto.status === IncidentStatus.DISMISSED;
+    const shouldClearResolved = dto.status != null && !isTerminal;
 
     const setPayload: Partial<typeof environmentalIncidents.$inferInsert> & {
-      resolvedAt?: Date;
-      resolvedBy?: string;
+      resolvedAt?: Date | null;
+      resolvedBy?: string | null;
     } = {
       status: dto.status,
-      adminNotes: dto.adminNotes,
-      eeaaReference: dto.eeaaReference,
+      adminNotes: dto.adminNotes === '' ? null : dto.adminNotes,
+      eeaaReference: dto.eeaaReference === '' ? null : dto.eeaaReference,
       updatedAt: new Date(),
       ...(isTerminal && {
         resolvedAt: new Date(),
         resolvedBy: adminId,
+      }),
+      ...(shouldClearResolved && {
+        resolvedAt: null,
+        resolvedBy: null,
       }),
     };
 

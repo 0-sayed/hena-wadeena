@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { useAdminIncidents, useUpdateIncident } from '@/hooks/use-incidents';
-import { ALL_STATUSES, STATUS_VARIANT, statusLabel, typeLabel } from '@/lib/incidents';
+import {
+  ALL_STATUSES,
+  STATUS_VARIANT,
+  getIncidentDescription,
+  statusLabel,
+  typeLabel,
+} from '@/lib/incidents';
 import { pickLocalizedCopy, type AppLanguage } from '@/lib/localization';
 import type { EnvironmentalIncident, IncidentStatus } from '@/services/api';
 
@@ -67,8 +74,18 @@ export default function AdminIncidents() {
   const handleUpdate = () => {
     if (!selected || !newStatus) return;
     updateIncident.mutate(
-      { id: selected.id, body: { status: newStatus, adminNotes: adminNotes.trim() || undefined } },
-      { onSuccess: closeDialog },
+      { id: selected.id, body: { status: newStatus, adminNotes: adminNotes.trim() } },
+      {
+        onSuccess: closeDialog,
+        onError: () => {
+          toast.error(
+            pickLocalizedCopy(lang, {
+              ar: 'تعذر تحديث البلاغ',
+              en: 'Failed to update incident',
+            }),
+          );
+        },
+      },
     );
   };
 
@@ -132,31 +149,38 @@ export default function AdminIncidents() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {incidents.map((incident) => (
-                  <TableRow key={incident.id}>
-                    <TableCell className="font-medium">
-                      {typeLabel(incident.incidentType, lang)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_VARIANT[incident.status]}>
-                        {statusLabel(incident.status, lang)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate text-muted-foreground">
-                      {lang === 'en' ? incident.descriptionEn : incident.descriptionAr}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(incident.createdAt).toLocaleDateString(
-                        lang === 'en' ? 'en-US' : 'ar-EG',
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => openDialog(incident)}>
-                        {pickLocalizedCopy(lang, { ar: 'مراجعة', en: 'Review' })}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {incidents.map((incident) => {
+                  const description = getIncidentDescription(incident, lang);
+
+                  return (
+                    <TableRow key={incident.id}>
+                      <TableCell className="font-medium">
+                        {typeLabel(incident.incidentType, lang)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={STATUS_VARIANT[incident.status]}>
+                          {statusLabel(incident.status, lang)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell
+                        className="max-w-xs truncate text-muted-foreground"
+                        dir={description?.dir}
+                      >
+                        {description?.text ?? '—'}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(incident.createdAt).toLocaleDateString(
+                          lang === 'en' ? 'en-US' : 'ar-EG',
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => openDialog(incident)}>
+                          {pickLocalizedCopy(lang, { ar: 'مراجعة', en: 'Review' })}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {incidents.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
@@ -194,64 +218,75 @@ export default function AdminIncidents() {
           </DialogHeader>
           {selected && (
             <div className="space-y-4">
-              <div className="rounded-md bg-muted p-3 text-sm">
-                <p className="font-medium">{typeLabel(selected.incidentType, lang)}</p>
-                <p className="mt-1 text-muted-foreground">
-                  {lang === 'en' ? selected.descriptionEn : selected.descriptionAr}
-                </p>
-                {selected.eeaaReference && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    EEAA: {selected.eeaaReference}
-                  </p>
-                )}
-              </div>
-              {selected.photos.length > 0 && (
-                <div className="flex justify-center gap-2 overflow-x-auto pb-1">
-                  {selected.photos.map((src, i) => (
-                    <img
-                      key={i}
-                      src={src}
-                      alt=""
-                      loading="lazy"
-                      className="h-24 w-24 flex-shrink-0 rounded-md object-cover"
-                    />
-                  ))}
-                </div>
-              )}
+              {(() => {
+                const description = getIncidentDescription(selected, lang);
 
-              <div className="space-y-2">
-                <Label>
-                  {pickLocalizedCopy(lang, { ar: 'تغيير الحالة', en: 'Update Status' })}
-                </Label>
-                <Select value={newStatus} onValueChange={(v) => setNewStatus(v as IncidentStatus)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ALL_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {statusLabel(s, lang)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                return (
+                  <>
+                    <div className="rounded-md bg-muted p-3 text-sm">
+                      <p className="font-medium">{typeLabel(selected.incidentType, lang)}</p>
+                      <p className="mt-1 text-muted-foreground" dir={description?.dir}>
+                        {description?.text ?? '—'}
+                      </p>
+                      {selected.eeaaReference && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          EEAA: {selected.eeaaReference}
+                        </p>
+                      )}
+                    </div>
+                    {selected.photos.length > 0 && (
+                      <div className="flex justify-center gap-2 overflow-x-auto pb-1">
+                        {selected.photos.map((src, i) => (
+                          <img
+                            key={i}
+                            src={src}
+                            alt=""
+                            loading="lazy"
+                            className="h-24 w-24 flex-shrink-0 rounded-md object-cover"
+                          />
+                        ))}
+                      </div>
+                    )}
 
-              <div className="space-y-2">
-                <Label htmlFor="adminNotes">
-                  {pickLocalizedCopy(lang, { ar: 'ملاحظات الإدارة', en: 'Admin Notes' })}
-                </Label>
-                <Textarea
-                  id="adminNotes"
-                  rows={3}
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder={pickLocalizedCopy(lang, {
-                    ar: 'أضف ملاحظة...',
-                    en: 'Add a note...',
-                  })}
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label>
+                        {pickLocalizedCopy(lang, { ar: 'تغيير الحالة', en: 'Update Status' })}
+                      </Label>
+                      <Select
+                        value={newStatus}
+                        onValueChange={(v) => setNewStatus(v as IncidentStatus)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ALL_STATUSES.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {statusLabel(s, lang)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="adminNotes">
+                        {pickLocalizedCopy(lang, { ar: 'ملاحظات الإدارة', en: 'Admin Notes' })}
+                      </Label>
+                      <Textarea
+                        id="adminNotes"
+                        rows={3}
+                        value={adminNotes}
+                        onChange={(e) => setAdminNotes(e.target.value)}
+                        placeholder={pickLocalizedCopy(lang, {
+                          ar: 'أضف ملاحظة...',
+                          en: 'Add a note...',
+                        })}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
           <DialogFooter>

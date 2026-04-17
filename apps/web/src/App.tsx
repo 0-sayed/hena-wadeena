@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactElement } from 'react';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -108,6 +108,10 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function withSuspense(element: ReactElement) {
+  return <Suspense fallback={null}>{element}</Suspense>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -257,10 +261,10 @@ const App = () => (
             </Route>
             <Route path="/logistics/ride/:id" element={<RideDetailPage />} />
 
-            <Route path="/incidents" element={<IncidentsPage />} />
+            <Route path="/incidents" element={withSuspense(<IncidentsPage />)} />
             <Route element={<RequireAuth />}>
-              <Route path="/incidents/mine" element={<MyIncidentsPage />} />
-              <Route path="/incidents/report" element={<ReportIncidentPage />} />
+              <Route path="/incidents/mine" element={withSuspense(<MyIncidentsPage />)} />
+              <Route path="/incidents/report" element={withSuspense(<ReportIncidentPage />)} />
             </Route>
 
             <Route path="/marketplace" element={<MarketplacePage />} />

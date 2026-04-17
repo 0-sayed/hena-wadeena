@@ -8,6 +8,8 @@
 import {
   CommodityCategory,
   CommodityUnit,
+  IncidentStatus as SharedIncidentStatus,
+  IncidentType as SharedIncidentType,
   NvDistrict,
   PriceType,
   UserRole,
@@ -1561,13 +1563,8 @@ export interface RideWithPassengers extends CarpoolRide {
   passengers?: CarpoolPassenger[];
 }
 
-export type IncidentType =
-  | 'litter'
-  | 'illegal_dumping'
-  | 'vehicle_damage'
-  | 'fire_remains'
-  | 'vandalism';
-export type IncidentStatus = 'reported' | 'under_review' | 'resolved' | 'dismissed';
+export type IncidentType = `${SharedIncidentType}`;
+export type IncidentStatus = `${SharedIncidentStatus}`;
 
 export interface EnvironmentalIncident {
   id: string;

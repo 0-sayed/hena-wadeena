@@ -64,7 +64,7 @@ export function useUpdateIncident() {
       body: { status?: IncidentStatus; adminNotes?: string; eeaaReference?: string };
     }) => incidentsAPI.adminUpdate(id, body),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['incidents', 'admin'] });
+      void qc.invalidateQueries({ queryKey: ['incidents'] });
     },
   });
 }

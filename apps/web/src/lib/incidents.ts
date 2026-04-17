@@ -1,5 +1,7 @@
+import { IncidentStatus as SharedIncidentStatus } from '@hena-wadeena/types';
+
 import type { AppLanguage } from '@/lib/localization';
-import type { IncidentStatus, IncidentType } from '@/services/api';
+import type { EnvironmentalIncident, IncidentStatus, IncidentType } from '@/services/api';
 
 export const STATUS_LABELS: Record<IncidentStatus, { ar: string; en: string }> = {
   reported: { ar: 'مُبلَّغ', en: 'Reported' },
@@ -26,7 +28,30 @@ export const TYPE_LABELS: Record<IncidentType, { ar: string; en: string }> = {
   vandalism: { ar: 'تخريب', en: 'Vandalism' },
 };
 
-export const ALL_STATUSES: IncidentStatus[] = ['reported', 'under_review', 'resolved', 'dismissed'];
+export const ALL_STATUSES = Object.values(SharedIncidentStatus) as IncidentStatus[];
+
+export function getIncidentDescription(
+  incident: Pick<EnvironmentalIncident, 'descriptionAr' | 'descriptionEn'>,
+  lang: AppLanguage,
+): { text: string; dir: 'ltr' | 'rtl' } | null {
+  if (lang === 'ar') {
+    if (incident.descriptionAr) {
+      return { text: incident.descriptionAr, dir: 'rtl' };
+    }
+    if (incident.descriptionEn) {
+      return { text: incident.descriptionEn, dir: 'ltr' };
+    }
+    return null;
+  }
+
+  if (incident.descriptionEn) {
+    return { text: incident.descriptionEn, dir: 'ltr' };
+  }
+  if (incident.descriptionAr) {
+    return { text: incident.descriptionAr, dir: 'rtl' };
+  }
+  return null;
+}
 
 export function typeLabel(type: IncidentType, lang: AppLanguage): string {
   const t = TYPE_LABELS[type];

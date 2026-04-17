@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyIncidents } from '@/hooks/use-incidents';
-import { STATUS_VARIANT, TYPE_LABELS, statusLabel } from '@/lib/incidents';
+import { STATUS_VARIANT, TYPE_LABELS, getIncidentDescription, statusLabel } from '@/lib/incidents';
 import { pickLocalizedCopy } from '@/lib/localization';
 import type { EnvironmentalIncident } from '@/services/api';
 
@@ -20,7 +20,7 @@ function IncidentCard({
   incident: EnvironmentalIncident;
   language: 'ar' | 'en';
 }) {
-  const description = language === 'en' ? incident.descriptionEn : incident.descriptionAr;
+  const description = getIncidentDescription(incident, language);
   const date = new Date(incident.createdAt).toLocaleDateString(
     language === 'en' ? 'en-US' : 'ar-EG',
   );
@@ -32,7 +32,9 @@ function IncidentCard({
           <div className="flex-1 space-y-1">
             <p className="font-medium">{TYPE_LABELS[incident.incidentType][language]}</p>
             {description ? (
-              <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
+              <p className="line-clamp-2 text-sm text-muted-foreground" dir={description.dir}>
+                {description.text}
+              </p>
             ) : null}
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
@@ -67,7 +69,7 @@ function IncidentCard({
 export default function MyIncidentsPage() {
   const { language: appLanguage } = useAuth();
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useMyIncidents({ page, limit: 10 });
+  const { data, isLoading, isError, refetch } = useMyIncidents({ page, limit: 10 });
 
   const incidents = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -110,6 +112,24 @@ export default function MyIncidentsPage() {
                 <Skeleton key={i} className="h-24 rounded-xl" />
               ))}
             </div>
+          ) : isError ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+                <AlertTriangle className="h-10 w-10 text-destructive/60" />
+                <p className="text-muted-foreground">
+                  {pickLocalizedCopy(appLanguage, {
+                    ar: 'تعذر تحميل البلاغات البيئية',
+                    en: 'Could not load your incident reports',
+                  })}
+                </p>
+                <Button variant="outline" size="sm" onClick={() => void refetch()}>
+                  {pickLocalizedCopy(appLanguage, {
+                    ar: 'حاول مرة أخرى',
+                    en: 'Try again',
+                  })}
+                </Button>
+              </CardContent>
+            </Card>
           ) : incidents.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center gap-3 py-12 text-center">

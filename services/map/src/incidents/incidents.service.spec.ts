@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CreateIncidentDto } from './dto/create-incident.dto';
@@ -121,6 +121,20 @@ describe('IncidentsService', () => {
       const result = await service.create('reporter-uuid-1', dto);
 
       expect(result.photos).toEqual([]);
+    });
+
+    it('should throw InternalServerErrorException when the insert returns no row', async () => {
+      mockDb.then.mockImplementationOnce(resolveWith([]));
+
+      const dto: CreateIncidentDto = {
+        incidentType: 'illegal_dumping',
+        latitude: 27.03,
+        longitude: 28.35,
+      } as CreateIncidentDto;
+
+      await expect(service.create('reporter-uuid-1', dto)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
@@ -265,7 +279,7 @@ describe('IncidentsService', () => {
       expect(setCall).toHaveProperty('resolvedBy', 'admin-uuid-1');
     });
 
-    it('should NOT set resolvedAt when status is under_review', async () => {
+    it('should clear resolved metadata when status moves back to under_review', async () => {
       const updated = {
         ...mockIncident,
         status: 'under_review' as const,
@@ -278,8 +292,8 @@ describe('IncidentsService', () => {
       await service.update('incident-uuid-1', 'admin-uuid-1', dto);
 
       const setCall = mockDb.set.mock.calls[0]?.[0] as Record<string, unknown>;
-      expect(setCall).not.toHaveProperty('resolvedAt');
-      expect(setCall).not.toHaveProperty('resolvedBy');
+      expect(setCall).toHaveProperty('resolvedAt', null);
+      expect(setCall).toHaveProperty('resolvedBy', null);
     });
   });
 });

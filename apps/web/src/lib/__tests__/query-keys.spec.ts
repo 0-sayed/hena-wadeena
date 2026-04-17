@@ -61,6 +61,18 @@ describe('queryKeys', () => {
     expect(queryKeys.bookings.mine()).toEqual(['bookings', 'mine']);
   });
 
+  it('incidents.mine returns the base key when no filters are provided', () => {
+    expect(queryKeys.incidents.mine()).toEqual(['incidents', 'mine']);
+  });
+
+  it('incidents.mine includes filters when provided', () => {
+    expect(queryKeys.incidents.mine({ page: 2, limit: 10 })).toEqual([
+      'incidents',
+      'mine',
+      { page: 2, limit: 10 },
+    ]);
+  });
+
   it('market.priceHistory includes id and params in key', () => {
     const params = { period: '30d', region: 'kharga' };
     expect(queryKeys.market.priceHistory('uuid-123', params)).toEqual([

@@ -163,10 +163,10 @@ async function main() {
   logSummary('map', layer, {
     pois: poiResult.length,
     pendingPois: pendingResult.length,
+    incidents: incidentCount,
     ...(layer === 'showcase' && {
       rides: rideCount,
       passengers: passengerCount,
-      incidents: incidentCount,
     }),
   });
 }

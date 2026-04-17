@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { usePublicIncidents } from '@/hooks/use-incidents';
 import { pickLocalizedCopy } from '@/lib/localization';
 import {
+  getIncidentDescription,
   statusLabel,
   typeLabel,
   STATUS_VARIANT,
@@ -165,37 +166,44 @@ export default function IncidentsPage() {
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {incidents.map((inc) => (
-                <Card key={inc.id} className="border-border/50">
-                  <CardContent className="p-4">
-                    {inc.photos && inc.photos.length > 0 && (
-                      <img
-                        src={inc.photos[0]}
-                        alt=""
-                        className="mb-3 h-32 w-full rounded-lg object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary">{typeLabel(inc.incidentType, language)}</Badge>
-                      <Badge variant={STATUS_VARIANT[inc.status]}>
-                        {statusLabel(inc.status, language)}
-                      </Badge>
-                    </div>
-                    {inc.descriptionAr && (
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground" dir="rtl">
-                        {inc.descriptionAr}
-                      </p>
-                    )}
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {new Date(inc.createdAt).toLocaleDateString(
-                        language === 'ar' ? 'ar-EG' : 'en-GB',
-                        { year: 'numeric', month: 'short', day: 'numeric' },
+              {incidents.map((inc) => {
+                const description = getIncidentDescription(inc, language);
+
+                return (
+                  <Card key={inc.id} className="border-border/50">
+                    <CardContent className="p-4">
+                      {inc.photos && inc.photos.length > 0 && (
+                        <img
+                          src={inc.photos[0]}
+                          alt=""
+                          className="mb-3 h-32 w-full rounded-lg object-cover"
+                          loading="lazy"
+                        />
                       )}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary">{typeLabel(inc.incidentType, language)}</Badge>
+                        <Badge variant={STATUS_VARIANT[inc.status]}>
+                          {statusLabel(inc.status, language)}
+                        </Badge>
+                      </div>
+                      {description ? (
+                        <p
+                          className="mt-2 line-clamp-2 text-sm text-muted-foreground"
+                          dir={description.dir}
+                        >
+                          {description.text}
+                        </p>
+                      ) : null}
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {new Date(inc.createdAt).toLocaleDateString(
+                          language === 'ar' ? 'ar-EG' : 'en-GB',
+                          { year: 'numeric', month: 'short', day: 'numeric' },
+                        )}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

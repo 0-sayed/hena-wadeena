@@ -39,10 +39,11 @@ export default function ReportIncidentPage() {
   const [incidentType, setIncidentType] = useState<IncidentType | ''>('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [descriptionAr, setDescriptionAr] = useState('');
+  const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isSubmitting = reportIncident.isPending || uploadingPhotos;
 
   const handleImageFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -100,7 +101,17 @@ export default function ReportIncidentPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (reportIncident.isPending) return;
+    if (isSubmitting) {
+      if (uploadingPhotos) {
+        toast.error(
+          pickLocalizedCopy(appLanguage, {
+            ar: 'انتظر حتى يكتمل رفع الصور',
+            en: 'Please wait for photos to finish uploading',
+          }),
+        );
+      }
+      return;
+    }
 
     if (!incidentType) {
       toast.error(
@@ -119,12 +130,15 @@ export default function ReportIncidentPage() {
       return;
     }
 
+    const trimmedDescription = description.trim();
+
     reportIncident.mutate(
       {
         incidentType,
         latitude,
         longitude,
-        descriptionAr: descriptionAr.trim() || undefined,
+        descriptionAr: appLanguage === 'ar' ? trimmedDescription || undefined : undefined,
+        descriptionEn: appLanguage === 'en' ? trimmedDescription || undefined : undefined,
         photos: photos.length > 0 ? photos : undefined,
       },
       {
@@ -138,12 +152,13 @@ export default function ReportIncidentPage() {
           void navigate('/incidents/mine');
         },
         onError: (err) => {
+          const fallbackMessage = pickLocalizedCopy(appLanguage, {
+            ar: 'حدث خطأ أثناء إرسال البلاغ',
+            en: 'Something went wrong',
+          });
+
           toast.error(
-            err.message ||
-              pickLocalizedCopy(appLanguage, {
-                ar: 'حدث خطأ أثناء إرسال البلاغ',
-                en: 'Something went wrong',
-              }),
+            err instanceof Error && err.message.length > 0 ? err.message : fallbackMessage,
           );
         },
       },
@@ -232,16 +247,16 @@ export default function ReportIncidentPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="descriptionAr">
+                  <Label htmlFor="description">
                     {pickLocalizedCopy(appLanguage, { ar: 'الوصف', en: 'Description' })}
                   </Label>
                   <Textarea
-                    id="descriptionAr"
-                    dir="rtl"
+                    id="description"
+                    dir={appLanguage === 'en' ? 'ltr' : 'rtl'}
                     rows={3}
                     maxLength={2000}
-                    value={descriptionAr}
-                    onChange={(e) => setDescriptionAr(e.target.value)}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder={pickLocalizedCopy(appLanguage, {
                       ar: 'صف الحادثة بالتفصيل...',
                       en: 'Describe the incident...',
@@ -329,10 +344,15 @@ export default function ReportIncidentPage() {
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={reportIncident.isPending}
+                  disabled={isSubmitting}
                 >
                   {reportIncident.isPending
                     ? pickLocalizedCopy(appLanguage, { ar: 'جارٍ الإرسال...', en: 'Submitting...' })
+                    : uploadingPhotos
+                      ? pickLocalizedCopy(appLanguage, {
+                          ar: 'جارٍ رفع الصور...',
+                          en: 'Uploading photos...',
+                        })
                     : pickLocalizedCopy(appLanguage, {
                         ar: 'إرسال البلاغ',
                         en: 'Submit Report',
