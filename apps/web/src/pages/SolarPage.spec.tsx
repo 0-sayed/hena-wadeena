@@ -12,6 +12,9 @@ const mockUsePois = vi.hoisted(() =>
 const mockUseBenefits = vi.hoisted(() =>
   vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
 );
+const mockUseAuth = vi.hoisted(() =>
+  vi.fn().mockReturnValue({ language: 'ar', isAuthenticated: false, user: null }),
+);
 
 vi.mock('@/hooks/use-listings', () => ({
   useListings: mockUseListings,
@@ -23,6 +26,10 @@ vi.mock('@/hooks/use-map', () => ({
 
 vi.mock('@/hooks/use-benefits', () => ({
   useBenefits: mockUseBenefits,
+}));
+
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('@/components/maps/InteractiveMap', () => ({
