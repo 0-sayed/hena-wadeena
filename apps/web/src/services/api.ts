@@ -268,7 +268,7 @@ export interface KycOnboardingSession {
 
 export interface UpdateProfileRequest {
   full_name?: string;
-  display_name?: string | null;
+  display_name?: string;
   email?: string;
   phone?: string;
   avatar_url?: string;

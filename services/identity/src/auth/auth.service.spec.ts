@@ -505,7 +505,9 @@ describe('AuthService', () => {
       mockDb.limit.mockResolvedValueOnce([otpRecord]);
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
       vi.spyOn(mockHashingService, 'verify').mockResolvedValue(false);
-      mockDb.returning.mockResolvedValueOnce([{ id: 'new-token-id' }]);
+      mockDb.returning
+        .mockResolvedValueOnce([{ id: 'otp-id' }])
+        .mockResolvedValueOnce([{ id: 'new-token-id' }]);
       const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
       const confirmationSpy = vi.spyOn(
         authService['emailService'],
@@ -589,6 +591,33 @@ describe('AuthService', () => {
       hashTokenSpy.mockRestore();
     });
 
+    it('should reject the reset if the OTP was consumed concurrently', async () => {
+      const hashTokenSpy = vi
+        .spyOn(authService as any, 'hashToken')
+        .mockReturnValue('matching-hash');
+      const otpRecord = {
+        id: 'otp-id',
+        target: 'test@example.com',
+        purpose: 'reset' as const,
+        codeHash: 'matching-hash',
+        expiresAt: new Date(Date.now() + 600000),
+        usedAt: null,
+        attempts: 0,
+        createdAt: new Date(),
+      };
+      mockDb.limit.mockResolvedValueOnce([otpRecord]);
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(false);
+      mockDb.returning.mockResolvedValueOnce([]);
+      const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
+
+      await expect(
+        authService.confirmPasswordReset('test@example.com', '123456', 'newpass123'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(updatePasswordSpy).not.toHaveBeenCalled();
+      hashTokenSpy.mockRestore();
+    });
+
     it('still resets the password when the confirmation email fails', async () => {
       const hashTokenSpy = vi
         .spyOn(authService as any, 'hashToken')
@@ -606,6 +635,9 @@ describe('AuthService', () => {
       mockDb.limit.mockResolvedValueOnce([otpRecord]);
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
       vi.spyOn(mockHashingService, 'verify').mockResolvedValue(false);
+      mockDb.returning
+        .mockResolvedValueOnce([{ id: 'otp-id' }])
+        .mockResolvedValueOnce([{ id: 'new-token-id' }]);
       vi.spyOn(authService['emailService'], 'sendPasswordResetConfirmation').mockRejectedValue(
         new Error('email provider unavailable'),
       );

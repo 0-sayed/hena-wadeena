@@ -337,7 +337,12 @@ export class AuthService {
       throw new BadRequestException('New password must be different from current password');
     }
 
-    await this.db.update(otpCodes).set({ usedAt: new Date() }).where(eq(otpCodes.id, otpRecord.id));
+    const [consumedOtp] = await this.db
+      .update(otpCodes)
+      .set({ usedAt: new Date() })
+      .where(and(eq(otpCodes.id, otpRecord.id), isNull(otpCodes.usedAt)))
+      .returning({ id: otpCodes.id });
+    if (!consumedOtp) throw new UnauthorizedException('Invalid or expired OTP');
 
     const passwordHash = await this.hashingService.hash(newPassword);
     await this.usersService.updatePassword(user.id, passwordHash);
