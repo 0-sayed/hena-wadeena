@@ -8,13 +8,17 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.26 /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --locked --no-dev --no-install-project
 
 COPY main.py ./
 COPY nakheel/ nakheel/
 COPY src/ src/
 
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+
 ENV PORT=8005
+ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8005
 
 HEALTHCHECK --interval=15s --timeout=10s --retries=5 \
@@ -25,4 +29,4 @@ RUN groupadd --gid 1001 appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-CMD ["/app/.venv/bin/python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8005"]
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8005"]
