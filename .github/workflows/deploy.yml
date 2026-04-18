@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-images]
     environment: production
-    timeout-minutes: 16
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: read
@@ -99,18 +99,42 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          command_timeout: 30m
           envs: GHCR_TOKEN,GHCR_LOGIN_USER,GHCR_REGISTRY_OWNER,DEPLOY_SHA,MONGO_INITDB_ROOT_USERNAME,MONGO_INITDB_ROOT_PASSWORD,JWT_ACCESS_SECRET,OPENAI_API_KEY,CORS_ORIGINS,SEED_PASSWORD,CADDY_HTTP_PORT,CADDY_HTTPS_PORT
           script: |
             set -euo pipefail
             cd /opt/hena-wadeena
 
-            echo "==> Configuring Docker to prefer IPv4 for GHCR (Contabo IPv6->Fastly peering is unstable)"
-            if ! python3 -c "import json; d=json.load(open('/etc/docker/daemon.json')); exit(0 if d.get('ipv6') is False else 1)" 2>/dev/null; then
-              sudo mkdir -p /etc/docker
-              existing="$(sudo cat /etc/docker/daemon.json 2>/dev/null || echo '{}')"
-              echo "$existing" | python3 -c $'import json,sys\ntry:\n d=json.loads(sys.stdin.read())\nexcept Exception:\n d={}\nd["ipv6"]=False\nprint(json.dumps(d,indent=2))' | sudo tee /etc/docker/daemon.json >/dev/null
-              sudo systemctl restart docker
-            fi
+            echo "==> Pinning GHCR blob hosts to IPv4 (Contabo IPv6->Fastly peering is unstable)"
+            pin_ipv4_host() {
+              local host="$1"
+              local backup
+              local tmp
+              local ips
+              backup="$(mktemp)"
+              tmp="$(mktemp)"
+              sudo cat /etc/hosts > "$backup"
+              grep -v " # hena-deploy ${host}$" "$backup" > "$tmp" || true
+              sudo install -m 644 "$tmp" /etc/hosts
+
+              ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u || true)"
+              if [ -z "$ips" ]; then
+                echo "ERROR: Could not resolve any IPv4 addresses for ${host}"
+                sudo install -m 644 "$backup" /etc/hosts
+                rm -f "$tmp" "$backup"
+                return 1
+              fi
+              while IFS= read -r ip; do
+                [ -n "$ip" ] || continue
+                printf '%s %s # hena-deploy %s\n' "$ip" "$host" "$host" >> "$tmp"
+              done <<< "$ips"
+              sudo install -m 644 "$tmp" /etc/hosts
+              rm -f "$tmp" "$backup"
+              echo "Pinned ${host} to IPv4: $(printf '%s\n' "$ips" | paste -sd ', ' -)"
+            }
+
+            pin_ipv4_host ghcr.io
+            pin_ipv4_host pkg-containers.githubusercontent.com
 
             echo "==> Logging into GHCR"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_LOGIN_USER" --password-stdin
