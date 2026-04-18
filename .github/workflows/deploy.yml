@@ -113,14 +113,14 @@ jobs:
               local ips
               backup="$(mktemp)"
               tmp="$(mktemp)"
-              sudo cat /etc/hosts > "$backup"
+              sudo -n cat /etc/hosts > "$backup"
               grep -v " # hena-deploy ${host}$" "$backup" > "$tmp" || true
-              sudo install -m 644 "$tmp" /etc/hosts
+              sudo -n tee /etc/hosts > /dev/null < "$tmp"
 
               ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u || true)"
               if [ -z "$ips" ]; then
                 echo "ERROR: Could not resolve any IPv4 addresses for ${host}"
-                sudo install -m 644 "$backup" /etc/hosts
+                sudo -n tee /etc/hosts > /dev/null < "$backup"
                 rm -f "$tmp" "$backup"
                 return 1
               fi
@@ -128,7 +128,7 @@ jobs:
                 [ -n "$ip" ] || continue
                 printf '%s %s # hena-deploy %s\n' "$ip" "$host" "$host" >> "$tmp"
               done <<< "$ips"
-              sudo install -m 644 "$tmp" /etc/hosts
+              sudo -n tee /etc/hosts > /dev/null < "$tmp"
               rm -f "$tmp" "$backup"
               echo "Pinned ${host} to IPv4: $(printf '%s\n' "$ips" | paste -sd ', ' -)"
             }
