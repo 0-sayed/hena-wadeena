@@ -108,27 +108,28 @@ jobs:
             echo "==> Pinning GHCR blob hosts to IPv4 (Contabo IPv6->Fastly peering is unstable)"
             pin_ipv4_host() {
               local host="$1"
+              local backup
               local tmp
               local ips
+              backup="$(mktemp)"
               tmp="$(mktemp)"
-              grep -v " # hena-deploy ${host}$" /etc/hosts > "$tmp" || true
+              sudo cat /etc/hosts > "$backup"
+              grep -v " # hena-deploy ${host}$" "$backup" > "$tmp" || true
               sudo install -m 644 "$tmp" /etc/hosts
-              rm -f "$tmp"
 
-              tmp="$(mktemp)"
-              ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u)"
+              ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u || true)"
               if [ -z "$ips" ]; then
                 echo "ERROR: Could not resolve any IPv4 addresses for ${host}"
-                rm -f "$tmp"
+                sudo install -m 644 "$backup" /etc/hosts
+                rm -f "$tmp" "$backup"
                 return 1
               fi
-              grep -v " # hena-deploy ${host}$" /etc/hosts > "$tmp" || true
               while IFS= read -r ip; do
                 [ -n "$ip" ] || continue
                 printf '%s %s # hena-deploy %s\n' "$ip" "$host" "$host" >> "$tmp"
               done <<< "$ips"
               sudo install -m 644 "$tmp" /etc/hosts
-              rm -f "$tmp"
+              rm -f "$tmp" "$backup"
               echo "Pinned ${host} to IPv4: $(printf '%s\n' "$ips" | paste -sd ', ' -)"
             }
 
