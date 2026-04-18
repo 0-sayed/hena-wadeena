@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-images]
     environment: production
-    timeout-minutes: 12
+    timeout-minutes: 16
     permissions:
       contents: read
       packages: read
