@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Codex
         uses: openai/codex-action@c25d10f3f498316d4b2496cc4c6dd58057a7b031 # v1
