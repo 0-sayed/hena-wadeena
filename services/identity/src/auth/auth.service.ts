@@ -331,7 +331,7 @@ export class AuthService {
     }
 
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException('Invalid or expired OTP');
     const isReusedPassword = await this.hashingService.verify(user.passwordHash, newPassword);
     if (isReusedPassword) {
       throw new BadRequestException('New password must be different from current password');
