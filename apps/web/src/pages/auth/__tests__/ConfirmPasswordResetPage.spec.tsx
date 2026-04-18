@@ -181,4 +181,60 @@ describe('ConfirmPasswordResetPage', () => {
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية');
   });
+
+  it('localizes known reset OTP errors instead of showing raw backend text', async () => {
+    mockConfirmPasswordReset.mockRejectedValue(new Error('Invalid or expired OTP'));
+
+    render(
+      <MemoryRouter>
+        <ConfirmPasswordResetPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('رمز OTP'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+      target: { value: 'newpassword123' },
+    });
+    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+      target: { value: 'newpassword123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'تأكيد إعادة التعيين' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('رمز OTP غير صالح أو منتهي الصلاحية');
+    expect(alert).not.toHaveTextContent('Invalid or expired OTP');
+  });
+
+  it('falls back to a generic Arabic error for unknown backend messages', async () => {
+    mockConfirmPasswordReset.mockRejectedValue(new Error('Some unexpected backend failure'));
+
+    render(
+      <MemoryRouter>
+        <ConfirmPasswordResetPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('رمز OTP'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+      target: { value: 'newpassword123' },
+    });
+    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+      target: { value: 'newpassword123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'تأكيد إعادة التعيين' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('تعذر إكمال إعادة التعيين');
+    expect(alert).not.toHaveTextContent('Some unexpected backend failure');
+  });
 });

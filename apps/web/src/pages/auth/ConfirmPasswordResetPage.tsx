@@ -25,6 +25,14 @@ function isPendingKycResponse(
 
 const SAME_PASSWORD_ERROR_MESSAGE = 'New password must be different from current password';
 const SAME_PASSWORD_ERROR_FEEDBACK = 'يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية';
+const RESET_PASSWORD_GENERIC_ERROR_FEEDBACK = 'تعذر إكمال إعادة التعيين';
+const RESET_PASSWORD_ERROR_FEEDBACK: Record<string, string> = {
+  [SAME_PASSWORD_ERROR_MESSAGE]: SAME_PASSWORD_ERROR_FEEDBACK,
+  'Invalid or expired OTP': 'رمز OTP غير صالح أو منتهي الصلاحية',
+  'OTP expired': 'انتهت صلاحية رمز OTP',
+  'Too many attempts': 'تم تجاوز عدد المحاولات المسموح بها',
+  'User not found': 'رمز OTP غير صالح أو منتهي الصلاحية',
+};
 
 export default function ConfirmPasswordResetPage() {
   const navigate = useNavigate();
@@ -71,10 +79,8 @@ export default function ConfirmPasswordResetPage() {
     } catch (error) {
       setFormError(
         error instanceof Error
-          ? error.message === SAME_PASSWORD_ERROR_MESSAGE
-            ? SAME_PASSWORD_ERROR_FEEDBACK
-            : error.message
-          : 'تعذر إكمال إعادة التعيين',
+          ? RESET_PASSWORD_ERROR_FEEDBACK[error.message] ?? RESET_PASSWORD_GENERIC_ERROR_FEEDBACK
+          : RESET_PASSWORD_GENERIC_ERROR_FEEDBACK,
       );
     } finally {
       setIsSubmitting(false);
