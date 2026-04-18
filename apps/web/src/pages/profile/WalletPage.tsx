@@ -14,6 +14,10 @@ import { useAuth } from '@/hooks/use-auth';
 import { formatPrice } from '@/lib/format';
 import { getWalletSnapshot, parseEgpInputToPiasters, topUpWallet } from '@/lib/wallet-store';
 
+function createWalletTopUpIdempotencyKey(userId: string) {
+  return `wallet:topup:${userId}:${crypto.randomUUID()}`;
+}
+
 const WalletPage = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<WalletType | null>(null);
@@ -21,6 +25,10 @@ const WalletPage = () => {
   const [topupAmount, setTopupAmount] = useState('');
   const [showTopup, setShowTopup] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pendingTopupIntent, setPendingTopupIntent] = useState<{
+    amountPiasters: number;
+    idempotencyKey: string;
+  } | null>(null);
 
   const refreshWallet = useCallback(async () => {
     if (!user) {
@@ -55,12 +63,18 @@ const WalletPage = () => {
     }
 
     setLoading(true);
+    const idempotencyKey =
+      pendingTopupIntent?.amountPiasters === amountPiasters
+        ? pendingTopupIntent.idempotencyKey
+        : createWalletTopUpIdempotencyKey(user.id);
+    setPendingTopupIntent({ amountPiasters, idempotencyKey });
     try {
-      const snapshot = await topUpWallet(user.id, amountPiasters);
+      const snapshot = await topUpWallet(user.id, amountPiasters, idempotencyKey);
       setWallet(snapshot.wallet);
       setTransactions(snapshot.transactions);
       setShowTopup(false);
       setTopupAmount('');
+      setPendingTopupIntent(null);
       toast.success('تم شحن المحفظة بنجاح');
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'تعذر شحن المحفظة');
@@ -129,7 +143,10 @@ const WalletPage = () => {
                           variant="outline"
                           size="sm"
                           className="hover:scale-[1.05] transition-transform rounded-lg"
-                          onClick={() => setTopupAmount(String(amt))}
+                          onClick={() => {
+                            setTopupAmount(String(amt));
+                            setPendingTopupIntent(null);
+                          }}
                         >
                           {amt}
                         </Button>
@@ -141,7 +158,10 @@ const WalletPage = () => {
                       step="0.01"
                       placeholder="مبلغ آخر..."
                       value={topupAmount}
-                      onChange={(e) => setTopupAmount(e.target.value)}
+                      onChange={(e) => {
+                        setTopupAmount(e.target.value);
+                        setPendingTopupIntent(null);
+                      }}
                       className="h-12 rounded-xl"
                     />
                     <div className="flex gap-3">
@@ -155,7 +175,10 @@ const WalletPage = () => {
                       <Button
                         variant="outline"
                         className="h-12 rounded-xl"
-                        onClick={() => setShowTopup(false)}
+                        onClick={() => {
+                          setShowTopup(false);
+                          setPendingTopupIntent(null);
+                        }}
                       >
                         إلغاء
                       </Button>
