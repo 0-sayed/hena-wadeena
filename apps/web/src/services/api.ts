@@ -1443,10 +1443,10 @@ export interface Transaction {
 
 export const paymentsAPI = {
   getWallet: () => apiFetchWithRefresh<{ success: boolean; data: Wallet }>('/wallet'),
-  topUp: (amount: number) =>
+  topUp: (data: { amount: number; idempotency_key: string }) =>
     apiFetchWithRefresh<{ success: boolean; data: { balance: number } }>('/wallet/topup', {
       method: 'POST',
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify(data),
     }),
   deduct: (data: {
     amount: number;

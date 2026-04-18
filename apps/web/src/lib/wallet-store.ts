@@ -149,6 +149,7 @@ export async function getWalletSnapshot(userId: string): Promise<StoredWalletSta
 export async function topUpWallet(
   userId: string,
   amountPiasters: number,
+  idempotencyKey: string,
   description = DEFAULT_TOP_UP_DESCRIPTION,
   reference?: { reference_id?: string; reference_type?: string },
 ): Promise<StoredWalletState> {
@@ -156,7 +157,10 @@ export async function topUpWallet(
     throw new Error('amountPiasters must be a positive integer');
   }
 
-  const response = await paymentsAPI.topUp(amountPiasters);
+  const response = await paymentsAPI.topUp({
+    amount: amountPiasters,
+    idempotency_key: idempotencyKey,
+  });
   if (!response.success) {
     throw new Error('فشل شحن المحفظة');
   }

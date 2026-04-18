@@ -10,7 +10,7 @@ vi.mock('@/services/api', () => ({
   paymentsAPI,
 }));
 
-import { getWalletSnapshot } from '../wallet-store';
+import { getWalletSnapshot, topUpWallet } from '../wallet-store';
 
 describe('wallet-store', () => {
   beforeEach(() => {
@@ -48,5 +48,29 @@ describe('wallet-store', () => {
     expect(snapshot.wallet.balance).toBe(30000);
     expect(snapshot.transactions).toEqual([bookingTransaction]);
     expect(snapshot.wallet.recent_transactions).toEqual([bookingTransaction]);
+  });
+
+  it('uses the caller-provided idempotency key when topping up the wallet', async () => {
+    paymentsAPI.topUp.mockResolvedValue({
+      success: true,
+      data: { balance: 32500 },
+    });
+    paymentsAPI.getWallet.mockResolvedValue({
+      success: true,
+      data: {
+        id: 'wallet-user-1',
+        user_id: 'user-1',
+        balance: 32500,
+        currency: 'EGP',
+        recent_transactions: [],
+      },
+    });
+
+    await topUpWallet('user-1', 2500, 'wallet:topup:user-1:intent-1');
+
+    expect(paymentsAPI.topUp).toHaveBeenCalledWith({
+      amount: 2500,
+      idempotency_key: 'wallet:topup:user-1:intent-1',
+    });
   });
 });
