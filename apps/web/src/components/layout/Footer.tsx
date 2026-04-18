@@ -7,28 +7,40 @@ import { pickLocalizedCopy } from '@/lib/localization';
 
 const quickLinks = [
   {
-    href: '/tourism',
-    label: { ar: 'السياحة والمجتمع', en: 'Tourism & community' },
+    href: '/',
+    label: { ar: 'الرئيسية', en: 'Home' },
   },
   {
-    href: '/tourism/accommodation',
-    label: { ar: 'الإقامة', en: 'Accommodation' },
+    href: '/tourism',
+    label: { ar: 'السياحة', en: 'Tourism' },
   },
   {
     href: '/guides',
     label: { ar: 'المرشدين', en: 'Guides' },
   },
   {
-    href: '/marketplace',
-    label: { ar: 'البورصة والأسعار', en: 'Marketplace & prices' },
+    href: '/tourism/accommodation',
+    label: { ar: 'الإقامة', en: 'Accommodation' },
   },
   {
     href: '/logistics',
-    label: { ar: 'اللوجستيات والتنقل', en: 'Logistics & mobility' },
+    label: { ar: 'اللوجستيات', en: 'Logistics' },
+  },
+  {
+    href: '/marketplace',
+    label: { ar: 'البورصة', en: 'Marketplace' },
   },
   {
     href: '/investment',
-    label: { ar: 'فرص الاستثمار', en: 'Investment opportunities' },
+    label: { ar: 'الاستثمار', en: 'Investment' },
+  },
+  {
+    href: '/jobs',
+    label: { ar: 'التوظيف', en: 'Jobs' },
+  },
+  {
+    href: '/news',
+    label: { ar: 'أخبار', en: 'News' },
   },
 ] as const;
 
@@ -71,9 +83,9 @@ export function Footer() {
             <p className="text-sm leading-relaxed text-muted-foreground">{copy.description}</p>
           </div>
 
-          <div>
-            <h4 className="mb-4 font-semibold text-foreground">{copy.quickLinks}</h4>
-            <ul className="space-y-2 text-sm">
+          <div className="lg:justify-self-center">
+            <h4 className="mb-4 text-start font-semibold text-foreground">{copy.quickLinks}</h4>
+            <ul className="mx-auto inline-grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
               {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
@@ -116,7 +128,7 @@ export function Footer() {
               >
                 <Facebook className="h-5 w-5 shrink-0" />
                 <span className="text-sm font-bold" dir="ltr">
-                  600+
+                  700+
                 </span>
               </a>
               <a

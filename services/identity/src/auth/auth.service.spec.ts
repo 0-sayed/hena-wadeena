@@ -1,4 +1,9 @@
-import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserStatus } from '@hena-wadeena/types';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -56,6 +61,9 @@ describe('AuthService', () => {
   let mockUsersService: UsersService;
   let mockHashingService: HashingService;
   let mockDb: ReturnType<typeof createMockDb>;
+  let mockConfigService: {
+    get: ReturnType<typeof vi.fn>;
+  };
   let mockSessionService: {
     blacklistAccessToken: ReturnType<typeof vi.fn>;
     revokeRefreshToken: ReturnType<typeof vi.fn>;
@@ -100,7 +108,7 @@ describe('AuthService', () => {
         .mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 900, jti: 'mock-jti' }),
     };
 
-    const mockConfigService = {
+    mockConfigService = {
       get: vi.fn((key: string, defaultVal?: string) => {
         const config: Record<string, string> = {
           JWT_REFRESH_EXPIRES_IN: '15d',
@@ -342,7 +350,9 @@ describe('AuthService', () => {
   describe('changePassword', () => {
     it('should change password and return new tokens', async () => {
       vi.spyOn(mockUsersService, 'findById').mockResolvedValue(mockUser);
-      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(true);
+      vi.spyOn(mockHashingService, 'verify')
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
       mockDb.returning.mockResolvedValueOnce([{ id: 'new-token-id' }]);
       const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
       const confirmationSpy = vi.spyOn(
@@ -366,9 +376,22 @@ describe('AuthService', () => {
       );
     });
 
-    it('still changes the password when the confirmation email fails', async () => {
+    it('should reject reusing the current password', async () => {
       vi.spyOn(mockUsersService, 'findById').mockResolvedValue(mockUser);
       vi.spyOn(mockHashingService, 'verify').mockResolvedValue(true);
+      const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
+
+      await expect(authService.changePassword('user-uuid', 'oldpass', 'oldpass')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(updatePasswordSpy).not.toHaveBeenCalled();
+    });
+
+    it('still changes the password when the confirmation email fails', async () => {
+      vi.spyOn(mockUsersService, 'findById').mockResolvedValue(mockUser);
+      vi.spyOn(mockHashingService, 'verify')
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
       vi.spyOn(mockUsersService, 'updatePassword').mockResolvedValue(undefined);
       vi.spyOn(authService['emailService'], 'sendPasswordChangedConfirmation').mockRejectedValue(
         new Error('email provider unavailable'),
@@ -398,6 +421,70 @@ describe('AuthService', () => {
 
       await expect(authService.requestPasswordReset('nope@example.com')).resolves.not.toThrow();
     });
+
+    it('still succeeds when the reset OTP email cannot be sent', async () => {
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(authService['emailService'], 'sendPasswordResetOtp').mockRejectedValue(
+        new Error('email provider unavailable'),
+      );
+
+      await expect(authService.requestPasswordReset('test@example.com')).resolves.not.toThrow();
+    });
+
+    it('discards the OTP when delivery fails outside development and test', async () => {
+      mockConfigService.get.mockImplementation((key: string, defaultVal?: string) => {
+        const config: Record<string, string> = {
+          JWT_REFRESH_EXPIRES_IN: '15d',
+          NODE_ENV: 'production',
+        };
+        return config[key] ?? defaultVal;
+      });
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(authService['emailService'], 'sendPasswordResetOtp').mockRejectedValue(
+        new Error('email provider unavailable'),
+      );
+      const loggerErrorSpy = vi
+        .spyOn(authService['logger'], 'error')
+        .mockImplementation(() => undefined);
+      const loggerWarnSpy = vi
+        .spyOn(authService['logger'], 'warn')
+        .mockImplementation(() => undefined);
+      mockDb.returning.mockResolvedValueOnce([{ id: 'otp-id' }]);
+
+      await expect(authService.requestPasswordReset('test@example.com')).resolves.not.toThrow();
+
+      expect(mockDb.delete).toHaveBeenCalled();
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        'Failed to deliver password reset OTP to test@example.com; discarded OTP record otp-id',
+      );
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('Password reset OTP for test@example.com:'),
+      );
+    });
+
+    it('does not leak the OTP to staging logs when delivery fails', async () => {
+      mockConfigService.get.mockImplementation((key: string, defaultVal?: string) => {
+        const config: Record<string, string> = {
+          JWT_REFRESH_EXPIRES_IN: '15d',
+          NODE_ENV: 'staging',
+        };
+        return config[key] ?? defaultVal;
+      });
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(authService['emailService'], 'sendPasswordResetOtp').mockRejectedValue(
+        new Error('email provider unavailable'),
+      );
+      const loggerWarnSpy = vi
+        .spyOn(authService['logger'], 'warn')
+        .mockImplementation(() => undefined);
+      mockDb.returning.mockResolvedValueOnce([{ id: 'otp-id' }]);
+
+      await expect(authService.requestPasswordReset('test@example.com')).resolves.not.toThrow();
+
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('Password reset OTP for test@example.com:'),
+      );
+    });
   });
 
   describe('confirmPasswordReset', () => {
@@ -417,7 +504,10 @@ describe('AuthService', () => {
       };
       mockDb.limit.mockResolvedValueOnce([otpRecord]);
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
-      mockDb.returning.mockResolvedValueOnce([{ id: 'new-token-id' }]);
+      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(false);
+      mockDb.returning
+        .mockResolvedValueOnce([{ id: 'otp-id' }])
+        .mockResolvedValueOnce([{ id: 'new-token-id' }]);
       const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
       const confirmationSpy = vi.spyOn(
         authService['emailService'],
@@ -474,6 +564,83 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
+    it('should reject reusing the current password during reset', async () => {
+      const hashTokenSpy = vi
+        .spyOn(authService as any, 'hashToken')
+        .mockReturnValue('matching-hash');
+      const otpRecord = {
+        id: 'otp-id',
+        target: 'test@example.com',
+        purpose: 'reset' as const,
+        codeHash: 'matching-hash',
+        expiresAt: new Date(Date.now() + 600000),
+        usedAt: null,
+        attempts: 0,
+        createdAt: new Date(),
+      };
+      mockDb.limit.mockResolvedValueOnce([otpRecord]);
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(true);
+      const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
+
+      await expect(
+        authService.confirmPasswordReset('test@example.com', '123456', 'oldpass'),
+      ).rejects.toThrow(BadRequestException);
+      expect(updatePasswordSpy).not.toHaveBeenCalled();
+      expect(mockDb.set).not.toHaveBeenCalledWith(expect.objectContaining({ usedAt: expect.any(Date) }));
+      hashTokenSpy.mockRestore();
+    });
+
+    it('should reject the reset if the OTP was consumed concurrently', async () => {
+      const hashTokenSpy = vi
+        .spyOn(authService as any, 'hashToken')
+        .mockReturnValue('matching-hash');
+      const otpRecord = {
+        id: 'otp-id',
+        target: 'test@example.com',
+        purpose: 'reset' as const,
+        codeHash: 'matching-hash',
+        expiresAt: new Date(Date.now() + 600000),
+        usedAt: null,
+        attempts: 0,
+        createdAt: new Date(),
+      };
+      mockDb.limit.mockResolvedValueOnce([otpRecord]);
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(false);
+      mockDb.returning.mockResolvedValueOnce([]);
+      const updatePasswordSpy = vi.spyOn(mockUsersService, 'updatePassword');
+
+      await expect(
+        authService.confirmPasswordReset('test@example.com', '123456', 'newpass123'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(updatePasswordSpy).not.toHaveBeenCalled();
+      hashTokenSpy.mockRestore();
+    });
+
+    it('should not reveal whether a reset target still has a user account', async () => {
+      const hashTokenSpy = vi
+        .spyOn(authService as any, 'hashToken')
+        .mockReturnValue('matching-hash');
+      const otpRecord = {
+        id: 'otp-id',
+        target: 'test@example.com',
+        purpose: 'reset' as const,
+        codeHash: 'matching-hash',
+        expiresAt: new Date(Date.now() + 600000),
+        usedAt: null,
+        attempts: 0,
+        createdAt: new Date(),
+      };
+      mockDb.limit.mockResolvedValueOnce([otpRecord]);
+      vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(null);
+
+      await expect(
+        authService.confirmPasswordReset('test@example.com', '123456', 'newpass123'),
+      ).rejects.toThrow('Invalid or expired OTP');
+      hashTokenSpy.mockRestore();
+    });
+
     it('still resets the password when the confirmation email fails', async () => {
       const hashTokenSpy = vi
         .spyOn(authService as any, 'hashToken')
@@ -490,6 +657,10 @@ describe('AuthService', () => {
       };
       mockDb.limit.mockResolvedValueOnce([otpRecord]);
       vi.spyOn(mockUsersService, 'findByEmail').mockResolvedValue(mockUser);
+      vi.spyOn(mockHashingService, 'verify').mockResolvedValue(false);
+      mockDb.returning
+        .mockResolvedValueOnce([{ id: 'otp-id' }])
+        .mockResolvedValueOnce([{ id: 'new-token-id' }]);
       vi.spyOn(authService['emailService'], 'sendPasswordResetConfirmation').mockRejectedValue(
         new Error('email provider unavailable'),
       );

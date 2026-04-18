@@ -90,6 +90,31 @@ describe('LoginPage pending KYC flow', () => {
     );
   });
 
+  it('submits the values currently shown in the inputs when the browser autofills them', async () => {
+    mockLogin.mockResolvedValue({ status: 'authenticated' });
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText<HTMLInputElement>('البريد الإلكتروني');
+    const passwordInput = screen.getByLabelText<HTMLInputElement>('كلمة المرور');
+
+    emailInput.value = 'resident@hena-wadeena.online';
+    passwordInput.value = 'SeedDev2026!';
+
+    fireEvent.click(screen.getByRole('button', { name: /تسجيل الدخول/i }));
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith({
+        email: 'resident@hena-wadeena.online',
+        password: 'SeedDev2026!',
+      });
+    });
+  });
+
   it('renders login failures inline and moves focus to the alert', async () => {
     mockLogin.mockRejectedValue(new Error('Invalid credentials'));
 

@@ -145,4 +145,27 @@ describe('ChangePasswordPage', () => {
     expect(alert).toHaveFocus();
     expect(mockChangePassword).not.toHaveBeenCalled();
   });
+
+  it('shows an inline error when the new password matches the current password', async () => {
+    render(
+      <MemoryRouter>
+        <ChangePasswordPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('كلمة المرور الحالية'), {
+      target: { value: 'same-password123' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+      target: { value: 'same-password123' },
+    });
+    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+      target: { value: 'same-password123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'تحديث كلمة المرور' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية');
+    expect(mockChangePassword).not.toHaveBeenCalled();
+  });
 });
