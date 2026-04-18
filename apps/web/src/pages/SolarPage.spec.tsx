@@ -89,6 +89,15 @@ describe('SolarPage', () => {
     expect(screen.getByTestId('interactive-map')).toBeDefined();
   });
 
+  it('requests solar installations with a backend-valid page size', () => {
+    renderPage();
+
+    expect(mockUsePois).toHaveBeenCalledWith({
+      category: 'solar_installation',
+      limit: 100,
+    });
+  });
+
   it('does not show irradiance legend entries when no overlay layer is rendered', () => {
     renderPage();
 

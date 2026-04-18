@@ -130,7 +130,7 @@ export default function SolarPage() {
     category: 'solar_installer',
     ...(district !== 'all' ? { district } : {}),
   });
-  const { data: installationsData } = usePois({ category: 'solar_installation', limit: 200 });
+  const { data: installationsData } = usePois({ category: 'solar_installation', limit: 100 });
   const { data: benefitsData } = useBenefits();
 
   const installers = installersData?.data ?? [];
