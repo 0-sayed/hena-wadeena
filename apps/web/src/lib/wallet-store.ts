@@ -6,6 +6,10 @@ const DEFAULT_TOP_UP_DESCRIPTION = 'شحن المحفظة';
 const DEFAULT_CURRENCY = 'EGP';
 const LEGACY_BOOKING_REFERENCE_TYPES = new Set(['package_booking', 'package_booking_refund']);
 
+function createWalletTopUpIdempotencyKey(userId: string): string {
+  return `wallet:topup:${userId}:${crypto.randomUUID()}`;
+}
+
 type StoredWalletState = {
   wallet: Wallet;
   transactions: Transaction[];
@@ -156,7 +160,10 @@ export async function topUpWallet(
     throw new Error('amountPiasters must be a positive integer');
   }
 
-  const response = await paymentsAPI.topUp(amountPiasters);
+  const response = await paymentsAPI.topUp({
+    amount: amountPiasters,
+    idempotency_key: createWalletTopUpIdempotencyKey(userId),
+  });
   if (!response.success) {
     throw new Error('فشل شحن المحفظة');
   }
