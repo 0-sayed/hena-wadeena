@@ -90,6 +90,7 @@ describe('SolarPage', () => {
   });
 
   it('requests solar installations with a backend-valid page size', () => {
+    mockUsePois.mockClear();
     renderPage();
 
     expect(mockUsePois).toHaveBeenCalledWith({
