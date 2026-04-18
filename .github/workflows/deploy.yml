@@ -111,6 +111,11 @@ jobs:
               local tmp
               local ips
               tmp="$(mktemp)"
+              grep -v " # hena-deploy ${host}$" /etc/hosts > "$tmp" || true
+              sudo install -m 644 "$tmp" /etc/hosts
+              rm -f "$tmp"
+
+              tmp="$(mktemp)"
               ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u)"
               if [ -z "$ips" ]; then
                 echo "ERROR: Could not resolve any IPv4 addresses for ${host}"
