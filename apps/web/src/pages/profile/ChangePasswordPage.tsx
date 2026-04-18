@@ -23,6 +23,9 @@ function isPendingKycResponse(
   return 'status' in response && response.status === 'pending_kyc';
 }
 
+const SAME_PASSWORD_ERROR_MESSAGE = 'New password must be different from current password';
+const SAME_PASSWORD_ERROR_FEEDBACK = 'يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية';
+
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -39,6 +42,10 @@ export default function ChangePasswordPage() {
 
     if (formData.newPassword !== formData.confirmPassword) {
       setFormError('كلمتا المرور غير متطابقتين');
+      return;
+    }
+    if (formData.currentPassword === formData.newPassword) {
+      setFormError(SAME_PASSWORD_ERROR_FEEDBACK);
       return;
     }
 
@@ -64,7 +71,13 @@ export default function ChangePasswordPage() {
       toast.success('تم تغيير كلمة المرور بنجاح');
       void navigate('/profile');
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'تعذر تغيير كلمة المرور');
+      setFormError(
+        error instanceof Error
+          ? error.message === SAME_PASSWORD_ERROR_MESSAGE
+            ? SAME_PASSWORD_ERROR_FEEDBACK
+            : error.message
+          : 'تعذر تغيير كلمة المرور',
+      );
     } finally {
       setIsSubmitting(false);
     }

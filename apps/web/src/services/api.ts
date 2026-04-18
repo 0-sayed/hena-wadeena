@@ -270,7 +270,6 @@ export interface UpdateProfileRequest {
   full_name?: string;
   email?: string;
   phone?: string;
-  display_name?: string;
   avatar_url?: string;
   language?: 'ar' | 'en';
 }

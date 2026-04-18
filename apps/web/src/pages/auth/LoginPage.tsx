@@ -21,12 +21,17 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const submittedValues = new FormData(e.currentTarget);
+    const email = String(submittedValues.get('email') ?? '').trim();
+    const password = String(submittedValues.get('password') ?? '');
+
+    setFormData({ email, password });
     setFormError(null);
     setIsLoading(true);
     try {
-      const result = await auth.login({ email: formData.email, password: formData.password });
+      const result = await auth.login({ email, password });
       if (result.status === 'pending_kyc') {
         toast.success('يجب استكمال وثائق التحقق قبل تفعيل الحساب');
         void navigate('/kyc/continue');
@@ -65,6 +70,7 @@ const LoginPage = () => {
                         <Mail className="absolute end-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           id="email"
+                          name="email"
                           type="email"
                           placeholder="example@email.com"
                           value={formData.email}
@@ -75,6 +81,7 @@ const LoginPage = () => {
                             }
                           }}
                           className="h-13 rounded-xl pe-12 text-base"
+                          autoComplete="username"
                           required
                         />
                       </div>
@@ -85,6 +92,7 @@ const LoginPage = () => {
                         <Lock className="absolute end-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           id="password"
+                          name="password"
                           type="password"
                           placeholder="••••••••"
                           value={formData.password}
@@ -95,6 +103,7 @@ const LoginPage = () => {
                             }
                           }}
                           className="h-13 rounded-xl pe-12 text-base"
+                          autoComplete="current-password"
                           required
                         />
                       </div>

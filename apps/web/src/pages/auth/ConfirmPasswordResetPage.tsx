@@ -23,6 +23,9 @@ function isPendingKycResponse(
   return 'status' in response && response.status === 'pending_kyc';
 }
 
+const SAME_PASSWORD_ERROR_MESSAGE = 'New password must be different from current password';
+const SAME_PASSWORD_ERROR_FEEDBACK = 'يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية';
+
 export default function ConfirmPasswordResetPage() {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -66,7 +69,13 @@ export default function ConfirmPasswordResetPage() {
       toast.success('تمت إعادة تعيين كلمة المرور بنجاح');
       void navigate('/');
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'تعذر إكمال إعادة التعيين');
+      setFormError(
+        error instanceof Error
+          ? error.message === SAME_PASSWORD_ERROR_MESSAGE
+            ? SAME_PASSWORD_ERROR_FEEDBACK
+            : error.message
+          : 'تعذر إكمال إعادة التعيين',
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -148,10 +148,10 @@ describe('Auth (e2e)', () => {
       const res = await request(app.getHttpServer())
         .patch('/api/v1/auth/me')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ display_name: 'Updated Name', language: 'en' })
+        .send({ full_name: 'Updated User Name', language: 'en' })
         .expect(200);
 
-      expect(res.body.displayName).toBe('Updated Name');
+      expect(res.body.fullName).toBe('Updated User Name');
       expect(res.body.language).toBe('en');
     });
   });
@@ -242,6 +242,14 @@ describe('Auth (e2e)', () => {
         .send({ current_password: 'totally-wrong-password', new_password: 'anotherpass123' })
         .expect(401);
     });
+
+    it('should reject reusing the current password', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ current_password: newPassword, new_password: newPassword })
+        .expect(400);
+    });
   });
 
   describe('POST /api/v1/auth/logout', () => {
@@ -290,6 +298,15 @@ describe('Auth (e2e)', () => {
         .post('/api/v1/auth/password-reset/confirm')
         .send({ email: testEmail, otp: '000000', new_password: resetPassword })
         .expect(401);
+    });
+
+    it('should reject reusing the current password during reset', async () => {
+      expect(latestResetOtp).toMatch(/^\d{6}$/);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/password-reset/confirm')
+        .send({ email: testEmail, otp: latestResetOtp, new_password: 'newpassword456' })
+        .expect(400);
     });
 
     it('should reject an expired OTP', async () => {

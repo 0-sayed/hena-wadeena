@@ -9,6 +9,7 @@ import {
   requiresKycForRole,
 } from '@hena-wadeena/types';
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -250,6 +251,10 @@ export class AuthService {
 
     const valid = await this.hashingService.verify(user.passwordHash, currentPassword);
     if (!valid) throw new UnauthorizedException('Invalid current password');
+    const isReusedPassword = await this.hashingService.verify(user.passwordHash, newPassword);
+    if (isReusedPassword) {
+      throw new BadRequestException('New password must be different from current password');
+    }
 
     const passwordHash = await this.hashingService.hash(newPassword);
     await this.usersService.updatePassword(userId, passwordHash);
@@ -276,7 +281,13 @@ export class AuthService {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-    await this.emailService.sendPasswordResetOtp(email, otp);
+    const emailSent = await this.deliverEmailSafely('password reset OTP', () =>
+      this.emailService.sendPasswordResetOtp(email, otp),
+    );
+
+    if (!emailSent && (this.configService.get<string>('NODE_ENV') ?? 'development') !== 'production') {
+      this.logger.warn(`Password reset OTP for ${email}: ${otp}`);
+    }
   }
 
   async confirmPasswordReset(
@@ -311,6 +322,10 @@ export class AuthService {
       this.usersService.findByEmail(email),
     ]);
     if (!user) throw new UnauthorizedException('User not found');
+    const isReusedPassword = await this.hashingService.verify(user.passwordHash, newPassword);
+    if (isReusedPassword) {
+      throw new BadRequestException('New password must be different from current password');
+    }
 
     const passwordHash = await this.hashingService.hash(newPassword);
     await this.usersService.updatePassword(user.id, passwordHash);
@@ -496,12 +511,14 @@ export class AuthService {
     });
   }
 
-  private async deliverEmailSafely(label: string, send: () => Promise<void>) {
+  private async deliverEmailSafely(label: string, send: () => Promise<void>): Promise<boolean> {
     try {
       await send();
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Failed to send ${label}: ${message}`);
+      return false;
     }
   }
 }

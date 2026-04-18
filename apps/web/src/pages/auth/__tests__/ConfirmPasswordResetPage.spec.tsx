@@ -152,4 +152,33 @@ describe('ConfirmPasswordResetPage', () => {
     expect(alert).toHaveFocus();
     expect(mockConfirmPasswordReset).not.toHaveBeenCalled();
   });
+
+  it('shows a friendly inline error when the backend rejects reusing the same password', async () => {
+    mockConfirmPasswordReset.mockRejectedValue(
+      new Error('New password must be different from current password'),
+    );
+
+    render(
+      <MemoryRouter>
+        <ConfirmPasswordResetPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('البريد الإلكتروني'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('رمز OTP'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'), {
+      target: { value: 'same-password123' },
+    });
+    fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور الجديدة'), {
+      target: { value: 'same-password123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'تأكيد إعادة التعيين' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية');
+  });
 });
