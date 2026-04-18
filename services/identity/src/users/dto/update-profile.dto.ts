@@ -65,6 +65,7 @@ const phoneField = z
 
 const updateProfileSchema = z.object({
   full_name: z.string().trim().min(1).max(100).optional(),
+  display_name: z.string().trim().min(1).max(100).optional(),
   email: emailField.optional(),
   phone: phoneField.optional(),
   avatar_url: avatarUrlField.optional(),

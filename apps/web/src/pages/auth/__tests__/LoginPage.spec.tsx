@@ -99,8 +99,8 @@ describe('LoginPage pending KYC flow', () => {
       </MemoryRouter>,
     );
 
-    const emailInput = screen.getByLabelText('البريد الإلكتروني') as HTMLInputElement;
-    const passwordInput = screen.getByLabelText('كلمة المرور') as HTMLInputElement;
+    const emailInput = screen.getByLabelText<HTMLInputElement>('البريد الإلكتروني');
+    const passwordInput = screen.getByLabelText<HTMLInputElement>('كلمة المرور');
 
     emailInput.value = 'resident@hena-wadeena.online';
     passwordInput.value = 'SeedDev2026!';

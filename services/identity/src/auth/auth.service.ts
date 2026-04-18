@@ -273,20 +273,33 @@ export class AuthService {
 
     const otp = this.generateOtp();
     const codeHash = this.hashToken(otp);
+    const environment = this.configService.get<string>('NODE_ENV') ?? 'development';
+    const shouldLogOtp = environment === 'development' || environment === 'test';
 
-    await this.db.insert(otpCodes).values({
-      target: email,
-      purpose: 'reset',
-      codeHash,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
+    const [otpRecord] = await this.db
+      .insert(otpCodes)
+      .values({
+        target: email,
+        purpose: 'reset',
+        codeHash,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      })
+      .returning({ id: otpCodes.id });
 
     const emailSent = await this.deliverEmailSafely('password reset OTP', () =>
       this.emailService.sendPasswordResetOtp(email, otp),
     );
 
-    if (!emailSent && (this.configService.get<string>('NODE_ENV') ?? 'development') !== 'production') {
+    if (!emailSent && shouldLogOtp) {
       this.logger.warn(`Password reset OTP for ${email}: ${otp}`);
+      return;
+    }
+
+    if (!emailSent && otpRecord) {
+      await this.db.delete(otpCodes).where(eq(otpCodes.id, otpRecord.id));
+      this.logger.error(
+        `Failed to deliver password reset OTP to ${email}; discarded OTP record ${otpRecord.id}`,
+      );
     }
   }
 
@@ -317,15 +330,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid OTP');
     }
 
-    const [, user] = await Promise.all([
-      this.db.update(otpCodes).set({ usedAt: new Date() }).where(eq(otpCodes.id, otpRecord.id)),
-      this.usersService.findByEmail(email),
-    ]);
+    const user = await this.usersService.findByEmail(email);
     if (!user) throw new UnauthorizedException('User not found');
     const isReusedPassword = await this.hashingService.verify(user.passwordHash, newPassword);
     if (isReusedPassword) {
       throw new BadRequestException('New password must be different from current password');
     }
+
+    await this.db.update(otpCodes).set({ usedAt: new Date() }).where(eq(otpCodes.id, otpRecord.id));
 
     const passwordHash = await this.hashingService.hash(newPassword);
     await this.usersService.updatePassword(user.id, passwordHash);

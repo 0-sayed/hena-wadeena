@@ -154,6 +154,16 @@ describe('Auth (e2e)', () => {
       expect(res.body.fullName).toBe('Updated User Name');
       expect(res.body.language).toBe('en');
     });
+
+    it('should accept display_name updates for backwards compatibility', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ display_name: 'Updated Display Name' })
+        .expect(200);
+
+      expect(res.body.displayName).toBe('Updated Display Name');
+    });
   });
 
   describe('POST /api/v1/auth/refresh', () => {
@@ -307,6 +317,15 @@ describe('Auth (e2e)', () => {
         .post('/api/v1/auth/password-reset/confirm')
         .send({ email: testEmail, otp: latestResetOtp, new_password: 'newpassword456' })
         .expect(400);
+
+      const [record] = await db
+        .select()
+        .from(otpCodes)
+        .where(and(eq(otpCodes.target, testEmail), eq(otpCodes.purpose, 'reset')))
+        .orderBy(desc(otpCodes.createdAt))
+        .limit(1);
+
+      expect(record?.usedAt).toBeNull();
     });
 
     it('should reject an expired OTP', async () => {

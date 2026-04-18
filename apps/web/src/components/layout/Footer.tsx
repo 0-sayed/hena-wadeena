@@ -84,7 +84,7 @@ export function Footer() {
           </div>
 
           <div className="lg:justify-self-center">
-            <h4 className="mb-4 text-right font-semibold text-foreground">{copy.quickLinks}</h4>
+            <h4 className="mb-4 text-start font-semibold text-foreground">{copy.quickLinks}</h4>
             <ul className="mx-auto inline-grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
               {quickLinks.map((link) => (
                 <li key={link.href}>

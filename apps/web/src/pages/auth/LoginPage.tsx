@@ -24,8 +24,10 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const submittedValues = new FormData(e.currentTarget);
-    const email = String(submittedValues.get('email') ?? '').trim();
-    const password = String(submittedValues.get('password') ?? '');
+    const rawEmail = submittedValues.get('email');
+    const rawPassword = submittedValues.get('password');
+    const email = typeof rawEmail === 'string' ? rawEmail.trim() : '';
+    const password = typeof rawPassword === 'string' ? rawPassword : '';
 
     setFormData({ email, password });
     setFormError(null);

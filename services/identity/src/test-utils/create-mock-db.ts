@@ -13,6 +13,7 @@ interface MockDbChain {
   returning: Mock;
   onConflictDoNothing: Mock;
   update: Mock;
+  delete: Mock;
   set: Mock;
   orderBy: Mock;
   execute: Mock;
@@ -36,6 +37,7 @@ export function createMockDb(): MockDbChain {
     returning: vi.fn().mockResolvedValue([]),
     onConflictDoNothing: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
     set: vi.fn(),
     orderBy: vi.fn(),
     execute: vi.fn().mockResolvedValue([]),
@@ -55,6 +57,7 @@ export function createMockDb(): MockDbChain {
   chain.insert.mockReturnValue(chain);
   chain.values.mockReturnValue(chain);
   chain.update.mockReturnValue(chain);
+  chain.delete.mockReturnValue(chain);
   chain.onConflictDoNothing.mockReturnValue(chain);
   chain.set.mockReturnValue(chain);
   chain.orderBy.mockReturnValue(chain);

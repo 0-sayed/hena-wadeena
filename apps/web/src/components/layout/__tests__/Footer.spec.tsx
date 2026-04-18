@@ -66,7 +66,7 @@ describe('Footer localization', () => {
     expect(quickLinksSection).toHaveClass('lg:justify-self-center');
     expect(quickLinksList).not.toBeNull();
     expect(quickLinksList).toHaveClass('mx-auto', 'inline-grid', 'grid-cols-3');
-    expect(quickLinksHeading).toHaveClass('text-right');
+    expect(quickLinksHeading).toHaveClass('text-start');
     expect(screen.getByText('700+')).toBeInTheDocument();
     expect(screen.getByAltText('Egypt Vision 2030')).toHaveAttribute(
       'src',
