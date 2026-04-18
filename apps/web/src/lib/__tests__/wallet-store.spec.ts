@@ -50,7 +50,7 @@ describe('wallet-store', () => {
     expect(snapshot.wallet.recent_transactions).toEqual([bookingTransaction]);
   });
 
-  it('includes an idempotency key when topping up the wallet', async () => {
+  it('uses the caller-provided idempotency key when topping up the wallet', async () => {
     paymentsAPI.topUp.mockResolvedValue({
       success: true,
       data: { balance: 32500 },
@@ -66,11 +66,11 @@ describe('wallet-store', () => {
       },
     });
 
-    await topUpWallet('user-1', 2500);
+    await topUpWallet('user-1', 2500, 'wallet:topup:user-1:intent-1');
 
     expect(paymentsAPI.topUp).toHaveBeenCalledWith({
       amount: 2500,
-      idempotency_key: expect.stringMatching(/^wallet:topup:user-1:/),
+      idempotency_key: 'wallet:topup:user-1:intent-1',
     });
   });
 });
