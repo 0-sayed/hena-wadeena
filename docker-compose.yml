@@ -217,7 +217,7 @@ services:
     healthcheck:
       <<: *nestjs-healthcheck
       test: ['CMD-SHELL', 'curl -sf http://localhost:8005/health || exit 1']
-      start_period: 120s
+      start_period: 420s
       retries: 12
 
   # --- Gateway ---

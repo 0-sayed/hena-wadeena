@@ -235,7 +235,7 @@ jobs:
             docker compose run --rm -w /app/services/map map node dist/db/migrate.js
 
             echo "==> Restarting services"
-            if ! docker compose up -d --wait --timeout 300 postgres redis qdrant mongodb identity market guide-booking map ai gateway; then
+            if ! docker compose up -d --wait --timeout 600 postgres redis qdrant mongodb identity market guide-booking map ai gateway; then
               echo "==> Service health check failed; collecting diagnostics"
               docker compose ps || true
               echo "==> AI logs"
