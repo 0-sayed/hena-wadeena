@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -124,6 +124,25 @@ describe('Home sections localization', () => {
     expect(screen.getByText('Invest.')).toBeInTheDocument();
     expect(screen.getByText('Services for New Valley residents')).toBeInTheDocument();
     expect(screen.getAllByText('Explore').length).toBeGreaterThan(0);
+  });
+
+  it('uses pink styling for the artisans card CTA by default and on hover', () => {
+    render(
+      <MemoryRouter>
+        <MissionCards />
+      </MemoryRouter>,
+    );
+
+    const artisansTitle = screen.getByRole('heading', { name: 'Artisans' });
+    const artisansLink = artisansTitle.closest('a');
+
+    expect(artisansLink).not.toBeNull();
+    expect(artisansTitle).toHaveClass('group-hover:text-pink-600');
+
+    const exploreCta = within(artisansLink as HTMLAnchorElement).getByText('Explore');
+
+    expect(exploreCta).toHaveClass('text-pink-600');
+    expect(exploreCta).toHaveClass('group-hover:text-pink-600');
   });
 
   it('renders the Vision 2030 strip in English mode', () => {

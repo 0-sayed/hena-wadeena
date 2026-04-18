@@ -238,6 +238,10 @@ export function MissionCards() {
           <SR stagger className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 lg:gap-7">
             {missions.map((mission) => {
               const Icon = mission.icon;
+              const hoverCopyClass =
+                mission.id === 'artisans' ? 'group-hover:text-pink-600' : 'group-hover:text-primary';
+              const ctaCopyClass = mission.id === 'artisans' ? 'text-pink-600' : 'text-primary';
+
               return (
                 <Link key={mission.id} to={mission.href}>
                   <Card
@@ -260,13 +264,17 @@ export function MissionCards() {
                       >
                         <Icon className="h-9 w-9 text-primary-foreground" strokeWidth={1.8} />
                       </div>
-                      <h3 className="mb-3 text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary">
+                      <h3
+                        className={`mb-3 text-xl font-bold text-foreground transition-colors duration-300 ${hoverCopyClass}`}
+                      >
                         {pickLocalizedCopy(language, mission.title)}
                       </h3>
                       <p className="mb-6 flex-1 leading-relaxed text-muted-foreground">
                         {pickLocalizedCopy(language, mission.description)}
                       </p>
-                      <div className="flex items-center gap-2 font-semibold text-primary">
+                      <div
+                        className={`flex items-center gap-2 font-semibold transition-colors duration-300 ${ctaCopyClass} ${hoverCopyClass}`}
+                      >
                         {copy.cta}
                         <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-2" />
                       </div>

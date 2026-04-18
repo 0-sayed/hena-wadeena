@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LtrText } from '@/components/ui/ltr-text';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { hasRequiredRole } from '@/components/auth/access-control';
 import { useAuth } from '@/hooks/use-auth';
@@ -65,11 +66,16 @@ type HeaderCopy = {
   register: string;
   search: string;
   searchPlaceholder: string;
+  translationUnavailableAriaLabel: string;
+  translationUnavailableBody: string;
+  translationUnavailableTitle: string;
   switchToArabic: string;
   switchToEnglish: string;
   themeToggle: string;
   wallet: string;
 };
+
+const ENGLISH_TRANSLATION_UNAVAILABLE = true;
 
 const CONTROL_BUTTON_CLASS =
   'flex h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50 md:h-9 md:min-w-9';
@@ -98,6 +104,10 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
     register: 'إنشاء حساب',
     search: 'بحث',
     searchPlaceholder: 'بحث...',
+    translationUnavailableAriaLabel: 'الترجمة الإنجليزية غير متاحة حالياً',
+    translationUnavailableBody:
+      'نعمل حالياً على تحسين النسخة الإنجليزية. يرجى استخدام العربية في الوقت الحالي.',
+    translationUnavailableTitle: 'الترجمة الإنجليزية قيد العمل',
     switchToArabic: 'التبديل إلى العربية',
     switchToEnglish: 'Switch to English',
     themeToggle: 'تبديل الوضع',
@@ -126,6 +136,9 @@ const headerCopy: Record<AppLanguage, HeaderCopy> = {
     register: 'Create account',
     search: 'Search',
     searchPlaceholder: 'Search...',
+    translationUnavailableAriaLabel: 'English translation is currently unavailable',
+    translationUnavailableBody: 'We are improving the English version right now. Please use Arabic for the time being.',
+    translationUnavailableTitle: 'English translation in progress',
     switchToArabic: 'Switch to Arabic',
     switchToEnglish: 'Switch to English',
     themeToggle: 'Toggle theme',
@@ -146,7 +159,6 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           investment: 'Investment',
           jobs: 'Jobs',
           news: 'News',
-          artisans: 'Artisans',
         }
       : {
           home: 'الرئيسية',
@@ -158,7 +170,6 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
           investment: 'الاستثمار',
           jobs: 'التوظيف',
           news: 'أخبار',
-          artisans: 'الحرفيات',
         };
 
   const isAccommodationPath = (pathname: string) => pathname.startsWith('/tourism/accommodation');
@@ -220,12 +231,6 @@ function buildNavigation(language: AppLanguage): NavigationItem[] {
       label: labels.news,
       matcher: (pathname) => pathname.startsWith('/news'),
     },
-    {
-      key: 'artisans',
-      href: '/artisans',
-      label: labels.artisans,
-      matcher: (pathname) => pathname.startsWith('/artisans'),
-    },
   ];
 }
 
@@ -270,18 +275,49 @@ function LanguageToggle({
 }) {
   const nextLanguage = language === 'ar' ? 'en' : 'ar';
   const title = language === 'ar' ? headerCopy.ar.switchToEnglish : headerCopy.en.switchToArabic;
+  const copy = headerCopy[language];
+  const isUnavailable = ENGLISH_TRANSLATION_UNAVAILABLE && language === 'ar';
+  const buttonClassName = `${CONTROL_BUTTON_CLASS} w-[3.125rem] gap-1 px-1.5 text-[10px] font-bold uppercase tracking-[0.16em] sm:w-12 sm:px-2 sm:text-[11px] sm:tracking-[0.18em]`;
+  const icon = (
+    <span className="relative inline-flex h-3.5 w-3.5 items-center justify-center">
+      <Languages className="h-3.5 w-3.5" />
+    </span>
+  );
+
+  if (isUnavailable) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={copy.translationUnavailableAriaLabel}
+            aria-disabled="true"
+            className={`${buttonClassName} cursor-help opacity-60 hover:bg-muted hover:text-foreground`}
+            dir="ltr"
+          >
+            {icon}
+            <span>{nextLanguage.toUpperCase()}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="center" className="w-64 space-y-1 p-3 text-sm">
+          <p className="font-semibold text-foreground">{copy.translationUnavailableTitle}</p>
+          <p className="text-muted-foreground">{copy.translationUnavailableBody}</p>
+        </PopoverContent>
+      </Popover>
+    );
+  }
 
   return (
     <button
       type="button"
       onClick={onToggle}
       disabled={disabled}
-      className={`${CONTROL_BUTTON_CLASS} w-[3.125rem] gap-1 px-1.5 text-[10px] font-bold uppercase tracking-[0.16em] sm:w-12 sm:px-2 sm:text-[11px] sm:tracking-[0.18em]`}
+      className={buttonClassName}
       aria-label={title}
       title={title}
       dir="ltr"
     >
-      <Languages className="h-3.5 w-3.5" />
+      {icon}
       <span>{nextLanguage.toUpperCase()}</span>
     </button>
   );
