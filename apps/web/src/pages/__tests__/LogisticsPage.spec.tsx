@@ -81,6 +81,7 @@ vi.mock('lucide-react', () => {
     Star: createIcon('star'),
     Plus: createIcon('plus'),
     ExternalLink: createIcon('external-link'),
+    RefreshCw: createIcon('refresh-cw'),
   };
 });
 
@@ -190,12 +191,35 @@ vi.mock('@/components/ui/card', () => ({
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/components/ui/tabs', () => ({
-  Tabs: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TabsContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({ children }: { children: ReactNode }) => <button>{children}</button>,
-}));
+vi.mock('@/components/ui/tabs', async () => {
+  const React = await vi.importActual<typeof import('react')>('react');
+  const TabsContext = React.createContext<{
+    value: string;
+    setValue: (value: string) => void;
+  }>({
+    value: '',
+    setValue: () => undefined,
+  });
+
+  return {
+    Tabs: ({ children, defaultValue = '' }: { children: ReactNode; defaultValue?: string }) => {
+      const [value, setValue] = React.useState(defaultValue);
+
+      return <TabsContext.Provider value={{ value, setValue }}>{children}</TabsContext.Provider>;
+    },
+    TabsContent: ({ children, value }: { children: ReactNode; value: string }) => {
+      const tabs = React.useContext(TabsContext);
+
+      return tabs.value === value ? <div>{children}</div> : null;
+    },
+    TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    TabsTrigger: ({ children, value }: { children: ReactNode; value: string }) => {
+      const tabs = React.useContext(TabsContext);
+
+      return <button onClick={() => tabs.setValue(value)}>{children}</button>;
+    },
+  };
+});
 
 vi.mock('@/components/ui/sheet', () => ({
   Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -283,6 +307,7 @@ describe('LogisticsPage', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       isAuthenticated: false,
+      language: 'ar',
       direction: 'rtl',
     });
     mockUsePois.mockReturnValue({
@@ -377,6 +402,27 @@ describe('LogisticsPage', () => {
     expect(localTransportTab.querySelector('[data-testid="icon-bus"]')).not.toBeNull();
   });
 
+  it('renders the bus departure board tab with seeded route and contact details', () => {
+    render(<LogisticsPage />);
+
+    expect(screen.getByRole('button', { name: 'مواعيد الحافلات' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'مواعيد الحافلات' }));
+
+    expect(screen.getByRole('heading', { name: 'وصّلني وادينا لايت' })).toBeInTheDocument();
+    expect(screen.getAllByText('الخارجة')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('القاهرة')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('اختر الخط')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('اختر المحطة')[0]).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /اتصال/i })[0]).toHaveAttribute(
+      'href',
+      'tel:+20927920000',
+    );
+    expect(screen.getAllByRole('link', { name: /واتساب/i })[0]).toHaveAttribute(
+      'href',
+      'https://wa.me/201001112222',
+    );
+  });
+
   it('keeps the explore map search input and nearby action the same filter height', () => {
     render(<LogisticsPage />);
 
@@ -420,6 +466,8 @@ describe('LogisticsPage ride creation access', () => {
 
     render(<LogisticsPage />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'مشاركة الرحلات' }));
+
     expect(screen.queryByRole('button', { name: /أضف رحلتك/i })).not.toBeInTheDocument();
   });
 
@@ -432,6 +480,8 @@ describe('LogisticsPage ride creation access', () => {
     });
 
     render(<LogisticsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'مشاركة الرحلات' }));
 
     expect(screen.getByRole('button', { name: /أضف رحلتك/i })).toBeInTheDocument();
   });

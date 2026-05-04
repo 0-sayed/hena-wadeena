@@ -6,6 +6,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { SR } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@/components/motion/Skeleton';
+import { BusDepartureBoard } from '@/components/logistics/BusDepartureBoard';
 import { LocalTransportTab } from '@/components/logistics/LocalTransportTab';
 import { InteractiveMap } from '@/components/maps/InteractiveMap';
 import type { MapLocation } from '@/components/maps/InteractiveMap';
@@ -345,7 +346,7 @@ const LogisticsPage = () => {
           <div className="container px-4">
             <Tabs defaultValue="explore-map" className="w-full">
               <SR>
-                <TabsList className="mx-auto mb-8 grid h-auto w-full max-w-3xl grid-cols-3 rounded-2xl p-1 sm:mb-10 sm:h-12 sm:rounded-xl">
+                <TabsList className="mx-auto mb-8 grid h-auto w-full max-w-4xl grid-cols-4 rounded-2xl p-1 sm:mb-10 sm:h-12 sm:rounded-xl">
                   <TabsTrigger
                     value="explore-map"
                     className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
@@ -364,6 +365,16 @@ const LogisticsPage = () => {
                     {pickLocalizedCopy(appLanguage, {
                       ar: 'مشاركة الرحلات',
                       en: 'Carpool rides',
+                    })}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="bus-departures"
+                    className="min-h-[56px] flex-col gap-1 rounded-xl py-2 text-[11px] font-semibold leading-tight sm:min-h-[44px] sm:flex-row sm:gap-2 sm:text-sm"
+                  >
+                    <Bus className="h-4 w-4" />
+                    {pickLocalizedCopy(appLanguage, {
+                      ar: 'مواعيد الحافلات',
+                      en: 'Bus departures',
                     })}
                   </TabsTrigger>
                   <TabsTrigger
@@ -730,6 +741,12 @@ const LogisticsPage = () => {
                     />
                   </SheetContent>
                 </Sheet>
+              </TabsContent>
+
+              <TabsContent value="bus-departures">
+                <SR>
+                  <BusDepartureBoard />
+                </SR>
               </TabsContent>
 
               <TabsContent value="local-transport">
